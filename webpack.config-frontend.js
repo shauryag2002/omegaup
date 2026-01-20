@@ -16,6 +16,7 @@ module.exports = {
       'unfetch/polyfill',
       './frontend/www/js/omegaup/polyfills.js',
       './frontend/www/js/omegaup/omegaup-legacy.js',
+      './frontend/www/js/omegaup/vue-plugins.ts',
     ],
     activity_feed: './frontend/www/js/omegaup/activity/feed.ts',
     admin_roles: './frontend/www/js/omegaup/admin/roles.ts',

@@ -80,7 +80,7 @@ runs:
         define('REDIS_HOST', 'redis');
         define('REDIS_PASS', '');
         define('TEMPLATE_CACHE_DIR', '/tmp');
-        define('OMEGAUP_CSRF_HOSTS', ['frontend', '127.0.0.1']);
+        define('OMEGAUP_CSRF_HOSTS', ['frontend', '127.0.0.1', '192.168.1.10']);
         EOF
 
         cat > ~/.my.cnf << EOF

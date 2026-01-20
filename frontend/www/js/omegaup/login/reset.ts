@@ -4,6 +4,9 @@ import * as ui from '../ui';
 import Vue from 'vue';
 import login_PasswordReset from '../components/login/PasswordReset.vue';
 
+// // Import keyboard visibility plugin for mobile keyboard handling
+// import '../vue-plugins';
+
 OmegaUp.on('ready', () => {
   const payload = JSON.parse(
     (document.getElementById('payload') as HTMLElement).innerText,

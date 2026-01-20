@@ -1,0 +1,187 @@
+/**
+ * Mobile Keyboard Visibility CSS
+ *
+ * Styles that help with mobile keyboard visibility issues.
+ * These styles work in conjunction with the KeyboardVisibilityPlugin.
+ *
+ * Import this file in your main SCSS/CSS entry point:
+ * @import '@/styles/mobile-keyboard.scss';
+ */
+
+// CSS custom properties for keyboard-safe areas
+:root {
+  // Bottom padding when keyboard is visible (set by JS)
+  --keyboard-height: 0px;
+  --keyboard-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+// Smooth scrolling for the entire page
+html {
+  scroll-behavior: smooth;
+}
+
+// Ensure body can scroll and respects viewport
+body {
+  // Use min-height instead of height to allow natural content flow
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+
+  // Prevent iOS from auto-zooming on input focus
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+// Prevent iOS Safari from zooming on input focus
+@supports (-webkit-touch-callout: none) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+// Mobile-specific styles
+@media (max-width: 768px) {
+  // Ensure inputs have enough space when focused
+  input:focus,
+  textarea:focus,
+  select:focus,
+  [contenteditable='true']:focus {
+    // Add visual feedback that input is focused
+    outline: 2px solid #4a90d9;
+    outline-offset: 2px;
+
+    // Ensure the element is in a scrollable container
+    position: relative;
+    z-index: 1;
+  }
+
+  // Forms should have padding at the bottom for keyboard
+  form,
+  .form-container {
+    padding-bottom: max(20px, var(--keyboard-safe-area-bottom));
+  }
+
+  // Fixed elements should respect keyboard height
+  .fixed-bottom,
+  [data-fixed-bottom] {
+    bottom: calc(var(--keyboard-height) + var(--keyboard-safe-area-bottom));
+    transition: bottom 0.3s ease;
+  }
+
+  // Modal dialogs and overlays
+  .modal,
+  .overlay,
+  .dialog {
+    // Ensure modals are scrollable
+    max-height: 100vh;
+    max-height: calc(100vh - var(--keyboard-height));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  // Card components with forms
+  .card,
+  .post {
+    // Ensure card content is visible when keyboard is open
+    &:has(input:focus),
+    &:has(textarea:focus) {
+      margin-bottom: 20px;
+    }
+  }
+}
+
+// Keyboard visibility utility classes
+.keyboard-visible {
+  // Applied to body when keyboard is detected
+  // Can be used for conditional styling
+
+  .hide-on-keyboard {
+    display: none !important;
+  }
+
+  .show-on-keyboard {
+    display: block !important;
+  }
+}
+
+// Scroll padding for focused inputs
+.scroll-padding-keyboard {
+  scroll-padding-bottom: calc(50vh);
+}
+
+// Ensure input containers are properly positioned
+.input-container,
+.form-group {
+  // Prevent content from being cut off
+  overflow: visible;
+  position: relative;
+}
+
+// iOS-specific fixes for rubber banding
+@supports (-webkit-touch-callout: none) {
+  // Prevent rubber banding while allowing scroll
+  .prevent-rubber-band {
+    overscroll-behavior: none;
+  }
+
+  // Better scrolling for input containers
+  .scrollable-form {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: scroll;
+  }
+}
+
+// Android Chrome specific
+@media screen and (-webkit-min-device-pixel-ratio: 0) and (min-resolution: 0.001dpcm) {
+  // Chrome on Android
+  input:focus,
+  textarea:focus {
+    // Ensure proper scroll behavior
+    scroll-margin-bottom: 50vh;
+    scroll-margin-top: 100px;
+  }
+}
+
+// Accessibility: Ensure focus is visible
+@media (prefers-reduced-motion: no-preference) {
+  input,
+  textarea,
+  select,
+  [contenteditable='true'] {
+    scroll-behavior: smooth;
+  }
+}
+
+// For browsers that support scroll-snap
+@supports (scroll-snap-type: y proximity) {
+  .form-with-keyboard-support {
+    scroll-snap-type: y proximity;
+
+    .form-group,
+    .input-container {
+      scroll-snap-align: start;
+      scroll-margin-top: 20px;
+    }
+  }
+}
+
+// Landscape mode on mobile
+@media (max-height: 500px) and (orientation: landscape) {
+  // Reduce spacing in landscape to maximize visible area
+  .form-group,
+  .input-container {
+    margin-bottom: 0.5rem;
+  }
+
+  input,
+  textarea,
+  select {
+    padding: 0.375rem 0.5rem;
+  }
+
+  // Labels can be inline in landscape
+  label {
+    margin-bottom: 0.25rem;
+  }
+}

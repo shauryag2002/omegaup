@@ -4,6 +4,9 @@ import * as ui from '../ui';
 import Vue from 'vue';
 import login_PasswordRecover from '../components/login/PasswordRecover.vue';
 
+// // Import keyboard visibility plugin for mobile keyboard handling
+// import '../vue-plugins';
+
 OmegaUp.on('ready', () => {
   new Vue({
     el: '#main-container',

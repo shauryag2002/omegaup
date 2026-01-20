@@ -7,6 +7,9 @@ import Vue from 'vue';
 import login_Signin from '../components/login/Signin.vue';
 import VueRecaptcha from 'vue-recaptcha';
 
+// // Import keyboard visibility plugin for mobile keyboard handling
+// import '../vue-plugins';
+
 OmegaUp.on('ready', () => {
   function loginAndRedirect(
     usernameOrEmail: string,
