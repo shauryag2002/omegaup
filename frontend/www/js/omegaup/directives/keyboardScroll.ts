@@ -54,13 +54,6 @@ function isMobileDevice(): boolean {
 }
 
 /**
- * Get the visual viewport height.
- */
-function getViewportHeight(): number {
-  return window.visualViewport?.height ?? window.innerHeight;
-}
-
-/**
  * Scroll element into the visible area of the viewport.
  */
 function scrollElementIntoView(
