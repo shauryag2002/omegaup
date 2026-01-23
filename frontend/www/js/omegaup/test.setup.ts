@@ -42,10 +42,15 @@ fetchMock.mockIf(/^\/api\/.*/, (req: Request) => {
 });
 
 declare global {
+  // eslint-disable-next-line no-var
+  var $: JQueryStatic;
+  // eslint-disable-next-line no-var
+  var jQuery: JQueryStatic;
+
   namespace NodeJS {
     interface Global {
-      $: JQuery;
-      jQuery: JQuery;
+      $: JQueryStatic;
+      jQuery: JQueryStatic;
       document: Document;
       URL: {
         createObjectURL: () => string;
@@ -54,7 +59,7 @@ declare global {
   }
 
   interface Window {
-    jQuery: JQuery;
+    jQuery: JQueryStatic;
   }
 }
 
@@ -65,12 +70,12 @@ global.URL.createObjectURL = jest.fn();
 
 // This is needed for CodeMirror to work.
 global.document.createRange = () => {
-  return ({
+  return {
     setEnd: () => {},
     setStart: () => {},
     getBoundingClientRect: () => {},
     getClientRects: () => [],
-  } as any) as Range;
+  } as any as Range;
 };
 
 // Any write to console.error() will cause a test failure.
