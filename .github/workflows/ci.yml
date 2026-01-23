@@ -155,11 +155,10 @@ jobs:
             --show-info=false
 
       - name: Upload code coverage
-        run: |
-          curl -Os https://uploader.codecov.io/v0.1.0_5313/linux/codecov
-          echo 'a229148bfbb9b802a95b4c78501b19630a17784696eb0b5182b40f0e1c0a4b6e  codecov' | shasum -a 256 -c
-          chmod +x codecov
-          ./codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: php
 
       - name: Upload artifacts
         if: ${{ always() }}
@@ -192,11 +191,10 @@ jobs:
         run: yarn test:coverage
 
       - name: Upload code coverage
-        run: |
-          curl -Os https://uploader.codecov.io/v0.1.0_5313/linux/codecov
-          echo 'a229148bfbb9b802a95b4c78501b19630a17784696eb0b5182b40f0e1c0a4b6e  codecov' | shasum -a 256 -c
-          chmod +x codecov
-          ./codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: javascript
 
   lint:
     runs-on: ubuntu-22.04
@@ -300,7 +298,7 @@ jobs:
         run: yarn install
 
       - name: Build webpack resources
-        run: yarn build
+        run: COVERAGE=1 yarn build
 
       - name: Wait for dependencies
         run: |
@@ -309,6 +307,12 @@ jobs:
       - name: Run Cypress tests
         run: |
           ./node_modules/.bin/cypress run --browser chrome
+
+      - name: Upload code coverage
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: cypress
 
       - name: Collect container logs
         if: ${{ always() }}

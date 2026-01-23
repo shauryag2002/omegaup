@@ -229,19 +229,32 @@ module.exports = {
       },
       {
         test: /\.ts$/,
-        loader: 'ts-loader',
+        use: [
+          {
+            loader: 'babel-loader',
+            options: {
+              presets: ['@babel/env'],
+              plugins: process.env.COVERAGE ? ['istanbul'] : [],
+              cacheDirectory: true,
+            },
+          },
+          {
+            loader: 'ts-loader',
+            options: {
+              appendTsSuffixTo: [/\.vue$/],
+              transpileOnly: true,
+              happyPackMode: false,
+            },
+          },
+        ],
         exclude: [/node_modules/, /stories\.ts$/],
-        options: {
-          appendTsSuffixTo: [/\.vue$/],
-          transpileOnly: true,
-          happyPackMode: false,
-        },
       },
       {
         test: /\.js$/,
         loader: 'babel-loader',
         options: {
           presets: ['@babel/env'],
+          plugins: process.env.COVERAGE ? ['istanbul'] : [],
           cacheDirectory: true,
         },
         exclude: /node_modules/,

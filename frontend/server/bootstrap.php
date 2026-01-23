@@ -97,6 +97,9 @@ $contentSecurityPolicy = [
         '/cspreport.php',
     ],
 ];
+if (defined('OMEGAUP_ENVIRONMENT') && OMEGAUP_ENVIRONMENT === 'development') {
+    $contentSecurityPolicy['script-src'][] = "'unsafe-eval'";
+}
 /** @var string|null $nrsh */
 $nrsh = NEW_RELIC_SCRIPT_HASH;
 if (!is_null($nrsh)) {
