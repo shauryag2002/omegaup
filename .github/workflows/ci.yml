@@ -308,10 +308,14 @@ jobs:
         run: |
           ./node_modules/.bin/cypress run --browser chrome
 
+      - name: Merge PHP code coverage
+        run: php stuff/merge-php-coverage.php
+
       - name: Upload code coverage
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage/lcov.info,php-cypress-coverage.xml
           flags: cypress
 
       - name: Collect container logs

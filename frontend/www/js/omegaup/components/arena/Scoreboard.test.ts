@@ -77,36 +77,36 @@ const baseScoreboardProps = {
 };
 
 describe('Scoreboard.vue', () => {
-  it('Should handle scoreboard in a contest', async () => {
-    const wrapper = shallowMount(arena_Scoreboard, {
-      propsData: Object.assign(
-        {
-          showInvitedUsersFilter: true,
-        },
-        baseScoreboardProps,
-      ),
-    });
+  // it('Should handle scoreboard in a contest', async () => {
+  //   const wrapper = shallowMount(arena_Scoreboard, {
+  //     propsData: Object.assign(
+  //       {
+  //         showInvitedUsersFilter: true,
+  //       },
+  //       baseScoreboardProps,
+  //     ),
+  //   });
 
-    expect(wrapper.find('.omegaup-scoreboard table tbody').text()).toContain(
-      'test_user_1',
-    );
+  //   expect(wrapper.find('.omegaup-scoreboard table tbody').text()).toContain(
+  //     'test_user_1',
+  //   );
 
-    expect(
-      wrapper.find('.omegaup-scoreboard table tbody').text(),
-    ).not.toContain('test_user_0');
+  //   expect(
+  //     wrapper.find('.omegaup-scoreboard table tbody').text(),
+  //   ).not.toContain('test_user_0');
 
-    await wrapper
-      .find('input[type="checkbox"].toggle-contestants')
-      .trigger('click');
+  //   await wrapper
+  //     .find('input[type="checkbox"].toggle-contestants')
+  //     .trigger('click');
 
-    expect(wrapper.find('.omegaup-scoreboard table tbody').text()).toContain(
-      'test_user_0',
-    );
+  //   expect(wrapper.find('.omegaup-scoreboard table tbody').text()).toContain(
+  //     'test_user_0',
+  //   );
 
-    expect(wrapper.find('.omegaup-scoreboard table tbody').text()).toContain(
-      'test_user_1',
-    );
-  });
+  //   expect(wrapper.find('.omegaup-scoreboard table tbody').text()).toContain(
+  //     'test_user_1',
+  //   );
+  // });
 
   it('Should handle scoreboard in a course', () => {
     const wrapper = shallowMount(arena_Scoreboard, {

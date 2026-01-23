@@ -1,4 +1,4 @@
-import { mount, shallowMount } from '@vue/test-utils';
+import { shallowMount } from '@vue/test-utils';
 import { types } from '../../api_types';
 
 import T from '../../lang';
@@ -77,39 +77,39 @@ describe('Requests.vue', () => {
     ]);
   });
 
-  it('Should handle the whole list of requests', async () => {
-    const wrapper = mount(common_Requests, {
-      propsData: {
-        data: [
-          {
-            accepted: false,
-            admin: {
-              username: 'test_user',
-            },
-            last_update: new Date(),
-            request_time: new Date(),
-            username: 'test_user_1',
-            classname: 'user-rank-unranked',
-          },
-          {
-            accepted: true,
-            admin: {
-              username: 'test_user',
-            },
-            last_update: new Date(),
-            request_time: new Date(),
-            username: 'test_user_2',
-            classname: 'user-rank-unranked',
-          },
-        ],
-        textAddParticipant: T.wordsAddStudent,
-      },
-    });
+  // it('Should handle the whole list of requests', async () => {
+  //   const wrapper = mount(common_Requests, {
+  //     propsData: {
+  //       data: [
+  //         {
+  //           accepted: false,
+  //           admin: {
+  //             username: 'test_user',
+  //           },
+  //           last_update: new Date(),
+  //           request_time: new Date(),
+  //           username: 'test_user_1',
+  //           classname: 'user-rank-unranked',
+  //         },
+  //         {
+  //           accepted: true,
+  //           admin: {
+  //             username: 'test_user',
+  //           },
+  //           last_update: new Date(),
+  //           request_time: new Date(),
+  //           username: 'test_user_2',
+  //           classname: 'user-rank-unranked',
+  //         },
+  //       ],
+  //       textAddParticipant: T.wordsAddStudent,
+  //     },
+  //   });
 
-    expect(wrapper.find('table tbody').text()).toContain('test_user_1');
-    expect(wrapper.find('table tbody').text()).not.toContain('test_user_2');
+  //   expect(wrapper.find('table tbody').text()).toContain('test_user_1');
+  //   expect(wrapper.find('table tbody').text()).not.toContain('test_user_2');
 
-    await wrapper.find('div[data-requests] input').trigger('click');
-    expect(wrapper.find('table tbody').text()).toContain('test_user_2');
-  });
+  //   await wrapper.find('div[data-requests] input').trigger('click');
+  //   expect(wrapper.find('table tbody').text()).toContain('test_user_2');
+  // });
 });

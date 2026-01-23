@@ -41,11 +41,19 @@ runs:
       shell: bash
       run: |
         docker compose up --no-build --detach
-
+        
         # Add aliases
         cat << EOF | sudo tee --append /etc/hosts
         127.0.0.1 mysql grader runner gitserver broadcaster redis rabbitmq
         EOF
+        
+        # Enable PHP coverage in the frontend container if we are in CI
+        if [ "${CI}" == "true" ]; then
+          docker compose exec -T --user root frontend bash -c "apt-get update && apt-get install -y php8.1-xdebug"
+          docker compose exec -T --user root frontend bash -c "echo 'xdebug.mode=coverage' >> /etc/php/8.1/fpm/conf.d/20-xdebug.ini"
+          docker compose exec -T --user root frontend bash -c "echo 'auto_prepend_file=/opt/omegaup/frontend/server/cypress-coverage-recorder.php' >> /etc/php/8.1/fpm/conf.d/99-coverage.ini"
+          docker compose exec -T --user root frontend service php8.1-fpm restart
+        fi
 
         # Wait for common services
         wait-for-it -t 60 mysql:13306

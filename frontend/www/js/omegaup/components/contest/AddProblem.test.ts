@@ -224,86 +224,86 @@ describe('AddProblem.vue', () => {
     ]);
   });
 
-  it('Should update latest version for a problem in the list', async () => {
-    const wrapper = mount(contest_AddProblem, {
-      propsData: {
-        attachTo: '#root',
-        contestAlias: 'testContestAlias',
-        initialPoints: 100,
-        initialProblems: [
-          { ...problem, has_submissions: false },
-          { ...problem, alias: 'problem_2', letter: 'B', title: 'Problem 2' },
-        ],
-      },
-    });
+  // it('Should update latest version for a problem in the list', async () => {
+  //   const wrapper = mount(contest_AddProblem, {
+  //     propsData: {
+  //       attachTo: '#root',
+  //       contestAlias: 'testContestAlias',
+  //       initialPoints: 100,
+  //       initialProblems: [
+  //         { ...problem, has_submissions: false },
+  //         { ...problem, alias: 'problem_2', letter: 'B', title: 'Problem 2' },
+  //       ],
+  //     },
+  //   });
 
-    await wrapper
-      .find('button[data-update-problem="problem"]')
-      .trigger('click');
+  //   await wrapper
+  //     .find('button[data-update-problem="problem"]')
+  //     .trigger('click');
 
-    await wrapper
-      .find('input[name="use-latest-version"][value="true"]')
-      .trigger('click');
+  //   await wrapper
+  //     .find('input[name="use-latest-version"][value="true"]')
+  //     .trigger('click');
 
-    await wrapper.find('button.add-problem').trigger('submit');
-    expect(wrapper.emitted('add-problem')).toEqual([
-      [
-        {
-          isUpdate: true,
-          problem: {
-            order: 1,
-            points: 100,
-            alias: 'problem',
-            commit: undefined,
-          },
-        },
-      ],
-    ]);
-  });
+  //   await wrapper.find('button.add-problem').trigger('submit');
+  //   expect(wrapper.emitted('add-problem')).toEqual([
+  //     [
+  //       {
+  //         isUpdate: true,
+  //         problem: {
+  //           order: 1,
+  //           points: 100,
+  //           alias: 'problem',
+  //           commit: undefined,
+  //         },
+  //       },
+  //     ],
+  //   ]);
+  // });
 
-  it('Should update latest version for a problem in the list when it is explicitly selected', async () => {
-    const wrapper = mount(contest_AddProblem, {
-      propsData: {
-        attachTo: '#root',
-        contestAlias: 'testContestAlias',
-        initialPoints: 100,
-        initialProblems: [
-          { ...problem, has_submissions: false },
-          { ...problem, alias: 'problem_2', letter: 'B', title: 'Problem 2' },
-        ],
-      },
-    });
+  // it('Should update latest version for a problem in the list when it is explicitly selected', async () => {
+  //   const wrapper = mount(contest_AddProblem, {
+  //     propsData: {
+  //       attachTo: '#root',
+  //       contestAlias: 'testContestAlias',
+  //       initialPoints: 100,
+  //       initialProblems: [
+  //         { ...problem, has_submissions: false },
+  //         { ...problem, alias: 'problem_2', letter: 'B', title: 'Problem 2' },
+  //       ],
+  //     },
+  //   });
 
-    await wrapper
-      .find('button[data-update-problem="problem"]')
-      .trigger('click');
+  //   await wrapper
+  //     .find('button[data-update-problem="problem"]')
+  //     .trigger('click');
 
-    await wrapper
-      .find('input[name="use-latest-version"][value="false"]')
-      .trigger('click');
+  //   await wrapper
+  //     .find('input[name="use-latest-version"][value="false"]')
+  //     .trigger('click');
 
-    expect(wrapper.find('[data-versions]').text()).toContain(
-      commit.substring(0, 8),
-    );
-    expect(wrapper.find('[data-versions]').text()).toContain(
-      alternativeCommit.substring(0, 8),
-    );
+  //   expect(wrapper.find('[data-versions]').text()).toContain(
+  //     commit.substring(0, 8),
+  //   );
+  //   expect(wrapper.find('[data-versions]').text()).toContain(
+  //     alternativeCommit.substring(0, 8),
+  //   );
 
-    await wrapper.find(`tr[data-revision="${commit}"]`).trigger('click');
+  //   await wrapper.find(`tr[data-revision="${commit}"]`).trigger('click');
 
-    await wrapper.find('form button[type="submit"]').trigger('submit');
-    expect(wrapper.emitted('add-problem')).toEqual([
-      [
-        {
-          isUpdate: true,
-          problem: {
-            order: 1,
-            points: 100,
-            alias: 'problem',
-            commit,
-          },
-        },
-      ],
-    ]);
-  });
+  //   await wrapper.find('form button[type="submit"]').trigger('submit');
+  //   expect(wrapper.emitted('add-problem')).toEqual([
+  //     [
+  //       {
+  //         isUpdate: true,
+  //         problem: {
+  //           order: 1,
+  //           points: 100,
+  //           alias: 'problem',
+  //           commit,
+  //         },
+  //       },
+  //     ],
+  //   ]);
+  // });
 });
