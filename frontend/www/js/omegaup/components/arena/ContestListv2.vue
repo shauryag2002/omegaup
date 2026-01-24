@@ -429,7 +429,7 @@ Vue.use(TabsPlugin);
 Vue.use(CardPlugin);
 Vue.use(DropdownPlugin);
 Vue.use(LayoutPlugin);
-library.add(fas);
+(library.add as any)(fas);
 
 export enum ContestTab {
   Current = 'current',

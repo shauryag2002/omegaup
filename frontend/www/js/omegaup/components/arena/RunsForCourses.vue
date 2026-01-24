@@ -541,17 +541,17 @@ import {
   faTimesCircle,
 } from '@fortawesome/free-solid-svg-icons';
 
-library.add(faQuestionCircle);
-library.add(faRedoAlt);
-library.add(faBan);
-library.add(faSearchPlus);
-library.add(faExternalLinkAlt);
-library.add(faTimes);
-library.add(faDatabase);
-library.add(faClock);
-library.add(faCalendarAlt);
-library.add(faCheckCircle);
-library.add(faTimesCircle);
+(library.add as any)(faQuestionCircle);
+(library.add as any)(faRedoAlt);
+(library.add as any)(faBan);
+(library.add as any)(faSearchPlus);
+(library.add as any)(faExternalLinkAlt);
+(library.add as any)(faTimes);
+(library.add as any)(faDatabase);
+(library.add as any)(faClock);
+(library.add as any)(faCalendarAlt);
+(library.add as any)(faCheckCircle);
+(library.add as any)(faTimesCircle);
 
 Vue.use(PaginationPlugin);
 

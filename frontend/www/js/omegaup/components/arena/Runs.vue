@@ -455,12 +455,12 @@ import {
   faExternalLinkAlt,
   faTimes,
 } from '@fortawesome/free-solid-svg-icons';
-library.add(faQuestionCircle);
-library.add(faRedoAlt);
-library.add(faBan);
-library.add(faSearchPlus);
-library.add(faExternalLinkAlt);
-library.add(faTimes);
+(library.add as any)(faQuestionCircle);
+(library.add as any)(faRedoAlt);
+(library.add as any)(faBan);
+(library.add as any)(faSearchPlus);
+(library.add as any)(faExternalLinkAlt);
+(library.add as any)(faTimes);
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

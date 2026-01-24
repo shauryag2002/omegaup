@@ -154,17 +154,17 @@ import {
   faSearch,
   faCogs,
 } from '@fortawesome/free-solid-svg-icons';
-library.add(faRobot);
-library.add(faLaptopCode);
-library.add(faSquareRootAlt);
-library.add(faProjectDiagram);
-library.add(faSitemap);
-library.add(faTrophy);
-library.add(faCode);
-library.add(faUsers);
-library.add(faRandom);
-library.add(faSearch);
-library.add(faCogs);
+(library.add as any)(faRobot);
+(library.add as any)(faLaptopCode);
+(library.add as any)(faSquareRootAlt);
+(library.add as any)(faProjectDiagram);
+(library.add as any)(faSitemap);
+(library.add as any)(faTrophy);
+(library.add as any)(faCode);
+(library.add as any)(faUsers);
+(library.add as any)(faRandom);
+(library.add as any)(faSearch);
+(library.add as any)(faCogs);
 
 const problemLevelIcons: { [key: string]: string } = {
   problemLevelBasicKarel: 'robot',

@@ -562,7 +562,7 @@ import {
 } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
-library.add(fas);
+(library.add as any)(fas);
 
 Vue.use(VueCookies, { expire: -1 });
 
@@ -658,33 +658,35 @@ export default class Form extends Vue {
               intro: T.createContestInteractiveGuideWelcome,
             },
             {
-              element: document.querySelector('.introjs-style') as Element,
+              element: document.querySelector('.introjs-style') as HTMLElement,
               title,
               intro: T.createContestInteractiveGuideStyle,
             },
             {
               element: document.querySelector(
                 '.introjs-contest-title',
-              ) as Element,
+              ) as HTMLElement,
               title,
               intro: T.createContestInteractiveGuideContestTitle,
             },
             {
               element: document.querySelector(
                 '.introjs-short-title',
-              ) as Element,
+              ) as HTMLElement,
               title,
               intro: T.createContestInteractiveGuideShortTitle,
             },
             {
               element: document.querySelector(
                 '.introjs-description',
-              ) as Element,
+              ) as HTMLElement,
               title,
               intro: T.createContestInteractiveGuideDescription,
             },
             {
-              element: document.querySelector('.introjs-schedule') as Element,
+              element: document.querySelector(
+                '.introjs-schedule',
+              ) as HTMLElement,
               title,
               intro: T.createContestInteractiveGuideSchedule,
             },
@@ -794,8 +796,8 @@ export default class Form extends Vue {
       penalty: this.penalty,
       scoreboard: this.scoreboard,
       penalty_type: this.penaltyType,
-      default_show_all_contestants_in_scoreboard: this
-        .defaultShowAllContestantsInScoreboard,
+      default_show_all_contestants_in_scoreboard:
+        this.defaultShowAllContestantsInScoreboard,
       show_scoreboard_after: this.showScoreboardAfter,
       score_mode: this.currentScoreMode,
       needs_basic_information: this.needsBasicInformation,

@@ -120,6 +120,7 @@
 </template>
 
 <script lang="ts">
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as monaco from 'monaco-editor';
 (window as any).monaco = monaco;
 import { Component, Prop, Ref, Watch } from 'vue-property-decorator';
@@ -159,7 +160,9 @@ import {
   faSun,
   faMoon,
 } from '@fortawesome/free-solid-svg-icons';
-library.add(faUpload, faFileArchive, faDownload, faSun, faMoon);
+(library.add as any)(
+  ...([faUpload, faFileArchive, faDownload, faSun, faMoon] as any),
+);
 
 import T from '../lang';
 
@@ -279,9 +282,8 @@ export default class Ephemeral extends Vue {
         store.commit('updatingSettings', false);
         this.$nextTick(() => {
           if (!this.isEmbedded || !this.goldenLayout?.isInitialised) return;
-          let mainColumn = this.goldenLayout.root.getItemsById(
-            'main-column',
-          )[0];
+          let mainColumn =
+            this.goldenLayout.root.getItemsById('main-column')[0];
           mainColumn.parent.setActiveContentItem(mainColumn);
         });
       })

@@ -51,7 +51,7 @@ import Notification from './Notification.vue';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faBell } from '@fortawesome/free-solid-svg-icons';
-library.add(faBell);
+(library.add as any)(faBell);
 
 @Component({
   components: {

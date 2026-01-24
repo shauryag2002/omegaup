@@ -75,10 +75,10 @@ import {
   faCogs,
 } from '@fortawesome/free-solid-svg-icons';
 import { getBlogUrl } from '../../urlHelper';
-library.add(faLock);
-library.add(faUnlock);
-library.add(faQuestionCircle);
-library.add(faCogs);
+(library.add as any)(faLock);
+(library.add as any)(faUnlock);
+(library.add as any)(faQuestionCircle);
+(library.add as any)(faCogs);
 
 import omegaup_problemMarkdown from './ProblemMarkdown.vue';
 

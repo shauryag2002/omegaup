@@ -31,7 +31,7 @@ import omegaup_Markdown from '../Markdown.vue';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
-library.add(faPrint);
+(library.add as any)(faPrint);
 
 @Component({
   components: {

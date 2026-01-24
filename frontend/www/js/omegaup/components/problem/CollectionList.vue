@@ -136,7 +136,7 @@ import {
   faChevronRight,
 } from '@fortawesome/free-solid-svg-icons';
 
-library.add(faChevronLeft, faChevronRight);
+(library.add as any)(faChevronLeft, faChevronRight);
 
 @Component({
   components: {

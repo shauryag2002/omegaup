@@ -117,7 +117,7 @@ import common_MultiTypeahead from '../common/MultiTypeahead.vue';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faLock, faTrashAlt, faSave } from '@fortawesome/free-solid-svg-icons';
-library.add(faLock, faTrashAlt, faSave);
+(library.add as any)(faLock, faTrashAlt, faSave);
 
 @Component({
   components: {

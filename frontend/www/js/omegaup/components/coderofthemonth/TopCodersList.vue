@@ -50,7 +50,7 @@ import omegaup_Markdown from '../Markdown.vue';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faCogs } from '@fortawesome/free-solid-svg-icons';
-library.add(faCogs);
+(library.add as any)(faCogs);
 
 @Component({
   components: {

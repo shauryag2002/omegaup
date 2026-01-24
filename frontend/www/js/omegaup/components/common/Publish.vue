@@ -75,7 +75,7 @@ import {
 } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
-library.add(fas);
+(library.add as any)(fas);
 Vue.use(Clipboard);
 
 export enum AdmissionMode {
@@ -103,8 +103,8 @@ export default class ContestEditPublish extends Vue {
   T = T;
   AdmissionMode = AdmissionMode;
   currentAdmissionMode = this.admissionMode;
-  currentDefaultShowAllContestantsInScoreboard = this
-    .defaultShowAllContestantsInScoreboard;
+  currentDefaultShowAllContestantsInScoreboard =
+    this.defaultShowAllContestantsInScoreboard;
 
   get contestURL(): string {
     return `${window.location.origin}/arena/${this.alias}/startfresh/`;
@@ -113,8 +113,8 @@ export default class ContestEditPublish extends Vue {
   onSubmit(): void {
     this.$emit('update-admission-mode', {
       admissionMode: this.currentAdmissionMode,
-      defaultShowAllContestantsInScoreboard: this
-        .currentDefaultShowAllContestantsInScoreboard,
+      defaultShowAllContestantsInScoreboard:
+        this.currentDefaultShowAllContestantsInScoreboard,
     });
   }
 

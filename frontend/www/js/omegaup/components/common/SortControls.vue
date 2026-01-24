@@ -25,7 +25,7 @@ import {
   faSortAmountUp,
   faExchangeAlt,
 } from '@fortawesome/free-solid-svg-icons';
-library.add(
+(library.add as any)(
   faSortAlphaDown,
   faSortAlphaUp,
   faSortAmountDown,

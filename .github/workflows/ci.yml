@@ -184,6 +184,11 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Install yarn dependencies
         run: yarn install
 
@@ -191,6 +196,7 @@ jobs:
         run: yarn test:coverage
 
       - name: Upload code coverage
+        if: always()
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -294,11 +300,16 @@ jobs:
         with:
           install_host_python_deps: true
 
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Install yarn dependencies
         run: yarn install
 
       - name: Build webpack resources
-        run: COVERAGE=1 yarn build
+        run: COVERAGE=1 yarn build-development
 
       - name: Wait for dependencies
         run: |
@@ -309,9 +320,11 @@ jobs:
           ./node_modules/.bin/cypress run --browser chrome
 
       - name: Merge PHP code coverage
+        if: always()
         run: php stuff/merge-php-coverage.php
 
       - name: Upload code coverage
+        if: always()
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

@@ -98,7 +98,7 @@ import {
   faExternalLinkAlt,
   faBookmark,
 } from '@fortawesome/free-solid-svg-icons';
-library.add(
+(library.add as any)(
   faExclamationTriangle,
   faEdit,
   faEyeSlash,

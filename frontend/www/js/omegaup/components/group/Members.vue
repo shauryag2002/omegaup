@@ -138,7 +138,7 @@ import common_Typeahead from '../common/Typeahead.vue';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faEdit, faLock, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-library.add(faEdit, faLock, faTrashAlt);
+(library.add as any)(faEdit, faLock, faTrashAlt);
 
 @Component({
   components: {

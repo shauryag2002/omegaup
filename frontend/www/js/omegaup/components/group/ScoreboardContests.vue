@@ -103,7 +103,7 @@ import omegaup_RadioSwitch from '../RadioSwitch.vue';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-library.add(faTrash);
+(library.add as any)(faTrash);
 
 @Component({
   components: {

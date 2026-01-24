@@ -40,8 +40,8 @@ import {
   faChevronCircleLeft,
   faChevronCircleRight,
 } from '@fortawesome/free-solid-svg-icons';
-library.add(faChevronCircleLeft);
-library.add(faChevronCircleRight);
+(library.add as any)(faChevronCircleLeft);
+(library.add as any)(faChevronCircleRight);
 
 @Component({
   components: {

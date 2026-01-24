@@ -10,7 +10,7 @@ import { Component, Vue } from 'vue-property-decorator';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faChevronUp } from '@fortawesome/free-solid-svg-icons';
-library.add(faChevronUp);
+(library.add as any)(faChevronUp);
 
 @Component({
   components: {

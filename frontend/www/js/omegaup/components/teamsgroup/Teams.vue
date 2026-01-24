@@ -96,6 +96,7 @@
 </template>
 
 <script lang="ts">
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Vue, Component, Prop } from 'vue-property-decorator';
 import { dao, types } from '../../api_types';
 import T from '../../lang';
@@ -111,7 +112,7 @@ import {
   faTrashAlt,
   faUsers,
 } from '@fortawesome/free-solid-svg-icons';
-library.add(faEdit, faLock, faTrashAlt, faUsers);
+(library.add as any)(faEdit, faLock, faTrashAlt, faUsers);
 
 export enum AvailableForms {
   None,

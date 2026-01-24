@@ -114,6 +114,7 @@
 </template>
 
 <script lang="ts">
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Vue, Component } from 'vue-property-decorator';
 import T from '../../lang';
 import * as ui from '../../ui';
@@ -129,7 +130,7 @@ import {
 } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
-library.add(fas);
+(library.add as any)(fas);
 
 export enum ObjectivesAnswers {
   Learning = 'learning',

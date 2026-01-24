@@ -359,7 +359,7 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faSignOutAlt, faUser } from '@fortawesome/free-solid-svg-icons';
 import LogoutConfirmation from './LogoutConfirmation.vue';
-library.add(faSignOutAlt, faUser);
+(library.add as any)(faSignOutAlt, faUser);
 
 @Component({
   components: {

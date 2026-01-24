@@ -495,7 +495,7 @@ import { BNavItemDropdown, FormInputPlugin, ModalPlugin } from 'bootstrap-vue';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import draggable from 'vuedraggable';
-library.add(fas);
+(library.add as any)(fas);
 Vue.use(FormInputPlugin);
 Vue.use(ModalPlugin);
 

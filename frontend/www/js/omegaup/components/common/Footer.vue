@@ -175,7 +175,7 @@ import {
   faGithub,
   faDiscord,
 } from '@fortawesome/free-brands-svg-icons';
-library.add(faFacebook, faGithub, faDiscord);
+(library.add as any)(...([faFacebook, faGithub, faDiscord] as any));
 
 @Component({
   components: {

@@ -244,7 +244,7 @@ import {
   faExclamationTriangle,
   faBan,
 } from '@fortawesome/free-solid-svg-icons';
-library.add(faEyeSlash, faMedal, faExclamationTriangle, faBan);
+(library.add as any)(faEyeSlash, faMedal, faExclamationTriangle, faBan);
 
 @Component({
   components: {

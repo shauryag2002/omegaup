@@ -119,6 +119,7 @@
 </template>
 
 <script lang="ts">
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Vue, Component, Prop } from 'vue-property-decorator';
 import { types } from '../../api_types';
 import T from '../../lang';
@@ -156,7 +157,7 @@ type TeamIdentity = types.Identity & {
   usernames: { username: string; password?: string }[];
 };
 
-library.add(faDownload, faUserPlus, faSpinner);
+(library.add as any)(faDownload, faUserPlus, faSpinner);
 @Component({
   components: {
     FontAwesomeIcon,

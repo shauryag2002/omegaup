@@ -344,7 +344,7 @@ import {
   faTachometerAlt,
   faChevronLeft,
 } from '@fortawesome/free-solid-svg-icons';
-library.add(faEdit, faLink, faTachometerAlt, faChevronLeft);
+(library.add as any)(faEdit, faLink, faTachometerAlt, faChevronLeft);
 
 export enum Tab {
   Information = 'information',

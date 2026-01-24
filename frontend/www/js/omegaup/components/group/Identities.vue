@@ -110,7 +110,7 @@ Vue.use(VueCookies, { expire: -1 });
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
-library.add(faDownload);
+(library.add as any)(faDownload);
 
 @Component({
   components: {
@@ -147,48 +147,50 @@ export default class Identities extends Vue {
             {
               element: document.querySelector(
                 '.introjs-information p:nth-child(1)',
-              ) as Element,
+              ) as HTMLElement,
               title,
               intro: T.createIdentitiesInteractiveGuideInformation,
             },
             {
               element: document.querySelector(
                 '.introjs-information p:nth-child(2)',
-              ) as Element,
+              ) as HTMLElement,
               title,
               intro: T.createIdentitiesInteractiveGuideFormat,
             },
             {
               element: document.querySelector(
                 '.introjs-information pre',
-              ) as Element,
+              ) as HTMLElement,
               title,
               intro: T.createIdentitiesInteractiveGuideExample,
             },
             {
               element: document.querySelector(
                 '.introjs-information button',
-              ) as Element,
+              ) as HTMLElement,
               title,
               intro: T.createIdentitiesInteractiveGuideCopy,
             },
             {
-              element: document.querySelector('.introjs-password') as Element,
+              element: document.querySelector(
+                '.introjs-password',
+              ) as HTMLElement,
               title,
               intro: T.createIdentitiesInteractiveGuidePassword,
             },
             {
-              element: document.querySelector('.introjs-upload') as Element,
+              element: document.querySelector('.introjs-upload') as HTMLElement,
               title,
               intro: T.createIdentitiesInteractiveGuideUpload,
             },
             {
-              element: document.querySelector('.introjs-info') as Element,
+              element: document.querySelector('.introjs-info') as HTMLElement,
               title,
               intro: T.createIdentitiesInteractiveGuideInformationPassword,
             },
             {
-              element: document.querySelector('.introjs-info') as Element,
+              element: document.querySelector('.introjs-info') as HTMLElement,
               title,
               intro: T.createIdentitiesInteractiveGuideInformationConfirm,
             },

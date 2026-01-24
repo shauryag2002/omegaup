@@ -198,7 +198,7 @@ import {
   faPrint,
   faFileDownload,
 } from '@fortawesome/free-solid-svg-icons';
-library.add(
+(library.add as any)(
   faEdit,
   faLink,
   faTachometerAlt,

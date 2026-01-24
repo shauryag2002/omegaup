@@ -131,7 +131,7 @@ import {
 } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
-library.add(fas);
+(library.add as any)(fas);
 
 @Component({
   components: {

@@ -45,7 +45,7 @@ import T from '../../lang';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faEdit } from '@fortawesome/free-solid-svg-icons';
-library.add(faEdit);
+(library.add as any)(faEdit);
 
 @Component({
   components: {

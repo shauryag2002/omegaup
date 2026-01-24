@@ -131,7 +131,7 @@ import {
   faFileAlt,
   faListAlt,
 } from '@fortawesome/free-solid-svg-icons';
-library.add(faChalkboardTeacher, faFileAlt, faListAlt);
+(library.add as any)(faChalkboardTeacher, faFileAlt, faListAlt);
 
 const levels = {
   introductory: T.courseLevelIntroductory,

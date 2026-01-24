@@ -14,25 +14,28 @@ date_default_timezone_set('UTC');
 /** @psalm-suppress RedundantCondition IS_TEST may be defined as true in tests. */
 if (!defined('IS_TEST') || IS_TEST !== true) {
     if (!is_file(__DIR__ . '/config.php')) { ?>
-<!doctype html>
-<HTML>
-    <head>
-        <link rel="stylesheet" type="text/css" href="css/style.css">
-    </head>
-    <body style="padding:5px">
-        <h1>No config file.</h1>
-        <p>You are missing the config file. These are the default values:</p>
-        <pre class="code" style="margin: 3em; border: 1px solid #000; background: #ccc;">
-        <?php echo htmlspecialchars(
-            file_get_contents(
-                __DIR__ . '/config.default.php'
-            )
-        ); ?>
-        </pre>
-        <p>Create a file called <code>config.php</code> &emdash; the settings there will
-        override any of the default values.</p>
-    </body>
-</html>
+        <!doctype html>
+        <HTML>
+
+        <head>
+            <link rel="stylesheet" type="text/css" href="css/style.css">
+        </head>
+
+        <body style="padding:5px">
+            <h1>No config file.</h1>
+            <p>You are missing the config file. These are the default values:</p>
+            <pre class="code" style="margin: 3em; border: 1px solid #000; background: #ccc;">
+                        <?php echo htmlspecialchars(
+                            file_get_contents(
+                                __DIR__ . '/config.default.php'
+                            )
+                        ); ?>
+                        </pre>
+            <p>Create a file called <code>config.php</code> &emdash; the settings there will
+                override any of the default values.</p>
+        </body>
+
+        </html>
         <?php
         exit;
     }
@@ -97,7 +100,7 @@ $contentSecurityPolicy = [
         '/cspreport.php',
     ],
 ];
-if (defined('OMEGAUP_ENVIRONMENT') && OMEGAUP_ENVIRONMENT === 'development') {
+if (getenv('COVERAGE') === '1') {
     $contentSecurityPolicy['script-src'][] = "'unsafe-eval'";
 }
 /** @var string|null $nrsh */
@@ -106,7 +109,7 @@ if (!is_null($nrsh)) {
     array_push($contentSecurityPolicy['script-src'], $nrsh);
 }
 header('Content-Security-Policy: ' . implode('; ', array_map(
-    fn ($k) => "{$k} " . implode(' ', $contentSecurityPolicy[$k]),
+    fn($k) => "{$k} " . implode(' ', $contentSecurityPolicy[$k]),
     array_keys($contentSecurityPolicy)
 )));
 header('X-Frame-Options: DENY');

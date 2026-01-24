@@ -217,7 +217,13 @@ import {
   faUser,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-library.add(faCheckSquare, faExchangeAlt, faQuestionCircle, faTimes, faUser);
+(library.add as any)(
+  faCheckSquare,
+  faExchangeAlt,
+  faQuestionCircle,
+  faTimes,
+  faUser,
+);
 
 import { getBlogUrl } from '../../urlHelper';
 
