@@ -4,10 +4,6 @@ permissions:
   contents: write
   pull-requests: write
 
-
-
-
-  
 on:
   # Trigger on pushes to main branch
   # This will automatically update all PRs targeting main when changes are pushed
