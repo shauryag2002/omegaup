@@ -93,21 +93,20 @@ jobs:
             }
 
             // --- Enhanced Summary Reporting ---
-            await core.summary
-              .addHeading('Auto-update Summary')
-              .addRaw('This workflow runs on every push to `main` to keep internal PRs synced.')
-              .addTable([
-                ['Status', 'Count', 'Pull Requests'],
-                ['✅ Updated', results.updated.length.toString(), results.updated.join(', ') || '-'],
-                ['⚠️ Conflicts', results.conflicts.length.toString(), results.conflicts.join(', ') || '-'],
-                ['ℹ️ Skipped (Forks)', results.skipped_fork.length.toString(), results.skipped_fork.join(', ') || '-'],
-                ['🚫 Skipped (Labels)', results.skipped_label.length.toString(), results.skipped_label.join(', ') || '-'],
-                ['✔ Already Current', results.already_current.length.toString(), results.already_current.join(', ') || '-'],
-                ['❌ Errors', results.errored.length.toString(), results.errored.join(', ') || '-'],
-              ])
-              .addRaw('\n> **Note for Fork PRs:** Contributors must manually sync forks by fetching `upstream/main` and rebasing.')
-              .write();
-
+            core.summary.addHeading('Auto-update Summary');
+            core.summary.addRaw('This workflow runs on every push to `main` to keep internal PRs synced.\n');
+            core.summary.addTable([
+              ['Status', 'Count', 'Pull Requests'],
+              ['✅ Updated', results.updated.length.toString(), results.updated.join(', ') || '-'],
+              ['⚠️ Conflicts', results.conflicts.length.toString(), results.conflicts.join(', ') || '-'],
+              ['ℹ️ Skipped (Forks)', results.skipped_fork.length.toString(), results.skipped_fork.join(', ') || '-'],
+              ['🚫 Skipped (Labels)', results.skipped_label.length.toString(), results.skipped_label.join(', ') || '-'],
+              ['✔ Already Current', results.already_current.length.toString(), results.already_current.join(', ') || '-'],
+              ['❌ Errors', results.errored.length.toString(), results.errored.join(', ') || '-'],
+            ]);
+            core.summary.addRaw('\n> **Note for Fork PRs:** Contributors must manually sync forks by fetching `upstream/main` and rebasing.');
+            await core.summary.write();
+            
             if (results.conflicts.length > 0) {
               core.warning(`Merge conflicts detected in: ${results.conflicts.join(', ')}`);
             }
