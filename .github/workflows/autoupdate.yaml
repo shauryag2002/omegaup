@@ -4,6 +4,10 @@ permissions:
   contents: write
   pull-requests: write
 
+
+
+
+  
 on:
   # Trigger on pushes to main branch
   # This will automatically update all PRs targeting main when changes are pushed
@@ -106,7 +110,7 @@ jobs:
             ]);
             core.summary.addRaw('\n> **Note for Fork PRs:** Contributors must manually sync forks by fetching `upstream/main` and rebasing.');
             await core.summary.write();
-
+            
             if (results.conflicts.length > 0) {
               core.warning(`Merge conflicts detected in: ${results.conflicts.join(', ')}`);
             }
