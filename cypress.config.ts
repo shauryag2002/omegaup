@@ -8,7 +8,8 @@ export default defineConfig({
     // You may want to clean this up later by importing these.
     setupNodeEvents(on, config) {
       require('@cypress/code-coverage/task')(on, config)
-      return require('./cypress/plugins/index.js')(on, config)
+      require('./cypress/plugins/index.js')(on, config)
+      return config;
     },
     baseUrl: 'http://127.0.0.1:8001',
   },
