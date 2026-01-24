@@ -7,7 +7,12 @@ if (!extension_loaded('xdebug')) {
 /** @psalm-suppress InvalidGlobal */
 $GLOBALS['__cypress_coverage_dir'] = __DIR__ . '/../tests/reports/phpunit/coverage-parts';
 if (!is_dir($GLOBALS['__cypress_coverage_dir'])) {
-    mkdir($GLOBALS['__cypress_coverage_dir'], 0777, true);
+    @mkdir($GLOBALS['__cypress_coverage_dir'], 0777, true);
+}
+
+// Ensure the directory is writable to avoid crashing the response with an error
+if (!is_writable($GLOBALS['__cypress_coverage_dir'])) {
+    return;
 }
 
 xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
