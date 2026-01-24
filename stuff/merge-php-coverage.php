@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 use SebastianBergmann\CodeCoverage\CodeCoverage;
 use SebastianBergmann\CodeCoverage\Report\Clover;
@@ -33,5 +33,5 @@ foreach ($files as $file) {
 }
 
 echo "Generating clover.xml...\n";
-(new Clover)->process($coverage, __DIR__ . '/php-cypress-coverage.xml');
+(new Clover)->process($coverage, __DIR__ . '/../php-cypress-coverage.xml');
 echo "Done!\n";
