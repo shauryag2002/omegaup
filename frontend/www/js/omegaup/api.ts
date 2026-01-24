@@ -9,7 +9,7 @@ interface ApiCallOptions {
 export function apiCall<
   RequestType extends { [key: string]: any },
   ServerResponseType,
-  ResponseType = ServerResponseType
+  ResponseType = ServerResponseType,
 >(
   url: string,
   transform?: (result: ServerResponseType) => ResponseType,
@@ -22,28 +22,28 @@ export function apiCall<
         url,
         params
           ? {
-              method: 'POST',
-              body: Object.keys(params)
-                .filter(
-                  (key) =>
-                    params[key] !== null && typeof params[key] !== 'undefined',
-                )
-                .map((key) => {
-                  if (params[key] instanceof Date) {
-                    return `${encodeURIComponent(key)}=${encodeURIComponent(
-                      Math.round(params[key].getTime() / 1000),
-                    )}`;
-                  }
+            method: 'POST',
+            body: Object.keys(params)
+              .filter(
+                (key) =>
+                  params[key] !== null && typeof params[key] !== 'undefined',
+              )
+              .map((key) => {
+                if (params[key] instanceof Date) {
                   return `${encodeURIComponent(key)}=${encodeURIComponent(
-                    params[key],
+                    Math.round(params[key].getTime() / 1000),
                   )}`;
-                })
-                .join('&'),
-              headers: {
-                'Content-Type':
-                  'application/x-www-form-urlencoded;charset=UTF-8',
-              },
-            }
+                }
+                return `${encodeURIComponent(key)}=${encodeURIComponent(
+                  params[key],
+                )}`;
+              })
+              .join('&'),
+            headers: {
+              'Content-Type':
+                'application/x-www-form-urlencoded;charset=UTF-8',
+            },
+          }
           : undefined,
       )
         .then((response) => {
@@ -2105,21 +2105,21 @@ export const User = {
       if (x instanceof Object) {
         Object.keys(x).forEach(
           (y) =>
-            (x[y] = ((x) => {
-              x.data = ((x) => {
-                x.finish_time = ((x: number) => new Date(x * 1000))(
-                  x.finish_time,
-                );
-                x.last_updated = ((x: number) => new Date(x * 1000))(
-                  x.last_updated,
-                );
-                x.start_time = ((x: number) => new Date(x * 1000))(
-                  x.start_time,
-                );
-                return x;
-              })(x.data);
+          (x[y] = ((x) => {
+            x.data = ((x) => {
+              x.finish_time = ((x: number) => new Date(x * 1000))(
+                x.finish_time,
+              );
+              x.last_updated = ((x: number) => new Date(x * 1000))(
+                x.last_updated,
+              );
+              x.start_time = ((x: number) => new Date(x * 1000))(
+                x.start_time,
+              );
               return x;
-            })(x[y])),
+            })(x.data);
+            return x;
+          })(x[y])),
         );
       }
       return x;
