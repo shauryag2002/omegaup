@@ -33,7 +33,7 @@ runs:
       run: |
         # Create the volume and initialize the problems.git directory
         docker volume create omegaup_omegaupdata
-        # Set ownership to UID/GID used by containers
+        # Set ownership to UID/GID used by containers (typically 1000:1000)
         docker run --rm -v omegaup_omegaupdata:/var/lib/omegaup alpine sh -c "mkdir -p /var/lib/omegaup/problems.git && chown -R 1000:1000 /var/lib/omegaup"
 
     - name: Start the Docker containers
@@ -53,9 +53,10 @@ runs:
           docker compose exec -T --user root frontend bash -c "echo 'auto_prepend_file=/opt/omegaup/frontend/server/cypress-coverage-recorder.php' >> /etc/php/8.1/fpm/conf.d/99-coverage.ini"
           docker compose exec -T --user root frontend bash -c "mkdir -p /opt/omegaup/frontend/tests/reports/phpunit/coverage-parts && chown -R ubuntu:ubuntu /opt/omegaup/frontend/tests/reports/phpunit/coverage-parts && chmod -R 777 /opt/omegaup/frontend/tests/reports/phpunit/coverage-parts"
           
-          # Fix: Use USR2 signal to reload PHP-FPM master process gracefully
-          # This bypasses the supervisorctl .ini error
-          docker compose exec -T --user root frontend bash -c "kill -USR2 \$(pgrep -o php-fpm)"
+          # Reload PHP-FPM using SIGUSR2. We find the master process PID without needing pgrep/procps.
+          docker compose exec -T --user root frontend bash -c "kill -USR2 \$(cat /run/php/php8.1-fpm.pid)" || \
+          docker compose exec -T --user root frontend bash -c "kill -USR2 1"
+          
           sleep 10
         fi
 
