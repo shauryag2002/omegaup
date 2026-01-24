@@ -53,7 +53,7 @@ runs:
           docker compose exec -T --user root frontend bash -c "echo 'xdebug.mode=coverage' >> /etc/php/8.1/fpm/conf.d/20-xdebug.ini"
           docker compose exec -T --user root frontend bash -c "echo 'auto_prepend_file=/opt/omegaup/frontend/server/cypress-coverage-recorder.php' >> /etc/php/8.1/fpm/conf.d/99-coverage.ini"
           docker compose exec -T --user root frontend bash -c "mkdir -p /opt/omegaup/frontend/tests/reports/phpunit/coverage-parts && chown -R ubuntu:ubuntu /opt/omegaup/frontend/tests/reports/phpunit/coverage-parts && chmod -R 777 /opt/omegaup/frontend/tests/reports/phpunit/coverage-parts"
-          docker compose exec -T --user root frontend supervisorctl restart php8.1-fpm
+          docker compose exec -T --user root frontend pkill -o -u root php-fpm
           sleep 10
         fi
 
