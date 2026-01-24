@@ -160,7 +160,7 @@ class RequestParam {
         }
         usort(
             $result,
-            fn (RequestParam $a, RequestParam $b) => $a->compare($b)
+            fn(RequestParam $a, RequestParam $b) => $a->compare($b)
         );
         return $result;
     }
@@ -362,7 +362,7 @@ class TypeMapper {
         $pythonNullable = false;
         $pythonVoidType = false;
         $savePythonType = false;
-        $quotePythonType = fn (string $name): string => (
+        $quotePythonType = fn(string $name): string => (
             str_starts_with($name, '_') ?
             "'{$name}'" :
             $name
@@ -444,7 +444,7 @@ class TypeMapper {
                                 $pythonDeclarationLines[] = "        else:\n";
                                 $pythonDeclarationLines[] = "            self.{$pythonPropertyName} = None\n";
                             } else {
-                                $pythonDeclarationOptionalParams [] = "{$pythonPropertyName}: Optional[{$pythonDeclarationParamTypeExpansion}] = None,";
+                                $pythonDeclarationOptionalParams[] = "{$pythonPropertyName}: Optional[{$pythonDeclarationParamTypeExpansion}] = None,";
                                 $pythonDeclarationLines[] = "        if ${pythonPropertyName} is not None:\n";
                                 $pythonDeclarationLines[] = "            self.{$pythonPropertyName} = " . str_replace(
                                     '$',
@@ -457,14 +457,14 @@ class TypeMapper {
                         } else {
                             $pythonDeclaration .= $pythonDeclarationTypeExpansion;
                             if ($isPythonBuiltin) {
-                                $pythonDeclarationLines [] = "        self.{$pythonPropertyName} = " . str_replace(
+                                $pythonDeclarationLines[] = "        self.{$pythonPropertyName} = " . str_replace(
                                     '$',
                                     "_kwargs['{$propertyName}']",
                                     $conversionResult->pythonConversion
                                 ) . "\n";
                             } else {
-                                $pythonDeclarationParams [] = "{$pythonPropertyName}: {$pythonDeclarationParamTypeExpansion},";
-                                $pythonDeclarationLines [] = "        self.{$pythonPropertyName} = " . str_replace(
+                                $pythonDeclarationParams[] = "{$pythonPropertyName}: {$pythonDeclarationParamTypeExpansion},";
+                                $pythonDeclarationLines[] = "        self.{$pythonPropertyName} = " . str_replace(
                                     '$',
                                     $pythonPropertyName,
                                     $conversionResult->pythonConversion
@@ -1048,7 +1048,7 @@ interface ApiCallOptions {
 export function apiCall<
   RequestType extends { [key: string]: any },
   ServerResponseType,
-  ResponseType = ServerResponseType
+  ResponseType = ServerResponseType,
 >(
   url: string,
   transform?: (result: ServerResponseType) => ResponseType,

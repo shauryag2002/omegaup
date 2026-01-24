@@ -1,0 +1,2 @@
+# Generated files should not be formatted by Prettier to avoid loops
+frontend/www/js/omegaup/api.ts

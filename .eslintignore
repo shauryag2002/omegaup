@@ -1,0 +1,2 @@
+# Generated files should not be linted/formatted by ESLint to avoid loops
+frontend/www/js/omegaup/api.ts
