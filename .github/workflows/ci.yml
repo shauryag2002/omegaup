@@ -155,11 +155,11 @@ jobs:
             --show-info=false
 
       - name: Upload PHP code coverage
-        run: |
-          curl -Os https://uploader.codecov.io/v0.1.0_5313/linux/codecov
-          echo 'a229148bfbb9b802a95b4c78501b19630a17784696eb0b5182b40f0e1c0a4b6e  codecov' | shasum -a 256 -c
-          chmod +x codecov
-          ./codecov -f coverage.xml -F php
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: php
 
       - name: Upload artifacts
         if: ${{ always() }}
@@ -192,18 +192,11 @@ jobs:
         run: yarn test:coverage
 
       - name: Upload JavaScript code coverage
-        run: |
-          curl -Os https://uploader.codecov.io/v0.1.0_5313/linux/codecov
-          echo 'a229148bfbb9b802a95b4c78501b19630a17784696eb0b5182b40f0e1c0a4b6e  codecov' | shasum -a 256 -c
-          chmod +x codecov
-          # Jest generates coverage in coverage/ directory with lcov.info
-          if [ -f coverage/lcov.info ]; then
-            ./codecov -f coverage/lcov.info -F javascript
-          elif [ -f coverage/coverage-final.json ]; then
-            ./codecov -f coverage/coverage-final.json -F javascript
-          else
-            echo "Warning: JavaScript coverage file not found"
-          fi
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: javascript
 
   lint:
     runs-on: ubuntu-22.04
@@ -319,6 +312,18 @@ jobs:
         run: |
           ./node_modules/.bin/cypress run --browser chrome
 
+      - name: Merge PHP code coverage
+        if: always()
+        run: php stuff/merge-php-coverage.php
+
+      - name: Upload code coverage
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage/lcov.info,php-cypress-coverage.xml
+          flags: cypress
+
       - name: Remap Cypress coverage paths
         if: always()
         run: |
@@ -333,15 +338,11 @@ jobs:
 
       - name: Upload Cypress code coverage
         if: always()
-        run: |
-          if [ -f coverage/lcov.info ]; then
-            curl -Os https://uploader.codecov.io/v0.1.0_5313/linux/codecov
-            echo 'a229148bfbb9b802a95b4c78501b19630a17784696eb0b5182b40f0e1c0a4b6e  codecov' | shasum -a 256 -c
-            chmod +x codecov
-            ./codecov -f coverage/lcov.info -F cypress
-          else
-            echo "Warning: Cypress coverage file not found, skipping upload"
-          fi
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          path: coverage/coverage-final.json
+          flags: cypress
 
       - name: Collect container logs
         if: ${{ always() }}
