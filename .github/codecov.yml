@@ -11,12 +11,18 @@ coverage:
       javascript:
         flags:
           - javascript
+      cypress:
+        flags:
+          - cypress
 
 flags:
   php:
     paths:
       - frontend/server/
   javascript:
+    paths:
+      - frontend/www/
+  cypress:
     paths:
       - frontend/www/
 

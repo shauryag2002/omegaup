@@ -1,9 +1,6 @@
 {
-  "extension": [
-    ".js",
-    ".ts",
-    ".vue"
-  ],
+  "cwd": "./",
+  "extension": [".js", ".ts", ".vue"],
   "include": [
     "frontend/www/js/**/*.js",
     "frontend/www/js/**/*.ts",
@@ -14,5 +11,14 @@
     "frontend/www/js/omegaup/lang*.ts",
     "frontend/www/js/omegaup/test.setup.js",
     "frontend/www/third_party/**"
+  ],
+  "sourceMap": true,
+  "instrument": false,
+  "temp-dir": "./.nyc_output",
+  "report-dir": "./coverage",
+  "reporter": ["lcov", "json", "text-summary"],
+  "all": true,
+  "map-path": [
+    ["/opt/omegaup/", "./"]
   ]
 }

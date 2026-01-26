@@ -79,6 +79,8 @@ $contentSecurityPolicy = [
         'https://www.google-analytics.com',
         'https://connect.facebook.net',
         'https://platform.twitter.com',
+        // Conditionally add 'unsafe-eval' for test environments
+        '\'unsafe-eval\'',
     ],
     'frame-src' => [
         '\'self\'',

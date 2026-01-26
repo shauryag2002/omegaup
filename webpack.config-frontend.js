@@ -7,6 +7,9 @@ const VueLoaderPlugin = require('vue-loader/lib/plugin');
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const defaultBadgeIcon = fs.readFileSync('./frontend/badges/default_icon.svg');
 
+// Check if we're in test mode for conditional coverage
+const isTest = process.env.NODE_ENV === 'test';
+
 module.exports = {
   name: 'frontend',
 
@@ -127,10 +130,8 @@ module.exports = {
     filename: 'js/dist/[name].js',
     library: '[name]',
     libraryTarget: 'umd',
-
-    // use absolute paths in sourcemaps (important for debugging via IDE)
-    devtoolModuleFilenameTemplate: '[absolute-resource-path]',
-    devtoolFallbackModuleFilenameTemplate: '[absolute-resource-path]?[hash]',
+devtoolModuleFilenameTemplate: 'webpack:///[resource-path]',
+  devtoolFallbackModuleFilenameTemplate: 'webpack:///[resource-path]?[hash]',
   },
 
   plugins: [
@@ -228,20 +229,33 @@ module.exports = {
         },
       },
       {
-        test: /\.ts$/,
-        loader: 'ts-loader',
-        exclude: [/node_modules/, /stories\.ts$/],
-        options: {
-          appendTsSuffixTo: [/\.vue$/],
-          transpileOnly: true,
-          happyPackMode: false,
-        },
+  test: /\.ts$/,
+  exclude: [/node_modules/, /stories\.ts$/],
+  use: [
+    {
+      loader: 'babel-loader',
+      options: {
+        presets: ['@babel/env'],
+        plugins: isTest ? ['istanbul'] : [],
+        cacheDirectory: true,
       },
+    },
+    {
+      loader: 'ts-loader',
+      options: {
+        transpileOnly: true,
+        appendTsSuffixTo: [/\.vue$/],
+        happyPackMode: false,
+      },
+    },
+  ],
+},
       {
         test: /\.js$/,
         loader: 'babel-loader',
         options: {
           presets: ['@babel/env'],
+          plugins: isTest ? ['istanbul'] : [],
           cacheDirectory: true,
         },
         exclude: /node_modules/,
