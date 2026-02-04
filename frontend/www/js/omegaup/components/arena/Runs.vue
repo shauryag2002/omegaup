@@ -462,15 +462,8 @@ library.add(faSearchPlus);
 library.add(faExternalLinkAlt);
 library.add(faTimes);
 
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  interface JQuery {
-    popover(action: string): JQuery;
-  }
-}
-
-// Bootstrap 5 global namespace
-declare const bootstrap: any;
+// Bootstrap 5 global namespace - use proper types
+declare const bootstrap: typeof import('bootstrap');
 
 export enum DisqualificationType {
   ByGUID,

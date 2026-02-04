@@ -555,15 +555,8 @@ library.add(faTimesCircle);
 
 Vue.use(PaginationPlugin);
 
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  interface JQuery {
-    popover(action: string): JQuery;
-  }
-}
-
-// Bootstrap 5 global namespace
-declare const bootstrap: any;
+// Bootstrap 5 global namespace - use proper types
+declare const bootstrap: typeof import('bootstrap');
 
 export enum MemoryStatus {
   NotAvailable = 'MEMORY_NOT_AVAILABLE',
