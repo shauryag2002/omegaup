@@ -144,7 +144,7 @@
               v-tooltip="T.cannotRemoveProblemWithSubmissions"
               :data-remove-problem-disabled="problem.alias"
               class="btn btn-link"
-              data-toggle="tooltip"
+              data-bs-toggle="tooltip"
               data-placement="bottom"
             >
               <font-awesome-icon icon="trash" class="disabled text-secondary" />

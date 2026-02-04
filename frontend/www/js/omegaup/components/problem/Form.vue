@@ -25,8 +25,8 @@
                   ref="basic-info"
                   class="btn btn-link btn-block text-left"
                   type="button"
-                  data-toggle="collapse"
-                  data-target=".basic-info"
+                  data-bs-toggle="collapse"
+                  data-bs-target=".basic-info"
                   aria-expanded="true"
                   aria-controls="problem-form-problem"
                 >
@@ -104,8 +104,8 @@
                     ref="tags"
                     class="btn btn-link btn-block text-left"
                     type="button"
-                    data-toggle="collapse"
-                    data-target=".tags"
+                    data-bs-toggle="collapse"
+                    data-bs-target=".tags"
                     aria-expanded="true"
                     aria-controls="problem-form-problem"
                   >
@@ -159,8 +159,8 @@
                 <button
                   class="btn btn-link btn-block text-left collapsed"
                   type="button"
-                  data-toggle="collapse"
-                  data-target=".validation"
+                  data-bs-toggle="collapse"
+                  data-bs-target=".validation"
                   aria-expanded="true"
                   aria-controls="problem-form-problem"
                 >
@@ -217,8 +217,8 @@
                   ref="limits"
                   class="btn btn-link btn-block text-left collapsed"
                   type="button"
-                  data-toggle="collapse"
-                  data-target=".limits"
+                  data-bs-toggle="collapse"
+                  data-bs-target=".limits"
                   aria-expanded="true"
                   aria-controls="problem-form-problem"
                 >
@@ -248,8 +248,8 @@
                 <button
                   class="btn btn-link btn-block text-left collapsed"
                   type="button"
-                  data-toggle="collapse"
-                  data-target=".access"
+                  data-bs-toggle="collapse"
+                  data-bs-target=".access"
                   aria-expanded="true"
                   aria-controls="problem-form-problem"
                 >
@@ -326,8 +326,8 @@
                   <button
                     class="btn btn-link btn-block text-left collapsed"
                     type="button"
-                    data-toggle="collapse"
-                    data-target=".evaluation"
+                    data-bs-toggle="collapse"
+                    data-bs-target=".evaluation"
                     aria-expanded="true"
                     aria-controls="problem-form-problem"
                   >

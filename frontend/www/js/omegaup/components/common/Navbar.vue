@@ -50,8 +50,8 @@
           <button
             class="navbar-toggler mr-2"
             type="button"
-            data-toggle="collapse"
-            data-target=".omegaup-navbar"
+            data-bs-toggle="collapse"
+            data-bs-target=".omegaup-navbar"
             aria-expanded="false"
             aria-label="Toggle navigation"
           >
@@ -98,7 +98,7 @@
                   href="#"
                   role="button"
                   data-nav-user
-                  data-toggle="dropdown"
+                  data-bs-toggle="dropdown"
                   aria-haspopup="true"
                   aria-expanded="false"
                 >
@@ -213,8 +213,8 @@
                         <button
                           type="button"
                           class="btn dropdown-item dropdown-toggle dropdown-toggle-split"
-                          data-toggle="collapse"
-                          data-target=".collapse-links"
+                          data-bs-toggle="collapse"
+                          data-bs-target=".collapse-links"
                           aria-expanded="false"
                           aria-controls="collapse-links"
                         ></button>
@@ -328,7 +328,7 @@
         class="alert alert-info alert-dismissible fade show"
         role="alert"
       >
-        <button type="button" class="close" data-dismiss="alert">
+        <button type="button" class="close" data-bs-dismiss="alert">
           &times;
         </button>
         <omegaup-markdown

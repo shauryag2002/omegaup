@@ -32,7 +32,7 @@
               class="btn btn-primary dropdown-toggle p-1 p-sm-2"
               href="#"
               role="button"
-              data-toggle="dropdown"
+              data-bs-toggle="dropdown"
               aria-haspopup="true"
               aria-expanded="false"
             >
@@ -67,7 +67,7 @@
               class="btn btn-primary dropdown-toggle p-1 p-sm-2"
               href="#"
               role="button"
-              data-toggle="dropdown"
+              data-bs-toggle="dropdown"
               aria-haspopup="true"
               aria-expanded="false"
             >
@@ -229,7 +229,7 @@
             class="btn btn-primary dropdown-toggle"
             href="#"
             role="button"
-            data-toggle="dropdown"
+            data-bs-toggle="dropdown"
             aria-haspopup="true"
             aria-expanded="false"
           >
@@ -261,7 +261,7 @@
             class="nav-link"
             :href="`#${tabKey}`"
             :class="{ active: selectedTab === tabKey }"
-            data-toggle="tab"
+            data-bs-toggle="tab"
             role="tab"
             @click="selectedTab = tabKey"
             >{{ tabName }}</a

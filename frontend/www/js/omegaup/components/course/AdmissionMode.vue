@@ -9,7 +9,7 @@
         <div class="form-group">
           <label>{{ T.courseEditAdmissionModeSelect }}</label>
           <a
-            data-toggle="tooltip"
+            data-bs-toggle="tooltip"
             rel="tooltip"
             :title="T.courseEditAdmissionModeDescription"
           >

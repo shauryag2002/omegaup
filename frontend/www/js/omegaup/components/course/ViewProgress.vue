@@ -74,7 +74,7 @@
                         }}
                         <a
                           v-if="assignment.points === 0"
-                          data-toggle="tooltip"
+                          data-bs-toggle="tooltip"
                           rel="tooltip"
                           :title="T.studentProgressOnlyLecturesDescription"
                           ><img src="/media/question.png"

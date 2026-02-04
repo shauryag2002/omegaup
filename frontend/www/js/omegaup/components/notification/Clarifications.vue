@@ -7,7 +7,7 @@
       aria-expanded="false"
       aria-haspopup="true"
       class="nav-link dropdown-toggle px-2 notification-toggle"
-      data-toggle="dropdown"
+      data-bs-toggle="dropdown"
       href="#"
       role="button"
     >

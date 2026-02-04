@@ -100,7 +100,7 @@
             <th scope="col" class="align-middle text-nowrap">
               <span>
                 <a
-                  data-toggle="tooltip"
+                  data-bs-toggle="tooltip"
                   :href="UserRankingFeatureGuideURL"
                   rel="tooltip"
                   :title="T.wordsPointsForRank"

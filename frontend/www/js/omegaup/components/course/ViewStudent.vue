@@ -61,7 +61,7 @@
               >
                 <a
                   aria-controls="home"
-                  data-toggle="tab"
+                  data-bs-toggle="tab"
                   href="#home"
                   class="nav-link"
                   :class="{

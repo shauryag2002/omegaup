@@ -14,7 +14,7 @@
           href="#"
           role="button"
           data-nav-contests
-          data-toggle="dropdown"
+          data-bs-toggle="dropdown"
           aria-haspopup="true"
           aria-expanded="false"
         >
@@ -56,7 +56,7 @@
           href="#"
           role="button"
           data-nav-courses
-          data-toggle="dropdown"
+          data-bs-toggle="dropdown"
           aria-haspopup="true"
           aria-expanded="false"
         >
@@ -94,7 +94,7 @@
           class="nav-link px-2 dropdown-toggle"
           href="#"
           role="button"
-          data-toggle="dropdown"
+          data-bs-toggle="dropdown"
           data-nav-problems
           aria-haspopup="true"
           aria-expanded="false"
@@ -128,8 +128,8 @@
                 <button
                   type="button"
                   class="dropdown-item dropdown-toggle"
-                  data-toggle="collapse"
-                  data-target=".collapse-links"
+                  data-bs-toggle="collapse"
+                  data-bs-target=".collapse-links"
                   data-nav-problems-create-options
                   aria-expanded="false"
                   aria-controls="collapse-links"
@@ -163,7 +163,7 @@
           class="nav-link px-2 dropdown-toggle"
           href="#"
           role="button"
-          data-toggle="dropdown"
+          data-bs-toggle="dropdown"
           aria-haspopup="true"
           aria-expanded="false"
         >
@@ -196,7 +196,7 @@
           class="nav-link px-2 dropdown-toggle"
           href="#"
           role="button"
-          data-toggle="dropdown"
+          data-bs-toggle="dropdown"
           aria-haspopup="true"
           aria-expanded="false"
         >

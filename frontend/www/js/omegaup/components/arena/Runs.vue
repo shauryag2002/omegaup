@@ -290,7 +290,7 @@
                   v-if="!!statusHelp(run)"
                   type="button"
                   :data-content="statusHelp(run)"
-                  data-toggle="popover"
+                  data-bs-toggle="popover"
                   data-trigger="focus"
                   class="btn-outline-dark btn-sm"
                   @click="showVerdictHelp"
@@ -332,7 +332,7 @@
                     data-runs-actions-button
                     class="btn btn-secondary dropdown-toggle"
                     type="button"
-                    data-toggle="dropdown"
+                    data-bs-toggle="dropdown"
                     aria-haspopup="true"
                     aria-expanded="false"
                   >

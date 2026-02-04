@@ -104,7 +104,7 @@
       <button
         type="button"
         class="btn btn-primary float-right w-25"
-        data-dismiss="modal"
+        data-bs-dismiss="modal"
         @click="onSubmit"
       >
         {{ T.userObjectivesModalButtonSend }}
