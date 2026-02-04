@@ -469,6 +469,9 @@ declare global {
   }
 }
 
+// Bootstrap 5 global namespace
+declare const bootstrap: any;
+
 export enum DisqualificationType {
   ByGUID,
   ByProblem,
@@ -683,7 +686,9 @@ export default class Runs extends Vue {
   }
 
   showVerdictHelp(ev: Event): void {
-    $(ev.target as HTMLElement).popover('show');
+    const element = ev.target as HTMLElement;
+    const popover = new bootstrap.Popover(element);
+    popover.show();
   }
 
   statusClass(run: types.Run): string {
