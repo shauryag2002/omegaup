@@ -27,7 +27,7 @@
               {{ T.contestEditTagDelete }}
               <a
                 v-if="!isLecture"
-                data-toggle="tooltip"
+                data-bs-toggle="tooltip"
                 rel="tooltip"
                 :title="T.problemEditTagPublicRequired"
               >

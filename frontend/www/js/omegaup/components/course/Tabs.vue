@@ -11,7 +11,7 @@
           class="nav-link"
           :href="`#${tabKey}`"
           :class="{ active: currentSelectedTab === tabKey }"
-          data-toggle="tab"
+          data-bs-toggle="tab"
           role="tab"
           @click="currentSelectedTab = tabKey"
           >{{ tabName }}</a

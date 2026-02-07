@@ -50,8 +50,8 @@
                   ref="basicInfo"
                   class="btn btn-link btn-block text-left"
                   type="button"
-                  data-toggle="collapse"
-                  data-target=".basic-info"
+                  data-bs-toggle="collapse"
+                  data-bs-target=".basic-info"
                   aria-expanded="true"
                   aria-controls="basic-info-collapse"
                 >
@@ -325,8 +325,8 @@
                   ref="logistics"
                   class="btn btn-link btn-block text-left collapsed"
                   type="button"
-                  data-toggle="collapse"
-                  data-target=".logistics"
+                  data-bs-toggle="collapse"
+                  data-bs-target=".logistics"
                   aria-expanded="false"
                   aria-controls="logistics-collapse"
                   @click.prevent
@@ -538,8 +538,8 @@
                   ref="scoringRules"
                   class="btn btn-link btn-block text-left collapsed"
                   type="button"
-                  data-toggle="collapse"
-                  data-target=".scoring-rules"
+                  data-bs-toggle="collapse"
+                  data-bs-target=".scoring-rules"
                   aria-expanded="false"
                 >
                   {{ T.contestNewFormScoringRules }}
@@ -775,8 +775,8 @@
                   ref="privacy"
                   class="btn btn-link btn-block text-left collapsed"
                   type="button"
-                  data-toggle="collapse"
-                  data-target=".privacy"
+                  data-bs-toggle="collapse"
+                  data-bs-target=".privacy"
                   aria-expanded="false"
                 >
                   {{ T.contestNewFormPrivacy }}

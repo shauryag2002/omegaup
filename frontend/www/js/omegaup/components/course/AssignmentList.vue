@@ -63,7 +63,7 @@
                 v-if="assignment.has_runs"
                 v-tooltip="T.assignmentRemoveAlreadyHasRuns"
                 class="btn btn-link"
-                data-toggle="tooltip"
+                data-bs-toggle="tooltip"
                 data-placement="bottom"
               >
                 <font-awesome-icon icon="trash" class="disabled" />

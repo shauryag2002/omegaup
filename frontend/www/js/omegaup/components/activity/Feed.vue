@@ -10,7 +10,7 @@
         <li class="nav-item" role="presentation">
           <a
             class="nav-link"
-            data-toggle="tab"
+            data-bs-toggle="tab"
             href="#report"
             role="tab"
             aria-controls="report"
@@ -23,7 +23,7 @@
         <li class="nav-item" role="presentation">
           <a
             class="nav-link"
-            data-toggle="tab"
+            data-bs-toggle="tab"
             href="#users"
             role="tab"
             aria-controls="users"
@@ -36,7 +36,7 @@
         <li class="nav-item" role="presentation">
           <a
             class="nav-link"
-            data-toggle="tab"
+            data-bs-toggle="tab"
             href="#origins"
             role="tab"
             aria-controls="origins"

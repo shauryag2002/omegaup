@@ -290,7 +290,7 @@
                   v-if="!!statusHelp(run)"
                   type="button"
                   :data-content="statusHelp(run)"
-                  data-toggle="popover"
+                  data-bs-toggle="popover"
                   data-trigger="focus"
                   class="btn-outline-dark btn-sm"
                   @click="showVerdictHelp"
@@ -332,7 +332,7 @@
                     data-runs-actions-button
                     class="btn btn-secondary dropdown-toggle"
                     type="button"
-                    data-toggle="dropdown"
+                    data-bs-toggle="dropdown"
                     aria-haspopup="true"
                     aria-expanded="false"
                   >
@@ -462,12 +462,8 @@ library.add(faSearchPlus);
 library.add(faExternalLinkAlt);
 library.add(faTimes);
 
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  interface JQuery {
-    popover(action: string): JQuery;
-  }
-}
+// Bootstrap 5 global namespace - use proper types
+declare const bootstrap: typeof import('bootstrap');
 
 export enum DisqualificationType {
   ByGUID,
@@ -683,7 +679,9 @@ export default class Runs extends Vue {
   }
 
   showVerdictHelp(ev: Event): void {
-    $(ev.target as HTMLElement).popover('show');
+    const element = ev.target as HTMLElement;
+    const popover = new bootstrap.Popover(element);
+    popover.show();
   }
 
   statusClass(run: types.Run): string {

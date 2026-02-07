@@ -10,7 +10,7 @@
         <a
           :href="`#${tab.name}`"
           class="nav-link"
-          data-toggle="tab"
+          data-bs-toggle="tab"
           role="tab"
           :aria-controls="tab.name"
           :class="{ active: selectedTab === tab.name }"
