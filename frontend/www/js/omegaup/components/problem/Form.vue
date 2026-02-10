@@ -536,7 +536,7 @@
 
     <!-- Problem Creator Modal -->
     <div
-      v-if="showProblemCreator"
+      v-show="showProblemCreator"
       class="problem-creator-modal"
       @click.self="closeProblemCreatorModal"
     >
@@ -860,15 +860,21 @@ export default class ProblemForm extends Vue {
     this.showProblemCreator = false;
   }
 
-  handleFormSubmit(): void {
-    // If using creator method and we have creator content, attach the zip blob
-    if (
-      !this.isUpdate &&
-      this.creationMethod === 'creator' &&
-      this.creatorGeneratedZipBlob
-    ) {
-      const fileInput = this.creatorFileInputRef;
+  handleFormSubmit(event: Event): void {
+    // If using creator method, handle file attachment
+    if (!this.isUpdate && this.creationMethod === 'creator') {
+      if (!this.creatorGeneratedZipBlob) {
+        // Prevent form submission if creator method selected but no content
+        event.preventDefault();
+        alert(
+          T.problemEditFormCreatorContentRequired ||
+            'Please create content in Problem Creator before submitting',
+        );
+        return;
+      }
 
+      // Attach the zip blob to the hidden file input
+      const fileInput = this.creatorFileInputRef;
       if (fileInput) {
         // Create a new File object from the blob
         const file = new File(
@@ -881,18 +887,18 @@ export default class ProblemForm extends Vue {
         const dataTransfer = new DataTransfer();
         dataTransfer.items.add(file);
         fileInput.files = dataTransfer.files;
+        
+        // Verify file was set
+        if (!fileInput.files || fileInput.files.length === 0) {
+          event.preventDefault();
+          alert('Failed to attach problem file. Please try again.');
+          return;
+        }
+      } else {
+        event.preventDefault();
+        alert('File input not found. Please try again.');
+        return;
       }
-    } else if (
-      !this.isUpdate &&
-      this.creationMethod === 'creator' &&
-      !this.creatorGeneratedZipBlob
-    ) {
-      // Prevent form submission if creator method selected but no content
-      alert(
-        T.problemEditFormCreatorContentRequired ||
-          'Please create content in Problem Creator before submitting',
-      );
-      event?.preventDefault();
     }
   }
 
