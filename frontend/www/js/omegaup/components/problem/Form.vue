@@ -538,12 +538,6 @@
       @click.self="closeProblemCreatorModal"
     >
       <div class="problem-creator-modal-content">
-        <div class="problem-creator-modal-header">
-          <h3>{{ T.problemCreatorTitle }}</h3>
-          <button type="button" class="close" @click="closeProblemCreatorModal">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
         <div class="problem-creator-modal-body">
           <omegaup-problem-creator
             ref="problemCreator"
@@ -551,6 +545,15 @@
             :hide-save-buttons="true"
             @download-zip-file="handleCreatorZipGeneration"
           />
+        </div>
+        <div class="problem-creator-modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            @click="closeProblemCreatorModal"
+          >
+            {{ T.wordsClose }}
+          </button>
         </div>
       </div>
     </div>
@@ -1015,9 +1018,8 @@ export default class ProblemForm extends Vue {
 
 .problem-creator-modal-content {
   background-color: white;
-  width: 95%;
-  max-width: 1400px;
-  height: 90vh;
+  height: 81vh;
+  width: 78%;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
@@ -1027,9 +1029,7 @@ export default class ProblemForm extends Vue {
 .problem-creator-modal-header {
   padding: 20px;
   border-bottom: 1px solid #dee2e6;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  position: absolute;
 }
 
 .problem-creator-modal-header h3 {
