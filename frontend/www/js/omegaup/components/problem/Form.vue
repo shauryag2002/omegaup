@@ -16,10 +16,10 @@
       </p>
     </div>
     <div class="card-body px-2 px-sm-4">
-      <form 
-        ref="form" 
-        method="POST" 
-        class="form" 
+      <form
+        ref="form"
+        method="POST"
+        class="form"
         enctype="multipart/form-data"
         @submit="handleFormSubmit"
       >
@@ -89,27 +89,25 @@
                   <div class="form-control">
                     <div class="form-check">
                       <input
-                        id="creation-method-creator"
                         v-model="creationMethod"
                         type="radio"
                         name="creation_method"
                         class="form-check-input"
                         value="creator"
                       />
-                      <label class="form-check-label" for="creation-method-creator">
+                      <label class="form-check-label">
                         {{ T.problemEditFormCreationMethodCreator }}
                       </label>
                     </div>
                     <div class="form-check">
                       <input
-                        id="creation-method-zip"
                         v-model="creationMethod"
                         type="radio"
                         name="creation_method"
                         class="form-check-input"
                         value="zip"
                       />
-                      <label class="form-check-label" for="creation-method-zip">
+                      <label class="form-check-label">
                         {{ T.problemEditFormCreationMethodZip }}
                       </label>
                     </div>
@@ -128,6 +126,15 @@
                   <span v-if="hasCreatorContent" class="ml-2 text-success">
                     ✓ {{ T.problemEditFormCreatorContentReady }}
                   </span>
+                  <!-- Hidden file input for creator-generated zip -->
+                  <input
+                    ref="creatorFileInput"
+                    :required="!isUpdate && creationMethod === 'creator'"
+                    name="problem_contents"
+                    type="file"
+                    accept=".zip"
+                    style="display: none"
+                  />
                 </div>
               </div>
               <div v-if="!isUpdate && creationMethod === 'zip'" class="row">
@@ -539,11 +546,7 @@
       <div class="problem-creator-modal-content">
         <div class="problem-creator-modal-header">
           <h3>{{ T.problemCreatorTitle }}</h3>
-          <button
-            type="button"
-            class="close"
-            @click="closeProblemCreatorModal"
-          >
+          <button type="button" class="close" @click="closeProblemCreatorModal">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
@@ -607,6 +610,7 @@ export default class ProblemForm extends Vue {
   @Ref('limits') limitsRef!: HTMLDivElement;
   @Ref('form') formRef!: HTMLFormElement;
   @Ref('problemCreator') problemCreatorRef!: any;
+  @Ref('creatorFileInput') creatorFileInputRef!: HTMLInputElement;
 
   T = T;
   title = this.data.title;
@@ -857,17 +861,14 @@ export default class ProblemForm extends Vue {
     this.showProblemCreator = false;
   }
 
-  handleFormSubmit(event: Event): void {
+  handleFormSubmit(): void {
     // If using creator method and we have creator content, attach the zip blob
     if (
       !this.isUpdate &&
       this.creationMethod === 'creator' &&
       this.creatorGeneratedZipBlob
     ) {
-      const formData = new FormData(this.formRef);
-      const fileInput = this.formRef.querySelector(
-        'input[name="problem_contents"]',
-      ) as HTMLInputElement;
+      const fileInput = this.$refs.creatorFileInput as HTMLInputElement;
 
       if (fileInput) {
         // Create a new File object from the blob
@@ -885,13 +886,7 @@ export default class ProblemForm extends Vue {
     }
   }
 
-  handleCreatorZipGeneration({
-    fileName,
-    zipContent,
-  }: {
-    fileName: string;
-    zipContent: JSZip;
-  }): void {
+  handleCreatorZipGeneration({ zipContent }: { zipContent: JSZip }): void {
     // Store the zip content for later use
     zipContent.generateAsync({ type: 'blob' }).then((blob) => {
       this.creatorGeneratedZipBlob = blob;
