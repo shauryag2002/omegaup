@@ -129,7 +129,6 @@
                   <!-- Hidden file input for creator-generated zip -->
                   <input
                     ref="creatorFileInput"
-                    :required="!isUpdate && creationMethod === 'creator'"
                     name="problem_contents"
                     type="file"
                     accept=".zip"
@@ -609,7 +608,9 @@ export default class ProblemForm extends Vue {
   @Ref('tags') tagsRef!: HTMLDivElement;
   @Ref('limits') limitsRef!: HTMLDivElement;
   @Ref('form') formRef!: HTMLFormElement;
-  @Ref('problemCreator') problemCreatorRef!: any;
+  @Ref('problemCreator') problemCreatorRef!: InstanceType<
+    typeof problem_CreatorWrapper
+  >;
   @Ref('creatorFileInput') creatorFileInputRef!: HTMLInputElement;
 
   T = T;
@@ -868,7 +869,7 @@ export default class ProblemForm extends Vue {
       this.creationMethod === 'creator' &&
       this.creatorGeneratedZipBlob
     ) {
-      const fileInput = this.$refs.creatorFileInput as HTMLInputElement;
+      const fileInput = this.creatorFileInputRef;
 
       if (fileInput) {
         // Create a new File object from the blob
@@ -883,6 +884,17 @@ export default class ProblemForm extends Vue {
         dataTransfer.items.add(file);
         fileInput.files = dataTransfer.files;
       }
+    } else if (
+      !this.isUpdate &&
+      this.creationMethod === 'creator' &&
+      !this.creatorGeneratedZipBlob
+    ) {
+      // Prevent form submission if creator method selected but no content
+      alert(
+        T.problemEditFormCreatorContentRequired ||
+          'Please create content in Problem Creator before submitting',
+      );
+      event?.preventDefault();
     }
   }
 
