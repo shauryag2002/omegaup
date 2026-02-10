@@ -5,6 +5,12 @@ import Vue from 'vue';
 import problem_New from '../components/problem/Form.vue';
 import * as ui from '../ui';
 import * as api from '../api';
+import { BootstrapVue, BootstrapVueIcons } from 'bootstrap-vue';
+import 'bootstrap/dist/css/bootstrap.css';
+import 'bootstrap-vue/dist/bootstrap-vue.css';
+
+Vue.use(BootstrapVue);
+Vue.use(BootstrapVueIcons);
 
 OmegaUp.on('ready', () => {
   const payload = types.payloadParsers.ProblemFormPayload();

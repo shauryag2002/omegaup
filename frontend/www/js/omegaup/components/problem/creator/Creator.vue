@@ -4,6 +4,7 @@
       <b-col>
         <b-card :header="T.problemCreatorTitle" header-class="h3">
           <creator-header
+            ref="creatorHeader"
             @download-zip-file="
               (zipObject) => $emit('download-zip-file', zipObject)
             "

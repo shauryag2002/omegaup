@@ -16,7 +16,13 @@
       </p>
     </div>
     <div class="card-body px-2 px-sm-4">
-      <form ref="form" method="POST" class="form" enctype="multipart/form-data">
+      <form 
+        ref="form" 
+        method="POST" 
+        class="form" 
+        enctype="multipart/form-data"
+        @submit="handleFormSubmit"
+      >
         <div class="accordion mb-3">
           <div class="card">
             <div class="card-header">
@@ -76,12 +82,79 @@
                     :class="{ 'is-invalid': errors.includes('source') }"
                   />
                 </div>
-                <div class="form-group col-md-6 introjs-file">
+                <div v-if="!isUpdate" class="form-group col-md-6">
+                  <label class="control-label">{{
+                    T.problemEditFormCreationMethod
+                  }}</label>
+                  <div class="form-control">
+                    <div class="form-check">
+                      <input
+                        id="creation-method-creator"
+                        v-model="creationMethod"
+                        type="radio"
+                        name="creation_method"
+                        class="form-check-input"
+                        value="creator"
+                      />
+                      <label class="form-check-label" for="creation-method-creator">
+                        {{ T.problemEditFormCreationMethodCreator }}
+                      </label>
+                    </div>
+                    <div class="form-check">
+                      <input
+                        id="creation-method-zip"
+                        v-model="creationMethod"
+                        type="radio"
+                        name="creation_method"
+                        class="form-check-input"
+                        value="zip"
+                      />
+                      <label class="form-check-label" for="creation-method-zip">
+                        {{ T.problemEditFormCreationMethodZip }}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div v-if="!isUpdate && creationMethod === 'creator'" class="row">
+                <div class="form-group col-md-12">
+                  <button
+                    type="button"
+                    class="btn btn-info"
+                    @click="showProblemCreator = true"
+                  >
+                    {{ T.problemEditFormOpenProblemCreator }}
+                  </button>
+                  <span v-if="hasCreatorContent" class="ml-2 text-success">
+                    ✓ {{ T.problemEditFormCreatorContentReady }}
+                  </span>
+                </div>
+              </div>
+              <div v-if="!isUpdate && creationMethod === 'zip'" class="row">
+                <div class="form-group col-md-12 introjs-file">
                   <label class="control-label">{{
                     T.problemEditFormFile
                   }}</label>
                   <input
-                    :required="!isUpdate"
+                    :required="!isUpdate && creationMethod === 'zip'"
+                    name="problem_contents"
+                    type="file"
+                    accept=".zip"
+                    class="form-control"
+                    :class="{
+                      'is-invalid': errors.includes('problem_contents'),
+                    }"
+                    @change="onUploadFile"
+                  />
+                </div>
+              </div>
+              <div v-if="isUpdate" class="row">
+                <div class="form-group col-md-12 introjs-file">
+                  <label class="control-label">{{
+                    T.problemEditFormFile
+                  }}</label>
+                  <input
+                    :required="false"
                     name="problem_contents"
                     type="file"
                     accept=".zip"
@@ -434,6 +507,12 @@
         />
         <input name="request" value="submit" type="hidden" />
         <input name="update_published" value="non-problemset" type="hidden" />
+        <input
+          v-if="creatorGeneratedZipBlob"
+          ref="creatorZipInput"
+          type="hidden"
+          name="problem_contents_from_creator"
+        />
         <div class="row">
           <div class="form-group col-md-6 no-bottom-margin">
             <button
@@ -450,6 +529,48 @@
         </div>
       </form>
     </div>
+
+    <!-- Problem Creator Modal -->
+    <div
+      v-if="showProblemCreator"
+      class="problem-creator-modal"
+      @click.self="closeProblemCreatorModal"
+    >
+      <div class="problem-creator-modal-content">
+        <div class="problem-creator-modal-header">
+          <h3>{{ T.problemCreatorTitle }}</h3>
+          <button
+            type="button"
+            class="close"
+            @click="closeProblemCreatorModal"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="problem-creator-modal-body">
+          <omegaup-problem-creator
+            ref="problemCreator"
+            @download-zip-file="handleCreatorZipGeneration"
+          />
+        </div>
+        <div class="problem-creator-modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            @click="closeProblemCreatorModal"
+          >
+            {{ T.wordsClose }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            @click="saveProblemCreatorContent"
+          >
+            {{ T.wordsSaveChanges }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -457,18 +578,21 @@
 import { Vue, Component, Prop, Watch, Ref } from 'vue-property-decorator';
 import problem_Settings from './Settings.vue';
 import problem_Tags from './Tags.vue';
+import problem_CreatorWrapper from './CreatorWrapper.vue';
 import T from '../../lang';
 import latinize from 'latinize';
 import { types } from '../../api_types';
 import 'intro.js/introjs.css';
 import introJs from 'intro.js';
 import VueCookies from 'vue-cookies';
+import JSZip from 'jszip';
 Vue.use(VueCookies, { expire: -1 });
 
 @Component({
   components: {
     'omegaup-problem-settings': problem_Settings,
     'omegaup-problem-tags': problem_Tags,
+    'omegaup-problem-creator': problem_CreatorWrapper,
   },
 })
 export default class ProblemForm extends Vue {
@@ -482,6 +606,7 @@ export default class ProblemForm extends Vue {
   @Ref('tags') tagsRef!: HTMLDivElement;
   @Ref('limits') limitsRef!: HTMLDivElement;
   @Ref('form') formRef!: HTMLFormElement;
+  @Ref('problemCreator') problemCreatorRef!: any;
 
   T = T;
   title = this.data.title;
@@ -510,6 +635,10 @@ export default class ProblemForm extends Vue {
   validLanguages = this.data.validLanguages;
   validatorTypes = this.data.validatorTypes;
   currentLanguages = this.data.languages;
+  creationMethod = 'creator';
+  showProblemCreator = false;
+  creatorGeneratedZipBlob: Blob | null = null;
+  hasCreatorContent = false;
 
   mounted() {
     const title = T.createProblemInteractiveGuideTitle;
@@ -724,6 +853,65 @@ export default class ProblemForm extends Vue {
     }
   }
 
+  closeProblemCreatorModal(): void {
+    this.showProblemCreator = false;
+  }
+
+  handleFormSubmit(event: Event): void {
+    // If using creator method and we have creator content, attach the zip blob
+    if (
+      !this.isUpdate &&
+      this.creationMethod === 'creator' &&
+      this.creatorGeneratedZipBlob
+    ) {
+      const formData = new FormData(this.formRef);
+      const fileInput = this.formRef.querySelector(
+        'input[name="problem_contents"]',
+      ) as HTMLInputElement;
+
+      if (fileInput) {
+        // Create a new File object from the blob
+        const file = new File(
+          [this.creatorGeneratedZipBlob],
+          `${this.alias || 'problem'}.zip`,
+          { type: 'application/zip' },
+        );
+
+        // Create a new DataTransfer to set the file
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        fileInput.files = dataTransfer.files;
+      }
+    }
+  }
+
+  handleCreatorZipGeneration({
+    fileName,
+    zipContent,
+  }: {
+    fileName: string;
+    zipContent: JSZip;
+  }): void {
+    // Store the zip content for later use
+    zipContent.generateAsync({ type: 'blob' }).then((blob) => {
+      this.creatorGeneratedZipBlob = blob;
+      this.hasCreatorContent = true;
+    });
+  }
+
+  saveProblemCreatorContent(): void {
+    // Get the problem creator wrapper component
+    const creatorWrapper = this.$refs.problemCreator as any;
+    if (creatorWrapper && creatorWrapper.$refs.creator) {
+      const creatorComponent = creatorWrapper.$refs.creator;
+      if (creatorComponent.$refs.creatorHeader) {
+        // Trigger the zip generation from the Creator component
+        creatorComponent.$refs.creatorHeader.generateProblem();
+        this.closeProblemCreatorModal();
+      }
+    }
+  }
+
   @Watch('alias')
   onValueChanged(newValue: string): void {
     if (this.isUpdate) {
@@ -738,5 +926,66 @@ export default class ProblemForm extends Vue {
 .problem-form .languages {
   padding: 0;
   width: 100%;
+}
+
+.problem-creator-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.problem-creator-modal-content {
+  background-color: white;
+  width: 95%;
+  max-width: 1400px;
+  height: 90vh;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.problem-creator-modal-header {
+  padding: 20px;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.problem-creator-modal-header h3 {
+  margin: 0;
+}
+
+.problem-creator-modal-header .close {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  line-height: 1;
+}
+
+.problem-creator-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.problem-creator-modal-footer {
+  padding: 20px;
+  border-top: 1px solid #dee2e6;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 </style>
