@@ -86,31 +86,29 @@
                   <label class="control-label">{{
                     T.problemEditFormCreationMethod
                   }}</label>
-                  <div class="form-control">
-                    <div class="form-check">
-                      <input
-                        v-model="creationMethod"
-                        type="radio"
-                        name="creation_method"
-                        class="form-check-input"
-                        value="creator"
-                      />
-                      <label class="form-check-label">
-                        {{ T.problemEditFormCreationMethodCreator }}
-                      </label>
-                    </div>
-                    <div class="form-check">
-                      <input
-                        v-model="creationMethod"
-                        type="radio"
-                        name="creation_method"
-                        class="form-check-input"
-                        value="zip"
-                      />
-                      <label class="form-check-label">
-                        {{ T.problemEditFormCreationMethodZip }}
-                      </label>
-                    </div>
+                  <div class="btn-group btn-group-toggle d-flex" role="group">
+                    <button
+                      type="button"
+                      class="btn flex-fill"
+                      :class="{
+                        'btn-primary': creationMethod === 'creator',
+                        'btn-outline-primary': creationMethod !== 'creator',
+                      }"
+                      @click="creationMethod = 'creator'"
+                    >
+                      {{ T.problemEditFormCreationMethodCreator }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn flex-fill"
+                      :class="{
+                        'btn-primary': creationMethod === 'zip',
+                        'btn-outline-primary': creationMethod !== 'zip',
+                      }"
+                      @click="creationMethod = 'zip'"
+                    >
+                      {{ T.problemEditFormCreationMethodZip }}
+                    </button>
                   </div>
                 </div>
               </div>
