@@ -26,7 +26,7 @@
           ></omegaup-markdown>
         </div>
       </div>
-      <div class="row">
+      <div v-if="!hideSaveButton" class="row">
         <div class="col-md-12">
           <button
             data-problem-creator-solution-save-markdown
@@ -71,6 +71,7 @@ export default class SolutionTab extends Vue {
 
   @Prop({ default: T.problemCreatorEmpty })
   currentSolutionMarkdownProp!: string;
+  @Prop({ default: false }) hideSaveButton!: boolean;
   @Prop() activeTabIndex!: TabIndex;
 
   T = T;
@@ -114,6 +115,10 @@ export default class SolutionTab extends Vue {
   updateMarkdown() {
     this.$store.commit('updateSolutionMarkdown', this.currentSolutionMarkdown);
     this.$emit('show-update-success-message');
+  }
+
+  persistDraft() {
+    this.$store.commit('updateSolutionMarkdown', this.currentSolutionMarkdown);
   }
 
   startIntroGuide() {

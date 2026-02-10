@@ -550,6 +550,8 @@
         <div class="problem-creator-modal-body">
           <omegaup-problem-creator
             ref="problemCreator"
+            :hide-header-actions="true"
+            :hide-save-buttons="true"
             @download-zip-file="handleCreatorZipGeneration"
           />
         </div>
@@ -580,6 +582,7 @@ import problem_Settings from './Settings.vue';
 import problem_Tags from './Tags.vue';
 import problem_CreatorWrapper from './CreatorWrapper.vue';
 import T from '../../lang';
+import * as ui from '../../ui';
 import latinize from 'latinize';
 import { types } from '../../api_types';
 import 'intro.js/introjs.css';
@@ -857,6 +860,7 @@ export default class ProblemForm extends Vue {
   }
 
   closeProblemCreatorModal(): void {
+    this.persistProblemCreatorDraft();
     this.showProblemCreator = false;
   }
 
@@ -866,7 +870,7 @@ export default class ProblemForm extends Vue {
       if (!this.creatorGeneratedZipBlob) {
         // Prevent form submission if creator method selected but no content
         event.preventDefault();
-        alert(
+        ui.error(
           T.problemEditFormCreatorContentRequired ||
             'Please create content in Problem Creator before submitting',
         );
@@ -887,16 +891,16 @@ export default class ProblemForm extends Vue {
         const dataTransfer = new DataTransfer();
         dataTransfer.items.add(file);
         fileInput.files = dataTransfer.files;
-        
+
         // Verify file was set
         if (!fileInput.files || fileInput.files.length === 0) {
           event.preventDefault();
-          alert('Failed to attach problem file. Please try again.');
+          ui.error('Failed to attach problem file. Please try again.');
           return;
         }
       } else {
         event.preventDefault();
-        alert('File input not found. Please try again.');
+        ui.error('File input not found. Please try again.');
         return;
       }
     }
@@ -910,17 +914,24 @@ export default class ProblemForm extends Vue {
     });
   }
 
+  persistProblemCreatorDraft(): void {
+    const creatorWrapper = this.$refs.problemCreator as any;
+    const creatorComponent = creatorWrapper?.$refs?.creator;
+    if (creatorComponent?.saveDraft) {
+      creatorComponent.saveDraft();
+    }
+  }
+
   saveProblemCreatorContent(): void {
     // Get the problem creator wrapper component
     const creatorWrapper = this.$refs.problemCreator as any;
-    if (creatorWrapper && creatorWrapper.$refs.creator) {
-      const creatorComponent = creatorWrapper.$refs.creator;
-      if (creatorComponent.$refs.creatorHeader) {
-        // Trigger the zip generation from the Creator component
-        creatorComponent.$refs.creatorHeader.generateProblem();
-        this.closeProblemCreatorModal();
-      }
+    const creatorComponent = creatorWrapper?.$refs?.creator;
+    this.persistProblemCreatorDraft();
+    if (creatorComponent?.$refs?.creatorHeader) {
+      // Trigger the zip generation from the Creator component
+      creatorComponent.$refs.creatorHeader.generateProblem();
     }
+    this.showProblemCreator = false;
   }
 
   @Watch('alias')

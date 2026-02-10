@@ -23,7 +23,7 @@
           ></omegaup-markdown>
         </div>
       </div>
-      <div class="row">
+      <div v-if="!hideSaveButton" class="row">
         <div class="col-md-12">
           <button
             data-problem-creator-save-markdown
@@ -62,6 +62,7 @@ export default class StatementTab extends Vue {
   @Ref() readonly markdownInput!: HTMLTextAreaElement;
 
   @Prop({ default: T.problemCreatorEmpty }) currentMarkdownProp!: string;
+  @Prop({ default: false }) hideSaveButton!: boolean;
 
   T = T;
   ui = ui;
@@ -98,6 +99,10 @@ export default class StatementTab extends Vue {
   updateMarkdown() {
     this.$store.commit('updateMarkdown', this.currentMarkdown);
     this.$emit('show-update-success-message');
+  }
+
+  persistDraft() {
+    this.$store.commit('updateMarkdown', this.currentMarkdown);
   }
 
   /**

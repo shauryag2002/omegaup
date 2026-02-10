@@ -5,17 +5,20 @@
         <b-card :header="T.problemCreatorTitle" header-class="h3">
           <creator-header
             ref="creatorHeader"
+            :show-header-actions="!hideHeaderActions"
             @download-zip-file="
               (zipObject) => $emit('download-zip-file', zipObject)
             "
             @upload-zip-file="populateProps"
           />
           <creator-tabs
+            ref="creatorTabs"
             data-problem-creator-tabs
             :code-prop="codeProp"
             :extension-prop="extensionProp"
             :current-solution-markdown-prop="currentSolutionMarkdownProp"
             :current-markdown-prop="currentMarkdownProp"
+            :hide-save-buttons="hideSaveButtons"
             @show-update-success-message="
               () => $emit('show-update-success-message')
             "
@@ -33,7 +36,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+import { Component, Vue, Prop, Ref } from 'vue-property-decorator';
 import creator_Header from './Header.vue';
 import creator_Tabs from './Tabs.vue';
 import T from '../../../lang';
@@ -47,6 +50,10 @@ import 'intro.js/introjs.css';
   },
 })
 export default class Creator extends Vue {
+  @Prop({ default: false }) hideHeaderActions!: boolean;
+  @Prop({ default: false }) hideSaveButtons!: boolean;
+  @Ref('creatorTabs') creatorTabsRef!: creator_Tabs;
+
   T = T;
   codeProp: string = T.problemCreatorEmpty;
   extensionProp: string = T.problemCreatorEmpty;
@@ -119,6 +126,12 @@ export default class Creator extends Vue {
     this.codeProp = storeData.problemCodeContent;
     this.extensionProp = storeData.problemCodeExtension;
     this.currentSolutionMarkdownProp = storeData.problemSolutionMarkdown;
+  }
+
+  saveDraft(): void {
+    if (this.creatorTabsRef) {
+      this.creatorTabsRef.saveAllDrafts();
+    }
   }
 }
 </script>

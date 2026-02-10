@@ -55,7 +55,7 @@
           />
         </div>
       </div>
-      <div class="row">
+      <div v-if="!hideSaveButton" class="row">
         <div class="col-md-12">
           <button
             data-problem-creator-code-save-btn
@@ -94,6 +94,7 @@ export default class CodeTab extends Vue {
   @Prop({ default: T.problemCreatorEmpty }) codeProp!: string;
   @Prop({ default: T.problemCreatorEmpty }) extensionProp!: string;
   @Prop() activeTabIndex!: TabIndex;
+  @Prop({ default: false }) hideSaveButton!: boolean;
 
   inputLimit = 512 * 1024; // Hardcoded as 512kiB _must_ be enough for anybody.
   T = T;
@@ -214,6 +215,11 @@ export default class CodeTab extends Vue {
     this.$store.commit('updateCodeContent', this.code);
     this.$store.commit('updateCodeExtension', this.extension);
     this.$emit('show-update-success-message');
+  }
+
+  persistDraft() {
+    this.$store.commit('updateCodeContent', this.code);
+    this.$store.commit('updateCodeExtension', this.extension);
   }
 
   startIntroGuide() {
