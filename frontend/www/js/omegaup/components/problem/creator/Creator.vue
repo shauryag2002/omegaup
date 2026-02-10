@@ -61,6 +61,9 @@ export default class Creator extends Vue {
   currentMarkdownProp: string = T.problemCreatorEmpty;
 
   mounted() {
+    if (this.$store?.state) {
+      this.populateProps(this.$store.state as { [key: string]: any });
+    }
     this.launchIntro();
   }
 

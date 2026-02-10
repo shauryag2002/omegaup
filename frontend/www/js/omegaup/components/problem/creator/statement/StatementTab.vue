@@ -80,7 +80,7 @@ export default class StatementTab extends Vue {
     this.currentMarkdownInternal = newMarkdown;
   }
 
-  @Watch('currentMarkdownProp')
+  @Watch('currentMarkdownProp', { immediate: true })
   onCurrentMarkdownPropChanged() {
     this.currentMarkdown = this.currentMarkdownProp;
   }

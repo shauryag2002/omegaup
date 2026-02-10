@@ -87,7 +87,7 @@ export default class SolutionTab extends Vue {
     this.currentSolutionMarkdownInternal = newMarkdown;
   }
 
-  @Watch('currentSolutionMarkdownProp')
+  @Watch('currentSolutionMarkdownProp', { immediate: true })
   onCurrentSolutionMarkdownPropChanged() {
     this.currentSolutionMarkdown = this.currentSolutionMarkdownProp;
   }

@@ -94,7 +94,7 @@
                         'btn-primary': creationMethod === 'creator',
                         'btn-outline-primary': creationMethod !== 'creator',
                       }"
-                      @click="creationMethod = 'creator'"
+                      @click="setCreationMethod('creator')"
                     >
                       {{ T.problemEditFormCreationMethodCreator }}
                     </button>
@@ -105,7 +105,7 @@
                         'btn-primary': creationMethod === 'zip',
                         'btn-outline-primary': creationMethod !== 'zip',
                       }"
-                      @click="creationMethod = 'zip'"
+                      @click="setCreationMethod('zip')"
                     >
                       {{ T.problemEditFormCreationMethodZip }}
                     </button>
@@ -121,9 +121,6 @@
                   >
                     {{ T.problemEditFormOpenProblemCreator }}
                   </button>
-                  <span v-if="hasCreatorContent" class="ml-2 text-success">
-                    ✓ {{ T.problemEditFormCreatorContentReady }}
-                  </span>
                   <!-- Hidden file input for creator-generated zip -->
                   <input
                     ref="creatorFileInput"
@@ -555,22 +552,6 @@
             @download-zip-file="handleCreatorZipGeneration"
           />
         </div>
-        <div class="problem-creator-modal-footer">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            @click="closeProblemCreatorModal"
-          >
-            {{ T.wordsClose }}
-          </button>
-          <button
-            type="button"
-            class="btn btn-primary"
-            @click="saveProblemCreatorContent"
-          >
-            {{ T.wordsSaveChanges }}
-          </button>
-        </div>
       </div>
     </div>
   </div>
@@ -645,8 +626,18 @@ export default class ProblemForm extends Vue {
   showProblemCreator = false;
   creatorGeneratedZipBlob: Blob | null = null;
   hasCreatorContent = false;
+  private readonly formDraftKey = 'problemFormDraft';
+  private readonly creatorDraftKey = 'problemCreatorDraft';
 
   mounted() {
+    if (!this.isUpdate) {
+      const savedMethod = window.sessionStorage.getItem(
+        'problemCreationMethod',
+      );
+      if (savedMethod === 'creator' || savedMethod === 'zip') {
+        this.creationMethod = savedMethod;
+      }
+    }
     const title = T.createProblemInteractiveGuideTitle;
     if (!this.hasVisitedSection) {
       introJs()
@@ -861,10 +852,41 @@ export default class ProblemForm extends Vue {
 
   closeProblemCreatorModal(): void {
     this.persistProblemCreatorDraft();
+    this.generateProblemCreatorZip();
     this.showProblemCreator = false;
   }
 
+  setCreationMethod(method: 'creator' | 'zip'): void {
+    this.creationMethod = method;
+    if (!this.isUpdate) {
+      window.sessionStorage.setItem('problemCreationMethod', method);
+      this.saveFormDraft();
+    }
+  }
+
+  saveFormDraft(): void {
+    if (this.isUpdate) {
+      return;
+    }
+    const draft = {
+      title: this.title,
+      alias: this.alias,
+      source: this.source,
+      problemLevel: this.problemLevel,
+      selectedTags: this.selectedTags,
+      currentLanguages: this.currentLanguages,
+      creationMethod: this.creationMethod,
+    };
+    window.localStorage.setItem(this.formDraftKey, JSON.stringify(draft));
+  }
+
   handleFormSubmit(event: Event): void {
+    if (!this.isUpdate) {
+      this.saveFormDraft();
+    }
+    if (!this.isUpdate && this.creationMethod === 'creator') {
+      this.persistProblemCreatorDraft();
+    }
     // If using creator method, handle file attachment
     if (!this.isUpdate && this.creationMethod === 'creator') {
       if (!this.creatorGeneratedZipBlob) {
@@ -904,6 +926,12 @@ export default class ProblemForm extends Vue {
         return;
       }
     }
+
+    if (!this.isUpdate && this.creationMethod === 'zip' && !this.hasFile) {
+      event.preventDefault();
+      ui.error(T.editFieldRequired || 'Please attach a zip file.');
+      return;
+    }
   }
 
   handleCreatorZipGeneration({ zipContent }: { zipContent: JSZip }): void {
@@ -922,16 +950,12 @@ export default class ProblemForm extends Vue {
     }
   }
 
-  saveProblemCreatorContent(): void {
-    // Get the problem creator wrapper component
+  generateProblemCreatorZip(): void {
     const creatorWrapper = this.$refs.problemCreator as any;
     const creatorComponent = creatorWrapper?.$refs?.creator;
-    this.persistProblemCreatorDraft();
     if (creatorComponent?.$refs?.creatorHeader) {
-      // Trigger the zip generation from the Creator component
       creatorComponent.$refs.creatorHeader.generateProblem();
     }
-    this.showProblemCreator = false;
   }
 
   @Watch('alias')
@@ -940,6 +964,32 @@ export default class ProblemForm extends Vue {
       return;
     }
     this.$emit('alias-changed', newValue);
+    this.saveFormDraft();
+  }
+
+  @Watch('title')
+  onTitleChanged(): void {
+    this.saveFormDraft();
+  }
+
+  @Watch('source')
+  onSourceChanged(): void {
+    this.saveFormDraft();
+  }
+
+  @Watch('problemLevel')
+  onProblemLevelChanged(): void {
+    this.saveFormDraft();
+  }
+
+  @Watch('selectedTags')
+  onSelectedTagsChanged(): void {
+    this.saveFormDraft();
+  }
+
+  @Watch('currentLanguages')
+  onCurrentLanguagesChanged(): void {
+    this.saveFormDraft();
   }
 }
 </script>

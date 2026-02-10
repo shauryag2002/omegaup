@@ -115,6 +115,12 @@ export default class Header extends Vue {
     this.nameInternal = newName;
   }
 
+  mounted(): void {
+    if (this.$store?.state?.problemName) {
+      this.nameInternal = this.$store.state.problemName;
+    }
+  }
+
   readFile(e: HTMLInputElement): File | null {
     return (e.files && e.files[0]) || null;
   }

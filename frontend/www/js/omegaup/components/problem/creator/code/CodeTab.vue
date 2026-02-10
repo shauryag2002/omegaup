@@ -118,13 +118,14 @@ export default class CodeTab extends Vue {
     this.extensionInternal = newExtension;
   }
 
-  @Watch('codeProp')
+  @Watch('codeProp', { immediate: true })
   onCodePropChanged() {
     this.code = this.codeProp;
   }
 
-  @Watch('extensionProp')
+  @Watch('extensionProp', { immediate: true })
   onextensionPropChanged() {
+    this.extension = this.extensionProp;
     if (
       this.extensionProp &&
       this.allowedExtensions.includes(this.extensionProp)
