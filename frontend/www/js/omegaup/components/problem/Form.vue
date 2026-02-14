@@ -82,10 +82,10 @@
                     :class="{ 'is-invalid': errors.includes('source') }"
                   />
                 </div>
-                <div v-if="!isUpdate" class="form-group col-md-6">
-                  <label class="control-label">{{
-                    T.problemEditFormCreationMethod
-                  }}</label>
+                <div
+                  v-if="!isUpdate"
+                  class="form-group col-md-6 introjs-creation-method"
+                >
                   <div class="btn-group btn-group-toggle d-flex" role="group">
                     <button
                       type="button"
@@ -94,6 +94,7 @@
                         'btn-primary': creationMethod === 'creator',
                         'btn-outline-primary': creationMethod !== 'creator',
                       }"
+                      :disabled="isCreationMethodIntroActive"
                       @click="setCreationMethod('creator')"
                     >
                       {{ T.problemEditFormCreationMethodCreator }}
@@ -105,22 +106,25 @@
                         'btn-primary': creationMethod === 'zip',
                         'btn-outline-primary': creationMethod !== 'zip',
                       }"
+                      :disabled="isCreationMethodIntroActive"
                       @click="setCreationMethod('zip')"
                     >
                       {{ T.problemEditFormCreationMethodZip }}
                     </button>
                   </div>
-                </div>
-              </div>
-              <div v-if="!isUpdate && creationMethod === 'creator'" class="row">
-                <div class="form-group col-md-12">
-                  <button
-                    type="button"
-                    class="btn btn-info"
-                    @click="showProblemCreator = true"
+                  <div
+                    v-if="creationMethod === 'creator'"
+                    class="mt-2 introjs-open-creator"
                   >
-                    {{ T.problemEditFormOpenProblemCreator }}
-                  </button>
+                    <button
+                      type="button"
+                      class="btn btn-info"
+                      :disabled="isCreationMethodIntroActive"
+                      @click="showProblemCreator = true"
+                    >
+                      {{ T.problemEditFormOpenProblemCreator }}
+                    </button>
+                  </div>
                   <!-- Hidden file input for creator-generated zip -->
                   <input
                     ref="creatorFileInput"
@@ -544,6 +548,7 @@
             ref="problemCreator"
             :hide-header-actions="true"
             :hide-save-buttons="true"
+            close-button-selector="[data-problem-creator-close]"
             @download-zip-file="handleCreatorZipGeneration"
           />
         </div>
@@ -551,6 +556,7 @@
           <button
             type="button"
             class="btn btn-secondary"
+            data-problem-creator-close
             @click="closeProblemCreatorModal"
           >
             {{ T.wordsClose }}
@@ -630,11 +636,16 @@ export default class ProblemForm extends Vue {
   showProblemCreator = false;
   creatorGeneratedZipBlob: Blob | null = null;
   hasCreatorContent = false;
+  isCreationMethodIntroActive = false;
   private readonly formDraftKey = 'problemFormDraft';
   private readonly creatorDraftKey = 'problemCreatorDraft';
   private createProblemIntro: any = null;
 
   mounted() {
+    if (this.isUpdate || this.isPageReload()) {
+      this.clearDraftStorage();
+    }
+    this.loadFormDraft();
     if (!this.isUpdate) {
       const savedMethod = window.sessionStorage.getItem(
         'problemCreationMethod',
@@ -643,59 +654,171 @@ export default class ProblemForm extends Vue {
         this.creationMethod = savedMethod;
       }
     }
+
     const title = T.createProblemInteractiveGuideTitle;
     if (!this.hasVisitedSection) {
+      const steps = [
+        {
+          title,
+          intro: T.createProblemInteractiveGuideWelcome,
+        },
+        {
+          element: document.querySelector('.introjs-title') as Element,
+          title,
+          intro: T.createProblemInteractiveGuideProblemTitle,
+        },
+        {
+          element: document.querySelector('.introjs-short-title') as Element,
+          title,
+          intro: T.createProblemInteractiveGuideShortTitle,
+        },
+        {
+          element: document.querySelector('.introjs-origin') as Element,
+          title,
+          intro: T.createProblemInteractiveGuideOrigin,
+        },
+      ];
+
+      const creationMethodElement = document.querySelector(
+        '.introjs-creation-method',
+      ) as Element | null;
+      if (creationMethodElement) {
+        steps.push({
+          element: creationMethodElement,
+          title,
+          intro: T.problemEditFormCreationMethod,
+        });
+      }
+
+      const openCreatorElement = document.querySelector(
+        '.introjs-open-creator',
+      ) as Element | null;
+      if (openCreatorElement) {
+        steps.push({
+          element: openCreatorElement,
+          title,
+          intro: T.problemEditFormOpenProblemCreator,
+        });
+      }
+
+      const fileElement = document.querySelector(
+        '.introjs-file',
+      ) as Element | null;
+      if (fileElement) {
+        steps.push({
+          element: fileElement,
+          title,
+          intro: T.createProblemInteractiveGuideFile,
+        });
+      }
+
+      steps.push(
+        {
+          element: document.querySelector('.introjs-tags-and-level') as Element,
+          title,
+          intro: T.createProblemInteractiveGuideTagsAndLevel,
+        },
+        {
+          element: document.querySelector('.introjs-type') as Element,
+          title,
+          intro: T.createProblemInteractiveGuideType,
+        },
+        {
+          element: document.querySelector('.introjs-validator') as Element,
+          title,
+          intro: T.createProblemInteractiveGuideValidator,
+        },
+      );
+
       const intro = introJs().setOptions({
         nextLabel: T.interactiveGuideNextButton,
         prevLabel: T.interactiveGuidePreviousButton,
         doneLabel: T.interactiveGuideDoneButton,
-        steps: [
-          {
-            title,
-            intro: T.createProblemInteractiveGuideWelcome,
-          },
-          {
-            element: document.querySelector('.introjs-title') as Element,
-            title,
-            intro: T.createProblemInteractiveGuideProblemTitle,
-          },
-          {
-            element: document.querySelector('.introjs-short-title') as Element,
-            title,
-            intro: T.createProblemInteractiveGuideShortTitle,
-          },
-          {
-            element: document.querySelector('.introjs-origin') as Element,
-            title,
-            intro: T.createProblemInteractiveGuideOrigin,
-          },
-          {
-            element: document.querySelector('.introjs-file') as Element,
-            title,
-            intro: T.createProblemInteractiveGuideFile,
-          },
-          {
-            element: document.querySelector(
-              '.introjs-tags-and-level',
-            ) as Element,
-            title,
-            intro: T.createProblemInteractiveGuideTagsAndLevel,
-          },
-          {
-            element: document.querySelector('.introjs-type') as Element,
-            title,
-            intro: T.createProblemInteractiveGuideType,
-          },
-          {
-            element: document.querySelector('.introjs-validator') as Element,
-            title,
-            intro: T.createProblemInteractiveGuideValidator,
-          },
-        ],
+        steps,
+      });
+      intro.onbeforechange((element) => {
+        const target = element as HTMLElement | null;
+        this.isCreationMethodIntroActive = Boolean(
+          target?.classList?.contains('introjs-creation-method') ||
+            target?.classList?.contains('introjs-open-creator'),
+        );
+      });
+      intro.onexit(() => {
+        this.isCreationMethodIntroActive = false;
+      });
+      intro.oncomplete(() => {
+        this.isCreationMethodIntroActive = false;
       });
       this.createProblemIntro = intro;
       intro.start();
       this.$cookies.set('has-visited-create-problem', true, -1);
+    }
+  }
+
+  clearDraftStorage(): void {
+    window.localStorage.removeItem(this.formDraftKey);
+    window.localStorage.removeItem(this.creatorDraftKey);
+    window.sessionStorage.removeItem('problemCreationMethod');
+  }
+
+  isPageReload(): boolean {
+    if (typeof performance === 'undefined') {
+      return false;
+    }
+    const entries = performance.getEntriesByType('navigation') as
+      | PerformanceNavigationTiming[]
+      | undefined;
+    if (entries && entries.length > 0) {
+      return entries[0].type === 'reload';
+    }
+    const navigation = (performance as any).navigation;
+    return navigation && navigation.type === 1;
+  }
+
+  loadFormDraft(): void {
+    if (this.isUpdate) {
+      return;
+    }
+    const raw = window.localStorage.getItem(this.formDraftKey);
+    if (!raw) {
+      return;
+    }
+    try {
+      const draft = JSON.parse(raw) as {
+        title?: string;
+        alias?: string;
+        source?: string;
+        problemLevel?: string;
+        selectedTags?: { tagname: string; public: boolean }[];
+        currentLanguages?: string;
+        creationMethod?: 'creator' | 'zip';
+      };
+      if (typeof draft.title === 'string') {
+        this.title = draft.title;
+      }
+      if (typeof draft.alias === 'string') {
+        this.alias = draft.alias;
+      }
+      if (typeof draft.source === 'string') {
+        this.source = draft.source;
+      }
+      if (typeof draft.problemLevel === 'string') {
+        this.problemLevel = draft.problemLevel;
+      }
+      if (Array.isArray(draft.selectedTags)) {
+        this.selectedTags = draft.selectedTags;
+      }
+      if (typeof draft.currentLanguages === 'string') {
+        this.currentLanguages = draft.currentLanguages;
+      }
+      if (
+        draft.creationMethod === 'creator' ||
+        draft.creationMethod === 'zip'
+      ) {
+        this.creationMethod = draft.creationMethod;
+      }
+    } catch (err) {
+      console.error('Failed to parse problem form draft', err);
     }
   }
 
