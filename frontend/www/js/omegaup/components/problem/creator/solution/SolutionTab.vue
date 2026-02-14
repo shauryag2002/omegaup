@@ -123,41 +123,46 @@ export default class SolutionTab extends Vue {
 
   startIntroGuide() {
     if (!this.$cookies.get('has-visited-solution-tab')) {
+      const steps = [
+        {
+          title: T.problemCreatorSolutionTabIntroToolbarTitle,
+          intro: T.problemCreatorSolutionTabIntroToolbarIntro,
+          element: document.querySelector(
+            '[data-solution-markdown-toolbar]',
+          ) as Element,
+        },
+        {
+          title: T.problemCreatorSolutionTabIntroEditorTitle,
+          intro: T.problemCreatorSolutionTabIntroEditorIntro,
+          element: document.querySelector(
+            '[data-problem-creator-solution-editor-markdown]',
+          ) as Element,
+        },
+        {
+          title: T.problemCreatorSolutionTabIntroPreviewTitle,
+          intro: T.problemCreatorSolutionTabIntroPreviewIntro,
+          element: document.querySelector(
+            '[data-problem-creator-solution-previewer-markdown]',
+          ) as Element,
+        },
+      ];
+
+      if (!this.hideSaveButton) {
+        steps.push({
+          title: T.problemCreatorSolutionTabIntroSaveTitle,
+          intro: T.problemCreatorSolutionTabIntroSaveIntro,
+          element: document.querySelector(
+            '[data-problem-creator-solution-save-markdown]',
+          ) as Element,
+        });
+      }
+
       introJs()
         .setOptions({
           nextLabel: T.interactiveGuideNextButton,
           prevLabel: T.interactiveGuidePreviousButton,
           doneLabel: T.interactiveGuideDoneButton,
-          steps: [
-            {
-              title: T.problemCreatorSolutionTabIntroToolbarTitle,
-              intro: T.problemCreatorSolutionTabIntroToolbarIntro,
-              element: document.querySelector(
-                '[data-solution-markdown-toolbar]',
-              ) as Element,
-            },
-            {
-              title: T.problemCreatorSolutionTabIntroEditorTitle,
-              intro: T.problemCreatorSolutionTabIntroEditorIntro,
-              element: document.querySelector(
-                '[data-problem-creator-solution-editor-markdown]',
-              ) as Element,
-            },
-            {
-              title: T.problemCreatorSolutionTabIntroPreviewTitle,
-              intro: T.problemCreatorSolutionTabIntroPreviewIntro,
-              element: document.querySelector(
-                '[data-problem-creator-solution-previewer-markdown]',
-              ) as Element,
-            },
-            {
-              title: T.problemCreatorSolutionTabIntroSaveTitle,
-              intro: T.problemCreatorSolutionTabIntroSaveIntro,
-              element: document.querySelector(
-                '[data-problem-creator-solution-save-markdown]',
-              ) as Element,
-            },
-          ],
+          steps,
         })
         .start();
       this.$cookies.set('has-visited-solution-tab', true, -1);

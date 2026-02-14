@@ -225,41 +225,46 @@ export default class CodeTab extends Vue {
 
   startIntroGuide() {
     if (!this.$cookies.get('has-visited-code-tab')) {
+      const steps = [
+        {
+          title: T.problemCreatorCodeTabIntroSelectLanguageTitle,
+          intro: T.problemCreatorCodeTabIntroSelectLanguageIntro,
+          element: document.querySelector(
+            '[data-problem-creator-code-language]',
+          ) as Element,
+        },
+        {
+          title: T.problemCreatorCodeTabIntroWriteCodeTitle,
+          intro: T.problemCreatorCodeTabIntroWriteCodeIntro,
+          element: document.querySelector(
+            '[data-problem-creator-code-editor]',
+          ) as Element,
+        },
+        {
+          title: T.problemCreatorCodeTabIntroUploadFileTitle,
+          intro: T.problemCreatorCodeTabIntroUploadFileIntro,
+          element: document.querySelector(
+            '[data-problem-creator-code-input]',
+          ) as Element,
+        },
+      ];
+
+      if (!this.hideSaveButton) {
+        steps.push({
+          title: T.problemCreatorCodeTabIntroSaveCodeTitle,
+          intro: T.problemCreatorCodeTabIntroSaveCodeIntro,
+          element: document.querySelector(
+            '[data-problem-creator-code-save-btn]',
+          ) as Element,
+        });
+      }
+
       introJs()
         .setOptions({
           nextLabel: T.interactiveGuideNextButton,
           prevLabel: T.interactiveGuidePreviousButton,
           doneLabel: T.interactiveGuideDoneButton,
-          steps: [
-            {
-              title: T.problemCreatorCodeTabIntroSelectLanguageTitle,
-              intro: T.problemCreatorCodeTabIntroSelectLanguageIntro,
-              element: document.querySelector(
-                '[data-problem-creator-code-language]',
-              ) as Element,
-            },
-            {
-              title: T.problemCreatorCodeTabIntroWriteCodeTitle,
-              intro: T.problemCreatorCodeTabIntroWriteCodeIntro,
-              element: document.querySelector(
-                '[data-problem-creator-code-editor]',
-              ) as Element,
-            },
-            {
-              title: T.problemCreatorCodeTabIntroUploadFileTitle,
-              intro: T.problemCreatorCodeTabIntroUploadFileIntro,
-              element: document.querySelector(
-                '[data-problem-creator-code-input]',
-              ) as Element,
-            },
-            {
-              title: T.problemCreatorCodeTabIntroSaveCodeTitle,
-              intro: T.problemCreatorCodeTabIntroSaveCodeIntro,
-              element: document.querySelector(
-                '[data-problem-creator-code-save-btn]',
-              ) as Element,
-            },
-          ],
+          steps,
         })
         .start();
 
