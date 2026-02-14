@@ -68,6 +68,9 @@ export default class Creator extends Vue {
   }
 
   launchIntro() {
+    if (document.body.classList.contains('introjs-showing')) {
+      return;
+    }
     if (!this.$cookies.get('has-visited-problem-creator')) {
       introJs()
         .setOptions({

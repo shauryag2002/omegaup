@@ -540,6 +540,7 @@
       <div class="problem-creator-modal-content">
         <div class="problem-creator-modal-body">
           <omegaup-problem-creator
+            v-if="showProblemCreator"
             ref="problemCreator"
             :hide-header-actions="true"
             :hide-save-buttons="true"
@@ -631,6 +632,7 @@ export default class ProblemForm extends Vue {
   hasCreatorContent = false;
   private readonly formDraftKey = 'problemFormDraft';
   private readonly creatorDraftKey = 'problemCreatorDraft';
+  private createProblemIntro: any = null;
 
   mounted() {
     if (!this.isUpdate) {
@@ -643,58 +645,56 @@ export default class ProblemForm extends Vue {
     }
     const title = T.createProblemInteractiveGuideTitle;
     if (!this.hasVisitedSection) {
-      introJs()
-        .setOptions({
-          nextLabel: T.interactiveGuideNextButton,
-          prevLabel: T.interactiveGuidePreviousButton,
-          doneLabel: T.interactiveGuideDoneButton,
-          steps: [
-            {
-              title,
-              intro: T.createProblemInteractiveGuideWelcome,
-            },
-            {
-              element: document.querySelector('.introjs-title') as Element,
-              title,
-              intro: T.createProblemInteractiveGuideProblemTitle,
-            },
-            {
-              element: document.querySelector(
-                '.introjs-short-title',
-              ) as Element,
-              title,
-              intro: T.createProblemInteractiveGuideShortTitle,
-            },
-            {
-              element: document.querySelector('.introjs-origin') as Element,
-              title,
-              intro: T.createProblemInteractiveGuideOrigin,
-            },
-            {
-              element: document.querySelector('.introjs-file') as Element,
-              title,
-              intro: T.createProblemInteractiveGuideFile,
-            },
-            {
-              element: document.querySelector(
-                '.introjs-tags-and-level',
-              ) as Element,
-              title,
-              intro: T.createProblemInteractiveGuideTagsAndLevel,
-            },
-            {
-              element: document.querySelector('.introjs-type') as Element,
-              title,
-              intro: T.createProblemInteractiveGuideType,
-            },
-            {
-              element: document.querySelector('.introjs-validator') as Element,
-              title,
-              intro: T.createProblemInteractiveGuideValidator,
-            },
-          ],
-        })
-        .start();
+      const intro = introJs().setOptions({
+        nextLabel: T.interactiveGuideNextButton,
+        prevLabel: T.interactiveGuidePreviousButton,
+        doneLabel: T.interactiveGuideDoneButton,
+        steps: [
+          {
+            title,
+            intro: T.createProblemInteractiveGuideWelcome,
+          },
+          {
+            element: document.querySelector('.introjs-title') as Element,
+            title,
+            intro: T.createProblemInteractiveGuideProblemTitle,
+          },
+          {
+            element: document.querySelector('.introjs-short-title') as Element,
+            title,
+            intro: T.createProblemInteractiveGuideShortTitle,
+          },
+          {
+            element: document.querySelector('.introjs-origin') as Element,
+            title,
+            intro: T.createProblemInteractiveGuideOrigin,
+          },
+          {
+            element: document.querySelector('.introjs-file') as Element,
+            title,
+            intro: T.createProblemInteractiveGuideFile,
+          },
+          {
+            element: document.querySelector(
+              '.introjs-tags-and-level',
+            ) as Element,
+            title,
+            intro: T.createProblemInteractiveGuideTagsAndLevel,
+          },
+          {
+            element: document.querySelector('.introjs-type') as Element,
+            title,
+            intro: T.createProblemInteractiveGuideType,
+          },
+          {
+            element: document.querySelector('.introjs-validator') as Element,
+            title,
+            intro: T.createProblemInteractiveGuideValidator,
+          },
+        ],
+      });
+      this.createProblemIntro = intro;
+      intro.start();
       this.$cookies.set('has-visited-create-problem', true, -1);
     }
   }
@@ -994,6 +994,18 @@ export default class ProblemForm extends Vue {
   onCurrentLanguagesChanged(): void {
     this.saveFormDraft();
   }
+
+  @Watch('showProblemCreator')
+  onShowProblemCreatorChanged(isVisible: boolean): void {
+    if (isVisible) {
+      if (this.createProblemIntro?.exit) {
+        this.createProblemIntro.exit();
+      }
+      document.body.classList.add('problem-creator-intro');
+      return;
+    }
+    document.body.classList.remove('problem-creator-intro');
+  }
 }
 </script>
 
@@ -1059,5 +1071,19 @@ export default class ProblemForm extends Vue {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+body.problem-creator-intro .introjs-helperLayer {
+  background: transparent !important;
+}
+
+body.problem-creator-intro .introjs-overlay {
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+body.problem-creator-intro .introjs-tooltipReference,
+body.problem-creator-intro .introjs-tooltip {
+  z-index: 1001;
 }
 </style>
