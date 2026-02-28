@@ -13,9 +13,8 @@ module.exports = {
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:jest-dom/recommended',
-    // Vue 2 ruleset. Do NOT mix with vue3-* until we migrate.
-    'plugin:vue/recommended',
-    // TODO: when migrating to Vue 3, replace the line above with vue3-recommended
+    // Vue 3 ruleset — using @vue/compat migration build.
+    'plugin:vue/vue3-recommended',
     'prettier',
     'prettier/@typescript-eslint',
     'prettier/vue',
@@ -32,15 +31,15 @@ module.exports = {
     // Avoid using bracket type assertions, since those are the old syntax.
     '@typescript-eslint/consistent-type-assertions': 'error',
 
-    // TODO: Remove when we migrate to Vue 3, since this syntax doesn't _quite_
-    // work all the time in Vue 2.
+    // Keep disabled during @vue/compat migration. Remove once all .sync
+    // modifiers are converted to v-model:propName.
     'vue/no-deprecated-v-bind-sync': 'off',
 
     // TODO(#4778): Add key to ALL v-for.
     'vue/require-v-for-key': 'off',
 
-    // TODO: Remove when we migrate to Vue 3, beacause of
-    // https://v3.vuejs.org/guide/migration/key-attribute.html#with-template-v-for
+    // Keep disabled during @vue/compat migration. Remove once components
+    // are fully migrated to Vue 3 template syntax.
     'vue/no-v-for-template-key-on-child': 'off',
 
     // TODO: Remove all these exceptions.
