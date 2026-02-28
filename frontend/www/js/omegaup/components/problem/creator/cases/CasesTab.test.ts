@@ -10,6 +10,7 @@ import Vue from 'vue';
 describe('Tabs.vue', () => {
   it('Should contain 3 buttons and Groups text', async () => {
     const wrapper = shallowMount(CasesTab);
+    const sidebar = wrapper.findComponent(Sidebar);
     expect(sidebar.exists()).toBe(true);
   });
   it('Should render "AddPanel.vue" conditionally', async () => {
