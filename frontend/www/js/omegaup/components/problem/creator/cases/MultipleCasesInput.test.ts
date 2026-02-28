@@ -1,4 +1,4 @@
-import { createLocalVue, shallowMount } from '@vue/test-utils';
+import { shallowMount } from '@vue/test-utils';
 
 import MultipleCasesInput from './MultipleCasesInput.vue';
 import BootstrapVue, { IconsPlugin } from 'bootstrap-vue';
@@ -8,9 +8,6 @@ import store from '@/js/omegaup/problem/creator/store';
 import { Group } from '@/js/omegaup/problem/creator/types';
 import { v4 as uuid } from 'uuid';
 
-const localVue = createLocalVue();
-localVue.use(BootstrapVue);
-localVue.use(IconsPlugin);
 
 const testGroup: Group = {
   groupID: uuid(),
@@ -25,7 +22,6 @@ store.commit('casesStore/addGroup', testGroup);
 describe('MultipleCasesInput.vue', () => {
   it('Should contain all 4 inputs', async () => {
     const wrapper = shallowMount(MultipleCasesInput, {
-      localVue,
       store,
     });
 
@@ -59,7 +55,6 @@ describe('MultipleCasesInput.vue', () => {
 
   it('Should handle autoformatting', () => {
     const wrapper = shallowMount(MultipleCasesInput, {
-      localVue,
       store,
     });
 
@@ -75,7 +70,6 @@ describe('MultipleCasesInput.vue', () => {
 
   it('Should handle choice of groups', () => {
     const wrapper = shallowMount(MultipleCasesInput, {
-      localVue,
       store,
     });
 
