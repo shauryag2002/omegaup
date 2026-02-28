@@ -253,11 +253,11 @@ export default class UserObjectivesQuestions extends Vue {
 <style lang="scss" scoped>
 @import '../../../../sass/main.scss';
 
->>> .modal-dialog {
+:deep(.modal-dialog) {
   max-width: 330px;
 }
 
->>> .modal-header {
+:deep(.modal-header) {
   border-bottom: 0;
 }
 

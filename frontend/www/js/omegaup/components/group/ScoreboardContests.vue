@@ -94,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineExpose } from 'vue';
+import { ref } from 'vue';
 import T from '../../lang';
 import * as ui from '../../ui';
 import { types } from '../../api_types';

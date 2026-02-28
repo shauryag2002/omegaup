@@ -16,13 +16,15 @@
   </label>
 </template>
 
-<script setup lang="ts">
-import { ref, watch } from 'vue';
-
+<script lang="ts">
 export enum ToggleSwitchSize {
   Small = 'small',
   Large = 'large',
 }
+</script>
+
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 
 const props = withDefaults(
   defineProps<{

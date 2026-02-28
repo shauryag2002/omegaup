@@ -42,9 +42,11 @@
               })
             }}
           </h3>
-          <template v-for="group in getGroups(item)">
+          <template
+            v-for="group in getGroups(item)"
+            :key="`${contestantData.username}_${item.alias}_${group.group}_case`"
+          >
             <table
-              :key="`${contestantData.username}_${item.alias}_${group.group}_case`"
               class="table table-stripped table-responsive"
             >
               <thead>
@@ -85,7 +87,6 @@
             </table>
 
             <table
-              :key="`${contestantData.username}_${item.alias}_${group.group}_detail`"
               class="table table-stripped table-responsive pb-2"
             >
               <thead>

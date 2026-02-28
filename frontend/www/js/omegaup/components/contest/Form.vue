@@ -1515,7 +1515,7 @@ export default class Form extends Vue {
 }
 
 /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
-.is-invalid-wrapper ::v-deep .multiselect__tags {
+.is-invalid-wrapper :deep(.multiselect__tags) {
   border-color: var(--form-input-error-color);
 }
 

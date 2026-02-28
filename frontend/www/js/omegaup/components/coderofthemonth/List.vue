@@ -46,7 +46,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, type Component as VueComponent } from 'vue';
+import { computed, ref } from 'vue';
+import type { Component as VueComponent } from 'vue';
 import T from '../../lang';
 import OmegaupCodersList from './CodersList.vue';
 import OmegaupTopCodersList from './TopCodersList.vue';

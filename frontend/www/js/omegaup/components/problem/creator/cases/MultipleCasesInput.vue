@@ -63,12 +63,10 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useStore } from 'vuex';
+import store from '../../../../problem/creator/store';
 import { GroupID } from '../../../../problem/creator/types';
 import { NIL } from 'uuid';
 import T from '../../../../lang';
-
-const store = useStore();
 
 const multipleCasesPrefix = ref('');
 const multipleCasesSuffix = ref('');
