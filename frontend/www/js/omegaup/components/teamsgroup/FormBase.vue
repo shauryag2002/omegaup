@@ -31,7 +31,7 @@
             <label class="control-label w-100">
               {{ T.contestNewFormShortTitleAlias }}
               <input
-                v-model="alias"
+                v-model="currentAlias"
                 name="alias"
                 required
                 type="text"

@@ -87,7 +87,7 @@ function dismiss(): void {
 
     // Override Markdown component styling for notifications
     /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
-    ::v-deep [data-markdown-statement] {
+    :deep([data-markdown-statement]) {
       display: inline;
       max-width: none;
       margin: 0;

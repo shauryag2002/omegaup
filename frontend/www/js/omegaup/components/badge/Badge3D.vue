@@ -86,7 +86,7 @@ onBeforeUnmount(() => {
   transform-style: preserve-3d;
   pointer-events: none;
 
-  >>> * {
+  :deep(*) {
     width: 100%;
     height: 100%;
     object-fit: contain;

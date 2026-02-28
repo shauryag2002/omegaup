@@ -124,7 +124,7 @@ const ownersNumber = computed((): string => {
   &-text {
     font-size: 1.1em;
 
-    >>> &-icon {
+    :deep(&-icon) {
       font-size: 30px;
     }
   }

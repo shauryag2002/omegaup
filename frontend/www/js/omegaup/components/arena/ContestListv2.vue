@@ -790,7 +790,7 @@ export default ArenaContestList;
 }
 
 .sidebar {
-  >>> .contest-list-nav {
+  :deep(.contest-list-nav) {
     background-color: var(
       --arena-contest-list-sidebar-tab-list-background-color
     );

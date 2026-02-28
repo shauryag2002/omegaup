@@ -1,4 +1,4 @@
-import { createLocalVue, shallowMount } from '@vue/test-utils';
+import { shallowMount } from '@vue/test-utils';
 import Sortable from 'sortablejs';
 
 import T from '../../lang';
@@ -19,16 +19,10 @@ describe('AssignmentList.vue', () => {
     expect(wrapper.text()).toContain(T.courseContentEmpty);
   });
 
-  const localVue = createLocalVue();
-  localVue.directive('Sortable', {
-    inserted: (el: HTMLElement, binding) => {
-      new Sortable(el, binding.value || {});
-    },
-  });
+
 
   it('Should handle content list', async () => {
     const wrapper = shallowMount(course_AssignmentList, {
-      localVue,
       propsData: {
         content: [
           {

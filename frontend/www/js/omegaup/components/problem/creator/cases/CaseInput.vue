@@ -49,11 +49,9 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useStore } from 'vuex';
+import store from '../../../../problem/creator/store';
 import { NIL } from 'uuid';
 import T from '../../../../lang';
-
-const store = useStore();
 
 const props = withDefaults(
   defineProps<{

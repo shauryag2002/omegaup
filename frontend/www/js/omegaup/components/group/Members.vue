@@ -127,7 +127,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineExpose } from 'vue';
+import { ref } from 'vue';
 import { dao, types } from '../../api_types';
 import T from '../../lang';
 import OmegaupUserUsername from '../user/Username.vue';

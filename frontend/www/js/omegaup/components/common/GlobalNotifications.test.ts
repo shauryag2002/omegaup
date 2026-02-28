@@ -1,4 +1,4 @@
-import { createLocalVue, shallowMount } from '@vue/test-utils';
+import { shallowMount } from '@vue/test-utils';
 import Vuex, { Store } from 'vuex';
 import {
   createNotificationsStore,
@@ -7,8 +7,6 @@ import {
 } from '../../notificationsStore';
 import GlobalNotifications from './GlobalNotifications.vue';
 
-const localVue = createLocalVue();
-localVue.use(Vuex);
 
 // Simple stub for markdown component that just renders the text
 const MarkdownStub = {
@@ -62,7 +60,6 @@ describe('GlobalNotifications.vue', () => {
   it('should not render alert when not visible', () => {
     // Store starts with visible: false by default
     const wrapper = shallowMount(GlobalNotifications, {
-      localVue,
       stubs: {
         'omegaup-markdown': MarkdownStub,
       },
@@ -79,7 +76,6 @@ describe('GlobalNotifications.vue', () => {
     });
 
     const wrapper = shallowMount(GlobalNotifications, {
-      localVue,
       stubs: {
         'omegaup-markdown': MarkdownStub,
       },
@@ -105,7 +101,6 @@ describe('GlobalNotifications.vue', () => {
     });
 
     const wrapper = shallowMount(GlobalNotifications, {
-      localVue,
       stubs: {
         'omegaup-markdown': MarkdownStub,
       },
@@ -124,7 +119,6 @@ describe('GlobalNotifications.vue', () => {
     });
 
     const wrapper = shallowMount(GlobalNotifications, {
-      localVue,
       stubs: {
         'omegaup-markdown': MarkdownStub,
       },
@@ -140,7 +134,6 @@ describe('GlobalNotifications.vue', () => {
 
   it('should have dismiss method that dispatches to store', () => {
     const wrapper = shallowMount(GlobalNotifications, {
-      localVue,
       stubs: {
         'omegaup-markdown': MarkdownStub,
       },

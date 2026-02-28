@@ -88,7 +88,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useStore } from 'vuex';
+import store from '../../../../problem/creator/store';
 import T from '../../../../lang';
 import CaseInput from './CaseInput.vue';
 import MultipleCasesInput from './MultipleCasesInput.vue';
@@ -100,8 +100,6 @@ import {
   AddTabTypes,
 } from '@/js/omegaup/problem/creator/types';
 import { NIL, v4 as uuid } from 'uuid';
-
-const store = useStore();
 
 const emit = defineEmits<{
   (e: 'close-add-window'): void;

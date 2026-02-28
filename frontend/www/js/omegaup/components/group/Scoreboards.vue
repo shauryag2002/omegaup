@@ -74,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, defineExpose } from 'vue';
+import { ref, watch } from 'vue';
 import T from '../../lang';
 import latinize from 'latinize';
 import { types } from '../../api_types';

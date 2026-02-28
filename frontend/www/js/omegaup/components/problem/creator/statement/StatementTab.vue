@@ -42,14 +42,12 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
-import { useStore } from 'vuex';
+import store from '../../../../problem/creator/store';
 import * as Markdown from '@/third_party/js/pagedown/Markdown.Editor.js';
 import * as markdown from '../../../../markdown';
 import T from '../../../../lang';
 import * as ui from '../../../../ui';
 import ProblemMarkdown from '../../ProblemMarkdown.vue';
-
-const store = useStore();
 
 const markdownConverter = new markdown.Converter({
   preview: true,

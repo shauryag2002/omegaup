@@ -1,4 +1,4 @@
-import { createLocalVue, shallowMount, mount } from '@vue/test-utils';
+import { shallowMount, mount } from '@vue/test-utils';
 
 import CasesForm from './CasesForm.vue';
 import BootstrapVue, { IconsPlugin } from 'bootstrap-vue';
@@ -11,9 +11,6 @@ import {
 } from '@/js/omegaup/problem/creator/modules/cases';
 import * as ui from '@/js/omegaup/ui';
 
-const localVue = createLocalVue();
-localVue.use(BootstrapVue);
-localVue.use(IconsPlugin);
 
 describe('CasesForm.vue', () => {
   beforeEach(() => {
@@ -22,7 +19,6 @@ describe('CasesForm.vue', () => {
 
   it('Should render commit message input and hidden fields', async () => {
     const wrapper = shallowMount(CasesForm, {
-      localVue,
       store: store,
       provide: { problemAlias: 'problem-alias' },
       propsData: { isCaseEdit: true },
@@ -57,7 +53,6 @@ describe('CasesForm.vue', () => {
 
   it('Should show input and output file fields when truncated', async () => {
     const wrapper = shallowMount(CasesForm, {
-      localVue,
       store: store,
       provide: { problemAlias: 'alias' },
       propsData: { isTruncatedInput: true, isTruncatedOutput: true },
@@ -83,7 +78,6 @@ describe('CasesForm.vue', () => {
     });
 
     const wrapper = shallowMount(CasesForm, {
-      localVue,
       store,
       provide: { problemAlias: 'alias' },
       propsData: { isCaseEdit: true },
@@ -108,7 +102,6 @@ describe('CasesForm.vue', () => {
     });
 
     const wrapper = shallowMount(CasesForm, {
-      localVue,
       store,
       provide: { problemAlias: 'alias' },
       propsData: { isCaseEdit: false, editGroup: editGroup },
@@ -131,7 +124,6 @@ describe('CasesForm.vue', () => {
     const errorSpy = jest.spyOn(ui, 'error').mockImplementation(() => {});
 
     const wrapper = mount(CasesForm, {
-      localVue,
       store: store,
       provide: { problemAlias: 'alias' },
       propsData: { isCaseEdit: false },
@@ -153,7 +145,6 @@ describe('CasesForm.vue', () => {
 
   it('Should hide submit button when isEmbedded is true', async () => {
     const wrapper = mount(CasesForm, {
-      localVue,
       store: store,
       provide: { problemAlias: 'alias' },
       propsData: { isEmbedded: true },
@@ -165,7 +156,6 @@ describe('CasesForm.vue', () => {
 
   it('Should initialize commitMessage for Case edit', () => {
     const wrapper = shallowMount(CasesForm, {
-      localVue,
       store,
       provide: { problemAlias: 'alias' },
       propsData: { isCaseEdit: true },
@@ -175,7 +165,6 @@ describe('CasesForm.vue', () => {
 
   it('Should initialize commitMessage for Group edit', () => {
     const wrapper = shallowMount(CasesForm, {
-      localVue,
       store,
       provide: { problemAlias: 'alias' },
       propsData: { isCaseEdit: false },
@@ -185,7 +174,6 @@ describe('CasesForm.vue', () => {
 
   it('Should render submit button with correct text', async () => {
     const wrapper = shallowMount(CasesForm, {
-      localVue,
       store,
       provide: { problemAlias: 'alias' },
       propsData: { isCaseEdit: true },

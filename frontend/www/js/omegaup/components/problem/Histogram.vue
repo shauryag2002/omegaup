@@ -69,14 +69,16 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { computed } from 'vue';
-import T from '../../lang';
-
+<script lang="ts">
 export enum HistogramType {
   Quality = 'quality',
   Difficulty = 'difficulty',
 }
+</script>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import T from '../../lang';
 
 const props = defineProps<{
   type: string;

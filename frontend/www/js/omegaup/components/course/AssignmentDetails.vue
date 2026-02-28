@@ -178,7 +178,10 @@
             :assignment-problems="assignmentProblems"
             :tagged-problems="taggedProblems"
             :selected-assignment="assignment"
-            :assignment-form-mode.sync="assignmentFormMode"
+            :assignment-form-mode="assignmentFormMode"
+            @update:assignment-form-mode="
+              (val) => emit('update:assignmentFormMode', val)
+            "
             :search-result-problems="searchResultProblems"
             @update-search-result-problems="
               (query) => emit('update-search-result-problems', query)
@@ -307,6 +310,10 @@ const emit = defineEmits<{
   (e: 'update-assignment', params: UpdateParams): void;
   (e: 'tags-problems', tags: string[]): void;
   (e: 'update-search-result-problems', query: string): void;
+  (
+    e: 'update:assignmentFormMode',
+    mode: omegaup.AssignmentFormMode,
+  ): void;
   (
     e: 'add-problem',
     assignment: types.CourseAssignment,
