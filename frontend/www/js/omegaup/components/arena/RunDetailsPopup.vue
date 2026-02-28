@@ -1,5 +1,5 @@
 <template>
-  <omegaup-overlay-popup @dismiss="$emit('dismiss')">
+  <OmegaupOverlayPopup @dismiss="emit('dismiss')">
     <div v-if="data">
       <form data-run-details-view>
         <slot
@@ -14,7 +14,7 @@
             T.wordsDownload
           }}</a>
           <slot v-else name="code-view" :guid="data.guid">
-            <omegaup-arena-feedback-code-view
+            <OmegaupArenaFeedbackCodeView
               :language="language"
               :value="source"
               :feedback-map="feedbackMap"
@@ -25,7 +25,7 @@
               @submit-feedback-thread="
                 (feedback) => onSubmitFeedbackThread(feedback, data.guid)
               "
-            ></omegaup-arena-feedback-code-view>
+            ></OmegaupArenaFeedbackCodeView>
           </slot>
         </div>
         <div v-if="data.groups" class="cases">
@@ -52,11 +52,11 @@
                     class="w-100 h-100 my-0 mx-auto text-center bg-white text-dark rounded"
                     @click="toggle(element.group)"
                   >
-                    <font-awesome-icon
+                    <FontAwesomeIcon
                       v-if="groupVisible[element.group]"
                       :icon="['fas', 'chevron-circle-up']"
                     />
-                    <font-awesome-icon
+                    <FontAwesomeIcon
                       v-else
                       :icon="['fas', 'chevron-circle-down']"
                     />
@@ -108,12 +108,12 @@
                     </tr>
                     <tr :key="`diffs-${problemCase.name}`">
                       <td v-if="data.cases" colspan="6">
-                        <omegaup-arena-diff-view
+                        <OmegaupArenaDiffView
                           :left="data.cases[problemCase.name].out"
                           :right="
                             getContestantOutput(data.cases, problemCase.name)
                           "
-                        ></omegaup-arena-diff-view>
+                        ></OmegaupArenaDiffView>
                       </td>
                       <td v-else colspan="6" class="empty-table-message">
                         {{ EMPTY_FIELD }}
@@ -185,17 +185,17 @@
         <span class="sr-only">Loading...</span>
       </div>
     </div>
-  </omegaup-overlay-popup>
+  </OmegaupOverlayPopup>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed, getCurrentInstance } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
-import arena_DiffView from './DiffView.vue';
-import omegaup_OverlayPopup from '../OverlayPopup.vue';
+import OmegaupArenaDiffView from './DiffView.vue';
+import OmegaupOverlayPopup from '../OverlayPopup.vue';
 import { ArenaCourseFeedback } from './Feedback.vue';
-import arena_FeedbackCodeView from './FeedbackCodeView.vue';
+import OmegaupArenaFeedbackCodeView from './FeedbackCodeView.vue';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
@@ -212,81 +212,90 @@ interface GroupVisibility {
 
 const EMPTY_FIELD = '∅';
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-    'omegaup-arena-diff-view': arena_DiffView,
-    'omegaup-overlay-popup': omegaup_OverlayPopup,
-    'omegaup-arena-feedback-code-view': arena_FeedbackCodeView,
+const props = withDefaults(
+  defineProps<{
+    data: types.RunDetails;
+    feedbackMap?: Map<number, ArenaCourseFeedback>;
+    feedbackThreadMap?: Map<number, ArenaCourseFeedback>;
+  }>(),
+  {
+    feedbackMap: () => new Map<number, ArenaCourseFeedback>(),
+    feedbackThreadMap: () => new Map<number, ArenaCourseFeedback>(),
   },
-})
-export default class ArenaRunDetailsPopup extends Vue {
-  @Prop() data!: types.RunDetails;
-  @Prop({ default: () => new Map<number, ArenaCourseFeedback>() })
-  feedbackMap!: Map<number, ArenaCourseFeedback>;
-  @Prop({ default: () => new Map<number, ArenaCourseFeedback>() })
-  feedbackThreadMap!: Map<number, ArenaCourseFeedback>;
+);
 
-  EMPTY_FIELD = EMPTY_FIELD;
-  T = T;
-  groupVisible: GroupVisibility = {};
+const emit = defineEmits<{
+  (e: 'dismiss'): void;
+}>();
 
-  get language(): string | undefined {
-    return this.data?.language;
-  }
+const groupVisible = ref<GroupVisibility>({});
 
-  get source(): string | undefined {
-    return this.data?.source;
-  }
+const language = computed((): string | undefined => {
+  return props.data?.language;
+});
 
-  get shortGuid(): string {
-    return this.data.guid.substring(0, 8);
-  }
+const source = computed((): string | undefined => {
+  return props.data?.source;
+});
 
-  toggle(group: string): void {
-    const visible = this.groupVisible[group];
-    this.$set(this.groupVisible, group, !visible);
-  }
+const shortGuid = computed((): string => {
+  return props.data.guid.substring(0, 8);
+});
 
-  showDataCase(
-    cases: types.ProblemCasesContents,
-    caseName: string,
-    caseType: 'in' | 'out' | 'contestantOutput',
-  ): string {
-    return cases[caseName]?.[caseType] ?? EMPTY_FIELD;
-  }
+function toggle(group: string): void {
+  const visible = groupVisible.value[group];
+  groupVisible.value[group] = !visible;
+}
 
-  shouldShowDiffs(caseName: string): boolean {
-    return (
-      this.data.show_diff === 'all' ||
-      (caseName === 'sample' && this.data.show_diff === 'examples')
-    );
-  }
+function showDataCase(
+  cases: types.ProblemCasesContents,
+  caseName: string,
+  caseType: 'in' | 'out' | 'contestantOutput',
+): string {
+  return cases[caseName]?.[caseType] ?? EMPTY_FIELD;
+}
 
-  getContestantOutput(cases: types.ProblemCasesContents, name: string): string {
-    return cases[name]?.contestantOutput ?? '';
-  }
+function shouldShowDiffs(caseName: string): boolean {
+  return (
+    props.data.show_diff === 'all' ||
+    (caseName === 'sample' && props.data.show_diff === 'examples')
+  );
+}
 
-  contestScore(problemCase: types.CaseResult): number {
-    return problemCase.contest_score ?? problemCase.score;
-  }
+function getContestantOutput(
+  cases: types.ProblemCasesContents,
+  name: string,
+): string {
+  return cases[name]?.contestantOutput ?? '';
+}
 
-  onSaveFeedbackList(
-    feedbackList: { lineNumber: number; feedback: string }[],
-    guid: string,
-  ) {
-    this.$parent?.$parent?.$parent?.$parent?.$emit('save-feedback-list', {
+function contestScore(problemCase: types.CaseResult): number {
+  return problemCase.contest_score ?? problemCase.score;
+}
+
+// TODO: Replace with proper event bus or provide/inject
+function onSaveFeedbackList(
+  feedbackList: { lineNumber: number; feedback: string }[],
+  guid: string,
+) {
+  getCurrentInstance()?.proxy?.$parent?.$parent?.$parent?.$parent?.$emit(
+    'save-feedback-list',
+    {
       feedbackList,
       guid,
-    });
-  }
+    },
+  );
+}
 
-  onSubmitFeedbackThread(feedback: ArenaCourseFeedback, guid: string) {
-    this.$parent?.$parent?.$parent?.$parent?.$emit('submit-feedback-thread', {
+// TODO: Replace with proper event bus or provide/inject
+function onSubmitFeedbackThread(feedback: ArenaCourseFeedback, guid: string) {
+  getCurrentInstance()?.proxy?.$parent?.$parent?.$parent?.$parent?.$emit(
+    'submit-feedback-thread',
+    {
       feedback,
       guid,
-    });
-  }
+    },
+  );
 }
 </script>
 

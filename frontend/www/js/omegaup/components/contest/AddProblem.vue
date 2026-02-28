@@ -24,20 +24,20 @@
                   </option>
                 </select>
               </div>
-              <omegaup-common-typeahead
+              <OmegaupCommonTypeahead
                 class="w-75"
                 :existing-options="searchResultProblems"
                 :activation-threshold="2"
                 :value.sync="alias"
                 @update-existing-options="
                   (query) =>
-                    $emit('update-search-result-problems', {
+                    emit('update-search-result-problems', {
                       query,
                       searchType: selectedSearchType,
                     })
                 "
               >
-              </omegaup-common-typeahead>
+              </OmegaupCommonTypeahead>
             </div>
           </div>
         </div>
@@ -46,20 +46,20 @@
             <label for="use-latest-version" class="font-weight-bold"
               >{{ T.contestAddproblemChooseVersion }}
             </label>
-            <omegaup-radio-switch
+            <OmegaupRadioSwitch
               :value.sync="useLatestVersion"
               :selected-value="useLatestVersion"
               :name="'use-latest-version'"
               :text-for-true="T.contestAddproblemLatestVersion"
               :text-for-false="T.contestAddproblemOtherVersion"
-            ></omegaup-radio-switch>
+            ></OmegaupRadioSwitch>
           </div>
           <div class="form-group col-md-3">
             <label
               v-tooltip="T.contestAddproblemProblemPoints"
               class="font-weight-bold"
               >{{ T.wordsPoints }}
-              <font-awesome-icon icon="info-circle" />
+              <FontAwesomeIcon icon="info-circle" />
             </label>
             <input
               v-model="points"
@@ -73,7 +73,7 @@
               v-tooltip="T.contestAddproblemContestOrder"
               class="font-weight-bold"
               >{{ T.contestAddproblemProblemOrder }}
-              <font-awesome-icon icon="info-circle" />
+              <FontAwesomeIcon icon="info-circle" />
             </label>
             <input
               v-model="order"
@@ -84,14 +84,14 @@
             />
           </div>
         </div>
-        <omegaup-problem-versions
+        <OmegaupProblemVersions
           v-if="!useLatestVersion && alias !== null"
           v-model="selectedRevision"
           :log="versionLog"
           :published-revision="publishedRevision"
           :show-footer="false"
           @runs-diff="onRunsDiff"
-        ></omegaup-problem-versions>
+        ></OmegaupProblemVersions>
         <div class="form-group">
           <button
             class="btn btn-primary add-problem"
@@ -137,7 +137,7 @@
               class="btn btn-link"
               @click="onEdit(problem)"
             >
-              <font-awesome-icon icon="edit" />
+              <FontAwesomeIcon icon="edit" />
             </button>
             <button
               v-if="problem.has_submissions"
@@ -147,7 +147,7 @@
               data-toggle="tooltip"
               data-placement="bottom"
             >
-              <font-awesome-icon icon="trash" class="disabled text-secondary" />
+              <FontAwesomeIcon icon="trash" class="disabled text-secondary" />
             </button>
             <button
               v-else
@@ -156,7 +156,7 @@
               class="btn btn-link"
               @click="onRemove(problem)"
             >
-              <font-awesome-icon icon="trash" />
+              <FontAwesomeIcon icon="trash" />
             </button>
           </td>
         </tr>
@@ -166,21 +166,26 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+export enum SearchTypes {
+  ALL = 'all',
+  TITLE = 'title',
+  ALIAS = 'alias',
+  ID = 'problem_id',
+}
+</script>
+
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 
-import problem_Versions from '../problem/Versions.vue';
-import common_Typeahead from '../common/Typeahead.vue';
-import omegaup_RadioSwitch from '../RadioSwitch.vue';
+import OmegaupProblemVersions from '../problem/Versions.vue';
+import OmegaupCommonTypeahead from '../common/Typeahead.vue';
+import OmegaupRadioSwitch from '../RadioSwitch.vue';
 import 'v-tooltip/dist/v-tooltip.css';
-import { VTooltip } from 'v-tooltip';
+import { VTooltip as vTooltip } from 'v-tooltip';
 
-import {
-  FontAwesomeIcon,
-  FontAwesomeLayers,
-  FontAwesomeLayersText,
-} from '@fortawesome/vue-fontawesome';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 library.add(fas);
@@ -192,163 +197,170 @@ interface MappedProblems {
   };
 }
 
-export enum SearchTypes {
-  ALL = 'all',
-  TITLE = 'title',
-  ALIAS = 'alias',
-  ID = 'problem_id',
-}
+const props = defineProps<{
+  contestAlias: string;
+  initialPoints: number;
+  initialProblems: types.ProblemsetProblemWithVersions[];
+  searchResultProblems: types.ListItem[];
+}>();
 
-@Component({
-  components: {
-    'omegaup-problem-versions': problem_Versions,
-    'omegaup-common-typeahead': common_Typeahead,
-    'omegaup-radio-switch': omegaup_RadioSwitch,
-    'font-awesome-icon': FontAwesomeIcon,
-    'font-awesome-layers': FontAwesomeLayers,
-    'font-awesome-layers-text': FontAwesomeLayersText,
-  },
-  directives: {
-    tooltip: VTooltip,
-  },
-})
-export default class AddProblem extends Vue {
-  @Prop() contestAlias!: string;
-  @Prop() initialPoints!: number;
-  @Prop() initialProblems!: types.ProblemsetProblemWithVersions[];
-  @Prop() searchResultProblems!: types.ListItem[];
+const emit = defineEmits<{
+  (
+    e: 'add-problem',
+    request: { problem: Record<string, unknown>; isUpdate: boolean },
+  ): void;
+  (
+    e: 'update-search-result-problems',
+    request: { query: string; searchType: string },
+  ): void;
+  (
+    e: 'get-versions',
+    request: {
+      target: Record<string, unknown>;
+      request: { problemAlias: string | undefined };
+    },
+  ): void;
+  (e: 'remove-problem', alias: string): void;
+  (
+    e: 'runs-diff',
+    alias: string | undefined,
+    versions: types.ProblemVersion[],
+    selectedCommit: types.ProblemVersion,
+  ): void;
+}>();
 
-  T = T;
-  alias: null | types.ListItem = null;
-  title: null | string = null;
-  points = this.initialPoints;
-  order = this.initialProblems.length + 1;
-  problems = this.initialProblems;
-  versionLog: types.ProblemVersion[] = [];
-  useLatestVersion = true;
-  publishedRevision: null | types.ProblemVersion = null;
-  selectedRevision: null | types.ProblemVersion = null;
-  selectedSearchType: SearchTypes = SearchTypes.ALL;
-  availableSearchTypes: types.ListItem[] = [
-    { key: SearchTypes.ALL, value: T.contestEditAddProblemSearchByAll },
-    { key: SearchTypes.ALIAS, value: T.contestEditAddProblemSearchByAlias },
-    { key: SearchTypes.TITLE, value: T.contestEditAddProblemSearchByTitle },
-    { key: SearchTypes.ID, value: T.contestEditAddProblemSearchById },
-  ];
+const alias = ref<null | types.ListItem>(null);
+const title = ref<null | string>(null);
+const points = ref(props.initialPoints);
+const order = ref(props.initialProblems.length + 1);
+const problems = ref(props.initialProblems);
+const versionLog = ref<types.ProblemVersion[]>([]);
+const useLatestVersion = ref(true);
+const publishedRevision = ref<null | types.ProblemVersion>(null);
+const selectedRevision = ref<null | types.ProblemVersion>(null);
+const selectedSearchType = ref<SearchTypes>(SearchTypes.ALL);
+const availableSearchTypes: types.ListItem[] = [
+  { key: SearchTypes.ALL, value: T.contestEditAddProblemSearchByAll },
+  { key: SearchTypes.ALIAS, value: T.contestEditAddProblemSearchByAlias },
+  { key: SearchTypes.TITLE, value: T.contestEditAddProblemSearchByTitle },
+  { key: SearchTypes.ID, value: T.contestEditAddProblemSearchById },
+];
 
-  get problemMapping(): MappedProblems {
-    let problemMapping: MappedProblems = {};
-    for (const problem of this.problems) {
+const problemMapping = computed(
+  (): MappedProblems => {
+    let mapping: MappedProblems = {};
+    for (const problem of problems.value) {
       const commitVersions: { [commit: string]: types.ProblemVersion } = {};
       for (const version of problem.versions.log) {
         commitVersions[version.commit] = version;
       }
-      problemMapping[problem.alias] = {
+      mapping[problem.alias] = {
         problem,
         commitVersions,
       };
     }
-    return problemMapping;
-  }
+    return mapping;
+  },
+);
 
-  onGetVersions(problemAlias: string): void {
-    const problemMapping = this.problemMapping[problemAlias];
-    this.versionLog = problemMapping.problem.versions.log;
-    const published = problemMapping.problem.commit;
-    const revision = problemMapping.commitVersions[published];
-    this.selectedRevision = this.publishedRevision = revision;
-    this.useLatestVersion = false;
-  }
+const isUpdate = computed((): boolean => {
+  if (!alias.value) return false;
+  return !!problemMapping.value[alias.value.key];
+});
 
-  onSubmit(): void {
-    if (!this.alias) return;
-    this.onAddProblem();
+const addProblemButtonLabel = computed((): string => {
+  if (isUpdate.value) {
+    return T.wordsUpdateProblem;
   }
+  return T.wordsAddProblem;
+});
 
-  onAddProblem(): void {
-    this.$emit('add-problem', {
-      problem: {
-        order: this.order,
-        alias: this.alias?.key,
-        points: this.points,
-        commit: !this.useLatestVersion
-          ? this.selectedRevision?.commit
-          : undefined,
-      },
-      isUpdate: this.isUpdate,
-    });
-    this.alias = null;
-    this.title = null;
-  }
+const addProblemButtonDisabled = computed((): boolean => {
+  if (useLatestVersion.value) return alias.value === null;
+  return !selectedRevision.value;
+});
 
-  onEdit(problem: types.ProblemsetProblemWithVersions): void {
-    this.title = problem.title;
-    this.alias = { key: problem.alias, value: problem.title };
-    this.points = problem.points;
-    this.order = problem.order;
-  }
-
-  onRemove(problem: types.ProblemsetProblemWithVersions): void {
-    this.$emit('remove-problem', problem.alias);
-  }
-
-  onRunsDiff(
-    versions: types.ProblemVersion[],
-    selectedCommit: types.ProblemVersion,
-  ): void {
-    let found = false;
-    for (const problem of this.problems) {
-      if (this.alias?.key === problem.alias) {
-        found = true;
-        break;
-      }
-    }
-    if (!found) {
-      return;
-    }
-    this.$emit('runs-diff', this.alias?.key, versions, selectedCommit);
-  }
-
-  get isUpdate(): boolean {
-    if (!this.alias) return false;
-    return !!this.problemMapping[this.alias.key];
-  }
-
-  get addProblemButtonLabel(): string {
-    if (this.isUpdate) {
-      return T.wordsUpdateProblem;
-    }
-    return T.wordsAddProblem;
-  }
-
-  get addProblemButtonDisabled(): boolean {
-    if (this.useLatestVersion) return this.alias === null;
-    return !this.selectedRevision;
-  }
-
-  @Watch('initialProblems')
-  onInitialProblemsChange(
-    newValue: types.ProblemsetProblemWithVersions[],
-  ): void {
-    this.problems = newValue;
-    this.order = newValue.length + 1;
-  }
-
-  @Watch('alias')
-  onAliasChange(newProblemAlias: null | types.ListItem) {
-    if (!newProblemAlias) {
-      this.versionLog = [];
-      this.selectedRevision = this.publishedRevision = null;
-      return;
-    }
-    if (this.isUpdate) {
-      this.onGetVersions(newProblemAlias.key);
-      return;
-    }
-    this.$emit('get-versions', {
-      target: this,
-      request: { problemAlias: this.alias?.key },
-    });
-  }
+function onGetVersions(problemAlias: string): void {
+  const mapping = problemMapping.value[problemAlias];
+  versionLog.value = mapping.problem.versions.log;
+  const published = mapping.problem.commit;
+  const revision = mapping.commitVersions[published];
+  selectedRevision.value = revision;
+  publishedRevision.value = revision;
+  useLatestVersion.value = false;
 }
+
+function onSubmit(): void {
+  if (!alias.value) return;
+  onAddProblem();
+}
+
+function onAddProblem(): void {
+  emit('add-problem', {
+    problem: {
+      order: order.value,
+      alias: alias.value?.key,
+      points: points.value,
+      commit: !useLatestVersion.value
+        ? selectedRevision.value?.commit
+        : undefined,
+    },
+    isUpdate: isUpdate.value,
+  });
+  alias.value = null;
+  title.value = null;
+}
+
+function onEdit(problem: types.ProblemsetProblemWithVersions): void {
+  title.value = problem.title;
+  alias.value = { key: problem.alias, value: problem.title };
+  points.value = problem.points;
+  order.value = problem.order;
+}
+
+function onRemove(problem: types.ProblemsetProblemWithVersions): void {
+  emit('remove-problem', problem.alias);
+}
+
+function onRunsDiff(
+  versions: types.ProblemVersion[],
+  selectedCommit: types.ProblemVersion,
+): void {
+  let found = false;
+  for (const problem of problems.value) {
+    if (alias.value?.key === problem.alias) {
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
+    return;
+  }
+  emit('runs-diff', alias.value?.key, versions, selectedCommit);
+}
+
+watch(
+  () => props.initialProblems,
+  (newValue) => {
+    problems.value = newValue;
+    order.value = newValue.length + 1;
+  },
+);
+
+watch(alias, (newProblemAlias) => {
+  if (!newProblemAlias) {
+    versionLog.value = [];
+    selectedRevision.value = null;
+    publishedRevision.value = null;
+    return;
+  }
+  if (isUpdate.value) {
+    onGetVersions(newProblemAlias.key);
+    return;
+  }
+  emit('get-versions', {
+    target: {},
+    request: { problemAlias: alias.value?.key },
+  });
+});
 </script>

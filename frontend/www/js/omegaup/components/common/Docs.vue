@@ -18,43 +18,27 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
 import T from '../../lang';
-import * as ui from '../../ui';
 import { types } from '../../api_types';
-import {
-  FontAwesomeIcon,
-  FontAwesomeLayers,
-  FontAwesomeLayersText,
-} from '@fortawesome/vue-fontawesome';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 library.add(fas);
 
-@Component({
-  components: {
-    'font-awesome-icon': FontAwesomeIcon,
-    'font-awesome-layers': FontAwesomeLayers,
-    'font-awesome-layers-text': FontAwesomeLayersText,
-  },
-})
-export default class CommonDocs extends Vue {
-  @Prop() docs!: { [key: string]: types.UserDocument[] };
+defineProps<{
+  docs: { [key: string]: types.UserDocument[] };
+}>();
 
-  T = T;
-  ui = ui;
-
-  getIcon(name: number | string): string[] {
-    const icon = ['fas'];
-    if (name === 'pdf') {
-      icon.push('file-pdf');
-    } else if (name === 'md') {
-      icon.push('file');
-    } else {
-      icon.push('folder');
-    }
-    return icon;
+function getIcon(name: number | string): string[] {
+  const icon = ['fas'];
+  if (name === 'pdf') {
+    icon.push('file-pdf');
+  } else if (name === 'md') {
+    icon.push('file');
+  } else {
+    icon.push('folder');
   }
+  return icon;
 }
 </script>

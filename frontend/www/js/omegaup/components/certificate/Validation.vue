@@ -39,34 +39,30 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import T from '../../lang';
 
-@Component
-export default class Validation extends Vue {
-  @Prop() verificationCode!: string;
-  @Prop() isValid!: boolean;
-  @Prop() certificate?: string;
+const props = defineProps<{
+  verificationCode: string;
+  isValid: boolean;
+  certificate?: string;
+}>();
 
-  T = T;
-  certificateUrl: null | string = null;
+const certificateUrl = ref<string | null>(null);
 
-  created() {
-    if (this.certificate === undefined) {
-      return;
-    }
-    const decodedData = atob(this.certificate);
-    const unicode = new Array(decodedData.length);
-    for (let i = 0; i < decodedData.length; i++) {
-      unicode[i] = decodedData.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(unicode);
-    const blob = new Blob([byteArray], {
-      type: 'application/pdf',
-    });
-    this.certificateUrl = window.URL.createObjectURL(blob);
+// created lifecycle equivalent — runs immediately in setup
+if (props.certificate !== undefined) {
+  const decodedData = atob(props.certificate);
+  const unicode = new Array(decodedData.length);
+  for (let i = 0; i < decodedData.length; i++) {
+    unicode[i] = decodedData.charCodeAt(i);
   }
+  const byteArray = new Uint8Array(unicode);
+  const blob = new Blob([byteArray], {
+    type: 'application/pdf',
+  });
+  certificateUrl.value = window.URL.createObjectURL(blob);
 }
 </script>
 

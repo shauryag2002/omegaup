@@ -9,11 +9,11 @@
     />
     <div v-else class="card">
       <div class="card-header">
-        <omegaup-user-username
+        <OmegaupUserUsername
           :classname="currentFeedbackThread.authorClassname"
           :username="currentFeedbackThread.author"
           :linkify="true"
-        ></omegaup-user-username>
+        />
         <button
           class="close btn-sm"
           type="button"
@@ -24,7 +24,7 @@
       </div>
       <div class="card-body">
         <textarea
-          ref="feedback-thread-form"
+          ref="feedbackThreadFormRef"
           v-model="currentFeedbackThread.text"
           :placeholder="T.runDetailsFeedbackThreadPlaceholder"
           class="w-100"
@@ -53,77 +53,76 @@
   </div>
   <div v-else class="card">
     <div class="card-header">
-      <omegaup-user-username
+      <OmegaupUserUsername
         :classname="currentFeedbackThread.authorClassname"
         :username="currentFeedbackThread.author"
         :linkify="true"
-      ></omegaup-user-username>
+      />
       {{ currentFeedbackThreadTimestamp }}
     </div>
     <div class="card-body">
-      <omegaup-markdown
+      <OmegaupMarkdown
         :markdown="currentFeedbackThread.text"
         :full-width="true"
-      ></omegaup-markdown>
+      />
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Ref, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed, watch, nextTick } from 'vue';
 import T from '../../lang';
-import omegaup_Markdown from '../Markdown.vue';
-import user_Username from '../user/Username.vue';
+import OmegaupMarkdown from '../Markdown.vue';
+import OmegaupUserUsername from '../user/Username.vue';
 import * as time from '../../time';
 import { ArenaCourseFeedback, FeedbackStatus } from './Feedback.vue';
 
-@Component({
-  components: {
-    'omegaup-markdown': omegaup_Markdown,
-    'omegaup-user-username': user_Username,
-  },
-})
-export default class FeedbackThread extends Vue {
-  @Prop() feedbackThread!: ArenaCourseFeedback;
-  @Prop({ default: false }) saved!: boolean;
-  @Ref('feedback-thread-form') feedbackThreadForm!: HTMLTextAreaElement;
+const props = defineProps<{
+  feedbackThread: ArenaCourseFeedback;
+  saved?: boolean;
+}>();
 
-  FeedbackStatus = FeedbackStatus;
-  T = T;
-  time = time;
-  currentSaved = this.saved;
-  currentFeedbackThread = this.feedbackThread;
-  isSelectedNewFeedback = false;
+const emit = defineEmits<{
+  (e: 'submit', feedbackThread: ArenaCourseFeedback): void;
+  (e: 'cancel'): void;
+  (e: 'delete'): void;
+}>();
 
-  get currentFeedbackThreadTimestamp(): string {
-    return time.formatDateTimeLocal(
-      this.currentFeedbackThread.timestamp ?? new Date(),
-    );
-  }
+const feedbackThreadFormRef = ref<HTMLElement | null>(null);
 
-  onHandleKeyDown(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      this.onDeleteFeedbackThread();
-    }
-  }
+const currentSaved = ref(props.saved ?? false);
+const currentFeedbackThread = ref(props.feedbackThread);
+const isSelectedNewFeedback = ref(false);
 
-  onSubmitFeedback() {
-    this.currentSaved = true;
-    this.$emit('submit-feedback-thread', this.currentFeedbackThread);
-  }
+const currentFeedbackThreadTimestamp = computed((): string => {
+  return time.formatDateTimeLocal(
+    currentFeedbackThread.value.timestamp ?? new Date(),
+  );
+});
 
-  onDeleteFeedbackThread() {
-    this.currentFeedbackThread.text = '';
-    this.isSelectedNewFeedback = false;
-  }
-
-  @Watch('isSelectedNewFeedback')
-  onIsSelectedNewFeedbackChanged(newValue: boolean): void {
-    if (newValue) {
-      this.$nextTick(() => this.feedbackThreadForm.focus());
-    }
+function onHandleKeyDown(event: KeyboardEvent): void {
+  if (event.key === 'Escape') {
+    onDeleteFeedbackThread();
   }
 }
+
+function onSubmitFeedback(): void {
+  currentSaved.value = true;
+  emit('submit', currentFeedbackThread.value);
+}
+
+function onDeleteFeedbackThread(): void {
+  currentFeedbackThread.value.text = '';
+  isSelectedNewFeedback.value = false;
+}
+
+watch(isSelectedNewFeedback, (newValue: boolean) => {
+  if (newValue) {
+    nextTick(() =>
+      (feedbackThreadFormRef.value as HTMLTextAreaElement)?.focus(),
+    );
+  }
+});
 </script>
 
 <style>

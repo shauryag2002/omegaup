@@ -3,9 +3,9 @@
     <div class="modal-mask">
       <div class="modal-container">
         <div class="d-flex justify-content-end">
-          <button class="btn" @click="$emit('close')">❌</button>
+          <button class="btn" @click="emit('close')">❌</button>
         </div>
-        <form-wizard
+        <FormWizard
           color="#678DD7"
           :back-button-text="T.wordsBack"
           :finish-button-text="T.wordsConfirm"
@@ -13,8 +13,8 @@
           :subtitle="T.wizardDescription"
           :title="T.wizardTitle"
           @on-complete="searchProblems"
-          ><tab-content :title="T.wizardStepOne"
-            ><toggle-button
+          ><TabContent :title="T.wizardStepOne"
+            ><ToggleButton
               v-model="karel"
               :color="{ checked: '#678DD7', unchecked: '#343a40' }"
               :font-size="12"
@@ -25,18 +25,18 @@
               }"
               :value="karel"
               :width="160"
-            ></toggle-button>
-            <tags-input
+            ></ToggleButton>
+            <TagsInput
               v-model="selectedTags"
               element-id="tags"
               :existing-tags="tagObjects"
               :only-existing-tags="true"
               :placeholder="T.wordsAddTag"
               :typeahead="true"
-            ></tags-input
-          ></tab-content>
-          <tab-content :title="T.wizardStepTwo"
-            ><vue-slider
+            ></TagsInput
+          ></TabContent>
+          <TabContent :title="T.wizardStepTwo"
+            ><VueSlider
               v-model="difficultyRange"
               tooltip="none"
               :adsorb="true"
@@ -46,9 +46,9 @@
               :marks="SLIDER_MARKS"
               :max="4"
               :min="0"
-            ></vue-slider
-          ></tab-content>
-          <tab-content :title="T.wizardStepThree">
+            ></VueSlider
+          ></TabContent>
+          <TabContent :title="T.wizardStepThree">
             <div class="tab-select">
               <label
                 v-for="priority in PRIORITIES"
@@ -64,15 +64,15 @@
                   type="radio"
                   :value="priority.type"
               /></label>
-            </div> </tab-content
-        ></form-wizard>
+            </div> </TabContent
+        ></FormWizard>
       </div>
     </div>
   </transition>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed } from 'vue';
 import { omegaup } from '../../omegaup';
 import T from '../../lang';
 // https://binarcode.github.io/vue-form-wizard/
@@ -81,7 +81,7 @@ import 'vue-form-wizard/dist/vue-form-wizard.min.css';
 // https://www.npmjs.com/package/vue-js-toggle-button
 import { ToggleButton } from 'vue-js-toggle-button';
 // https://github.com/voerro/vue-tagsinput
-import VoerroTagsInput from '@voerro/vue-tagsinput';
+import TagsInput from '@voerro/vue-tagsinput';
 import '@voerro/vue-tagsinput/dist/style.css';
 // https://nightcatsama.github.io/vue-slider-component/
 import VueSlider from 'vue-slider-component';
@@ -97,75 +97,71 @@ interface TagObject {
   value: string;
 }
 
-@Component({
-  components: {
-    FormWizard,
-    TabContent,
-    ToggleButton,
-    'tags-input': VoerroTagsInput,
-    VueSlider,
+const props = defineProps<{
+  possibleTags: { name: string }[];
+}>();
+
+const emit = defineEmits<{
+  (e: 'close'): void;
+  (e: 'search-problems', queryParameters: omegaup.QueryParameters): void;
+}>();
+
+const karel = ref(false);
+const selectedTags = ref<TagObject[]>([]);
+const difficultyRange = ref([0, 4]);
+const selectedPriority = ref('quality');
+
+const SLIDER_MARKS: { [key: string]: string } = {
+  '0': T.qualityFormDifficultyVeryEasy,
+  '1': T.qualityFormDifficultyEasy,
+  '2': T.qualityFormDifficultyMedium,
+  '3': T.qualityFormDifficultyHard,
+  '4': T.qualityFormDifficultyVeryHard,
+};
+
+const PRIORITIES: Priority[] = [
+  {
+    type: 'quality',
+    text: T.wordsQuality,
   },
-})
-export default class ProblemFinderWizard extends Vue {
-  @Prop() possibleTags!: { name: string }[];
+  {
+    type: 'points',
+    text: T.wordsPointsForRank,
+  },
+  {
+    type: 'submissions',
+    text: T.wizardPriorityPopularity,
+  },
+];
 
-  T = T;
-  karel = false;
-  selectedTags: TagObject[] = [];
-  difficultyRange = [0, 4];
-  SLIDER_MARKS: { [key: string]: string } = {
-    '0': T.qualityFormDifficultyVeryEasy,
-    '1': T.qualityFormDifficultyEasy,
-    '2': T.qualityFormDifficultyMedium,
-    '3': T.qualityFormDifficultyHard,
-    '4': T.qualityFormDifficultyVeryHard,
-  };
-  selectedPriority = 'quality';
-  PRIORITIES: Priority[] = [
-    {
-      type: 'quality',
-      text: T.wordsQuality,
-    },
-    {
-      type: 'points',
-      text: T.wordsPointsForRank,
-    },
-    {
-      type: 'submissions',
-      text: T.wizardPriorityPopularity,
-    },
-  ];
-
-  get tagObjects(): TagObject[] {
-    const tagObjects: TagObject[] = [];
-    this.possibleTags.forEach((tagObject) => {
-      if (!Object.prototype.hasOwnProperty.call(T, tagObject.name)) {
-        return;
-      }
-      tagObjects.push({
-        key: tagObject.name,
-        value: T[tagObject.name],
-      });
+const tagObjects = computed((): TagObject[] => {
+  const result: TagObject[] = [];
+  props.possibleTags.forEach((tagObject) => {
+    if (!Object.prototype.hasOwnProperty.call(T, tagObject.name)) {
+      return;
+    }
+    result.push({
+      key: tagObject.name,
+      value: T[tagObject.name],
     });
-    return tagObjects;
-  }
+  });
+  return result;
+});
 
-  searchProblems(): void {
-    // Build query parameters
-    let queryParameters: omegaup.QueryParameters = {
-      some_tags: true,
-      difficulty_range: `${this.difficultyRange[0].toString()},${this.difficultyRange[1].toString()}`,
-      order_by: this.selectedPriority,
-      sort_order: 'desc',
-    };
-    if (this.karel) {
-      queryParameters.only_karel = true;
-    }
-    if (this.selectedTags.length > 0) {
-      queryParameters.tag = this.selectedTags.map((tag) => tag.key);
-    }
-    this.$emit('search-problems', queryParameters);
+function searchProblems(): void {
+  const queryParameters: omegaup.QueryParameters = {
+    some_tags: true,
+    difficulty_range: `${difficultyRange.value[0].toString()},${difficultyRange.value[1].toString()}`,
+    order_by: selectedPriority.value,
+    sort_order: 'desc',
+  };
+  if (karel.value) {
+    queryParameters.only_karel = true;
   }
+  if (selectedTags.value.length > 0) {
+    queryParameters.tag = selectedTags.value.map((tag) => tag.key);
+  }
+  emit('search-problems', queryParameters);
 }
 </script>
 

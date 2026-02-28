@@ -107,88 +107,91 @@
   </tr>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed } from 'vue';
 import T from '../../lang';
 import { types } from '../../api_types';
 import * as time from '../../time';
 import * as ui from '../../ui';
 
-@Component
-export default class ArenaClarification extends Vue {
-  @Prop() clarification!: types.Clarification;
-  @Prop({ default: false }) isAdmin!: boolean;
-  @Prop({ default: false }) selected!: boolean;
+const props = withDefaults(
+  defineProps<{
+    clarification: types.Clarification;
+    isAdmin?: boolean;
+    selected?: boolean;
+  }>(),
+  { isAdmin: false, selected: false },
+);
 
-  T = T;
-  time = time;
+const emit = defineEmits<{
+  (e: 'clarification-response', response: types.Clarification): void;
+}>();
 
-  isPublic = this.clarification.public;
-  message = '';
-  selectedResponse = 'yes';
-  showUpdateAnswer = false;
-  responses = [
-    {
-      value: 'yes',
-      text: T.wordsYes,
-    },
-    {
-      value: 'no',
-      text: T.wordsNo,
-    },
-    {
-      value: 'nocomment',
-      text: T.wordsNoComment,
-    },
-    {
-      value: 'readAgain',
-      text: T.wordsReadAgain,
-    },
-    {
-      value: 'other',
-      text: T.wordsOther,
-    },
-  ];
+const isPublic = ref(props.clarification.public);
+const message = ref('');
+const selectedResponse = ref('yes');
+const showUpdateAnswer = ref(false);
 
-  get clarificationAuthorReceiver(): string {
-    if (this.clarification.receiver) {
-      return ui.formatString(T.clarificationsOnBehalf, {
-        author: this.clarification.author,
-        receiver: this.clarification.receiver,
-      });
-    }
-    return this.clarification.author;
+const responses = [
+  {
+    value: 'yes',
+    text: T.wordsYes,
+  },
+  {
+    value: 'no',
+    text: T.wordsNo,
+  },
+  {
+    value: 'nocomment',
+    text: T.wordsNoComment,
+  },
+  {
+    value: 'readAgain',
+    text: T.wordsReadAgain,
+  },
+  {
+    value: 'other',
+    text: T.wordsOther,
+  },
+];
+
+const clarificationAuthorReceiver = computed((): string => {
+  if (props.clarification.receiver) {
+    return ui.formatString(T.clarificationsOnBehalf, {
+      author: props.clarification.author,
+      receiver: props.clarification.receiver,
+    });
   }
+  return props.clarification.author;
+});
 
-  get isDirectMessage(): boolean {
-    return (
-      this.clarification.answer == null && this.clarification.receiver != null
-    );
-  }
+const isDirectMessage = computed(
+  (): boolean =>
+    props.clarification.answer == null && props.clarification.receiver != null,
+);
 
-  get responseText(): string {
-    const response = this.responses.find(
-      (response) => response.value === this.selectedResponse,
-    );
-    if (!response) {
-      return this.selectedResponse;
-    }
-    return this.selectedResponse === 'other' ? this.message : response.text;
+const responseText = computed((): string => {
+  const found = responses.find(
+    (response) => response.value === selectedResponse.value,
+  );
+  if (!found) {
+    return selectedResponse.value;
   }
+  return selectedResponse.value === 'other' ? message.value : found.text;
+});
 
-  sendClarificationResponse(): void {
-    const response: types.Clarification = {
-      clarification_id: this.clarification.clarification_id,
-      author: this.clarification.author,
-      answer: this.responseText,
-      public: this.isPublic,
-      message: this.message,
-      problem_alias: this.clarification.problem_alias,
-      time: new Date(),
-    };
-    this.showUpdateAnswer = false;
-    this.$emit('clarification-response', response);
-  }
+function sendClarificationResponse(): void {
+  const response: types.Clarification = {
+    clarification_id: props.clarification.clarification_id,
+    author: props.clarification.author,
+    answer: responseText.value,
+    public: isPublic.value,
+    message: message.value,
+    problem_alias: props.clarification.problem_alias,
+    time: new Date(),
+  };
+  showUpdateAnswer.value = false;
+  emit('clarification-response', response);
 }
 </script>
 

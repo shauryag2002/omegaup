@@ -1,8 +1,6 @@
 <template>
   <div v-if="isDisabled" class="system-in-maintainance m-5 text-center">
-    <omegaup-markdown
-      :markdown="T.coderOfTheMonthSystemInMaintainance"
-    ></omegaup-markdown>
+    <OmegaupMarkdown :markdown="T.coderOfTheMonthSystemInMaintainance" />
     <font-awesome-icon :icon="['fas', 'cogs']" />
   </div>
   <table v-else class="table table-striped table-hover table-responsive-sm">
@@ -23,50 +21,42 @@
           <img :src="coder.gravatar_32" :alt="coder.username" />
         </td>
         <td class="text-center align-middle">
-          <omegaup-user-username
+          <OmegaupUserUsername
             :classname="coder.classname"
             :linkify="true"
             :username="coder.username"
-          ></omegaup-user-username>
+          />
         </td>
         <td class="text-center align-middle">
-          <omegaup-countryflag
-            :country="coder.country_id"
-          ></omegaup-countryflag>
+          <OmegaupCountryflag :country="coder.country_id" />
         </td>
       </tr>
     </tbody>
   </table>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
 import T from '../../lang';
-import user_Username from '../user/Username.vue';
-import country_Flag from '../CountryFlag.vue';
+import OmegaupUserUsername from '../user/Username.vue';
+import OmegaupCountryflag from '../CountryFlag.vue';
 import { types } from '../../api_types';
 
-import omegaup_Markdown from '../Markdown.vue';
+import OmegaupMarkdown from '../Markdown.vue';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faCogs } from '@fortawesome/free-solid-svg-icons';
 library.add(faCogs);
 
-@Component({
-  components: {
-    'omegaup-user-username': user_Username,
-    'omegaup-countryflag': country_Flag,
-    'omegaup-markdown': omegaup_Markdown,
-    'font-awesome-icon': FontAwesomeIcon,
+withDefaults(
+  defineProps<{
+    coders: types.CoderOfTheMonthList[];
+    selectedTab: string;
+    isDisabled?: boolean;
+  }>(),
+  {
+    isDisabled: false,
   },
-})
-export default class CoderOfTheMonthList extends Vue {
-  @Prop() coders!: types.CoderOfTheMonthList[];
-  @Prop() selectedTab!: string;
-  @Prop({ default: false }) isDisabled!: boolean;
-
-  T = T;
-}
+);
 </script>
 
 <style scoped lang="scss">

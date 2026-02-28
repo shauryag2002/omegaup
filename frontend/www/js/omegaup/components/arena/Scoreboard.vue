@@ -11,17 +11,13 @@
           </slot>
         </h2>
         <div v-if="!finishTime" class="clock">{{ INF }}</div>
-        <omegaup-countdown
-          v-else
-          class="clock"
-          :target-time="finishTime"
-        ></omegaup-countdown>
+        <OmegaupCountdown v-else class="clock" :target-time="finishTime" />
       </div>
     </slot>
-    <highcharts
+    <Highcharts
       v-if="rankingChartOptions && Object.keys(rankingChartOptions).length"
       :options="rankingChartOptions"
-    ></highcharts>
+    />
     <div v-else class="bg-white text-center p-4 mb-3">
       {{ T.rankingNoUsers }}
     </div>
@@ -123,109 +119,119 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed, ref } from 'vue';
 
-import * as Highcharts from 'highcharts/highstock';
-import { Chart } from 'highcharts-vue';
+import * as HighchartsLib from 'highcharts/highstock';
+import { Chart as Highcharts } from 'highcharts-vue';
 import { types } from '../../api_types';
 import { omegaup } from '../../omegaup';
 import T from '../../lang';
 import * as ui from '../../ui';
 import * as time from '../../time';
-import omegaup_Countdown from '../Countdown.vue';
+import OmegaupCountdown from '../Countdown.vue';
 import { SocketStatus } from '../../arena/events_socket';
 
-@Component({
-  components: {
-    highcharts: Chart,
-    'omegaup-countdown': omegaup_Countdown,
+const INF = '∞';
+
+const props = withDefaults(
+  defineProps<{
+    numberOfPositions?: number;
+    problems: omegaup.Problem[];
+    ranking: types.ScoreboardRankingEntry[];
+    rankingChartOptions?: HighchartsLib.Options | null;
+    lastUpdated: Date;
+    showInvitedUsersFilter?: boolean;
+    showPenalty?: boolean;
+    showAllContestants?: boolean;
+    digitsAfterDecimalPoint?: number;
+    title: string;
+    finishTime?: Date | null;
+    socketStatus?: SocketStatus;
+  }>(),
+  {
+    numberOfPositions: 10,
+    rankingChartOptions: null,
+    showInvitedUsersFilter: true,
+    showPenalty: true,
+    showAllContestants: false,
+    digitsAfterDecimalPoint: 2,
+    finishTime: null,
+    socketStatus: SocketStatus.Waiting,
   },
-})
-export default class ArenaScoreboard extends Vue {
-  @Prop({ default: 10 }) numberOfPositions!: number;
-  @Prop() problems!: omegaup.Problem[];
-  @Prop() ranking!: types.ScoreboardRankingEntry[];
-  @Prop({ default: null }) rankingChartOptions!: Highcharts.Options | null;
-  @Prop() lastUpdated!: Date;
-  @Prop({ default: true }) showInvitedUsersFilter!: boolean;
-  @Prop({ default: true }) showPenalty!: boolean;
-  @Prop({ default: false }) showAllContestants!: boolean;
-  @Prop({ default: 2 }) digitsAfterDecimalPoint!: number;
-  @Prop() title!: string;
-  @Prop({ default: null }) finishTime!: null | Date;
-  @Prop({ default: SocketStatus.Waiting }) socketStatus!: SocketStatus;
+);
 
-  T = T;
-  ui = ui;
-  INF = '∞';
-  onlyShowExplicitlyInvited =
-    !this.showAllContestants && this.showInvitedUsersFilter;
-  nameDisplayOptions: ui.NameDisplayOptions =
-    ui.NameDisplayOptions.NameAndUsername;
+const onlyShowExplicitlyInvited = ref(
+  !props.showAllContestants && props.showInvitedUsersFilter,
+);
+const nameDisplayOptions = ref<ui.NameDisplayOptions>(
+  ui.NameDisplayOptions.NameAndUsername,
+);
 
-  get lastUpdatedString(): null | string {
-    if (!this.lastUpdated) return null;
-    return ui.formatString(T.scoreboardLastUpdated, {
-      datetime: time.formatDateTime(this.lastUpdated),
-    });
+const lastUpdatedString = computed((): null | string => {
+  if (!props.lastUpdated) return null;
+  return ui.formatString(T.scoreboardLastUpdated, {
+    datetime: time.formatDateTime(props.lastUpdated),
+  });
+});
+
+const socketClass = computed((): string => {
+  if (props.socketStatus === SocketStatus.Connected) {
+    return 'socket-status socket-status-ok';
   }
-
-  get socketClass(): string {
-    if (this.socketStatus === SocketStatus.Connected) {
-      return 'socket-status socket-status-ok';
-    }
-    if (this.socketStatus === SocketStatus.Failed) {
-      return 'socket-status socket-status-error';
-    }
-    return 'socket-status';
+  if (props.socketStatus === SocketStatus.Failed) {
+    return 'socket-status socket-status-error';
   }
+  return 'socket-status';
+});
 
-  get socketStatusTitle(): string {
-    if (this.socketStatus === SocketStatus.Connected) {
-      return T.socketStatusConnected;
-    }
-    if (this.socketStatus === SocketStatus.Failed) {
-      return T.socketStatusFailed;
-    }
-    return T.socketStatusWaiting;
+const socketStatusTitle = computed((): string => {
+  if (props.socketStatus === SocketStatus.Connected) {
+    return T.socketStatusConnected;
   }
+  if (props.socketStatus === SocketStatus.Failed) {
+    return T.socketStatusFailed;
+  }
+  return T.socketStatusWaiting;
+});
 
-  legendClass(idx: number): string {
-    return idx < this.numberOfPositions ? `legend-${idx + 1}` : '';
-  }
+function legendClass(idx: number): string {
+  return idx < props.numberOfPositions ? `legend-${idx + 1}` : '';
+}
 
-  renderPoints(p: types.ScoreboardRankingProblem): string {
-    return (
-      (p.points > 0 ? '+' : '') + p.points.toFixed(this.digitsAfterDecimalPoint)
-    );
-  }
+function renderPoints(p: types.ScoreboardRankingProblem): string {
+  return (
+    (p.points > 0 ? '+' : '') + p.points.toFixed(props.digitsAfterDecimalPoint)
+  );
+}
 
-  totalRuns(u: types.ScoreboardRankingEntry): number {
-    return u.problems.reduce(
-      (acc: number, val: types.ScoreboardRankingProblem) => acc + val.runs,
-      0,
-    );
-  }
+function totalRuns(u: types.ScoreboardRankingEntry): number {
+  return u.problems.reduce(
+    (acc: number, val: types.ScoreboardRankingProblem) => acc + val.runs,
+    0,
+  );
+}
 
-  problemClass(p: types.ScoreboardRankingProblem, alias: string): string {
-    if (p.percent === 100) {
-      return `${alias} accepted`;
-    } else if (p.pending) {
-      return `${alias} pending`;
-    } else if (p.percent === 0 && p.runs > 0) {
-      return `${alias} wrong`;
-    } else {
-      return alias;
-    }
+function problemClass(
+  p: types.ScoreboardRankingProblem,
+  alias: string,
+): string {
+  if (p.percent === 100) {
+    return `${alias} accepted`;
+  } else if (p.pending) {
+    return `${alias} pending`;
+  } else if (p.percent === 0 && p.runs > 0) {
+    return `${alias} wrong`;
+  } else {
+    return alias;
   }
+}
 
-  showUser(userIsInvited: boolean): boolean {
-    // Invited users filter is only available in contests, in a course all users
-    // are visible in scoreboard.
-    if (!this.showInvitedUsersFilter) return true;
-    return userIsInvited || !this.onlyShowExplicitlyInvited;
-  }
+function showUser(userIsInvited: boolean): boolean {
+  // Invited users filter is only available in contests, in a course all users
+  // are visible in scoreboard.
+  if (!props.showInvitedUsersFilter) return true;
+  return userIsInvited || !onlyShowExplicitlyInvited.value;
 }
 </script>
 

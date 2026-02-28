@@ -4,34 +4,33 @@
   }}</span>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 
-@Component
-export default class GraderCountBadge extends Vue {
-  @Prop() queueLength!: number;
-  @Prop() error!: boolean;
+const props = defineProps<{
+  queueLength: number;
+  error: boolean;
+}>();
 
-  get graderCounter(): string {
-    if (this.error === true) {
-      return '?';
-    } else if (this.queueLength === -1) {
-      return '…';
-    }
-    return `${this.queueLength}`;
+const graderCounter = computed((): string => {
+  if (props.error === true) {
+    return '?';
+  } else if (props.queueLength === -1) {
+    return '…';
   }
+  return `${props.queueLength}`;
+});
 
-  get graderBadgeClass(): string {
-    if (this.queueLength === -1 && this.error === false) {
-      return '';
-    } else if (this.error === true) {
-      return 'grader-error';
-    } else if (this.queueLength < 5) {
-      return 'grader-ok';
-    }
-    return 'grader-warning';
+const graderBadgeClass = computed((): string => {
+  if (props.queueLength === -1 && props.error === false) {
+    return '';
+  } else if (props.error === true) {
+    return 'grader-error';
+  } else if (props.queueLength < 5) {
+    return 'grader-ok';
   }
-}
+  return 'grader-warning';
+});
 </script>
 
 <style lang="scss" scoped>

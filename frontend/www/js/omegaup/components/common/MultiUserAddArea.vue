@@ -30,7 +30,10 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { ref, watch } from 'vue';
+import T from '../../lang';
+
 const debounce = (fn: (event: Event) => void, waitTime: number) => {
   let timer: any = null;
 
@@ -40,75 +43,76 @@ const debounce = (fn: (event: Event) => void, waitTime: number) => {
     }
 
     timer = setTimeout(() => {
-      fn.apply(this, args);
+      fn(...args);
     }, waitTime);
   };
 };
 
 const WAIT_TIME = 1000;
-import { Vue, Component, Watch, Prop } from 'vue-property-decorator';
-import T from '../../lang';
 
-@Component({})
-export default class MultiUserAddArea extends Vue {
-  @Prop() users!: string[];
+const props = defineProps<{
+  users: string[];
+}>();
 
-  T = T;
-  isFocused: boolean = false;
-  bulkContestants: string | null = null;
+const emit = defineEmits<{
+  (e: 'update-users', users: string[]): void;
+}>();
 
-  // if the users prop is not empty, we need to keep track of those users in the usersList
-  usersList: string[] = this.users || [];
+const isFocused = ref(false);
+const bulkContestants = ref<string | null>(null);
 
-  onBulkContestantsChanged = debounce(this.onTextAreaChange, WAIT_TIME);
+// if the users prop is not empty, we need to keep track of those users in the usersList
+const usersList = ref<string[]>(props.users || []);
 
-  onTextAreaChange(event: Event) {
-    const target = event.target as HTMLTextAreaElement;
-    const { value } = target;
+function onTextAreaChange(event: Event) {
+  const target = event.target as HTMLTextAreaElement;
+  const { value } = target;
 
-    // 1. Separate original string by new lines
-    const users = value.split('\n').reduce((acc, line) => {
-      // 2. Separate each line by commas
-      const lineUsers = line.split(',').reduce((acc, token) => {
-        // 3. Separate each token by spaces
-        const tokenUsers = token.split(' ').reduce((acc, token) => {
-          if (token.trim() !== '') {
-            acc.push(token.trim());
-          }
-          return acc;
-        }, [] as string[]);
-        return acc.concat(tokenUsers);
+  // 1. Separate original string by new lines
+  const users = value.split('\n').reduce((acc, line) => {
+    // 2. Separate each line by commas
+    const lineUsers = line.split(',').reduce((acc, token) => {
+      // 3. Separate each token by spaces
+      const tokenUsers = token.split(' ').reduce((acc, token) => {
+        if (token.trim() !== '') {
+          acc.push(token.trim());
+        }
+        return acc;
       }, [] as string[]);
-      return acc.concat(lineUsers);
+      return acc.concat(tokenUsers);
     }, [] as string[]);
+    return acc.concat(lineUsers);
+  }, [] as string[]);
 
-    this.usersList = Array.from(new Set([...users])); // Removes duplicates
-    this.bulkContestants = this.usersList.join(',');
+  usersList.value = Array.from(new Set([...users])); // Removes duplicates
+  bulkContestants.value = usersList.value.join(',');
 
-    this.isFocused = false;
-  }
-
-  removeUser(user: string) {
-    this.usersList = this.usersList.filter((u) => u !== user);
-    this.bulkContestants = this.usersList.join(',');
-    this.isFocused = false;
-  }
-
-  @Watch('users')
-  onUsersChange() {
-    // We need to keep the usersList without any user that is part of the users prop
-    this.usersList = this.usersList.filter(
-      (user) => !this.users.includes(user),
-    );
-    this.bulkContestants = this.usersList.join(',');
-  }
-
-  // When the usersList changes, emit the new value to the parent
-  @Watch('usersList')
-  onUsersListChange() {
-    this.$emit('update-users', this.usersList);
-  }
+  isFocused.value = false;
 }
+
+const onBulkContestantsChanged = debounce(onTextAreaChange, WAIT_TIME);
+
+function removeUser(user: string) {
+  usersList.value = usersList.value.filter((u) => u !== user);
+  bulkContestants.value = usersList.value.join(',');
+  isFocused.value = false;
+}
+
+watch(
+  () => props.users,
+  () => {
+    // We need to keep the usersList without any user that is part of the users prop
+    usersList.value = usersList.value.filter(
+      (user) => !props.users.includes(user),
+    );
+    bulkContestants.value = usersList.value.join(',');
+  },
+);
+
+// When the usersList changes, emit the new value to the parent
+watch(usersList, () => {
+  emit('update-users', usersList.value);
+});
 </script>
 
 <style scoped>

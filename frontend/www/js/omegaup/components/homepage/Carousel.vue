@@ -18,12 +18,12 @@
         class="carousel-item"
         :class="{ active: !index }"
       >
-        <omegaup-homepage-slide
+        <HomepageSlide
           :title="slide.title[T.locale]"
           :description="slide.description[T.locale]"
           :image-src="slide.image"
           :button="slide.button"
-        ></omegaup-homepage-slide>
+        />
       </div>
     </div>
     <a
@@ -47,22 +47,13 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+<script setup lang="ts">
 import T from '../../lang';
-import homepageSlide from './Slide.vue';
+import HomepageSlide from './Slide.vue';
 import carouselConfig from '../../carousel.config';
 
-@Component({
-  components: {
-    'omegaup-homepage-slide': homepageSlide,
-  },
-})
-export default class Carousel extends Vue {
-  T = T;
-  // Reverse the entries so that newer ones appear first.
-  slides = carouselConfig.reverse();
-}
+// Reverse the entries so that newer ones appear first.
+const slides = carouselConfig.reverse();
 </script>
 
 <style lang="scss" scoped>

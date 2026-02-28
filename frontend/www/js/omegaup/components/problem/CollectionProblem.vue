@@ -17,21 +17,13 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
-import T from '../../lang';
+<script setup lang="ts">
 import 'v-tooltip/dist/v-tooltip.css';
-import { VTooltip } from 'v-tooltip';
+import { VTooltip as vTooltip } from 'v-tooltip';
 
-@Component({
-  directives: {
-    tooltip: VTooltip,
-  },
-})
-export default class CollectionProblem extends Vue {
-  @Prop() title!: string;
-  T = T;
-}
+defineProps<{
+  title: string;
+}>();
 </script>
 
 <style>

@@ -20,15 +20,15 @@
       </a>
     </h5>
     <div v-if="!showHeader" class="card-body form-row">
-      <omegaup-common-typeahead
+      <OmegaupCommonTypeahead
         class="col col-md-4 pl-0 pr-2"
         :existing-options="searchResultSchools"
         :value.sync="searchedSchool"
         :max-results="10"
         @update-existing-options="
-          (query) => $emit('update-search-result-schools', query)
+          (query) => emit('update-search-result-schools', query)
         "
-      ></omegaup-common-typeahead>
+      ></OmegaupCommonTypeahead>
       <button
         class="btn btn-primary form-control col-4 col-md-2"
         type="button"
@@ -51,9 +51,9 @@
             {{ showHeader ? index + 1 : school.ranking || '' }}
           </th>
           <td class="text-truncate text-center">
-            <omegaup-countryflag
+            <OmegaupCountryflag
               :country="school.country_id"
-            ></omegaup-countryflag>
+            ></OmegaupCountryflag>
             <a :href="`/schools/profile/${school.school_id}/`">{{
               school.name
             }}</a>
@@ -68,58 +68,57 @@
       <a href="/rank/schools/">{{ T.rankSeeGeneralRanking }}</a>
     </div>
     <div v-else class="card-footer">
-      <omegaup-common-paginator
+      <OmegaupCommonPaginator
         :pager-items="pagerItems"
-      ></omegaup-common-paginator>
+      ></OmegaupCommonPaginator>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed } from 'vue';
 
 import { omegaup } from '../../omegaup';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
-import CountryFlag from '../CountryFlag.vue';
-import common_Paginator from '../common/Paginator.vue';
-import common_Typeahead from '../common/Typeahead.vue';
+import OmegaupCountryflag from '../CountryFlag.vue';
+import OmegaupCommonPaginator from '../common/Paginator.vue';
+import OmegaupCommonTypeahead from '../common/Typeahead.vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { getBlogUrl } from '../../urlHelper';
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-    'omegaup-countryflag': CountryFlag,
-    'omegaup-common-paginator': common_Paginator,
-    'omegaup-common-typeahead': common_Typeahead,
+withDefaults(
+  defineProps<{
+    page: number;
+    length: number;
+    showHeader: boolean;
+    totalRows: number;
+    rank: omegaup.SchoolsRank[];
+    pagerItems: types.PageItem[];
+    searchResultSchools?: types.SchoolListItem[];
+  }>(),
+  {
+    searchResultSchools: () => [],
   },
-})
-export default class SchoolRank extends Vue {
-  @Prop() page!: number;
-  @Prop() length!: number;
-  @Prop() showHeader!: boolean;
-  @Prop() totalRows!: number;
-  @Prop() rank!: omegaup.SchoolsRank[];
-  @Prop() pagerItems!: types.PageItem[];
-  @Prop({ default: () => [] }) searchResultSchools!: types.SchoolListItem[];
+);
 
-  T = T;
-  ui = ui;
-  searchedSchool: null | types.SchoolListItem = null;
+const emit = defineEmits<{
+  (e: 'update-search-result-schools', query: string): void;
+}>();
 
-  get SchoolRankingFeatureGuideURL(): string {
-    // Use the key defined in blog-links-config.json
-    return getBlogUrl('SchoolRankingFeatureGuideURL');
-  }
+const searchedSchool = ref<null | types.SchoolListItem>(null);
 
-  onSubmit(): void {
-    if (!this.searchedSchool) return;
-    window.location.href = `/schools/profile/${encodeURIComponent(
-      this.searchedSchool.key,
-    )}/`;
-  }
+const SchoolRankingFeatureGuideURL = computed<string>(() => {
+  // Use the key defined in blog-links-config.json
+  return getBlogUrl('SchoolRankingFeatureGuideURL');
+});
+
+function onSubmit(): void {
+  if (!searchedSchool.value) return;
+  window.location.href = `/schools/profile/${encodeURIComponent(
+    searchedSchool.value.key,
+  )}/`;
 }
 </script>
 

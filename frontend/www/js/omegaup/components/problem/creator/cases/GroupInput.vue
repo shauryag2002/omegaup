@@ -43,35 +43,45 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Vue, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import T from '../../../../lang';
 
-@Component
-export default class GroupInput extends Vue {
-  @Prop({ default: '' }) name!: string;
-  @Prop({ default: 100 }) points!: number;
-  @Prop({ default: true }) autoPoints!: boolean;
+const props = withDefaults(
+  defineProps<{
+    name?: string;
+    points?: number;
+    autoPoints?: boolean;
+  }>(),
+  {
+    name: '',
+    points: 100,
+    autoPoints: true,
+  },
+);
 
-  groupName = this.name;
-  groupPoints: number = this.points;
-  groupAutoPoints: boolean = this.autoPoints;
+const groupName = ref(props.name);
+const groupPoints = ref<number>(props.points);
+const groupAutoPoints = ref<boolean>(props.autoPoints);
 
-  T = T;
+function formatter(text: string) {
+  return text.toLowerCase().replace(/[^a-zA-Z0-9_-]/g, '');
+}
 
-  formatter(text: string) {
-    return text.toLowerCase().replace(/[^a-zA-Z0-9_-]/g, '');
-  }
+function pointsFormatter(points: number) {
+  return Math.max(points, 0);
+}
 
-  pointsFormatter(points: number) {
-    return Math.max(points, 0);
-  }
-
-  toggleGroupAutoPoints() {
-    this.groupAutoPoints = !this.groupAutoPoints;
-    if (this.groupAutoPoints) {
-      this.groupPoints = 100;
-    }
+function toggleGroupAutoPoints() {
+  groupAutoPoints.value = !groupAutoPoints.value;
+  if (groupAutoPoints.value) {
+    groupPoints.value = 100;
   }
 }
+
+defineExpose({
+  groupName,
+  groupPoints,
+  groupAutoPoints,
+});
 </script>

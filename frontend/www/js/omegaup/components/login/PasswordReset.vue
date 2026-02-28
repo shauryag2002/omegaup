@@ -5,7 +5,7 @@
       <form>
         <div class="form-group">
           <h5>{{ T.passwordResetPassword }}</h5>
-          <omegaup-password-input
+          <OmegaupPasswordInput
             v-model="password"
             name="password"
             autocomplete="new-password"
@@ -13,7 +13,7 @@
         </div>
         <div class="form-group">
           <h5>{{ T.passwordResetPasswordConfirmation }}</h5>
-          <omegaup-password-input
+          <OmegaupPasswordInput
             v-model="passwordConfirmation"
             name="password_confirmation"
             autocomplete="new-password"
@@ -41,22 +41,26 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import T from '../../lang';
-import omegaup_PasswordInput from '../common/PasswordInput.vue';
+import OmegaupPasswordInput from '../common/PasswordInput.vue';
 
-@Component({
-  components: {
-    'omegaup-password-input': omegaup_PasswordInput,
-  },
-})
-export default class PasswordRecover extends Vue {
-  @Prop() email?: string;
-  @Prop() resetToken?: string;
+defineProps<{
+  email?: string;
+  resetToken?: string;
+}>();
 
-  T = T;
-  password = '';
-  passwordConfirmation = '';
-}
+defineEmits<{
+  (
+    e: 'reset-password',
+    email: string | undefined,
+    resetToken: string | undefined,
+    password: string,
+    passwordConfirmation: string,
+  ): void;
+}>();
+
+const password = ref('');
+const passwordConfirmation = ref('');
 </script>

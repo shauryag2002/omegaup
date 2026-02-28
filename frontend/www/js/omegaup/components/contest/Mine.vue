@@ -26,7 +26,7 @@
                 class="form-check-input"
                 type="checkbox"
                 @change.prevent="
-                  $emit('change-show-all-contests', shouldShowAllContests)
+                  emit('change-show-all-contests', shouldShowAllContests)
                 "
               />
               <span>{{ T.contestListShowAdminContests }}</span>
@@ -39,7 +39,7 @@
                 class="form-check-input"
                 type="checkbox"
                 @change.prevent="
-                  $emit(
+                  emit(
                     'change-show-archived-contests',
                     shouldShowArchivedContests,
                   )
@@ -180,8 +180,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Emit } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
@@ -208,62 +208,53 @@ library.add(
   faFileDownload,
 );
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-  },
-})
-export default class List extends Vue {
-  @Prop() contests!: types.ContestListItem[];
-  @Prop() privateContestsAlert!: boolean;
+defineProps<{
+  contests: types.ContestListItem[];
+  privateContestsAlert: boolean;
+}>();
 
-  T = T;
-  ui = ui;
-  time = time;
-  shouldShowAllContests = false;
-  shouldShowArchivedContests = false;
-  allContestsVisibilityOption = 'none';
-  selectedContests: string[] = [];
+const emit = defineEmits<{
+  (e: 'change-show-all-contests', value: boolean): void;
+  (e: 'change-show-archived-contests', value: boolean): void;
+  (e: 'change-admission-mode', contests: string[], mode: string): void;
+  (e: 'toggle-show-admin', value: boolean): void;
+  (e: 'download-csv-users', alias: string): void;
+}>();
 
-  getAdmissionModeText(admissionMode: string): string {
-    switch (admissionMode) {
-      case 'public':
-        return T.wordsPublic;
-      case 'private':
-        return T.wordsPrivate;
-      case 'registration':
-        return T.wordsRegistration;
-      default:
-        return '';
-    }
+const shouldShowAllContests = ref(false);
+const shouldShowArchivedContests = ref(false);
+const allContestsVisibilityOption = ref('none');
+const selectedContests = ref<string[]>([]);
+
+function getAdmissionModeText(admissionMode: string): string {
+  switch (admissionMode) {
+    case 'public':
+      return T.wordsPublic;
+    case 'private':
+      return T.wordsPrivate;
+    case 'registration':
+      return T.wordsRegistration;
+    default:
+      return '';
   }
+}
 
-  onChangeAdmissionMode(): void {
-    if (
-      this.allContestsVisibilityOption !== 'none' &&
-      this.selectedContests.length
-    ) {
-      this.$emit(
-        'change-admission-mode',
-        this.selectedContests,
-        this.allContestsVisibilityOption,
-      );
-      this.selectedContests = [];
-      this.allContestsVisibilityOption = 'none';
-    }
+function onChangeAdmissionMode(): void {
+  if (
+    allContestsVisibilityOption.value !== 'none' &&
+    selectedContests.value.length
+  ) {
+    emit(
+      'change-admission-mode',
+      selectedContests.value,
+      allContestsVisibilityOption.value,
+    );
+    selectedContests.value = [];
+    allContestsVisibilityOption.value = 'none';
   }
+}
 
-  @Emit('toggle-show-admin')
-  onShowAdmin(): boolean {
-    const input = this.$el.querySelector(
-      '.show-admin-contests',
-    ) as HTMLInputElement;
-    return input.checked;
-  }
-
-  @Emit('download-csv-users')
-  onDownloadCsv(contestAlias: string): string {
-    return contestAlias;
-  }
+function onDownloadCsv(contestAlias: string): void {
+  emit('download-csv-users', contestAlias);
 }
 </script>

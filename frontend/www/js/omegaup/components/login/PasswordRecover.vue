@@ -23,15 +23,15 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import T from '../../lang';
 
-@Component
-export default class PasswordRecover extends Vue {
-  T = T;
-  email: string = '';
-}
+const email = ref('');
+
+defineEmits<{
+  (e: 'forgot-password', email: string): void;
+}>();
 </script>
 
 <style scoped>

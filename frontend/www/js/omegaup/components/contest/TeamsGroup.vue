@@ -4,15 +4,15 @@
       <form class="form" @submit.prevent="onSubmit">
         <div class="form-group">
           <label>{{ T.wordsGroup }}</label>
-          <omegaup-common-typeahead
+          <OmegaupCommonTypeahead
             :existing-options="searchResultTeamsGroups"
             :value.sync="typeaheadGroup"
             :disabled="hasSubmissions"
             @update-existing-options="
-              (query) => $emit('update-search-result-teams-groups', query)
+              (query) => emit('update-search-result-teams-groups', query)
             "
           >
-          </omegaup-common-typeahead>
+          </OmegaupCommonTypeahead>
         </div>
         <button
           class="btn btn-primary"
@@ -35,7 +35,7 @@
         <tr :key="teamsGroup.alias">
           <td>
             <a :href="`/teamsgroup/${teamsGroup.alias}/edit/#edit`">
-              <omegaup-markdown :markdown="teamsGroup.name"></omegaup-markdown>
+              <OmegaupMarkdown :markdown="teamsGroup.name"></OmegaupMarkdown>
             </a>
           </td>
         </tr>
@@ -44,40 +44,43 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
-import common_Typeahead from '../common/Typeahead.vue';
-import omegaup_Markdown from '../Markdown.vue';
+import OmegaupCommonTypeahead from '../common/Typeahead.vue';
+import OmegaupMarkdown from '../Markdown.vue';
 
-@Component({
-  components: {
-    'omegaup-common-typeahead': common_Typeahead,
-    'omegaup-markdown': omegaup_Markdown,
-  },
-})
-export default class TeamsGroup extends Vue {
-  @Prop() teamsGroup!: types.ContestGroup;
-  @Prop() searchResultTeamsGroups!: types.ListItem[];
-  @Prop({ default: false }) hasSubmissions!: boolean;
+const props = defineProps<{
+  teamsGroup: types.ContestGroup;
+  searchResultTeamsGroups: types.ListItem[];
+  hasSubmissions?: boolean;
+}>();
 
-  T = T;
-  typeaheadGroup: null | types.ListItem = null;
+const emit = defineEmits<{
+  (e: 'update-search-result-teams-groups', query: string): void;
+  (
+    e: 'replace-teams-group',
+    value: { alias: string | undefined; name: string | undefined },
+  ): void;
+}>();
 
-  onSubmit(): void {
-    const name = this.searchResultTeamsGroups.find(
-      (teamsGroup) => teamsGroup.key === this.typeaheadGroup?.key,
-    )?.value;
-    this.$emit('replace-teams-group', {
-      alias: this.typeaheadGroup?.key,
-      name,
-    });
-  }
+const typeaheadGroup = ref<null | types.ListItem>(null);
 
-  @Watch('teamsGroup')
-  onTeamsGroupChange(): void {
-    this.typeaheadGroup = null;
-  }
+function onSubmit(): void {
+  const name = props.searchResultTeamsGroups.find(
+    (teamsGroup) => teamsGroup.key === typeaheadGroup.value?.key,
+  )?.value;
+  emit('replace-teams-group', {
+    alias: typeaheadGroup.value?.key,
+    name,
+  });
 }
+
+watch(
+  () => props.teamsGroup,
+  () => {
+    typeaheadGroup.value = null;
+  },
+);
 </script>

@@ -21,7 +21,7 @@
             >
               {{ T.problemCreatorCannotHaveSameName }}</b-alert
             >
-            <omegaup-problem-creator-case-input ref="case-input" />
+            <CaseInput ref="caseInputRef" />
           </b-tab>
           <b-tab
             :active="tab === 'group'"
@@ -41,7 +41,7 @@
             >
               {{ T.problemCreatorCannotHaveSameName }}</b-alert
             >
-            <omegaup-problem-creator-group-input ref="group-input" />
+            <GroupInput ref="groupInputRef" />
           </b-tab>
           <b-tab
             :active="tab === 'multiplecases'"
@@ -64,9 +64,7 @@
             >
               {{ T.problemCreatorCannotHaveSameName }}</b-alert
             >
-            <omegaup-problem-creator-multiple-cases-input
-              ref="multiple-cases-input"
-            />
+            <MultipleCasesInput ref="multipleCasesInputRef" />
           </b-tab>
         </b-tabs>
       </div>
@@ -74,7 +72,7 @@
         variant="danger"
         size="sm"
         class="mr-2"
-        @click="$emit('close-add-window')"
+        @click="emit('close-add-window')"
         >{{ T.wordsCancel }}</b-button
       >
       <b-button
@@ -88,13 +86,13 @@
   </b-card>
 </template>
 
-<script lang="ts">
-import { Component, Ref, Vue } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
+import { useStore } from 'vuex';
 import T from '../../../../lang';
-import problemCreator_Cases_CaseInput from './CaseInput.vue';
-import problemCreator_Cases_MultipleCasesInput from './MultipleCasesInput.vue';
-import problemCreator_Cases_GroupInput from './GroupInput.vue';
-import { namespace } from 'vuex-class';
+import CaseInput from './CaseInput.vue';
+import MultipleCasesInput from './MultipleCasesInput.vue';
+import GroupInput from './GroupInput.vue';
 import {
   Group,
   CaseRequest,
@@ -103,137 +101,124 @@ import {
 } from '@/js/omegaup/problem/creator/types';
 import { NIL, v4 as uuid } from 'uuid';
 
-const casesStore = namespace('casesStore');
+const store = useStore();
 
-@Component({
-  components: {
-    'omegaup-problem-creator-case-input': problemCreator_Cases_CaseInput,
-    'omegaup-problem-creator-multiple-cases-input': problemCreator_Cases_MultipleCasesInput,
-    'omegaup-problem-creator-group-input': problemCreator_Cases_GroupInput,
-  },
-})
-export default class AddPanel extends Vue {
-  tab: AddTabTypes = 'case';
+const emit = defineEmits<{
+  (e: 'close-add-window'): void;
+}>();
 
-  invalidCaseName = false;
-  invalidGroupName = false;
-  T = T;
+const tab = ref<AddTabTypes>('case');
+const invalidCaseName = ref(false);
+const invalidGroupName = ref(false);
 
-  @Ref('multiple-cases-input')
-  multipleCasesInputRef!: problemCreator_Cases_MultipleCasesInput;
-  @Ref('case-input') caseInputRef!: problemCreator_Cases_CaseInput;
-  @Ref('group-input') groupInputRef!: problemCreator_Cases_GroupInput;
+const multipleCasesInputRef = ref<InstanceType<typeof MultipleCasesInput>>();
+const caseInputRef = ref<InstanceType<typeof CaseInput>>();
+const groupInputRef = ref<InstanceType<typeof GroupInput>>();
 
-  @casesStore.Mutation('addCase') addCase!: (caseRequest: CaseRequest) => void;
-  @casesStore.Mutation('addGroup') addGroup!: (groupRequest: Group) => void;
-  @casesStore.Action('addMultipleCases') addMultipleCases!: (
-    multipleCaseRequest: MultipleCaseAddRequest,
-  ) => void;
-  @casesStore.State('groups') groups!: Group[];
+function addItemToStore() {
+  invalidCaseName.value = false;
+  invalidGroupName.value = false;
 
-  addItemToStore() {
-    this.invalidCaseName = false;
-    this.invalidGroupName = false;
+  const groups: Group[] = store.state.casesStore.groups;
 
-    if (this.tab === 'case') {
-      // Case Input
-      const caseName = this.caseInputRef.caseName;
-      const caseGroup = this.caseInputRef.caseGroup;
-      const casePoints = this.caseInputRef.casePoints;
-      const caseAutoPoints = this.caseInputRef.caseAutoPoints;
+  if (tab.value === 'case') {
+    // Case Input
+    const caseName = caseInputRef.value!.caseName;
+    const caseGroup = caseInputRef.value!.caseGroup;
+    const casePoints = caseInputRef.value!.casePoints;
+    const caseAutoPoints = caseInputRef.value!.caseAutoPoints;
 
-      // Check if there is a group/case with the same name already
-      if (caseGroup === NIL) {
-        // In this case we just need to check if there is a group with the same name. Since every time a new ungrouped case is created, a corresponding group is created too
-        const nameAlreadyExists = this.groups.find((g) => g.name === caseName);
-        if (nameAlreadyExists) {
-          this.invalidCaseName = true;
-          return;
-        }
-      } else {
-        const group = this.groups.find((g) => g.groupID === caseGroup);
-        if (!group) return;
-        const nameAlreadyExists = group.cases.find((c) => c.name === caseName);
-        if (nameAlreadyExists) {
-          this.invalidCaseName = true;
-          return;
-        }
-      }
-
-      this.addCase({
-        caseID: uuid(),
-        groupID: caseGroup,
-        name: caseName,
-        points: casePoints,
-        autoPoints: caseAutoPoints,
-      });
-    } else if (this.tab === 'group') {
-      const groupName = this.groupInputRef.groupName;
-      const groupPoints = this.groupInputRef.groupPoints;
-      const groupAutoPoints = this.groupInputRef.groupAutoPoints;
-
-      // Check if there is a group with the same name already
-      const nameAlreadyExists = this.groups.find((g) => g.name === groupName);
+    // Check if there is a group/case with the same name already
+    if (caseGroup === NIL) {
+      // In this case we just need to check if there is a group with the same name. Since every time a new ungrouped case is created, a corresponding group is created too
+      const nameAlreadyExists = groups.find((g) => g.name === caseName);
       if (nameAlreadyExists) {
-        this.invalidGroupName = true;
+        invalidCaseName.value = true;
         return;
       }
-
-      this.addGroup({
-        groupID: uuid(),
-        name: groupName,
-        points: groupPoints,
-        autoPoints: groupAutoPoints,
-        ungroupedCase: false,
-        cases: [],
-      });
-    } else if (this.tab === 'multiplecases') {
-      const multipleCasesPrefix = this.multipleCasesInputRef
-        .multipleCasesPrefix;
-      const multipleCasesSuffix = this.multipleCasesInputRef
-        .multipleCasesSuffix;
-      const multipleCasesCount = this.multipleCasesInputRef.multipleCasesCount;
-      const multipleCasesGroup = this.multipleCasesInputRef.multipleCasesGroup;
-
-      const multipleCaseNameArray = Array.from(
-        { length: multipleCasesCount },
-        (_, i) => multipleCasesPrefix + `${i + 1}` + multipleCasesSuffix,
-      );
-
-      const multipleCaseRequest: MultipleCaseAddRequest = {
-        groupID: multipleCasesGroup,
-        numberOfCases: multipleCasesCount,
-        prefix: multipleCasesPrefix,
-        suffix: multipleCasesSuffix,
-      };
-
-      if (multipleCasesGroup === NIL) {
-        // In this case we just need to check if there is a group with the same name. Since every time a new ungrouped case is created, a corresponding group is created too
-        const nameAlreadyExists = this.groups.find((g) =>
-          multipleCaseNameArray.includes(g.name),
-        );
-        if (nameAlreadyExists) {
-          this.invalidCaseName = true;
-          return;
-        }
-        this.addMultipleCases(multipleCaseRequest);
-        this.$emit('close-add-window');
-        return;
-      }
-      const group = this.groups.find((g) => g.groupID === multipleCasesGroup);
+    } else {
+      const group = groups.find((g) => g.groupID === caseGroup);
       if (!group) return;
-      const nameAlreadyExists = group.cases.find((c) =>
-        multipleCaseNameArray.includes(c.name),
-      );
+      const nameAlreadyExists = group.cases.find((c) => c.name === caseName);
       if (nameAlreadyExists) {
-        this.invalidCaseName = true;
+        invalidCaseName.value = true;
         return;
       }
-      this.addMultipleCases(multipleCaseRequest);
-      this.$emit('close-add-window');
+    }
+
+    store.commit('casesStore/addCase', {
+      caseID: uuid(),
+      groupID: caseGroup,
+      name: caseName,
+      points: casePoints,
+      autoPoints: caseAutoPoints,
+    } as CaseRequest);
+  } else if (tab.value === 'group') {
+    const groupName = groupInputRef.value!.groupName;
+    const groupPoints = groupInputRef.value!.groupPoints;
+    const groupAutoPoints = groupInputRef.value!.groupAutoPoints;
+
+    // Check if there is a group with the same name already
+    const nameAlreadyExists = groups.find((g) => g.name === groupName);
+    if (nameAlreadyExists) {
+      invalidGroupName.value = true;
       return;
     }
-    this.$emit('close-add-window');
+
+    store.commit('casesStore/addGroup', {
+      groupID: uuid(),
+      name: groupName,
+      points: groupPoints,
+      autoPoints: groupAutoPoints,
+      ungroupedCase: false,
+      cases: [],
+    } as Group);
+  } else if (tab.value === 'multiplecases') {
+    const multipleCasesPrefix = multipleCasesInputRef.value!
+      .multipleCasesPrefix;
+    const multipleCasesSuffix = multipleCasesInputRef.value!
+      .multipleCasesSuffix;
+    const multipleCasesCount = multipleCasesInputRef.value!.multipleCasesCount;
+    const multipleCasesGroup = multipleCasesInputRef.value!.multipleCasesGroup;
+
+    const multipleCaseNameArray = Array.from(
+      { length: multipleCasesCount },
+      (_, i) => multipleCasesPrefix + `${i + 1}` + multipleCasesSuffix,
+    );
+
+    const multipleCaseRequest: MultipleCaseAddRequest = {
+      groupID: multipleCasesGroup,
+      numberOfCases: multipleCasesCount,
+      prefix: multipleCasesPrefix,
+      suffix: multipleCasesSuffix,
+    };
+
+    if (multipleCasesGroup === NIL) {
+      // In this case we just need to check if there is a group with the same name. Since every time a new ungrouped case is created, a corresponding group is created too
+      const nameAlreadyExists = groups.find((g) =>
+        multipleCaseNameArray.includes(g.name),
+      );
+      if (nameAlreadyExists) {
+        invalidCaseName.value = true;
+        return;
+      }
+      store.dispatch('casesStore/addMultipleCases', multipleCaseRequest);
+      emit('close-add-window');
+      return;
+    }
+    const group = groups.find((g) => g.groupID === multipleCasesGroup);
+    if (!group) return;
+    const nameAlreadyExists = group.cases.find((c) =>
+      multipleCaseNameArray.includes(c.name),
+    );
+    if (nameAlreadyExists) {
+      invalidCaseName.value = true;
+      return;
+    }
+    store.dispatch('casesStore/addMultipleCases', multipleCaseRequest);
+    emit('close-add-window');
+    return;
   }
+  emit('close-add-window');
 }
 </script>

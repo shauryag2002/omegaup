@@ -54,15 +54,15 @@
         class="tab-pane active"
         role="tabpanel"
       >
-        <omegaup-group-form
+        <OmegaupGroupForm
           :is-update="true"
           :group-name="groupName"
           :group-alias="groupAlias"
           :group-description="groupDescription"
           @update-group="
-            (name, description) => $emit('update-group', name, description)
+            (name, description) => emit('update-group', name, description)
           "
-        ></omegaup-group-form>
+        ></OmegaupGroupForm>
       </div>
 
       <div
@@ -70,7 +70,7 @@
         class="tab-pane active"
         role="tabpanel"
       >
-        <omegaup-group-members
+        <OmegaupGroupMembers
           :identities="currentIdentities"
           :identities-csv="currentIdentitiesCsv"
           :group-alias="groupAlias"
@@ -78,26 +78,26 @@
           :search-result-users="searchResultUsers"
           :search-result-schools="searchResultSchools"
           @update-search-result-schools="
-            (query) => $emit('update-search-result-schools', query)
+            (query) => emit('update-search-result-schools', query)
           "
           @add-member="
             (memberComponent, username) =>
-              $emit('add-member', memberComponent, username)
+              emit('add-member', memberComponent, username)
           "
           @edit-identity="
             (memberComponent, identity) =>
-              $emit('edit-identity', memberComponent, identity)
+              emit('edit-identity', memberComponent, identity)
           "
           @edit-identity-member="
-            (request) => $emit('edit-identity-member', request)
+            (request) => emit('edit-identity-member', request)
           "
           @change-password-identity="
             (memberComponent, username) =>
-              $emit('change-password-identity', memberComponent, username)
+              emit('change-password-identity', memberComponent, username)
           "
           @change-password-identity-member="
             (memberComponent, username, password, repeatPassword) =>
-              $emit(
+              emit(
                 'change-password-identity-member',
                 memberComponent,
                 username,
@@ -105,12 +105,12 @@
                 repeatPassword,
               )
           "
-          @remove="(username) => $emit('remove', username)"
-          @cancel="(memberComponent) => $emit('cancel', memberComponent)"
+          @remove="(username) => emit('remove', username)"
+          @cancel="(memberComponent) => emit('cancel', memberComponent)"
           @update-search-result-users="
-            (query) => $emit('update-search-result-users', query)
+            (query) => emit('update-search-result-users', query)
           "
-        ></omegaup-group-members>
+        ></OmegaupGroupMembers>
       </div>
 
       <div
@@ -118,14 +118,14 @@
         class="tab-pane active"
         role="tabpanel"
       >
-        <omegaup-group-scoreboards
+        <OmegaupGroupScoreboards
           :group-alias="groupAlias"
           :scoreboards.sync="currentScoreboards"
           @create-scoreboard="
             (title, alias, description) =>
-              $emit('create-scoreboard', title, alias, description)
+              emit('create-scoreboard', title, alias, description)
           "
-        ></omegaup-group-scoreboards>
+        ></OmegaupGroupScoreboards>
       </div>
 
       <div
@@ -133,97 +133,118 @@
         class="tab-pane active"
         role="tabpanel"
       >
-        <omegaup-group-create-identities
+        <OmegaupGroupCreateIdentities
           :group-alias="groupAlias"
           :user-error-row="userErrorRow"
           :has-visited-section="hasVisitedSection"
           :is-organizer="isOrganizer"
-          @bulk-identities="
-            (identities) => $emit('bulk-identities', identities)
-          "
+          @bulk-identities="(identities) => emit('bulk-identities', identities)"
           @download-identities="
-            (identities) => $emit('download-identities', identities)
+            (identities) => emit('download-identities', identities)
           "
-          @read-csv="(source) => $emit('read-csv', source)"
-          @invalid-file="$emit('invalid-file')"
-        ></omegaup-group-create-identities>
+          @read-csv="(source) => emit('read-csv', source)"
+          @invalid-file="emit('invalid-file')"
+        ></OmegaupGroupCreateIdentities>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
-import group_Identities from './Identities.vue';
-import group_Form from './Form.vue';
-import group_Members from './Members.vue';
-import group_Scoreboards from './Scoreboards.vue';
-import T from '../../lang';
-import { dao, types } from '../../api_types';
-import * as ui from '../../ui';
-
 export enum AvailableTabs {
   Edit = 'edit',
   Members = 'members',
   Scoreboards = 'scoreboards',
   Identities = 'identities',
 }
+</script>
 
-@Component({
-  components: {
-    'omegaup-group-create-identities': group_Identities,
-    'omegaup-group-form': group_Form,
-    'omegaup-group-members': group_Members,
-    'omegaup-group-scoreboards': group_Scoreboards,
-  },
-})
-export default class GroupEdit extends Vue {
-  @Prop() groupAlias!: string;
-  @Prop() groupDescription!: string;
-  @Prop() groupName!: string;
-  @Prop() countries!: dao.Countries[];
-  @Prop() isOrganizer!: boolean;
-  @Prop() tab!: AvailableTabs;
-  @Prop() identities!: types.Identity[];
-  @Prop() identitiesCsv!: types.Identity[];
-  @Prop() scoreboards!: types.GroupScoreboard[];
-  @Prop() userErrorRow!: null | string;
-  @Prop() searchResultUsers!: types.ListItem[];
-  @Prop() searchResultSchools!: types.SchoolListItem[];
-  @Prop() hasVisitedSection!: boolean;
+<script setup lang="ts">
+import { ref, watch } from 'vue';
+import OmegaupGroupCreateIdentities from './Identities.vue';
+import OmegaupGroupForm from './Form.vue';
+import OmegaupGroupMembers from './Members.vue';
+import OmegaupGroupScoreboards from './Scoreboards.vue';
+import T from '../../lang';
+import { dao, types } from '../../api_types';
+import * as ui from '../../ui';
 
-  T = T;
-  ui = ui;
-  AvailableTabs = AvailableTabs;
-  selectedTab: AvailableTabs = this.tab;
-  currentIdentities = this.identities;
-  currentIdentitiesCsv = this.identitiesCsv;
-  currentScoreboards = this.scoreboards;
+const props = defineProps<{
+  groupAlias: string;
+  groupDescription: string;
+  groupName: string;
+  countries: dao.Countries[];
+  isOrganizer: boolean;
+  tab: AvailableTabs;
+  identities: types.Identity[];
+  identitiesCsv: types.Identity[];
+  scoreboards: types.GroupScoreboard[];
+  userErrorRow: null | string;
+  searchResultUsers: types.ListItem[];
+  searchResultSchools: types.SchoolListItem[];
+  hasVisitedSection: boolean;
+}>();
 
-  @Watch('tab')
-  onInitialTabChanged(newValue: AvailableTabs): void {
-    if (!Object.values(AvailableTabs).includes(this.tab)) {
-      this.selectedTab = AvailableTabs.Members;
+const emit = defineEmits<{
+  (e: 'update-group', name: string, description: string): void;
+  (e: 'update-search-result-schools', query: string): void;
+  (e: 'add-member', component: any, username: string | undefined): void;
+  (e: 'edit-identity', component: any, identity: types.Identity): void;
+  (e: 'edit-identity-member', request: any): void;
+  (e: 'change-password-identity', component: any, username: string): void;
+  (
+    e: 'change-password-identity-member',
+    component: any,
+    username: string,
+    password: string,
+    repeatPassword: string,
+  ): void;
+  (e: 'remove', username: string): void;
+  (e: 'cancel', component: any): void;
+  (e: 'update-search-result-users', query: string): void;
+  (e: 'create-scoreboard', title: any, alias: any, description: any): void;
+  (e: 'bulk-identities', identities: any): void;
+  (e: 'download-identities', identities: any): void;
+  (e: 'read-csv', source: any): void;
+  (e: 'invalid-file'): void;
+}>();
+
+const selectedTab = ref<AvailableTabs>(props.tab);
+const currentIdentities = ref(props.identities);
+const currentIdentitiesCsv = ref(props.identitiesCsv);
+const currentScoreboards = ref(props.scoreboards);
+
+watch(
+  () => props.tab,
+  (newValue) => {
+    if (!Object.values(AvailableTabs).includes(props.tab)) {
+      selectedTab.value = AvailableTabs.Members;
       return;
     }
-    this.selectedTab = newValue;
-  }
+    selectedTab.value = newValue;
+  },
+);
 
-  @Watch('identities')
-  onInitialIdentitiesChanged(newValue: types.Identity[]): void {
-    this.currentIdentities = newValue;
-  }
+watch(
+  () => props.identities,
+  (newValue) => {
+    currentIdentities.value = newValue;
+  },
+);
 
-  @Watch('identitiesCsv')
-  onInitialIdentitiesCsvChanged(newValue: types.Identity[]): void {
-    this.currentIdentitiesCsv = newValue;
-  }
+watch(
+  () => props.identitiesCsv,
+  (newValue) => {
+    currentIdentitiesCsv.value = newValue;
+  },
+);
 
-  @Watch('scoreboards')
-  onInitialScoreboardsChanged(newValue: types.GroupScoreboard[]): void {
-    this.currentScoreboards = newValue;
-  }
-}
+watch(
+  () => props.scoreboards,
+  (newValue) => {
+    currentScoreboards.value = newValue;
+  },
+);
 </script>
 
 <style scoped lang="scss">

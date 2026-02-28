@@ -20,16 +20,14 @@
           <img :src="coder.gravatar_32" :alt="coder.username" />
         </td>
         <td class="text-center align-middle">
-          <omegaup-user-username
+          <OmegaupUserUsername
             :classname="coder.classname"
             :linkify="true"
             :username="coder.username"
-          ></omegaup-user-username>
+          />
         </td>
         <td class="text-center align-middle">
-          <omegaup-countryflag
-            :country="coder.country_id"
-          ></omegaup-countryflag>
+          <OmegaupCountryflag :country="coder.country_id" />
         </td>
         <td class="text-center align-middle">
           {{ coder.date }}
@@ -39,22 +37,13 @@
   </table>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
 import T from '../../lang';
-import user_Username from '../user/Username.vue';
-import country_Flag from '../CountryFlag.vue';
+import OmegaupUserUsername from '../user/Username.vue';
+import OmegaupCountryflag from '../CountryFlag.vue';
 import { types } from '../../api_types';
 
-@Component({
-  components: {
-    'omegaup-user-username': user_Username,
-    'omegaup-countryflag': country_Flag,
-  },
-})
-export default class CoderOfTheMonthList extends Vue {
-  @Prop() coders!: types.CoderOfTheMonthList[];
-
-  T = T;
-}
+defineProps<{
+  coders: types.CoderOfTheMonthList[];
+}>();
 </script>

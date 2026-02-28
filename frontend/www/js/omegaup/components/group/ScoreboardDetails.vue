@@ -52,19 +52,15 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
 import T from '../../lang';
 import { types } from '../../api_types';
 
-@Component
-export default class GroupScoreboardDetails extends Vue {
-  @Prop() ranking!: types.ScoreboardRanking[];
-  @Prop() scoreboard!: types.ScoreboardDetails;
-  @Prop() contests!: types.ScoreboardContest[];
-  @Prop() scoreboardAlias!: string;
-  @Prop() groupAlias!: string;
-
-  T = T;
-}
+defineProps<{
+  ranking: types.ScoreboardRanking[];
+  scoreboard: types.ScoreboardDetails;
+  contests: types.ScoreboardContest[];
+  scoreboardAlias: string;
+  groupAlias: string;
+}>();
 </script>

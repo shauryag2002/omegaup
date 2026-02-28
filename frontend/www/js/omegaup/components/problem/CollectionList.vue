@@ -15,13 +15,13 @@
         class="filters-sidebar"
         :class="{ 'filters-hidden': !filtersVisible }"
       >
-        <omegaup-problem-filter-tags
+        <OmegaupProblemFilterTags
           :selected-tags="selectedTags"
           :tags="availableTags"
           :public-quality-tags="publicQualityTags"
           @new-selected-tag="
             (selectedTags) =>
-              $emit(
+              emit(
                 'apply-filter',
                 columnName,
                 sortOrder,
@@ -30,22 +30,22 @@
                 selectedTags,
               )
           "
-        ></omegaup-problem-filter-tags>
+        />
 
         <div class="mb-3">
-          <omegaup-toggle-switch
+          <OmegaupToggleSwitch
             data-problem-tags-toggle
             :checked-value="showProblemTags"
             :text-description="T.userEditShowProblemTags"
             :size="ToggleSwitchSize.Small"
             @update:value="(value) => (showProblemTags = value)"
-          ></omegaup-toggle-switch>
+          />
         </div>
-        <omegaup-problem-filter-difficulty
+        <OmegaupProblemFilterDifficulty
           :selected-difficulty="difficulty"
           @change-difficulty="
             (difficulty) =>
-              $emit(
+              emit(
                 'apply-filter',
                 columnName,
                 sortOrder,
@@ -54,13 +54,13 @@
                 selectedTags,
               )
           "
-        ></omegaup-problem-filter-difficulty>
+        />
 
-        <omegaup-problem-filter-quality
+        <OmegaupProblemFilterQuality
           :quality="quality"
           @change-quality="
             (quality) =>
-              $emit(
+              emit(
                 'apply-filter',
                 columnName,
                 sortOrder,
@@ -69,7 +69,7 @@
                 selectedTags,
               )
           "
-        ></omegaup-problem-filter-quality>
+        />
       </div>
 
       <button
@@ -82,7 +82,7 @@
         "
         @click="filtersVisible = !filtersVisible"
       >
-        <font-awesome-icon
+        <FontAwesomeIcon
           :icon="filtersVisible ? 'chevron-left' : 'chevron-right'"
         />
       </button>
@@ -94,7 +94,7 @@
           </div>
         </div>
 
-        <omegaup-problem-base-list
+        <OmegaupProblemBaseList
           v-else
           :problems="problemsToShow"
           :logged-in="loggedIn"
@@ -115,7 +115,7 @@
           :show-problem-tags="showProblemTags"
           @apply-filter="
             (columnName, sortOrder) =>
-              $emit(
+              emit(
                 'apply-filter',
                 columnName,
                 sortOrder,
@@ -130,14 +130,14 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed, ref } from 'vue';
 import { omegaup } from '../../omegaup';
-import problem_FilterTags from './FilterTags.vue';
-import problem_BaseList from './BaseList.vue';
-import problem_FilterDifficulty from './FilterDifficulty.vue';
-import problem_FilterQuality from './FilterQuality.vue';
-import omegaup_ToggleSwitch, { ToggleSwitchSize } from '../ToggleSwitch.vue';
+import OmegaupProblemFilterTags from './FilterTags.vue';
+import OmegaupProblemBaseList from './BaseList.vue';
+import OmegaupProblemFilterDifficulty from './FilterDifficulty.vue';
+import OmegaupProblemFilterQuality from './FilterQuality.vue';
+import OmegaupToggleSwitch, { ToggleSwitchSize } from '../ToggleSwitch.vue';
 import T from '../../lang';
 import { types } from '../../api_types';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
@@ -149,87 +149,91 @@ import {
 
 library.add(faChevronLeft, faChevronRight);
 
-@Component({
-  components: {
-    'omegaup-problem-filter-tags': problem_FilterTags,
-    'omegaup-problem-base-list': problem_BaseList,
-    'omegaup-problem-filter-difficulty': problem_FilterDifficulty,
-    'omegaup-problem-filter-quality': problem_FilterQuality,
-    'font-awesome-icon': FontAwesomeIcon,
-    'omegaup-toggle-switch': omegaup_ToggleSwitch,
+const props = withDefaults(
+  defineProps<{
+    data: types.CollectionDetailsByLevelPayload;
+    problems: omegaup.Problem[];
+    loggedIn: boolean;
+    selectedTags?: string[];
+    pagerItems: types.PageItem[];
+    wizardTags: omegaup.Tag[];
+    language: string;
+    languages: string[];
+    keyword: string;
+    modes: string[];
+    columns: string[];
+    mode: string;
+    column: string;
+    tagsList?: string[];
+    sortOrder: string;
+    columnName: string;
+    difficulty: string;
+    quality: string;
+  }>(),
+  {
+    selectedTags: () => [],
+    tagsList: () => [],
   },
-})
-export default class CollectionList extends Vue {
-  @Prop() data!: types.CollectionDetailsByLevelPayload;
-  @Prop() problems!: omegaup.Problem[];
-  @Prop() loggedIn!: boolean;
-  @Prop({ default: () => [] }) selectedTags!: string[];
-  @Prop() pagerItems!: types.PageItem[];
-  @Prop() wizardTags!: omegaup.Tag[];
-  @Prop() language!: string;
-  @Prop() languages!: string[];
-  @Prop() keyword!: string;
-  @Prop() modes!: string[];
-  @Prop() columns!: string[];
-  @Prop() mode!: string;
-  @Prop() column!: string;
-  @Prop({ default: () => [] }) tagsList!: string[];
-  @Prop() sortOrder!: string;
-  @Prop() columnName!: string;
-  @Prop() difficulty!: string;
-  @Prop() quality!: string;
+);
 
-  T = T;
-  ToggleSwitchSize = ToggleSwitchSize;
-  level = this.data.level;
-  filtersVisible = true;
-  showProblemTags = true;
+const emit = defineEmits<{
+  (
+    e: 'apply-filter',
+    columnName: string,
+    sortOrder: string,
+    difficulty: string,
+    quality: string,
+    selectedTags: string[],
+  ): void;
+}>();
 
-  get problemsToShow(): omegaup.Problem[] {
-    if (this.showProblemTags) return this.problems;
-    // Keep filtering logic intact but hide rendered tags by stripping them.
-    return this.problems.map((problem) => ({
-      ...problem,
-      tags: [],
-    }));
+const level = props.data.level;
+const filtersVisible = ref(true);
+const showProblemTags = ref(true);
+
+const problemsToShow = computed((): omegaup.Problem[] => {
+  if (showProblemTags.value) return props.problems;
+  return props.problems.map((problem) => ({
+    ...problem,
+    tags: [],
+  }));
+});
+
+const publicQualityTags = computed((): types.TagWithProblemCount[] => {
+  const tagNames: Set<string> = new Set(
+    props.data.frequentTags.map((x) => x.name),
+  );
+  return props.data.publicTags.filter((tag) => !tagNames.has(tag.name));
+});
+
+const availableTags = computed((): types.TagWithProblemCount[] => {
+  const tags: types.TagWithProblemCount[] = props.data.frequentTags;
+  const selectedTagNames = new Set<string>(props.selectedTags);
+  return tags.concat(
+    publicQualityTags.value.filter((tag) => selectedTagNames.has(tag.name)),
+  );
+});
+
+const title = computed((): string => {
+  switch (level) {
+    case 'problemLevelBasicKarel':
+      return T.problemLevelBasicKarel;
+    case 'problemLevelBasicIntroductionToProgramming':
+      return T.problemLevelBasicIntroductionToProgramming;
+    case 'problemLevelIntermediateMathsInProgramming':
+      return T.problemLevelIntermediateMathsInProgramming;
+    case 'problemLevelIntermediateDataStructuresAndAlgorithms':
+      return T.problemLevelIntermediateDataStructuresAndAlgorithms;
+    case 'problemLevelIntermediateAnalysisAndDesignOfAlgorithms':
+      return T.problemLevelIntermediateAnalysisAndDesignOfAlgorithms;
+    case 'problemLevelAdvancedCompetitiveProgramming':
+      return T.problemLevelAdvancedCompetitiveProgramming;
+    case 'problemLevelAdvancedSpecializedTopics':
+      return T.problemLevelAdvancedSpecializedTopics;
+    default:
+      return '';
   }
-
-  get publicQualityTags(): types.TagWithProblemCount[] {
-    const tagNames: Set<string> = new Set(
-      this.data.frequentTags.map((x) => x.name),
-    );
-    return this.data.publicTags.filter((tag) => !tagNames.has(tag.name));
-  }
-
-  get availableTags(): types.TagWithProblemCount[] {
-    const tags: types.TagWithProblemCount[] = this.data.frequentTags;
-    const selectedTagNames = new Set<string>(this.selectedTags);
-    return tags.concat(
-      this.publicQualityTags.filter((tag) => selectedTagNames.has(tag.name)),
-    );
-  }
-
-  get title(): string {
-    switch (this.level) {
-      case 'problemLevelBasicKarel':
-        return T.problemLevelBasicKarel;
-      case 'problemLevelBasicIntroductionToProgramming':
-        return T.problemLevelBasicIntroductionToProgramming;
-      case 'problemLevelIntermediateMathsInProgramming':
-        return T.problemLevelIntermediateMathsInProgramming;
-      case 'problemLevelIntermediateDataStructuresAndAlgorithms':
-        return T.problemLevelIntermediateDataStructuresAndAlgorithms;
-      case 'problemLevelIntermediateAnalysisAndDesignOfAlgorithms':
-        return T.problemLevelIntermediateAnalysisAndDesignOfAlgorithms;
-      case 'problemLevelAdvancedCompetitiveProgramming':
-        return T.problemLevelAdvancedCompetitiveProgramming;
-      case 'problemLevelAdvancedSpecializedTopics':
-        return T.problemLevelAdvancedSpecializedTopics;
-      default:
-        return '';
-    }
-  }
-}
+});
 </script>
 
 <style scoped>

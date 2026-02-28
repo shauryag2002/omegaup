@@ -1,5 +1,5 @@
 <template>
-  <ephemeral-ide
+  <EphemeralIde
     :accepted-languages="acceptedLanguages"
     :initial-language="initialLanguage"
     :problem="problem"
@@ -9,50 +9,57 @@
     :initial-theme="initialTheme"
     :next-submission-timestamp="nextSubmissionTimestamp"
     :next-execution-timestamp="nextExecutionTimestamp"
-    @execute-run="() => this.$emit('execute-run')"
+    @execute-run="emit('execute-run')"
   >
-  </ephemeral-ide>
+  </EphemeralIde>
 </template>
 
-<script lang="ts">
-import { Component, Vue, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import { types } from '../../api_types';
 import * as Util from '../../grader/util';
-import Ephemeral from '../../grader/Ephemeral.vue';
+import EphemeralIde from '../../grader/Ephemeral.vue';
 
-@Component({
-  components: {
-    'ephemeral-ide': Ephemeral,
-  },
-})
-export default class EphemeralGrader extends Vue {
-  @Prop({ default: () => ({ ...Util.DUMMY_PROBLEM }) })
-  problem!: types.ProblemInfo;
-  @Prop({ default: false }) canSubmit!: boolean;
-  @Prop({ default: true }) canRun!: boolean;
-  @Prop({
-    default: () =>
+const props = withDefaults(
+  defineProps<{
+    problem?: types.ProblemInfo;
+    canSubmit?: boolean;
+    canRun?: boolean;
+    acceptedLanguages?: string[];
+    preferredLanguage?: string | null;
+    isEmbedded?: boolean;
+    initialTheme?: Util.MonacoThemes;
+    nextSubmissionTimestamp?: null | Date;
+    nextExecutionTimestamp?: null | Date;
+  }>(),
+  {
+    problem: () => ({ ...Util.DUMMY_PROBLEM }),
+    canSubmit: false,
+    canRun: true,
+    acceptedLanguages: () =>
       Object.values(Util.supportedLanguages).map(
         (languageInfo) => languageInfo.language,
       ),
-  })
-  acceptedLanguages!: string[];
-  @Prop({ default: 'cpp17-gcc' }) preferredLanguage!: string | null;
-  @Prop({ default: true }) isEmbedded!: boolean;
-  @Prop({ default: Util.MonacoThemes.VSLight })
-  initialTheme!: Util.MonacoThemes;
-  @Prop({ default: null }) nextSubmissionTimestamp!: null | Date;
-  @Prop({ default: null }) nextExecutionTimestamp!: null | Date;
+    preferredLanguage: 'cpp17-gcc',
+    isEmbedded: true,
+    initialTheme: Util.MonacoThemes.VSLight,
+    nextSubmissionTimestamp: null,
+    nextExecutionTimestamp: null,
+  },
+);
 
-  // note: initial source is for the IDE is also supported
-  get initialLanguage() {
-    if (
-      !this.preferredLanguage ||
-      !this.acceptedLanguages.includes(this.preferredLanguage)
-    ) {
-      return this.acceptedLanguages[0];
-    }
-    return this.preferredLanguage;
+const emit = defineEmits<{
+  (e: 'execute-run'): void;
+}>();
+
+// note: initial source is for the IDE is also supported
+const initialLanguage = computed(() => {
+  if (
+    !props.preferredLanguage ||
+    !props.acceptedLanguages.includes(props.preferredLanguage)
+  ) {
+    return props.acceptedLanguages[0];
   }
-}
+  return props.preferredLanguage;
+});
 </script>

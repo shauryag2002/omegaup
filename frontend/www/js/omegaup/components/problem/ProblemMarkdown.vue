@@ -6,14 +6,13 @@
   ></div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Emit, Prop, Ref, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import Vue, { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import * as markdown from '../../markdown';
 import * as ui from '../../ui';
 import { types } from '../../api_types';
 import LibinteractiveDownload from './templates/LibinteractiveDownload.vue';
 import OutputOnlyDownload from './templates/OutputOnlyDownload.vue';
-
 import T from '../../lang';
 
 declare global {
@@ -33,182 +32,198 @@ declare global {
   }
 }
 
-@Component
-export default class ProblemMarkdown extends Vue {
-  @Prop() markdown!: string;
-  @Ref() root!: HTMLElement;
-  @Prop({ default: null }) imageMapping!: markdown.ImageMapping | null;
-  @Prop({ default: null }) sourceMapping!: markdown.SourceMapping | null;
-  @Prop({ default: null })
-  problemSettings!: types.ProblemSettingsDistrib | null;
-  @Prop({ default: false }) preview!: boolean;
-  @Prop({ default: false }) fullWidth!: boolean;
+const props = withDefaults(
+  defineProps<{
+    markdown: string;
+    imageMapping?: markdown.ImageMapping | null;
+    sourceMapping?: markdown.SourceMapping | null;
+    problemSettings?: types.ProblemSettingsDistrib | null;
+    preview?: boolean;
+    fullWidth?: boolean;
+  }>(),
+  {
+    imageMapping: null,
+    sourceMapping: null,
+    problemSettings: null,
+    preview: false,
+    fullWidth: false,
+  },
+);
 
-  private vueInstances: Vue[] = [];
+const emit = defineEmits<{
+  (e: 'rendered'): void;
+}>();
 
-  markdownConverter = new markdown.Converter({ preview: false });
+const root = ref<HTMLElement | null>(null);
 
-  get html(): string {
-    if (this.problemSettings || this.imageMapping) {
-      return this.markdownConverter.makeHtmlWithImages(
-        this.markdown,
-        this.imageMapping || {},
-        this.sourceMapping || {},
-        this.problemSettings || undefined,
-      );
-    }
-    return this.markdownConverter.makeHtml(this.markdown);
-  }
+let vueInstances: Vue[] = [];
 
-  mounted(): void {
-    this.renderMathJax();
-    this.injectTemplates();
-    this.renderMermaid();
-  }
+const markdownConverter = new markdown.Converter({ preview: false });
 
-  @Watch('markdown')
-  onMarkdownChanged() {
-    this.renderMathJax();
-    this.renderMermaid();
-  }
-
-  @Emit('rendered')
-  private renderMathJax(): void {
-    this.root.innerHTML = this.html;
-    this.root
-      .querySelectorAll(
-        '[data-markdown-statement] > pre, .sample_io > tbody > tr > td:first-of-type > pre',
-      )
-      .forEach((preElement) => {
-        if (!preElement.firstChild) {
-          return;
-        }
-        const inputValue = (preElement as HTMLElement).innerText;
-
-        const clipboardButton = document.createElement('button');
-        clipboardButton.appendChild(document.createTextNode('📋'));
-        clipboardButton.title = T.wordsCopyToClipboard;
-        clipboardButton.className = 'clipboard btn btn-light';
-
-        clipboardButton.addEventListener('click', (event: Event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          ui.copyToClipboard(inputValue);
-        });
-
-        (preElement.parentElement as HTMLElement).insertBefore(
-          clipboardButton,
-          preElement,
-        );
-      });
-    if (!window.MathJax?.startup) {
-      window.MathJax = {
-        tex: {
-          inlineMath: [
-            ['$', '$'],
-            ['\\(', '\\)'],
-          ],
-          processEscapes: true,
-          autoload: { color: [], colorV2: ['color'] },
-          packages: { '[+]': ['noerrors'] },
-        },
-        startup: {
-          typeset: true,
-          elements: [],
-          ready: () => {
-            if (!window.MathJax?.startup) {
-              return;
-            }
-            if (window.MathJax.startup.defaultReady) {
-              window.MathJax.startup.defaultReady();
-            }
-            if (
-              window.MathJax.startup.elements &&
-              window.MathJax.startup.elements.length > 0 &&
-              window.MathJax.typeset
-            ) {
-              window.MathJax.typeset(window.MathJax.startup.elements.splice(0));
-            }
-          },
-        },
-        options: {
-          ignoreHtmlClass: 'tex2jax_ignore',
-          processHtmlClass: 'tex2jax_process',
-        },
-        loader: { load: ['[tex]/noerrors'] },
-      };
-      // Now that the global MathJax config is set, we can lazily load the
-      // library. The element to be rendered will be queued up in
-      // MathJax.startup.elements.
-      let scriptElement = document.getElementById(
-        'MathJax-script',
-      ) as HTMLScriptElement | null;
-      if (!scriptElement) {
-        scriptElement = document.createElement('script');
-        scriptElement.src = '/third_party/js/mathjax/es5/tex-svg.js';
-        scriptElement.id = 'MathJax-script';
-        document.head.appendChild(scriptElement);
-      }
-    }
-
-    if (!window.MathJax.typeset) {
-      // In case the library hasn't quite finished loading completely, add the
-      // current element to the queue of elements that need to be rendered.
-      if (!window.MathJax.startup.elements) {
-        window.MathJax.startup.elements = [];
-      }
-      if (window.MathJax.startup.elements.indexOf(this.root) === -1) {
-        window.MathJax.startup.elements.push(this.root);
-      }
-      return;
-    }
-
-    window.MathJax.typeset([this.root]);
-  }
-
-  private async renderMermaid(): Promise<void> {
-    try {
-      await this.markdownConverter.renderMermaidDiagrams(this.root);
-    } catch (error) {
-      console.error('Error rendering Mermaid diagrams:', error);
-    }
-  }
-
-  private injectTemplates(): void {
-    const templateComponents: Record<string, any> = {
-      'libinteractive:download': LibinteractiveDownload,
-      'output-only:download': OutputOnlyDownload,
-    };
-
-    const templates = this.root.querySelectorAll(
-      'template[data-template-name]',
+const html = computed((): string => {
+  if (props.problemSettings || props.imageMapping) {
+    return markdownConverter.makeHtmlWithImages(
+      props.markdown,
+      props.imageMapping || {},
+      props.sourceMapping || {},
+      props.problemSettings || undefined,
     );
-    for (const template of templates) {
-      const name = template.getAttribute('data-template-name');
-      if (!name || !templateComponents[name]) continue;
+  }
+  return markdownConverter.makeHtml(props.markdown);
+});
 
-      const mountPoint = document.createElement('div');
-      template.replaceWith(mountPoint);
+function renderMathJax(): void {
+  if (!root.value) return;
+  root.value.innerHTML = html.value;
+  root.value
+    .querySelectorAll(
+      '[data-markdown-statement] > pre, .sample_io > tbody > tr > td:first-of-type > pre',
+    )
+    .forEach((preElement) => {
+      if (!preElement.firstChild) {
+        return;
+      }
+      const inputValue = (preElement as HTMLElement).innerText;
 
-      const app = new Vue({
-        render: (h) => h(templateComponents[name]),
+      const clipboardButton = document.createElement('button');
+      clipboardButton.appendChild(document.createTextNode('📋'));
+      clipboardButton.title = T.wordsCopyToClipboard;
+      clipboardButton.className = 'clipboard btn btn-light';
+
+      clipboardButton.addEventListener('click', (event: Event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        ui.copyToClipboard(inputValue);
       });
-      app.$mount(mountPoint);
 
-      this.vueInstances.push(app);
+      (preElement.parentElement as HTMLElement).insertBefore(
+        clipboardButton,
+        preElement,
+      );
+    });
+  if (!window.MathJax?.startup) {
+    window.MathJax = {
+      tex: {
+        inlineMath: [
+          ['$', '$'],
+          ['\\(', '\\)'],
+        ],
+        processEscapes: true,
+        autoload: { color: [], colorV2: ['color'] },
+        packages: { '[+]': ['noerrors'] },
+      },
+      startup: {
+        typeset: true,
+        elements: [],
+        ready: () => {
+          if (!window.MathJax?.startup) {
+            return;
+          }
+          if (window.MathJax.startup.defaultReady) {
+            window.MathJax.startup.defaultReady();
+          }
+          if (
+            window.MathJax.startup.elements &&
+            window.MathJax.startup.elements.length > 0 &&
+            window.MathJax.typeset
+          ) {
+            window.MathJax.typeset(window.MathJax.startup.elements.splice(0));
+          }
+        },
+      },
+      options: {
+        ignoreHtmlClass: 'tex2jax_ignore',
+        processHtmlClass: 'tex2jax_process',
+      },
+      loader: { load: ['[tex]/noerrors'] },
+    };
+    // Now that the global MathJax config is set, we can lazily load the
+    // library. The element to be rendered will be queued up in
+    // MathJax.startup.elements.
+    let scriptElement = document.getElementById(
+      'MathJax-script',
+    ) as HTMLScriptElement | null;
+    if (!scriptElement) {
+      scriptElement = document.createElement('script');
+      scriptElement.src = '/third_party/js/mathjax/es5/tex-svg.js';
+      scriptElement.id = 'MathJax-script';
+      document.head.appendChild(scriptElement);
     }
   }
 
-  beforeDestroy() {
-    for (const app of this.vueInstances) {
-      app.$destroy();
-      if (app.$el && app.$el.parentNode) {
-        app.$el.parentNode.removeChild(app.$el);
-      }
+  if (!window.MathJax.typeset) {
+    // In case the library hasn't quite finished loading completely, add the
+    // current element to the queue of elements that need to be rendered.
+    if (!window.MathJax.startup.elements) {
+      window.MathJax.startup.elements = [];
     }
-    this.vueInstances = [];
+    if (window.MathJax.startup.elements.indexOf(root.value) === -1) {
+      window.MathJax.startup.elements.push(root.value);
+    }
+    emit('rendered');
+    return;
+  }
+
+  window.MathJax.typeset([root.value]);
+  emit('rendered');
+}
+
+async function renderMermaid(): Promise<void> {
+  if (!root.value) return;
+  try {
+    await markdownConverter.renderMermaidDiagrams(root.value);
+  } catch (error) {
+    console.error('Error rendering Mermaid diagrams:', error);
   }
 }
+
+function injectTemplates(): void {
+  if (!root.value) return;
+  const templateComponents: Record<string, any> = {
+    'libinteractive:download': LibinteractiveDownload,
+    'output-only:download': OutputOnlyDownload,
+  };
+
+  const templates = root.value.querySelectorAll('template[data-template-name]');
+  for (const template of templates) {
+    const name = template.getAttribute('data-template-name');
+    if (!name || !templateComponents[name]) continue;
+
+    const mountPoint = document.createElement('div');
+    template.replaceWith(mountPoint);
+
+    const app = new Vue({
+      render: (h) => h(templateComponents[name]),
+    });
+    app.$mount(mountPoint);
+
+    vueInstances.push(app);
+  }
+}
+
+onMounted(() => {
+  renderMathJax();
+  injectTemplates();
+  renderMermaid();
+});
+
+onBeforeUnmount(() => {
+  for (const app of vueInstances) {
+    app.$destroy();
+    if (app.$el && app.$el.parentNode) {
+      app.$el.parentNode.removeChild(app.$el);
+    }
+  }
+  vueInstances = [];
+});
+
+watch(
+  () => props.markdown,
+  () => {
+    renderMathJax();
+    renderMermaid();
+  },
+);
 </script>
 
 <style lang="scss">

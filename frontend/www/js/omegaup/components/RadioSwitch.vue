@@ -29,26 +29,41 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Emit, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import T from '../lang';
 
-@Component
-export default class RadioSwitch extends Vue {
-  @Prop() name!: string;
-  @Prop({ default: false }) readonly!: boolean;
-  @Prop() selectedValue!: any;
-  @Prop({ default: true }) valueForTrue!: any;
-  @Prop({ default: false }) valueForFalse!: any;
-  @Prop({ default: T.wordsYes }) textForTrue!: string;
-  @Prop({ default: T.wordsNo }) textForFalse!: string;
+const props = withDefaults(
+  defineProps<{
+    name: string;
+    readonly?: boolean;
+    selectedValue?: any;
+    valueForTrue?: any;
+    valueForFalse?: any;
+    textForTrue?: string;
+    textForFalse?: string;
+  }>(),
+  {
+    readonly: false,
+    selectedValue: undefined,
+    valueForTrue: true,
+    valueForFalse: false,
+    textForTrue: () => T.wordsYes,
+    textForFalse: () => T.wordsNo,
+  },
+);
 
-  radioValue = this.selectedValue ?? this.valueForFalse;
+const emit = defineEmits<{
+  (e: 'update:value', value: any): void;
+}>();
 
-  @Watch('radioValue')
-  @Emit('update:value')
-  onUpdateInput(newValue: any): any {
-    return newValue;
-  }
+const radioValue = ref(props.selectedValue ?? props.valueForFalse);
+
+watch(radioValue, (newValue) => {
+  emit('update:value', newValue);
+});
+
+function onUpdateInput(): void {
+  emit('update:value', radioValue.value);
 }
 </script>

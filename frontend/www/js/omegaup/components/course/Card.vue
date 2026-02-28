@@ -6,12 +6,12 @@
         <div class="col-sm-10 col-lg-9">
           <div class="card-body">
             <h5 class="card-title text-trimmed">{{ course.name }}</h5>
-            <omegaup-markdown
+            <OmegaupMarkdown
               v-if="type === CourseType.Public"
               class="card-long-text"
               :markdown="course.description"
-            ></omegaup-markdown>
-            <omegaup-markdown
+            />
+            <OmegaupMarkdown
               v-if="type !== CourseType.Finished"
               class="card-text text-trimmed"
               :markdown="
@@ -19,7 +19,7 @@
                   school_name: course.school_name,
                 })
               "
-            ></omegaup-markdown>
+            />
             <div
               v-if="type === CourseType.Student"
               class="row no-gutters justify-content-start align-items-center mb-4"
@@ -62,44 +62,36 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
-import { types } from '../../api_types';
-import T from '../../lang';
-import * as ui from '../../ui';
-
-import omegaup_Markdown from '../Markdown.vue';
-
 export enum CourseType {
   Finished = 'finished',
   Public = 'public',
   Student = 'student',
 }
+</script>
 
-@Component({
-  components: {
-    'omegaup-markdown': omegaup_Markdown,
-  },
-})
-export default class CourseCard extends Vue {
-  @Prop() course!: types.FilteredCourse;
-  @Prop() type!: CourseType;
+<script setup lang="ts">
+import { computed } from 'vue';
+import { types } from '../../api_types';
+import T from '../../lang';
+import * as ui from '../../ui';
+import OmegaupMarkdown from '../Markdown.vue';
 
-  T = T;
-  ui = ui;
-  CourseType = CourseType;
+const props = defineProps<{
+  course: types.FilteredCourse;
+  type: CourseType;
+}>();
 
-  get buttonMessage(): string {
-    switch (this.type) {
-      case CourseType.Finished:
-        return T.wordsSeeCourse;
-      case CourseType.Student:
-        return T.courseCardCourseResume;
-      case CourseType.Public:
-        return T.wordsStart;
-    }
-    return T.courseCardCourseResume;
+const buttonMessage = computed((): string => {
+  switch (props.type) {
+    case CourseType.Finished:
+      return T.wordsSeeCourse;
+    case CourseType.Student:
+      return T.courseCardCourseResume;
+    case CourseType.Public:
+      return T.wordsStart;
   }
-}
+  return T.courseCardCourseResume;
+});
 </script>
 
 <style lang="scss" scoped>

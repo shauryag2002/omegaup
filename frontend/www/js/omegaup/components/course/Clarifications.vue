@@ -1,5 +1,5 @@
 <template>
-  <omegaup-clarification-list
+  <OmegaupClarificationList
     :clarifications="clarifications"
     :is-admin="isAdmin"
     :allow-filter-by-assignment="true"
@@ -7,31 +7,27 @@
     :page="page"
     :pager-items="pagerItems"
     @clarification-response="
-      (request) => $emit('clarification-response', request)
+      (request) => emit('clarification-response', request)
     "
   >
-  </omegaup-clarification-list>
+  </OmegaupClarificationList>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
 import T from '../../lang';
 import { types } from '../../api_types';
 
-import clarification_List from '../arena/ClarificationList.vue';
+import OmegaupClarificationList from '../arena/ClarificationList.vue';
 
-@Component({
-  components: {
-    'omegaup-clarification-list': clarification_List,
-  },
-})
-export default class CourseClarifications extends Vue {
-  @Prop() isAdmin!: boolean;
-  @Prop() clarifications!: types.Clarification[];
-  @Prop() pagerItems!: types.PageItem[];
-  @Prop() pageSize!: number;
-  @Prop() page!: number;
+defineProps<{
+  isAdmin: boolean;
+  clarifications: types.Clarification[];
+  pagerItems: types.PageItem[];
+  pageSize: number;
+  page: number;
+}>();
 
-  T = T;
-}
+const emit = defineEmits<{
+  (e: 'clarification-response', request: unknown): void;
+}>();
 </script>

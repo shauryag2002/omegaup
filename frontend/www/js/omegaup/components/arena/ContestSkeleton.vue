@@ -27,14 +27,7 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
-
-@Component
-class ArenaContestSkeleton extends Vue {}
-
-export default ArenaContestSkeleton;
-</script>
+<script setup lang="ts"></script>
 
 <style lang="scss" scoped>
 @import '../../../../sass/main.scss';

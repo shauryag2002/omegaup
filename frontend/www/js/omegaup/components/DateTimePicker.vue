@@ -1,5 +1,6 @@
 <template>
   <input
+    ref="inputEl"
     v-model="stringValue"
     class="form-control"
     :class="{ 'is-invalid': isInvalid }"
@@ -13,87 +14,102 @@
   />
 </template>
 
-<script lang="ts">
-import { Vue, Component, Watch, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch, onMounted } from 'vue';
 import T from '../lang';
 import * as time from '../time';
 import '../../../third_party/js/bootstrap-datetimepicker.min.js';
 import '../../../third_party/js/locales/bootstrap-datetimepicker.es.js';
 import '../../../third_party/js/locales/bootstrap-datetimepicker.pt-BR.js';
 
-@Component
-export default class DateTimePicker extends Vue {
-  T = T;
-  time = time;
+const props = withDefaults(
+  defineProps<{
+    value: Date;
+    enabled?: boolean;
+    format?: string;
+    start?: Date | null;
+    finish?: Date | null;
+    readonly?: boolean;
+    isInvalid?: boolean;
+  }>(),
+  {
+    enabled: true,
+    format: () => T.dateTimePickerFormat,
+    start: null,
+    finish: null,
+    readonly: false,
+    isInvalid: false,
+  },
+);
 
-  @Prop() value!: Date;
-  @Prop({ default: true }) enabled!: boolean;
-  @Prop({ default: T.dateTimePickerFormat }) format!: string;
-  @Prop({ default: null }) start!: Date;
-  @Prop({ default: null }) finish!: Date;
-  @Prop({ default: false }) readonly!: boolean;
-  @Prop({ default: false }) isInvalid!: boolean;
+const emit = defineEmits<{
+  (e: 'input', value: Date): void;
+}>();
 
-  private usedFallback: boolean = false;
-  private stringValue: string = time.formatDateTimeLocal(this.value);
+const inputEl = ref<HTMLInputElement | null>(null);
+const usedFallback = ref(false);
+const stringValue = ref(time.formatDateTimeLocal(props.value));
 
-  public mounted() {
-    if ((this.$el as HTMLInputElement).type === 'text') {
-      // Even though we declared the input as having datetime-local type,
-      // browsers that don't support it will silently change the type to text.
-      // In that case, use the bootstrap datetimepicker.
-      this.mountedFallback();
-    }
+function addDelay(date: Date): Date {
+  // Since test field population is slow, it's necessary to add a delay
+  // of a few minutes to prevent the test from failing due to
+  // the next minute starting.
+  let delayedDate = new Date(date);
+  const delay = 5;
+  delayedDate.setMinutes(delayedDate.getMinutes() - delay);
+  return delayedDate;
+}
+
+function mountedFallback(): void {
+  usedFallback.value = true;
+  $(inputEl.value!)
+    .datetimepicker({
+      format: props.format,
+      defaultDate: props.value,
+      locale: T.locale,
+    })
+    .on('change', () => {
+      emit('input', $(inputEl.value!).data('datetimepicker').getDate());
+    });
+
+  $(inputEl.value!).data('datetimepicker').setDate(props.value);
+  if (props.start !== null) {
+    $(inputEl.value!).data('datetimepicker').setStartDate(props.start);
   }
-
-  private mountedFallback() {
-    this.usedFallback = true;
-    $(this.$el)
-      .datetimepicker({
-        format: this.format,
-        defaultDate: this.value,
-        locale: T.locale,
-      })
-      .on('change', () => {
-        this.$emit('input', $(this.$el).data('datetimepicker').getDate());
-      });
-
-    $(this.$el).data('datetimepicker').setDate(this.value);
-    if (this.start !== null) {
-      $(this.$el).data('datetimepicker').setStartDate(this.start);
-    }
-    if (this.finish !== null) {
-      $(this.$el).data('datetimepicker').setEndDate(this.finish);
-    }
+  if (props.finish !== null) {
+    $(inputEl.value!).data('datetimepicker').setEndDate(props.finish);
   }
+}
 
-  private addDelay(date: Date) {
-    // Since test field population is slow, it's necessary to add a delay
-    // of a few minutes to prevent the test from failing due to
-    // the next minute starting.
-    let delayedDate = new Date(date);
-    const delay = 5;
-    delayedDate.setMinutes(delayedDate.getMinutes() - delay);
-    return delayedDate;
+onMounted(() => {
+  if (inputEl.value && inputEl.value.type === 'text') {
+    // Even though we declared the input as having datetime-local type,
+    // browsers that don't support it will silently change the type to text.
+    // In that case, use the bootstrap datetimepicker.
+    mountedFallback();
   }
+});
 
-  @Watch('stringValue')
-  onStringValueChanged(newStringValue: string) {
-    if (this.usedFallback) {
+watch(
+  () => stringValue.value,
+  (newStringValue: string) => {
+    if (usedFallback.value) {
       // If the fallback was used, we don't need to update anything.
       return;
     }
-    this.$emit('input', time.parseDateTimeLocal(newStringValue));
-  }
+    emit('input', time.parseDateTimeLocal(newStringValue));
+  },
+);
 
-  @Watch('value')
-  onPropertyChanged(newValue: Date) {
-    this.stringValue = time.formatDateTimeLocal(newValue);
-    if (this.usedFallback) {
-      $(this.$el).data('datetimepicker').setDate(newValue);
+watch(
+  () => props.value,
+  (newValue: Date) => {
+    stringValue.value = time.formatDateTimeLocal(newValue);
+    if (usedFallback.value) {
+      $(inputEl.value!).data('datetimepicker').setDate(newValue);
     }
-  }
-}
+  },
+);
 </script>
 
 <style>

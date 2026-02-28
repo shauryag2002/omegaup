@@ -6,46 +6,40 @@
         :icon="['fas', 'print']"
     /></a>
     <div v-for="problem in problems" :key="problem.alias" class="mt-3">
-      <omegaup-problem-settings-summary
+      <OmegaupProblemSettingsSummary
         :problem="problem"
         :problemset-title="contestTitle"
-      ></omegaup-problem-settings-summary>
-      <omegaup-markdown
+      />
+      <OmegaupMarkdown
         :markdown="problem.statement.markdown"
         :source-mapping="problem.statement.sources"
         :image-mapping="problem.statement.images"
         :problem-settings="problem.settings"
-      ></omegaup-markdown>
+      />
       <hr />
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
 import { types } from '../../api_types';
 import T from '../../lang';
-import problem_SettingsSummary from '../problem/SettingsSummary.vue';
-import omegaup_Markdown from '../Markdown.vue';
+import OmegaupProblemSettingsSummary from '../problem/SettingsSummary.vue';
+import OmegaupMarkdown from '../Markdown.vue';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
 library.add(faPrint);
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-    'omegaup-markdown': omegaup_Markdown,
-    'omegaup-problem-settings-summary': problem_SettingsSummary,
-  },
-})
-export default class ProblemPrint extends Vue {
-  @Prop() problems!: types.ProblemDetails[];
-  @Prop() contestTitle!: string;
+defineProps<{
+  problems: types.ProblemDetails[];
+  contestTitle: string;
+}>();
 
-  T = T;
-}
+defineEmits<{
+  (e: 'print-page'): void;
+}>();
 </script>
 
 <style lang="scss" scoped>

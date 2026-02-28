@@ -1,29 +1,29 @@
 <template>
   <div v-if="isDisabled" class="system-in-maintainance m-5 text-center">
-    <omegaup-markdown
+    <OmegaupMarkdown
       :markdown="T.problemSolutionSystemInMaintainance"
-    ></omegaup-markdown>
-    <font-awesome-icon :icon="['fas', 'cogs']" />
+    ></OmegaupMarkdown>
+    <FontAwesomeIcon :icon="['fas', 'cogs']" />
   </div>
   <div v-else class="card">
     <div class="row p-3">
       <div class="col-12 text-right">
         <a :href="SolutionViewFeatureGuideURL"
-          ><font-awesome-icon :icon="['fas', 'question-circle']" />
+          ><FontAwesomeIcon :icon="['fas', 'question-circle']" />
           {{ T.officialSolutionsInfo }}</a
         >
       </div>
     </div>
 
-    <omegaup-markdown
+    <OmegaupMarkdown
       v-if="showSolution"
       :markdown="solution.markdown"
       :source-mapping="solution.sources"
       :image-mapping="solution.images"
-    ></omegaup-markdown>
+    ></OmegaupMarkdown>
     <div v-else class="interstitial">
-      <omegaup-markdown :markdown="statusMessage"></omegaup-markdown>
-      <omegaup-markdown
+      <OmegaupMarkdown :markdown="statusMessage"></OmegaupMarkdown>
+      <OmegaupMarkdown
         v-show="showViewsLeft"
         :markdown="
           ui.formatString(T.solutionViewsLeft, {
@@ -31,38 +31,38 @@
             total: 5,
           }),
         "
-      ></omegaup-markdown>
+      ></OmegaupMarkdown>
       <div class="text-center mt-5">
         <button
           v-if="status === 'unlocked'"
           class="btn btn-primary btn-md"
-          @click="$emit('get-solution')"
+          @click="emit('get-solution')"
         >
           {{ T.wordsSeeSolution }}
-          <font-awesome-icon :icon="['fas', 'unlock']" />
+          <FontAwesomeIcon :icon="['fas', 'unlock']" />
         </button>
         <button
           v-else-if="status === 'locked' && allowedSolutionsToSee === null"
           class="btn btn-secondary btn-md"
-          @click="$emit('get-allowed-solutions')"
+          @click="emit('get-allowed-solutions')"
         >
           {{ T.solutionAvailableViews }}
         </button>
         <button
           v-else-if="status === 'locked' && allowedSolutionsToSee > 0"
           class="btn btn-primary btn-md"
-          @click="$emit('unlock-solution')"
+          @click="emit('unlock-solution')"
         >
           {{ T.wordsUnlockSolution }}
-          <font-awesome-icon :icon="['fas', 'lock']" />
+          <FontAwesomeIcon :icon="['fas', 'lock']" />
         </button>
       </div>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import T from '../../lang';
 import * as ui from '../../ui';
 import { types } from '../../api_types';
@@ -80,52 +80,55 @@ library.add(faUnlock);
 library.add(faQuestionCircle);
 library.add(faCogs);
 
-import omegaup_problemMarkdown from './ProblemMarkdown.vue';
+import OmegaupMarkdown from './ProblemMarkdown.vue';
 
-@Component({
-  components: {
-    'omegaup-markdown': omegaup_problemMarkdown,
-    FontAwesomeIcon,
+const props = withDefaults(
+  defineProps<{
+    status: string;
+    solution?: types.ProblemStatement | null;
+    allowedSolutionsToSee: number;
+    isDisabled?: boolean;
+  }>(),
+  {
+    solution: null,
+    isDisabled: true,
   },
-})
-class ProblemSolution extends Vue {
-  @Prop() status!: string;
-  @Prop({ default: null }) solution!: types.ProblemStatement | null;
-  @Prop() allowedSolutionsToSee!: number;
-  @Prop({ default: true }) isDisabled!: boolean;
+);
 
-  T = T;
-  ui = ui;
+const emit = defineEmits<{
+  (e: 'get-solution'): void;
+  (e: 'get-allowed-solutions'): void;
+  (e: 'unlock-solution'): void;
+}>();
 
-  get SolutionViewFeatureGuideURL(): string {
-    return getBlogUrl('SolutionViewFeatureGuideURL');
-  }
-  get showSolution(): boolean {
-    return this.status === 'unlocked' && this.solution !== null;
-  }
+const SolutionViewFeatureGuideURL = computed((): string => {
+  return getBlogUrl('SolutionViewFeatureGuideURL');
+});
 
-  get statusMessage(): string {
-    switch (this.status) {
-      case 'unlocked':
-        return T.solutionConfirm;
-      case 'locked':
-        return T.solutionLocked;
-      case 'not_found':
-        return T.solutionNotFound;
-      case 'not_logged_in':
-        return T.solutionNotLoggedIn;
-      default:
-        return '';
-    }
-  }
-  get showViewsLeft(): boolean {
-    return (
-      this.allowedSolutionsToSee !== null && this.status !== 'not_logged_in'
-    );
-  }
-}
+const showSolution = computed((): boolean => {
+  return props.status === 'unlocked' && props.solution !== null;
+});
 
-export default ProblemSolution;
+const statusMessage = computed((): string => {
+  switch (props.status) {
+    case 'unlocked':
+      return T.solutionConfirm;
+    case 'locked':
+      return T.solutionLocked;
+    case 'not_found':
+      return T.solutionNotFound;
+    case 'not_logged_in':
+      return T.solutionNotLoggedIn;
+    default:
+      return '';
+  }
+});
+
+const showViewsLeft = computed((): boolean => {
+  return (
+    props.allowedSolutionsToSee !== null && props.status !== 'not_logged_in'
+  );
+});
 </script>
 
 <style scoped lang="scss">

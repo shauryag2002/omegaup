@@ -2,7 +2,7 @@
   <div class="container-fluid p-0 mt-0" data-user-edit-email>
     <div class="row">
       <div class="col-md-2">
-        <omegaup-user-maininfo :profile="profile" :edit="true" />
+        <OmegaupUserMaininfo :profile="profile" :edit="true" />
       </div>
       <div class="col-md-10">
         <div class="card">
@@ -10,7 +10,7 @@
           <div class="card-body">
             <form
               class="form-horizontal"
-              @submit.prevent="$emit('submit', currentEmail)"
+              @submit.prevent="emit('submit', currentEmail)"
             >
               <div class="form-group">
                 <label class="col-md-3 control-label" for="email">{{
@@ -41,21 +41,20 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import T from '../../lang';
 import { types } from '../../api_types';
-import user_MainInfo from './MainInfo.vue';
+import OmegaupUserMaininfo from './MainInfo.vue';
 
-@Component({
-  components: {
-    'omegaup-user-maininfo': user_MainInfo,
-  },
-})
-export default class UserEmailEdit extends Vue {
-  @Prop() email!: string;
-  @Prop() profile!: types.UserProfileInfo;
-  T = T;
-  currentEmail: string = this.email;
-}
+const props = defineProps<{
+  email: string;
+  profile: types.UserProfileInfo;
+}>();
+
+const emit = defineEmits<{
+  (e: 'submit', email: string): void;
+}>();
+
+const currentEmail = ref(props.email);
 </script>

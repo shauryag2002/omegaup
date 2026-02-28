@@ -5,15 +5,15 @@
         <div class="row">
           <div class="form-group col-md-9 mb-1 mt-1">
             <label class="d-inline">{{ T.wordsMember }}</label>
-            <omegaup-common-typeahead
+            <OmegaupCommonTypeahead
               :existing-options="searchResultUsers"
               :value.sync="searchedUsername"
               :max-results="10"
               class="input"
               @update-existing-options="
-                (query) => $emit('update-search-result-users', query)
+                (query) => emit('update-search-result-users', query)
               "
-            ></omegaup-common-typeahead>
+            ></OmegaupCommonTypeahead>
           </div>
           <div
             class="form-group mb-0 col-md-3 d-flex align-items-center mt-4 margin-phone"
@@ -35,17 +35,17 @@
       <tbody>
         <tr v-for="identity in identities" :key="identity.username">
           <td>
-            <omegaup-user-username
+            <OmegaupUserUsername
               :classname="identity.classname"
               :linkify="true"
               :username="identity.username"
-            ></omegaup-user-username>
+            ></OmegaupUserUsername>
           </td>
           <td>
             <button
               class="btn btn-link"
               :title="T.groupEditMembersRemove"
-              @click="$emit('remove', identity.username)"
+              @click="emit('remove', identity.username)"
             >
               <font-awesome-icon :icon="['fas', 'trash-alt']" />
             </button>
@@ -67,11 +67,11 @@
       <tbody>
         <tr v-for="identity in identitiesCsv" :key="identity.username">
           <td data-members-username>
-            <omegaup-user-username
+            <OmegaupUserUsername
               :classname="identity.classname"
               :linkify="true"
               :username="identity.username"
-            ></omegaup-user-username>
+            ></OmegaupUserUsername>
           </td>
           <td>{{ identity.name }}</td>
           <td>{{ identity.country }}</td>
@@ -96,7 +96,7 @@
             <button
               class="btn btn-link"
               :title="T.groupEditMembersRemove"
-              @click="$emit('remove', identity.username)"
+              @click="emit('remove', identity.username)"
             >
               <font-awesome-icon :icon="['fas', 'trash-alt']" />
             </button>
@@ -104,107 +104,144 @@
         </tr>
       </tbody>
     </table>
-    <omegaup-identity-edit
+    <OmegaupIdentityEdit
       v-if="showEditForm"
       :countries="countries"
       :identity="identity"
       :search-result-schools="searchResultSchools"
       @cancel="onChildCancel"
       @edit-identity-member="
-        (request) => $emit('edit-identity-member', { ...request, showEditForm })
+        (request) => emit('edit-identity-member', { ...request, showEditForm })
       "
       @update-search-result-schools="
-        (query) => $emit('update-search-result-schools', query)
+        (query) => emit('update-search-result-schools', query)
       "
-    ></omegaup-identity-edit>
-    <omegaup-identity-change-password
+    ></OmegaupIdentityEdit>
+    <OmegaupIdentityChangePassword
       v-if="showChangePasswordForm"
       :username="username"
       @emit-cancel="onChildCancel"
       @emit-change-password="onChildChangePasswordMember"
-    ></omegaup-identity-change-password>
+    ></OmegaupIdentityChangePassword>
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, defineExpose } from 'vue';
 import { dao, types } from '../../api_types';
 import T from '../../lang';
-import user_Username from '../user/Username.vue';
-import identity_Edit from '../identity/Edit.vue';
-import identity_ChangePassword from '../identity/ChangePassword.vue';
-import common_Typeahead from '../common/Typeahead.vue';
+import OmegaupUserUsername from '../user/Username.vue';
+import OmegaupIdentityEdit from '../identity/Edit.vue';
+import OmegaupIdentityChangePassword from '../identity/ChangePassword.vue';
+import OmegaupCommonTypeahead from '../common/Typeahead.vue';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faEdit, faLock, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 library.add(faEdit, faLock, faTrashAlt);
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-    'omegaup-common-typeahead': common_Typeahead,
-    'omegaup-user-username': user_Username,
-    'omegaup-identity-edit': identity_Edit,
-    'omegaup-identity-change-password': identity_ChangePassword,
+defineProps<{
+  identities: types.Identity[];
+  identitiesCsv: types.Identity[];
+  groupAlias: string;
+  countries: Array<dao.Countries>;
+  searchResultUsers: types.ListItem[];
+  searchResultSchools: types.SchoolListItem[];
+}>();
+
+const emit = defineEmits<{
+  (e: 'update-search-result-users', query: string): void;
+  (e: 'update-search-result-schools', query: string): void;
+  (e: 'add-member', component: any, username: string | undefined): void;
+  (e: 'edit-identity', component: any, identity: types.Identity): void;
+  (e: 'edit-identity-member', request: any): void;
+  (e: 'change-password-identity', component: any, username: string): void;
+  (
+    e: 'change-password-identity-member',
+    component: any,
+    username: string,
+    password: string,
+    repeatPassword: string,
+  ): void;
+  (e: 'remove', username: string): void;
+  (e: 'cancel', component: any): void;
+}>();
+
+const identity = ref<any>({});
+const username = ref('');
+const showEditForm = ref(false);
+const showChangePasswordForm = ref(false);
+const searchedUsername = ref<types.ListItem | null>(null);
+
+const componentProxy = {
+  get showEditForm() {
+    return showEditForm.value;
   },
-})
-export default class Members extends Vue {
-  @Prop() identities!: types.Identity[];
-  @Prop() identitiesCsv!: types.Identity[];
-  @Prop() groupAlias!: string;
-  @Prop() countries!: Array<dao.Countries>;
-  @Prop() searchResultUsers!: types.ListItem[];
-  @Prop() searchResultSchools!: types.SchoolListItem[];
+  set showEditForm(v: boolean) {
+    showEditForm.value = v;
+  },
+  get showChangePasswordForm() {
+    return showChangePasswordForm.value;
+  },
+  set showChangePasswordForm(v: boolean) {
+    showChangePasswordForm.value = v;
+  },
+  get identity() {
+    return identity.value;
+  },
+  set identity(v: any) {
+    identity.value = v;
+  },
+  get username() {
+    return username.value;
+  },
+  set username(v: string) {
+    username.value = v;
+  },
+  reset,
+};
 
-  T = T;
-  identity = {};
-  username = '';
-  showEditForm = false;
-  showChangePasswordForm = false;
-  searchedUsername: null | types.ListItem = null;
-
-  onAddMember(): void {
-    this.$emit('add-member', this, this.searchedUsername?.key);
-    this.reset();
-  }
-
-  onEdit(identity: types.Identity): void {
-    this.$emit('edit-identity', this, identity);
-  }
-
-  onChangePass(username: string): void {
-    this.$emit('change-password-identity', this, username);
-  }
-
-  onChildChangePasswordMember(
-    newPassword: string,
-    newPasswordRepeat: string,
-  ): void {
-    this.$emit(
-      'change-password-identity-member',
-      this,
-      this.username,
-      newPassword,
-      newPasswordRepeat,
-    );
-  }
-
-  onChildEditIdentityMember(
-    originalUsername: string,
-    identity: types.Identity,
-  ): void {
-    this.$emit('edit-identity-member', this, originalUsername, identity);
-  }
-
-  onChildCancel(): void {
-    this.$emit('cancel', this);
-  }
-
-  reset(): void {
-    this.searchedUsername = null;
-  }
+function onAddMember(): void {
+  emit('add-member', componentProxy, searchedUsername.value?.key);
+  reset();
 }
+
+function onEdit(ident: types.Identity): void {
+  emit('edit-identity', componentProxy, ident);
+}
+
+function onChangePass(user: string): void {
+  emit('change-password-identity', componentProxy, user);
+}
+
+function onChildChangePasswordMember(
+  newPassword: string,
+  newPasswordRepeat: string,
+): void {
+  emit(
+    'change-password-identity-member',
+    componentProxy,
+    username.value,
+    newPassword,
+    newPasswordRepeat,
+  );
+}
+
+function onChildCancel(): void {
+  emit('cancel', componentProxy);
+}
+
+function reset(): void {
+  searchedUsername.value = null;
+}
+
+defineExpose({
+  showEditForm,
+  showChangePasswordForm,
+  identity,
+  username,
+  reset,
+});
 </script>
 
 <style scoped lang="scss">

@@ -47,9 +47,7 @@
       </li>
     </ul>
     <div v-if="isDisabled" class="system-in-maintainance m-5 text-center">
-      <omegaup-markdown
-        :markdown="T.schoolOfTheMonthSystemInMaintainance"
-      ></omegaup-markdown>
+      <OmegaupMarkdown :markdown="T.schoolOfTheMonthSystemInMaintainance" />
       <font-awesome-icon :icon="['fas', 'cogs']" />
     </div>
     <table v-else class="table table-striped table-hover">
@@ -77,9 +75,7 @@
       <tbody>
         <tr v-for="(school, index) in visibleSchools" :key="index">
           <td class="text-center">
-            <omegaup-country-flag
-              :country="school.country_id"
-            ></omegaup-country-flag>
+            <OmegaupCountryFlag :country="school.country_id" />
           </td>
           <td class="text-center">
             <a :href="`/schools/profile/${school.school_id}/`">{{
@@ -109,48 +105,49 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed, ref } from 'vue';
 import { omegaup } from '../../omegaup';
 import T from '../../lang';
-import country_Flag from '../CountryFlag.vue';
-import omegaup_Markdown from '../Markdown.vue';
+import OmegaupCountryFlag from '../CountryFlag.vue';
+import OmegaupMarkdown from '../Markdown.vue';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faCogs } from '@fortawesome/free-solid-svg-icons';
 library.add(faCogs);
 
-@Component({
-  components: {
-    'omegaup-country-flag': country_Flag,
-    'omegaup-markdown': omegaup_Markdown,
-    'font-awesome-icon': FontAwesomeIcon,
+const props = withDefaults(
+  defineProps<{
+    schoolsOfPreviousMonths: omegaup.SchoolOfTheMonth[];
+    schoolsOfPreviousMonth: omegaup.SchoolOfTheMonth[];
+    candidatesToSchoolOfTheMonth: omegaup.SchoolOfTheMonth[];
+    isMentor: boolean;
+    canChooseSchool: boolean;
+    schoolIsSelected: boolean;
+    isDisabled?: boolean;
+  }>(),
+  {
+    isDisabled: true,
   },
-})
-export default class SchoolOfTheMonthList extends Vue {
-  @Prop() schoolsOfPreviousMonths!: omegaup.SchoolOfTheMonth[];
-  @Prop() schoolsOfPreviousMonth!: omegaup.SchoolOfTheMonth[];
-  @Prop() candidatesToSchoolOfTheMonth!: omegaup.SchoolOfTheMonth[];
-  @Prop() isMentor!: boolean;
-  @Prop() canChooseSchool!: boolean;
-  @Prop() schoolIsSelected!: boolean;
-  @Prop({ default: true }) isDisabled!: boolean;
+);
 
-  T = T;
-  selectedTab = 'allSchoolsOfTheMonth';
+defineEmits<{
+  (e: 'select-school', schoolId: number): void;
+}>();
 
-  get visibleSchools(): omegaup.SchoolOfTheMonth[] {
-    switch (this.selectedTab) {
-      case 'allSchoolsOfTheMonth':
-      default:
-        return this.schoolsOfPreviousMonths;
-      case 'schoolsOfPreviousMonth':
-        return this.schoolsOfPreviousMonth;
-      case 'candidatesToSchoolOfTheMonth':
-        return this.candidatesToSchoolOfTheMonth;
-    }
+const selectedTab = ref('allSchoolsOfTheMonth');
+
+const visibleSchools = computed((): omegaup.SchoolOfTheMonth[] => {
+  switch (selectedTab.value) {
+    case 'allSchoolsOfTheMonth':
+    default:
+      return props.schoolsOfPreviousMonths;
+    case 'schoolsOfPreviousMonth':
+      return props.schoolsOfPreviousMonth;
+    case 'candidatesToSchoolOfTheMonth':
+      return props.candidatesToSchoolOfTheMonth;
   }
-}
+});
 </script>
 
 <style scoped>

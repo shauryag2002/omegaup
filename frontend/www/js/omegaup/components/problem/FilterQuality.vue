@@ -14,7 +14,7 @@
             type="radio"
             name="quality"
             :value="quality.id"
-            @click="$emit('change-quality', quality.id)"
+            @click="emit('change-quality', quality.id)"
           />{{ quality.name }}
         </label>
       </div>
@@ -22,34 +22,40 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Emit, Watch, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import T from '../../lang';
 
-@Component
-export default class FilterQuality extends Vue {
-  @Prop({ default: 'onlyQualityProblems' }) quality!: string;
+const props = withDefaults(
+  defineProps<{
+    quality?: string;
+  }>(),
+  {
+    quality: 'onlyQualityProblems',
+  },
+);
 
-  T = T;
-  currentQuality = this.quality;
+const emit = defineEmits<{
+  (e: 'change-quality', id: string): void;
+  (e: 'change', val: string | null): void;
+}>();
 
-  qualityValues: { [key: string]: { name: string; id: string } } = {
-    allProblems: {
-      name: T.qualityFormQualityAny,
-      id: 'all',
-    },
-    onlyQualityProblems: {
-      name: T.qualityFormQualityOnly,
-      id: 'onlyQualityProblems',
-    },
-  };
+const currentQuality = ref(props.quality);
 
-  @Emit('change')
-  @Watch('currentQuality')
-  onCurrentQualityChanged(val: string | null) {
-    return val;
-  }
-}
+const qualityValues: { [key: string]: { name: string; id: string } } = {
+  allProblems: {
+    name: T.qualityFormQualityAny,
+    id: 'all',
+  },
+  onlyQualityProblems: {
+    name: T.qualityFormQualityOnly,
+    id: 'onlyQualityProblems',
+  },
+};
+
+watch(currentQuality, (val) => {
+  emit('change', val);
+});
 </script>
 
 <style scoped>

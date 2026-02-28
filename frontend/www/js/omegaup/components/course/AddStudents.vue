@@ -4,22 +4,22 @@
       <form
         class="form"
         @submit.prevent="
-          $emit('emit-add-student', { participant, participants });
+          emit('emit-add-student', { participant, participants });
           participants = '';
         "
       >
         <div class="form-group">
           <p class="card-title">{{ T.courseEditAddStudentsDescription }}</p>
           <div class="d-flex align-items-center">
-            <omegaup-common-typeahead
+            <OmegaupCommonTypeahead
               class="w-100"
               :existing-options="searchResultUsers"
               :value.sync="participant"
               :max-results="10"
               @update-existing-options="
-                (query) => $emit('update-search-result-users', query)
+                (query) => emit('update-search-result-users', query)
               "
-            ></omegaup-common-typeahead>
+            ></OmegaupCommonTypeahead>
             <button
               class="btn btn-secondary add-participant ml-2"
               :disabled="!participant"
@@ -73,7 +73,7 @@
               <button
                 class="close"
                 type="button"
-                @click="$emit('emit-remove-student', student)"
+                @click="emit('emit-remove-student', student)"
               >
                 ×
               </button>
@@ -87,62 +87,70 @@
         </a>
       </div>
     </div>
-    <omegaup-common-requests
+    <OmegaupCommonRequests
       :data="identityRequests"
       :text-add-participant="T.wordsAddStudent"
-      @accept-request="(request) => $emit('accept-request', request)"
-      @deny-request="(request) => $emit('deny-request', request)"
-    ></omegaup-common-requests>
+      @accept-request="(request) => emit('accept-request', request)"
+      @deny-request="(request) => emit('deny-request', request)"
+    ></OmegaupCommonRequests>
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
-import common_Typeahead from '../common/Typeahead.vue';
-import common_Requests from '../common/Requests.vue';
+import OmegaupCommonTypeahead from '../common/Typeahead.vue';
+import OmegaupCommonRequests from '../common/Requests.vue';
 
-@Component({
-  components: {
-    'omegaup-common-typeahead': common_Typeahead,
-    'omegaup-common-requests': common_Requests,
-  },
-})
-export default class CourseAddStudents extends Vue {
-  @Prop() courseAlias!: string;
-  @Prop() students!: types.CourseStudent[];
-  @Prop({ required: false }) identityRequests!: types.IdentityRequest[];
-  @Prop() searchResultUsers!: types.ListItem[];
+const props = defineProps<{
+  courseAlias: string;
+  students: types.CourseStudent[];
+  identityRequests?: types.IdentityRequest[];
+  searchResultUsers: types.ListItem[];
+}>();
 
-  T = T;
-  studentUsername = '';
-  participant: null | types.ListItem = null;
-  participants = '';
-  requests: types.IdentityRequest[] = [];
+const emit = defineEmits<{
+  (
+    e: 'emit-add-student',
+    payload: { participant: types.ListItem | null; participants: string },
+  ): void;
+  (e: 'update-search-result-users', query: string): void;
+  (e: 'emit-remove-student', student: types.CourseStudent): void;
+  (e: 'accept-request', request: types.IdentityRequest): void;
+  (e: 'deny-request', request: types.IdentityRequest): void;
+}>();
 
-  studentProgressUrl(student: types.CourseStudent): string {
-    return `/course/${this.courseAlias}/student/${student.username}/`;
-  }
+const studentUsername = ref('');
+const participant = ref<types.ListItem | null>(null);
+const participants = ref('');
+const requests = ref<types.IdentityRequest[]>([]);
 
-  studentsProgressUrl(): string {
-    return `/course/${this.courseAlias}/students/`;
-  }
-
-  addParticipantToList(): void {
-    if (this.participants.length) {
-      this.participants += '\n';
-    }
-    this.participants += this.participant?.key;
-
-    this.participant = null;
-  }
-
-  @Watch('identityRequests')
-  onDataChange(): void {
-    this.requests = this.identityRequests;
-  }
+function studentProgressUrl(student: types.CourseStudent): string {
+  return `/course/${props.courseAlias}/student/${student.username}/`;
 }
+
+function studentsProgressUrl(): string {
+  return `/course/${props.courseAlias}/students/`;
+}
+
+function addParticipantToList(): void {
+  if (participants.value.length) {
+    participants.value += '\n';
+  }
+  participants.value += participant.value?.key;
+
+  participant.value = null;
+}
+
+watch(
+  () => props.identityRequests,
+  (newVal) => {
+    if (newVal) {
+      requests.value = newVal;
+    }
+  },
+);
 </script>
 
 <style>

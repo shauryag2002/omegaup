@@ -5,11 +5,11 @@
         {{ T.runDetailsNewFeedback }}
       </template>
       <template v-else>
-        <omegaup-user-username
+        <OmegaupUserUsername
           :classname="feedback.authorClassname"
           :username="feedback.author"
           :linkify="true"
-        ></omegaup-user-username>
+        />
         {{ currentFeedbackTimestamp }}
       </template>
       <button
@@ -24,16 +24,16 @@
     <div class="card-body">
       <textarea
         v-if="!saved"
-        ref="feedback-form"
+        ref="feedbackFormRef"
         v-model="currentFeedback.text"
         :placeholder="T.runDetailsFeedbackPlaceholder"
         class="w-100"
       ></textarea>
-      <omegaup-markdown
+      <OmegaupMarkdown
         v-else
         :markdown="currentFeedback.text"
         :full-width="true"
-      ></omegaup-markdown>
+      />
     </div>
     <div v-if="!saved" class="card-footer text-muted">
       <div class="form-group my-2">
@@ -58,12 +58,6 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Ref } from 'vue-property-decorator';
-import T from '../../lang';
-import * as time from '../../time';
-import user_Username from '../user/Username.vue';
-import omegaup_Markdown from '../Markdown.vue';
-
 export enum FeedbackStatus {
   New = 'New',
   InProgress = 'InProgress',
@@ -81,46 +75,51 @@ export interface ArenaCourseFeedback {
   timestamp?: Date;
   submissionFeedbackId?: number;
 }
+</script>
 
-@Component({
-  components: {
-    'omegaup-markdown': omegaup_Markdown,
-    'omegaup-user-username': user_Username,
-  },
-})
-export default class Feedback extends Vue {
-  @Prop() feedback!: ArenaCourseFeedback;
-  @Ref('feedback-form') feedbackForm!: HTMLTextAreaElement;
+<script setup lang="ts">
+import { ref, computed, onMounted, nextTick } from 'vue';
+import T from '../../lang';
+import * as time from '../../time';
+import OmegaupUserUsername from '../user/Username.vue';
+import OmegaupMarkdown from '../Markdown.vue';
 
-  FeedbackStatus = FeedbackStatus;
-  T = T;
-  time = time;
-  saved: boolean = this.feedback.status == FeedbackStatus.Saved;
-  currentFeedback = this.feedback;
+const props = defineProps<{
+  feedback: ArenaCourseFeedback;
+}>();
 
-  get currentFeedbackTimestamp(): string {
-    return time.formatDateTimeLocal(this.feedback.timestamp ?? new Date());
-  }
+const emit = defineEmits<{
+  (e: 'submit', feedback: ArenaCourseFeedback): void;
+  (e: 'cancel'): void;
+  (e: 'delete', feedback: ArenaCourseFeedback): void;
+}>();
 
-  mounted() {
-    if (this.feedback.status === FeedbackStatus.Saved) return;
-    this.$nextTick(() => this.feedbackForm.focus());
-  }
+const feedbackFormRef = ref<HTMLTextAreaElement | null>(null);
+const saved = ref(props.feedback.status === FeedbackStatus.Saved);
+const currentFeedback = ref(props.feedback);
 
-  onSubmitFeedback() {
-    this.saved = true;
-    this.currentFeedback.status = FeedbackStatus.InProgress;
-    this.$emit('submit', this.currentFeedback);
-  }
+const currentFeedbackTimestamp = computed((): string => {
+  return time.formatDateTimeLocal(props.feedback.timestamp ?? new Date());
+});
 
-  onCancelFeedback() {
-    this.currentFeedback.text = null;
-    this.$emit('cancel');
-  }
+onMounted(() => {
+  if (props.feedback.status === FeedbackStatus.Saved) return;
+  nextTick(() => feedbackFormRef.value?.focus());
+});
 
-  onDeleteFeedback() {
-    this.currentFeedback.text = null;
-    this.$emit('delete', this.currentFeedback);
-  }
+function onSubmitFeedback(): void {
+  saved.value = true;
+  currentFeedback.value.status = FeedbackStatus.InProgress;
+  emit('submit', currentFeedback.value);
+}
+
+function onCancelFeedback(): void {
+  currentFeedback.value.text = null;
+  emit('cancel');
+}
+
+function onDeleteFeedback(): void {
+  currentFeedback.value.text = null;
+  emit('delete', currentFeedback.value);
 }
 </script>

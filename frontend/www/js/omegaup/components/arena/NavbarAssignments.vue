@@ -29,8 +29,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import { omegaup } from '../../omegaup';
 import T from '../../lang';
 
@@ -43,38 +43,34 @@ import {
 library.add(faChevronCircleLeft);
 library.add(faChevronCircleRight);
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-  },
-})
-export default class ArenaNavbarAssignments extends Vue {
-  @Prop() assignments!: omegaup.Assignment[];
-  @Prop() currentAssignment!: omegaup.Assignment;
+const props = defineProps<{
+  assignments: omegaup.Assignment[];
+  currentAssignment: omegaup.Assignment;
+}>();
 
-  T = T;
+defineEmits<{
+  (e: 'navigate-to-assignment', alias: string): void;
+}>();
 
-  get previousAssignment(): omegaup.Assignment | null {
-    if (this.currentAssignmentIndex === 0) {
-      return null;
-    }
-    return this.assignments[this.currentAssignmentIndex - 1];
+const currentAssignmentIndex = computed((): number => {
+  return props.assignments.findIndex(
+    (assignment) => assignment.alias === props.currentAssignment.alias,
+  );
+});
+
+const previousAssignment = computed((): omegaup.Assignment | null => {
+  if (currentAssignmentIndex.value === 0) {
+    return null;
   }
+  return props.assignments[currentAssignmentIndex.value - 1];
+});
 
-  get nextAssignment(): omegaup.Assignment | null {
-    if (this.currentAssignmentIndex === this.assignments.length - 1) {
-      return null;
-    }
-    return this.assignments[this.currentAssignmentIndex + 1];
+const nextAssignment = computed((): omegaup.Assignment | null => {
+  if (currentAssignmentIndex.value === props.assignments.length - 1) {
+    return null;
   }
-
-  private get currentAssignmentIndex(): number {
-    // Getting index of current assignment
-    return this.assignments.findIndex(
-      (assignment) => assignment.alias === this.currentAssignment.alias,
-    );
-  }
-}
+  return props.assignments[currentAssignmentIndex.value + 1];
+});
 </script>
 
 <style>

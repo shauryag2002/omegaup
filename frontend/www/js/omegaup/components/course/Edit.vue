@@ -91,7 +91,7 @@
 
     <div class="tab-content mt-2">
       <div v-if="showTab === 'course'" class="tab-pane active" role="tabpanel">
-        <omegaup-course-form
+        <OmegaupCourseForm
           :update="true"
           :course="data.course"
           :all-languages="data.allLanguages"
@@ -99,13 +99,13 @@
           :read-only="readOnly"
           :invalid-parameter-name="invalidParameterName"
           @emit-cancel="onCancel"
-          @submit="(request) => $emit('submit-edit-course', request)"
+          @submit="(request) => emit('submit-edit-course', request)"
           @update-search-result-schools="
-            (query) => $emit('update-search-result-schools', query)
+            (query) => emit('update-search-result-schools', query)
           "
-          @invalid-languages="$emit('invalid-languages')"
-          @clear-language-error="$emit('clear-language-error')"
-        ></omegaup-course-form>
+          @invalid-languages="emit('invalid-languages')"
+          @clear-language-error="emit('clear-language-error')"
+        ></OmegaupCourseForm>
       </div>
 
       <div
@@ -114,21 +114,21 @@
         class="tab-pane active"
         role="tabpanel"
       >
-        <omegaup-course-assignment-list
+        <OmegaupCourseAssignmentList
           :content="assignments"
           :course-alias="data.course.alias"
           :assignment-form-mode="assignmentFormMode"
           @emit-new="onNewAssignment"
           @emit-edit="(assignment) => onEditAssignment(assignment)"
           @emit-add-problems="(assignment) => onAddProblems(assignment)"
-          @emit-delete="(assignment) => $emit('delete-assignment', assignment)"
+          @emit-delete="(assignment) => emit('delete-assignment', assignment)"
           @emit-sort-content="
             (courseAlias, contentAliases) =>
-              $emit('sort-content', courseAlias, contentAliases)
+              emit('sort-content', courseAlias, contentAliases)
           "
-        ></omegaup-course-assignment-list>
-        <omegaup-course-assignment-details
-          ref="assignment-details"
+        ></OmegaupCourseAssignmentList>
+        <OmegaupCourseAssignmentDetails
+          ref="assignmentDetailsRef"
           :unlimited-duration-course="!data.course.finish_time"
           :finish-time-course="data.course.finish_time"
           :start-time-course="data.course.start_time"
@@ -140,30 +140,29 @@
           :course-alias="data.course.alias"
           :search-result-problems="searchResultProblems"
           @update-search-result-problems="
-            (query) => $emit('update-search-result-problems', query)
+            (query) => emit('update-search-result-problems', query)
           "
           @add-problem="
-            (assignment, problem) => $emit('add-problem', assignment, problem)
+            (assignment, problem) => emit('add-problem', assignment, problem)
           "
           @emit-add-problem="
             (assignment, problemAlias) =>
-              $emit('add-problem', assignment, problemAlias)
+              emit('add-problem', assignment, problemAlias)
           "
           @emit-select-assignment="
-            (assignment) => $emit('select-assignment', assignment)
+            (assignment) => emit('select-assignment', assignment)
           "
           @remove-problem="
-            (assignment, problem) =>
-              $emit('remove-problem', assignment, problem)
+            (assignment, problem) => emit('remove-problem', assignment, problem)
           "
           @sort-problems="
             (assignmentAlias, problemsAlias) =>
-              $emit('sort-problems', assignmentAlias, problemsAlias)
+              emit('sort-problems', assignmentAlias, problemsAlias)
           "
           @cancel="onResetAssignmentForm"
-          @add-assignment="(params) => $emit('add-assignment', params)"
-          @update-assignment="(params) => $emit('update-assignment', params)"
-          @get-versions="(request) => $emit('get-versions', request)"
+          @add-assignment="(params) => emit('add-assignment', params)"
+          @update-assignment="(params) => emit('update-assignment', params)"
+          @get-versions="(request) => emit('get-versions', request)"
         >
           <template #page-header><span></span></template>
           <template #cancel-button>
@@ -174,7 +173,7 @@
             >
               {{ T.wordsCancel }}
             </button></template
-          ></omegaup-course-assignment-details
+          ></OmegaupCourseAssignmentDetails
         >
       </div>
 
@@ -184,15 +183,15 @@
         class="tab-pane active"
         role="tabpanel"
       >
-        <omegaup-course-admision-mode
+        <OmegaupCourseAdmisionMode
           :admission-mode="data.course.admission_mode"
           :should-show-public-option="data.course.is_curator"
           :course-alias="data.course.alias"
           :show-in-public-courses-list="data.course.recommended"
           @update-admission-mode="
-            (request) => $emit('update-admission-mode', request)
+            (request) => emit('update-admission-mode', request)
           "
-        ></omegaup-course-admision-mode>
+        ></OmegaupCourseAdmisionMode>
       </div>
 
       <div
@@ -201,21 +200,21 @@
         class="tab-pane active"
         role="tabpanel"
       >
-        <omegaup-course-add-students
+        <OmegaupCourseAddStudents
           :students="data.students"
           :course-alias="data.course.alias"
           :identity-requests="data.identityRequests"
           :search-result-users="searchResultUsers"
           @emit-add-student="
-            (participants) => $emit('add-student', participants)
+            (participants) => emit('add-student', participants)
           "
-          @emit-remove-student="(student) => $emit('remove-student', student)"
-          @accept-request="(request) => $emit('accept-request', request)"
-          @deny-request="(request) => $emit('deny-request', request)"
+          @emit-remove-student="(student) => emit('remove-student', student)"
+          @accept-request="(request) => emit('accept-request', request)"
+          @deny-request="(request) => emit('deny-request', request)"
           @update-search-result-users="
-            (query) => $emit('update-search-result-users', query)
+            (query) => emit('update-search-result-users', query)
           "
-        ></omegaup-course-add-students>
+        ></OmegaupCourseAddStudents>
       </div>
 
       <div
@@ -224,87 +223,87 @@
         role="tabpanel"
       >
         <div class="col-md-6">
-          <omegaup-common-admins
+          <OmegaupCommonAdmins
             :admins="data.admins"
             :search-result-users="searchResultUsers"
-            @add-admin="(username) => $emit('add-admin', username)"
-            @remove-admin="(username) => $emit('remove-admin', username)"
+            @add-admin="(username) => emit('add-admin', username)"
+            @remove-admin="(username) => emit('remove-admin', username)"
             @update-search-result-users="
-              (query) => $emit('update-search-result-users', query)
+              (query) => emit('update-search-result-users', query)
             "
-          ></omegaup-common-admins>
+          ></OmegaupCommonAdmins>
         </div>
         <div class="col-md-6">
-          <omegaup-common-groupadmins
+          <OmegaupCommonGroupadmins
             :group-admins="data.groupsAdmins"
             :search-result-groups="searchResultGroups"
             @add-group-admin="
-              (groupAlias) => $emit('add-group-admin', groupAlias)
+              (groupAlias) => emit('add-group-admin', groupAlias)
             "
             @remove-group-admin="
-              (groupAlias) => $emit('remove-group-admin', groupAlias)
+              (groupAlias) => emit('remove-group-admin', groupAlias)
             "
             @update-search-result-groups="
-              (query) => $emit('update-search-result-groups', query)
+              (query) => emit('update-search-result-groups', query)
             "
-          ></omegaup-common-groupadmins>
+          ></OmegaupCommonGroupadmins>
         </div>
         <div class="col-md-6">
-          <omegaup-common-teaching-assistants
+          <OmegaupCommonTeachingAssistants
             :teaching-assistants="data.teachingAssistants"
             :search-result-users="searchResultUsers"
             @add-teaching-assistant="
-              (username) => $emit('add-teaching-assistant', username)
+              (username) => emit('add-teaching-assistant', username)
             "
             @remove-teaching-assistant="
-              (username) => $emit('remove-teaching-assistant', username)
+              (username) => emit('remove-teaching-assistant', username)
             "
             @update-search-result-users="
-              (query) => $emit('update-search-result-users', query)
+              (query) => emit('update-search-result-users', query)
             "
-          ></omegaup-common-teaching-assistants>
+          ></OmegaupCommonTeachingAssistants>
         </div>
         <div class="col-md-6">
-          <omegaup-common-group-teaching-assistants
+          <OmegaupCommonGroupTeachingAssistants
             :group-teaching-assistants="data.groupsTeachingAssistants"
             :search-result-groups="searchResultGroups"
             @add-group-teaching-assistant="
-              (groupAlias) => $emit('add-group-teaching-assistant', groupAlias)
+              (groupAlias) => emit('add-group-teaching-assistant', groupAlias)
             "
             @remove-group-teaching-assistant="
               (groupAlias) =>
-                $emit('remove-group-teaching-assistant', groupAlias)
+                emit('remove-group-teaching-assistant', groupAlias)
             "
             @update-search-result-groups="
-              (query) => $emit('update-search-result-groups', query)
+              (query) => emit('update-search-result-groups', query)
             "
-          ></omegaup-common-group-teaching-assistants>
+          ></OmegaupCommonGroupTeachingAssistants>
         </div>
       </div>
 
       <div v-if="showTab === 'clone'" class="tab-pane active" role="tabpanel">
         <div class="card">
           <div class="card-body">
-            <omegaup-course-clone
+            <OmegaupCourseClone
               class="mb-4"
               :initial-alias="data.course.alias"
               :initial-name="data.course.name"
               @clone="
                 (alias, name, startTime) =>
-                  $emit('clone', alias, name, startTime)
+                  emit('clone', alias, name, startTime)
               "
-            ></omegaup-course-clone>
-            <omegaup-course-generate-link-clone
+            ></OmegaupCourseClone>
+            <OmegaupCourseGenerateLinkClone
               v-if="data.course.admission_mode !== admissionMode.Public"
               :alias="data.course.alias"
               :token="token"
-              @generate-link="(alias) => $emit('generate-link', alias)"
-            ></omegaup-course-generate-link-clone>
+              @generate-link="(alias) => emit('generate-link', alias)"
+            ></OmegaupCourseGenerateLinkClone>
           </div>
         </div>
       </div>
       <div v-if="showTab === 'archive'" class="tab-pane active" role="tabpanel">
-        <omegaup-common-archive
+        <OmegaupCommonArchive
           :already-archived="alreadyArchived"
           :archive-button-description="
             alreadyArchived ? T.wordsUnarchiveCourse : T.wordsArchiveCourse
@@ -313,26 +312,26 @@
           :archive-header-title="T.wordsArchiveCourse"
           :archive-help-text="T.courseArchiveHelpText"
           @archive="onArchiveCourse"
-        ></omegaup-common-archive>
+        ></OmegaupCommonArchive>
       </div>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch, Ref } from 'vue-property-decorator';
-import course_Form from './Form.vue';
-import course_AssignmentList from './AssignmentList.vue';
-import common_Archive from '../common/Archive.vue';
-import course_AssignmentDetails from './AssignmentDetails.vue';
-import course_AdmissionMode from './AdmissionMode.vue';
-import course_AddStudents from './AddStudents.vue';
-import common_Admins from '../common/Admins.vue';
-import common_GroupAdmins from '../common/GroupAdmins.vue';
-import common_TeachingAssistants from '../common/TeachingAssistants.vue';
-import common_GroupTeachingAssistants from '../common/GroupTeachingAssistants.vue';
-import course_Clone from './Clone.vue';
-import course_GenerateLinkClone from './GenerateLinkClone.vue';
+<script setup lang="ts">
+import { ref, computed, watch, nextTick } from 'vue';
+import OmegaupCourseForm from './Form.vue';
+import OmegaupCourseAssignmentList from './AssignmentList.vue';
+import OmegaupCommonArchive from '../common/Archive.vue';
+import OmegaupCourseAssignmentDetails from './AssignmentDetails.vue';
+import OmegaupCourseAdmisionMode from './AdmissionMode.vue';
+import OmegaupCourseAddStudents from './AddStudents.vue';
+import OmegaupCommonAdmins from '../common/Admins.vue';
+import OmegaupCommonGroupadmins from '../common/GroupAdmins.vue';
+import OmegaupCommonTeachingAssistants from '../common/TeachingAssistants.vue';
+import OmegaupCommonGroupTeachingAssistants from '../common/GroupTeachingAssistants.vue';
+import OmegaupCourseClone from './Clone.vue';
+import OmegaupCourseGenerateLinkClone from './GenerateLinkClone.vue';
 import T from '../../lang';
 import type { types } from '../../api_types';
 import { omegaup } from '../../omegaup';
@@ -369,106 +368,136 @@ const emptyAssignment: types.CourseAssignment = {
   problemCount: 0,
 };
 
-@Component({
-  components: {
-    'omegaup-course-form': course_Form,
-    'omegaup-common-archive': common_Archive,
-    'omegaup-course-assignment-list': course_AssignmentList,
-    'omegaup-course-assignment-details': course_AssignmentDetails,
-    'omegaup-course-admision-mode': course_AdmissionMode,
-    'omegaup-course-add-students': course_AddStudents,
-    'omegaup-common-admins': common_Admins,
-    'omegaup-common-groupadmins': common_GroupAdmins,
-    'omegaup-common-teaching-assistants': common_TeachingAssistants,
-    'omegaup-common-group-teaching-assistants': common_GroupTeachingAssistants,
-    'omegaup-course-clone': course_Clone,
-    'omegaup-course-generate-link-clone': course_GenerateLinkClone,
-  },
-})
-export default class CourseEdit extends Vue {
-  @Ref('assignment-details') readonly assignmentDetails!: Vue;
-  @Prop() data!: types.CourseEditPayload;
-  @Prop() invalidParameterName!: string;
-  @Prop() initialTab!: string;
-  @Prop() searchResultUsers!: types.ListItem[];
-  @Prop() searchResultProblems!: types.ListItem[];
-  @Prop() searchResultGroups!: types.ListItem[];
-  @Prop() searchResultTeachingAssistants!: types.ListItem[];
-  @Prop() searchResultGroupsTeachingAssistants!: types.ListItem[];
-  @Prop() searchResultSchools!: types.SchoolListItem[];
-  @Prop() readOnly!: boolean;
+const props = defineProps<{
+  data: types.CourseEditPayload;
+  invalidParameterName: string;
+  initialTab: string;
+  searchResultUsers: types.ListItem[];
+  searchResultProblems: types.ListItem[];
+  searchResultGroups: types.ListItem[];
+  searchResultTeachingAssistants: types.ListItem[];
+  searchResultGroupsTeachingAssistants: types.ListItem[];
+  searchResultSchools: types.SchoolListItem[];
+  readOnly: boolean;
+}>();
 
-  T = T;
-  showTab = this.initialTab;
-  admissionMode = AdmissionMode.Private;
-  alreadyArchived = this.data.course.archived;
+const emit = defineEmits<{
+  (e: 'submit-edit-course', request: unknown): void;
+  (e: 'update-search-result-schools', query: string): void;
+  (e: 'invalid-languages'): void;
+  (e: 'clear-language-error'): void;
+  (e: 'delete-assignment', assignment: types.CourseAssignment): void;
+  (e: 'sort-content', courseAlias: string, contentAliases: string[]): void;
+  (e: 'update-search-result-problems', query: string): void;
+  (
+    e: 'add-problem',
+    assignment: types.CourseAssignment,
+    problem: unknown,
+  ): void;
+  (e: 'select-assignment', assignment: types.CourseAssignment): void;
+  (
+    e: 'remove-problem',
+    assignment: types.CourseAssignment,
+    problem: unknown,
+  ): void;
+  (e: 'sort-problems', assignmentAlias: string, problemsAlias: string[]): void;
+  (e: 'add-assignment', params: unknown): void;
+  (e: 'update-assignment', params: unknown): void;
+  (e: 'get-versions', request: unknown): void;
+  (e: 'update-admission-mode', request: unknown): void;
+  (e: 'add-student', participants: unknown): void;
+  (e: 'remove-student', student: unknown): void;
+  (e: 'accept-request', request: unknown): void;
+  (e: 'deny-request', request: unknown): void;
+  (e: 'update-search-result-users', query: string): void;
+  (e: 'add-admin', username: string): void;
+  (e: 'remove-admin', username: string): void;
+  (e: 'add-group-admin', groupAlias: string): void;
+  (e: 'remove-group-admin', groupAlias: string): void;
+  (e: 'update-search-result-groups', query: string): void;
+  (e: 'add-teaching-assistant', username: string): void;
+  (e: 'remove-teaching-assistant', username: string): void;
+  (e: 'add-group-teaching-assistant', groupAlias: string): void;
+  (e: 'remove-group-teaching-assistant', groupAlias: string): void;
+  (e: 'clone', alias: string, name: string, startTime: Date): void;
+  (e: 'generate-link', alias: string): void;
+  (e: 'archive-course', alias: string, archive: boolean): void;
+  (e: 'cancel', courseURL: string): void;
+}>();
 
-  assignmentProblems = this.data.assignmentProblems;
-  assignments = this.data.course.assignments;
-  assignmentFormMode: omegaup.AssignmentFormMode =
-    omegaup.AssignmentFormMode.Default;
-  assignment = emptyAssignment;
-  token = '';
+const assignmentDetailsRef = ref<InstanceType<
+  typeof OmegaupCourseAssignmentDetails
+> | null>(null);
 
-  get courseURL(): string {
-    return `/course/${this.data.course.alias}/`;
-  }
+const showTab = ref(props.initialTab);
+const alreadyArchived = ref(props.data.course.archived);
+const assignmentProblems = ref(props.data.assignmentProblems);
+const assignments = ref(props.data.course.assignments);
+const assignmentFormMode = ref<omegaup.AssignmentFormMode>(
+  omegaup.AssignmentFormMode.Default,
+);
+const assignment = ref(emptyAssignment);
+const token = ref('');
+const admissionMode = AdmissionMode;
 
-  onNewAssignment(): void {
-    this.assignmentFormMode = omegaup.AssignmentFormMode.New;
-    this.assignment = emptyAssignment;
-    this.assignmentProblems = [];
-    this.$nextTick(() => {
-      this.assignmentDetails.$el.scrollIntoView();
-      (this.assignmentDetails.$refs.name as HTMLElement).focus();
-    });
-  }
+const courseURL = computed(() => `/course/${props.data.course.alias}/`);
 
-  onEditAssignment(assignment: types.CourseAssignment): void {
-    this.assignmentFormMode = omegaup.AssignmentFormMode.Edit;
-    this.assignment = assignment;
-    this.$emit('select-assignment', this.assignment);
-    this.$nextTick(() => {
-      this.assignmentDetails.$el.scrollIntoView();
-      (this.assignmentDetails.$refs.name as HTMLElement).focus();
-    });
-  }
+function onNewAssignment(): void {
+  assignmentFormMode.value = omegaup.AssignmentFormMode.New;
+  assignment.value = emptyAssignment;
+  assignmentProblems.value = [];
+  nextTick(() => {
+    assignmentDetailsRef.value?.$el.scrollIntoView();
+    (assignmentDetailsRef.value?.$refs.name as HTMLElement)?.focus();
+  });
+}
 
-  onAddProblems(assignment: types.CourseAssignment): void {
-    this.assignmentFormMode = omegaup.AssignmentFormMode.Edit;
-    this.assignment = assignment;
-    this.$emit('select-assignment', assignment);
-    this.$nextTick(() => {
-      this.assignmentDetails.$el.scrollIntoView();
-    });
-  }
+function onEditAssignment(editAssignment: types.CourseAssignment): void {
+  assignmentFormMode.value = omegaup.AssignmentFormMode.Edit;
+  assignment.value = editAssignment;
+  emit('select-assignment', assignment.value);
+  nextTick(() => {
+    assignmentDetailsRef.value?.$el.scrollIntoView();
+    (assignmentDetailsRef.value?.$refs.name as HTMLElement)?.focus();
+  });
+}
 
-  onCancel(): void {
-    this.$emit('cancel', this.courseURL);
-  }
+function onAddProblems(addAssignment: types.CourseAssignment): void {
+  assignmentFormMode.value = omegaup.AssignmentFormMode.Edit;
+  assignment.value = addAssignment;
+  emit('select-assignment', addAssignment);
+  nextTick(() => {
+    assignmentDetailsRef.value?.$el.scrollIntoView();
+  });
+}
 
-  onResetAssignmentForm(): void {
-    this.assignmentFormMode = omegaup.AssignmentFormMode.Default;
-    window.scrollTo(0, 0);
-  }
+function onCancel(): void {
+  emit('cancel', courseURL.value);
+}
 
-  onSelectAssignmentTab(): void {
-    this.showTab = 'content';
-    this.onResetAssignmentForm();
-  }
+function onResetAssignmentForm(): void {
+  assignmentFormMode.value = omegaup.AssignmentFormMode.Default;
+  window.scrollTo(0, 0);
+}
 
-  onArchiveCourse(archive: boolean): void {
-    this.$emit('archive-course', this.data.course.alias, archive);
-    this.alreadyArchived = archive;
-  }
+function onSelectAssignmentTab(): void {
+  showTab.value = 'content';
+  onResetAssignmentForm();
+}
 
-  @Watch('initialTab')
-  onInitialTabChanged(newValue: string): void {
-    if (!availableTabs.includes(this.initialTab)) {
-      this.showTab = 'course';
+function onArchiveCourse(archive: boolean): void {
+  emit('archive-course', props.data.course.alias, archive);
+  alreadyArchived.value = archive;
+}
+
+watch(
+  () => props.initialTab,
+  (newValue: string) => {
+    if (!availableTabs.includes(props.initialTab)) {
+      showTab.value = 'course';
       return;
     }
-    this.showTab = newValue;
-  }
-}
+    showTab.value = newValue;
+  },
+);
 </script>

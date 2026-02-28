@@ -12,12 +12,12 @@
       <tr v-for="user in users">
         <td class="position">{{ user.position }}</td>
         <td class="user">
-          <omegaup-user-username
+          <OmegaupUserUsername
             :classname="user.classname"
             :username="user.username"
             :country="user.country"
           >
-          </omegaup-user-username>
+          </OmegaupUserUsername>
         </td>
         <td class="points">
           {{ user.points.toFixed(2) }}
@@ -28,21 +28,15 @@
   </table>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
 import { omegaup } from '../../omegaup';
 import T from '../../lang';
-import user_Username from '../user/Username.vue';
-@Component({
-  components: {
-    'omegaup-user-username': user_Username,
-  },
-})
-export default class ArenaNavbarMiniranking extends Vue {
-  @Prop() showRanking!: boolean;
-  @Prop() users!: omegaup.UserRank[];
-  T = T;
-}
+import OmegaupUserUsername from '../user/Username.vue';
+
+defineProps<{
+  showRanking: boolean;
+  users: omegaup.UserRank[];
+}>();
 </script>
 
 <style lang="scss" scoped>

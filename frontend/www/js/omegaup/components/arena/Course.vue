@@ -1,10 +1,10 @@
 <template>
-  <omegaup-arena
+  <OmegaupArena
     :active-tab="activeTab"
     :title="currentAssignment.name"
     :should-show-runs="isAdmin"
     :should-show-ranking="showRanking"
-    @update:activeTab="(selectedTab) => $emit('update:activeTab', selectedTab)"
+    @update:activeTab="(selectedTab) => emit('update:activeTab', selectedTab)"
   >
     <template #socket-status>
       <sup :class="socketClass" :title="socketStatusTitle">{{
@@ -14,25 +14,25 @@
     <template #clock>
       <div v-if="!deadline" class="clock">{{ INF }}</div>
       <template v-else>
-        <omegaup-countdown
+        <OmegaupCountdown
           v-show="currentAssignment.start_time > now"
           :target-time="currentAssignment.start_time"
           :countdown-format="omegaup.CountdownFormat.AssignmentHasNotStarted"
           @finish="now = new Date()"
-        ></omegaup-countdown>
-        <omegaup-countdown
+        />
+        <OmegaupCountdown
           v-show="currentAssignment.start_time < now"
           class="clock"
           :target-time="deadline"
           @finish="now = new Date()"
-        ></omegaup-countdown>
+        />
       </template>
     </template>
     <template #arena-problems>
       <div data-course>
         <div class="tab navleft">
           <div class="navbar">
-            <omegaup-arena-navbar-problems
+            <OmegaupArenaNavbarProblems
               :problems="problems"
               :active-problem="activeProblemAlias"
               :in-assignment="true"
@@ -42,29 +42,29 @@
               :digits-after-decimal-point="2"
               @disable-active-problem="activeProblem = null"
               @navigate-to-problem="onNavigateToProblem"
-            ></omegaup-arena-navbar-problems>
-            <omegaup-arena-navbar-assignments
+            />
+            <OmegaupArenaNavbarAssignments
               :assignments="course.assignments"
               :current-assignment="currentAssignment"
               @navigate-to-assignment="
                 (assignmentAliasToShow) =>
-                  $emit('navigate-to-assignment', {
+                  emit('navigate-to-assignment', {
                     assignmentAliasToShow,
                     courseAlias: course.alias,
                   })
               "
-            ></omegaup-arena-navbar-assignments>
+            />
           </div>
-          <omegaup-arena-summary
+          <OmegaupArenaSummary
             v-if="activeProblem === null"
             :title="currentAssignment.name"
             :description="currentAssignment.description"
             :start-time="currentAssignment.start_time"
             :finish-time="currentAssignment.finish_time"
             :admin="currentAssignment.director"
-          ></omegaup-arena-summary>
+          />
           <div v-else class="problem main">
-            <omegaup-problem-details
+            <OmegaupProblemDetails
               :user="{ loggedIn: true, admin: false, reviewer: false }"
               :next-submission-timestamp="currentNextSubmissionTimestamp"
               :next-execution-timestamp="currentNextExecutionTimestamp"
@@ -83,27 +83,25 @@
               :in-contest-or-course="true"
               :feedback-map="feedbackMap"
               :feedback-thread-map="feedbackThreadMap"
-              @request-feedback="(guid) => $emit('request-feedback', guid)"
+              @request-feedback="(guid) => emit('request-feedback', guid)"
               @update:activeTab="
                 (selectedTab) =>
-                  $emit('reset-hash', { selectedTab, problemAlias })
+                  emit('reset-hash', { selectedTab, problemAlias })
               "
               @submit-run="onRunSubmitted"
               @execute-run="onRunExecuted"
               @show-run="onRunDetails"
-              @submit-promotion="
-                (request) => $emit('submit-promotion', request)
-              "
+              @submit-promotion="(request) => emit('submit-promotion', request)"
               @dismiss-promotion="
                 (qualityPromotionComponent, isDismissed) =>
-                  $emit('dismiss-promotion', {
+                  emit('dismiss-promotion', {
                     solved: qualityPromotionComponent.solved,
                     tried: qualityPromotionComponent.tried,
                     isDismissed,
                   })
               "
               @new-submission-popup-displayed="
-                $emit('new-submission-popup-displayed')
+                emit('new-submission-popup-displayed')
               "
             >
               <template #quality-nomination-buttons>
@@ -113,30 +111,30 @@
                 <div></div>
               </template>
               <template #feedback="{ guid, isAdmin, feedback }">
-                <omegaup-submission-feedback
+                <OmegaupSubmissionFeedback
                   :guid="guid"
                   :is-admin="isAdmin"
                   :feedback-options="feedback"
-                  @set-feedback="(request) => $emit('set-feedback', request)"
-                ></omegaup-submission-feedback>
+                  @set-feedback="(request) => emit('set-feedback', request)"
+                />
               </template>
-            </omegaup-problem-details>
+            </OmegaupProblemDetails>
           </div>
         </div>
       </div>
     </template>
     <template v-if="scoreboard" #arena-scoreboard>
-      <omegaup-arena-scoreboard
+      <OmegaupArenaScoreboard
         :show-invited-users-filter="false"
         :problems="scoreboard.problems"
         :ranking="scoreboard.ranking"
         :last-updated="scoreboard.time"
       >
         <template #scoreboard-header><div></div></template>
-      </omegaup-arena-scoreboard>
+      </OmegaupArenaScoreboard>
     </template>
     <template v-if="isAdmin" #arena-runs>
-      <omegaup-arena-runs-for-courses
+      <OmegaupArenaRunsForCourses
         :show-all-runs="true"
         :contest-alias="currentAssignment.alias"
         :runs="allRuns"
@@ -152,38 +150,38 @@
         :search-result-users="searchResultUsers"
         :search-result-problems="searchResultProblems"
         @details="onRunAdminDetails"
-        @rejudge="(run) => $emit('rejudge', run)"
-        @disqualify="(run) => $emit('disqualify', run)"
-        @requalify="(run) => $emit('requalify', run)"
-        @filter-changed="(request) => $emit('apply-filter', request)"
+        @rejudge="(run) => emit('rejudge', run)"
+        @disqualify="(run) => emit('disqualify', run)"
+        @requalify="(run) => emit('requalify', run)"
+        @filter-changed="(request) => emit('apply-filter', request)"
         @update-search-result-users-contest="
-          (request) => $emit('update-search-result-users-assignment', request)
+          (request) => emit('update-search-result-users-assignment', request)
         "
       >
         <template #title><div></div></template>
         <template #runs><div></div></template>
-      </omegaup-arena-runs-for-courses>
-      <omegaup-overlay
+      </OmegaupArenaRunsForCourses>
+      <OmegaupOverlay
         v-if="isAdmin"
         :show-overlay="currentPopupDisplayed !== PopupDisplayed.None"
         @hide-overlay="onPopupDismissed"
       >
         <template #popup>
-          <omegaup-arena-rundetails-popup
+          <OmegaupArenaRundetailsPopup
             v-show="currentPopupDisplayed === PopupDisplayed.RunDetails"
             :data="currentRunDetailsData"
             @dismiss="onPopupDismissed"
           >
             <template #feedback="{ guid, isAdmin, feedback }">
-              <omegaup-submission-feedback
+              <OmegaupSubmissionFeedback
                 :guid="guid"
                 :is-admin="isAdmin"
                 :feedback-options="feedback"
-                @set-feedback="(request) => $emit('set-feedback', request)"
-              ></omegaup-submission-feedback>
+                @set-feedback="(request) => emit('set-feedback', request)"
+              />
             </template>
             <template #code-view="{ guid }">
-              <omegaup-arena-feedback-code-view
+              <OmegaupArenaFeedbackCodeView
                 :language="language"
                 :value="source"
                 :readonly="false"
@@ -193,21 +191,21 @@
                 :current-username="currentUsername"
                 @save-feedback-list="
                   (feedbackList) =>
-                    $emit('save-feedback-list', { feedbackList, guid })
+                    emit('save-feedback-list', { feedbackList, guid })
                 "
                 @submit-feedback-thread="
                   (feedback) =>
-                    $emit('submit-feedback-thread', { feedback, guid })
+                    emit('submit-feedback-thread', { feedback, guid })
                 "
-              ></omegaup-arena-feedback-code-view>
+              />
             </template>
-          </omegaup-arena-rundetails-popup>
+          </OmegaupArenaRundetailsPopup>
         </template>
-      </omegaup-overlay>
+      </OmegaupOverlay>
     </template>
     <template #arena-clarifications>
       <div class="container">
-        <omegaup-arena-clarification-list
+        <OmegaupArenaClarificationList
           :problems="problems"
           :users="users"
           :problem-alias="problems.length != 0 ? problems[0].alias : null"
@@ -216,262 +214,300 @@
           :is-admin="isAdmin"
           :allow-filter-by-assignment="true"
           :show-new-clarification-popup="showNewClarificationPopup"
-          @new-clarification="(request) => $emit('new-clarification', request)"
+          @new-clarification="(request) => emit('new-clarification', request)"
           @clarification-response="
-            (request) => $emit('clarification-response', request)
+            (request) => emit('clarification-response', request)
           "
           @update:activeTab="
-            (selectedTab) => $emit('update:activeTab', selectedTab)
+            (selectedTab) => emit('update:activeTab', selectedTab)
           "
         >
           <template #table-title>
             <th class="text-center" scope="col">{{ T.wordsHomework }}</th>
             <th class="text-center" scope="col">{{ T.wordsProblem }}</th>
           </template>
-        </omegaup-arena-clarification-list>
+        </OmegaupArenaClarificationList>
       </div>
     </template>
-  </omegaup-arena>
+  </OmegaupArena>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import { omegaup } from '../../omegaup';
-import arena_Arena from './Arena.vue';
-import arena_ClarificationList from './ClarificationList.vue';
-import arena_NavbarAssignments from './NavbarAssignments.vue';
-import arena_NavbarProblems from './NavbarProblems.vue';
-import arena_Runs from './Runs.vue';
-import arena_RunsForCourses from '../arena/RunsForCourses.vue';
-import arena_RunDetailsPopup from '../arena/RunDetailsPopup.vue';
-import omegaup_Overlay from '../Overlay.vue';
-import arena_Scoreboard from './Scoreboard.vue';
-import arena_Summary from './Summary.vue';
-import omegaup_Countdown from '../Countdown.vue';
-import problem_Details, { PopupDisplayed } from '../problem/Details.vue';
-import submission_Feedback from '../submissions/Feedback.vue';
+import OmegaupArena from './Arena.vue';
+import OmegaupArenaClarificationList from './ClarificationList.vue';
+import OmegaupArenaNavbarAssignments from './NavbarAssignments.vue';
+import OmegaupArenaNavbarProblems from './NavbarProblems.vue';
+import OmegaupArenaRuns from './Runs.vue';
+import OmegaupArenaRunsForCourses from '../arena/RunsForCourses.vue';
+import OmegaupArenaRundetailsPopup from '../arena/RunDetailsPopup.vue';
+import OmegaupOverlay from '../Overlay.vue';
+import OmegaupArenaScoreboard from './Scoreboard.vue';
+import OmegaupArenaSummary from './Summary.vue';
+import OmegaupCountdown from '../Countdown.vue';
+import OmegaupProblemDetails from '../problem/Details.vue';
+import { PopupDisplayed } from '../problem/Details.vue';
+import OmegaupSubmissionFeedback from '../submissions/Feedback.vue';
 import { SocketStatus } from '../../arena/events_socket';
 import { SubmissionRequest } from '../../arena/submissions';
-import arena_FeedbackCodeView from './FeedbackCodeView.vue';
+import OmegaupArenaFeedbackCodeView from './FeedbackCodeView.vue';
 import { ArenaCourseFeedback } from './Feedback.vue';
 
-@Component({
-  components: {
-    'omegaup-arena': arena_Arena,
-    'omegaup-arena-clarification-list': arena_ClarificationList,
-    'omegaup-arena-navbar-assignments': arena_NavbarAssignments,
-    'omegaup-arena-navbar-problems': arena_NavbarProblems,
-    'omegaup-arena-runs': arena_Runs,
-    'omegaup-arena-runs-for-courses': arena_RunsForCourses,
-    'omegaup-arena-rundetails-popup': arena_RunDetailsPopup,
-    'omegaup-overlay': omegaup_Overlay,
-    'omegaup-arena-scoreboard': arena_Scoreboard,
-    'omegaup-arena-summary': arena_Summary,
-    'omegaup-problem-details': problem_Details,
-    'omegaup-submission-feedback': submission_Feedback,
-    'omegaup-countdown': omegaup_Countdown,
-    'omegaup-arena-feedback-code-view': arena_FeedbackCodeView,
+const props = withDefaults(
+  defineProps<{
+    course: types.CourseDetails;
+    currentAssignment: types.ArenaAssignment;
+    problems: types.NavbarProblemsetProblem[];
+    users?: types.ContestUser[];
+    problem?: types.NavbarProblemsetProblem | null;
+    problemInfo?: types.ProblemDetails | null;
+    clarifications?: types.Clarification[];
+    activeTab: string;
+    guid?: null | string;
+    problemAlias?: null | string;
+    socketStatus?: SocketStatus;
+    showNewClarificationPopup?: boolean;
+    scoreboard?: null | types.Scoreboard;
+    popupDisplayed?: PopupDisplayed;
+    runs?: types.Run[];
+    allRuns?: null | types.Run[];
+    runDetailsData?: types.RunDetails | null;
+    nextSubmissionTimestamp?: Date | null;
+    nextExecutionTimestamp?: Date | null;
+    shouldShowFirstAssociatedIdentityRunWarning?: boolean;
+    showRanking?: boolean;
+    totalRuns: number;
+    searchResultUsers: types.ListItem[];
+    feedbackMap?: Map<number, ArenaCourseFeedback>;
+    feedbackThreadMap?: Map<number, ArenaCourseFeedback>;
+    currentUsername: string;
+    currentUserClassName: string;
+  }>(),
+  {
+    users: () => [],
+    problem: null,
+    problemInfo: null,
+    clarifications: () => [],
+    guid: null,
+    problemAlias: null,
+    socketStatus: SocketStatus.Waiting,
+    showNewClarificationPopup: false,
+    scoreboard: null,
+    popupDisplayed: PopupDisplayed.None,
+    runs: () => [],
+    allRuns: null,
+    runDetailsData: null,
+    nextSubmissionTimestamp: null,
+    nextExecutionTimestamp: null,
+    shouldShowFirstAssociatedIdentityRunWarning: false,
+    showRanking: false,
+    feedbackMap: () => new Map<number, ArenaCourseFeedback>(),
+    feedbackThreadMap: () => new Map<number, ArenaCourseFeedback>(),
   },
-})
-export default class ArenaCourse extends Vue {
-  @Prop() course!: types.CourseDetails;
-  @Prop() currentAssignment!: types.ArenaAssignment;
-  @Prop() problems!: types.NavbarProblemsetProblem[];
-  @Prop({ default: () => [] }) users!: types.ContestUser[];
-  @Prop({ default: null }) problem!: types.NavbarProblemsetProblem | null;
-  @Prop({ default: null }) problemInfo!: types.ProblemDetails;
-  @Prop({ default: () => [] }) clarifications!: types.Clarification[];
-  @Prop() activeTab!: string;
-  @Prop({ default: null }) guid!: null | string;
-  @Prop({ default: null }) problemAlias!: null | string;
-  @Prop({ default: SocketStatus.Waiting }) socketStatus!: SocketStatus;
-  @Prop({ default: false }) showNewClarificationPopup!: boolean;
-  @Prop() scoreboard!: null | types.Scoreboard;
-  @Prop({ default: PopupDisplayed.None }) popupDisplayed!: PopupDisplayed;
-  @Prop({ default: () => [] }) runs!: types.Run[];
-  @Prop({ default: null }) allRuns!: null | types.Run[];
-  @Prop({ default: null }) runDetailsData!: types.RunDetails | null;
-  @Prop({ default: null }) nextSubmissionTimestamp!: Date | null;
-  @Prop({ default: null }) nextExecutionTimestamp!: Date | null;
-  @Prop({ default: false })
-  shouldShowFirstAssociatedIdentityRunWarning!: boolean;
-  @Prop({ default: false }) showRanking!: boolean;
-  @Prop() totalRuns!: number;
-  @Prop() searchResultUsers!: types.ListItem[];
-  @Prop({ default: () => new Map<number, ArenaCourseFeedback>() })
-  feedbackMap!: Map<number, ArenaCourseFeedback>;
-  @Prop({ default: () => new Map<number, ArenaCourseFeedback>() })
-  feedbackThreadMap!: Map<number, ArenaCourseFeedback>;
-  @Prop() currentUsername!: string;
-  @Prop() currentUserClassName!: string;
+);
 
-  T = T;
-  omegaup = omegaup;
-  PopupDisplayed = PopupDisplayed;
-  isAdmin =
-    this.course.is_admin ||
-    this.course.is_curator ||
-    this.course.is_teaching_assistant;
-  currentClarifications = this.clarifications;
-  activeProblem: types.NavbarProblemsetProblem | null = this.problem;
-  currentRunDetailsData = this.runDetailsData;
-  currentPopupDisplayed = this.popupDisplayed;
-  currentNextSubmissionTimestamp = this.nextSubmissionTimestamp;
-  currentNextExecutionTimestamp = this.nextExecutionTimestamp;
-  now = new Date();
-  INF = '∞';
+const emit = defineEmits<{
+  (e: 'update:activeTab', selectedTab: string): void;
+  (
+    e: 'navigate-to-assignment',
+    payload: { assignmentAliasToShow: string; courseAlias: string },
+  ): void;
+  (
+    e: 'navigate-to-problem',
+    payload: { problem: types.NavbarProblemsetProblem },
+  ): void;
+  (e: 'submit-run', payload: object): void;
+  (e: 'execute-run', payload: { target: object }): void;
+  (e: 'show-run', payload: object): void;
+  (
+    e: 'reset-hash',
+    payload: { selectedTab: string; alias: string | null },
+  ): void;
+  (e: 'rejudge', run: types.Run): void;
+  (e: 'disqualify', run: types.Run): void;
+  (e: 'requalify', run: types.Run): void;
+  (e: 'apply-filter', request: object): void;
+  (e: 'update-search-result-users-assignment', request: object): void;
+  (e: 'new-clarification', request: object): void;
+  (e: 'clarification-response', request: object): void;
+  (e: 'new-submission-popup-displayed'): void;
+  (e: 'submit-promotion', request: object): void;
+  (e: 'dismiss-promotion', payload: object): void;
+  (e: 'set-feedback', request: object): void;
+  (e: 'save-feedback-list', payload: object): void;
+  (e: 'submit-feedback-thread', payload: object): void;
+  (e: 'request-feedback', guid: string): void;
+}>();
 
-  get activeProblemAlias(): null | string {
-    return this.activeProblem?.alias ?? null;
+const INF = '∞';
+
+const isAdmin =
+  props.course.is_admin ||
+  props.course.is_curator ||
+  props.course.is_teaching_assistant;
+const currentClarifications = ref(props.clarifications);
+const activeProblem = ref<types.NavbarProblemsetProblem | null>(props.problem);
+const currentRunDetailsData = ref(props.runDetailsData);
+const currentPopupDisplayed = ref(props.popupDisplayed);
+const currentNextSubmissionTimestamp = ref(props.nextSubmissionTimestamp);
+const currentNextExecutionTimestamp = ref(props.nextExecutionTimestamp);
+const now = ref(new Date());
+
+const activeProblemAlias = computed((): null | string => {
+  return activeProblem.value?.alias ?? null;
+});
+
+const socketClass = computed((): string => {
+  if (props.socketStatus === SocketStatus.Connected) {
+    return 'socket-status socket-status-ok';
   }
-
-  get socketClass(): string {
-    if (this.socketStatus === SocketStatus.Connected) {
-      return 'socket-status socket-status-ok';
-    }
-    if (this.socketStatus === SocketStatus.Failed) {
-      return 'socket-status socket-status-error';
-    }
-    return 'socket-status';
+  if (props.socketStatus === SocketStatus.Failed) {
+    return 'socket-status socket-status-error';
   }
+  return 'socket-status';
+});
 
-  get socketStatusTitle(): string {
-    if (this.socketStatus === SocketStatus.Connected) {
-      return T.socketStatusConnected;
-    }
-    if (this.socketStatus === SocketStatus.Failed) {
-      return T.socketStatusFailed;
-    }
-    return T.socketStatusWaiting;
+const socketStatusTitle = computed((): string => {
+  if (props.socketStatus === SocketStatus.Connected) {
+    return T.socketStatusConnected;
   }
-
-  get deadline(): null | Date {
-    return this.currentAssignment.finish_time ?? null;
+  if (props.socketStatus === SocketStatus.Failed) {
+    return T.socketStatusFailed;
   }
+  return T.socketStatusWaiting;
+});
 
-  get problemDetailsPopup(): PopupDisplayed {
-    if (!this.problemInfo) {
-      return this.currentPopupDisplayed;
+const deadline = computed((): null | Date => {
+  return props.currentAssignment.finish_time ?? null;
+});
+
+const problemDetailsPopup = computed(
+  (): PopupDisplayed => {
+    if (!props.problemInfo) {
+      return currentPopupDisplayed.value;
     }
 
-    // Problem has not been solved or tried
     if (
-      !this.problemInfo.nominationStatus.solved &&
-      !this.problemInfo.nominationStatus.tried
+      !props.problemInfo.nominationStatus.solved &&
+      !props.problemInfo.nominationStatus.tried
     ) {
-      return this.currentPopupDisplayed;
+      return currentPopupDisplayed.value;
     }
 
-    // Problem has been dismissed or has been dismissed beforeAC and has not been solved
     if (
-      this.problemInfo.nominationStatus.dismissed ||
-      (this.problemInfo.nominationStatus.dismissedBeforeAc &&
-        !this.problemInfo.nominationStatus.solved)
+      props.problemInfo.nominationStatus.dismissed ||
+      (props.problemInfo.nominationStatus.dismissedBeforeAc &&
+        !props.problemInfo.nominationStatus.solved)
     ) {
-      return this.currentPopupDisplayed;
+      return currentPopupDisplayed.value;
     }
 
-    // Problem has been previously nominated
     if (
-      this.problemInfo.nominationStatus.nominated ||
-      (this.problemInfo.nominationStatus.nominatedBeforeAc &&
-        !this.problemInfo.nominationStatus.solved)
+      props.problemInfo.nominationStatus.nominated ||
+      (props.problemInfo.nominationStatus.nominatedBeforeAc &&
+        !props.problemInfo.nominationStatus.solved)
     ) {
-      return this.currentPopupDisplayed;
+      return currentPopupDisplayed.value;
     }
 
-    // User can't nominate the problem
-    if (!this.problemInfo.nominationStatus.canNominateProblem) {
-      return this.currentPopupDisplayed;
+    if (!props.problemInfo.nominationStatus.canNominateProblem) {
+      return currentPopupDisplayed.value;
     }
 
     return PopupDisplayed.Promotion;
-  }
+  },
+);
 
-  get searchResultProblems(): types.ListItem[] {
-    if (!this.problems.length) {
-      return [];
-    }
-    return this.problems.map((problem) => ({
-      key: problem.alias,
-      value: problem.text,
-    }));
+const searchResultProblems = computed((): types.ListItem[] => {
+  if (!props.problems.length) {
+    return [];
   }
+  return props.problems.map((problem) => ({
+    key: problem.alias,
+    value: problem.text,
+  }));
+});
 
-  get language(): string | undefined {
-    return this.runDetailsData?.language;
-  }
+const language = computed((): string | undefined => {
+  return props.runDetailsData?.language;
+});
 
-  get source(): string | undefined {
-    return this.runDetailsData?.source;
-  }
+const source = computed((): string | undefined => {
+  return props.runDetailsData?.source;
+});
 
-  onPopupDismissed(): void {
-    this.currentPopupDisplayed = PopupDisplayed.None;
-    this.currentRunDetailsData = null;
-    this.$emit('reset-hash', { selectedTab: 'runs', alias: null });
-  }
+function onPopupDismissed(): void {
+  currentPopupDisplayed.value = PopupDisplayed.None;
+  currentRunDetailsData.value = null;
+  emit('reset-hash', { selectedTab: 'runs', alias: null });
+}
 
-  onNavigateToProblem(problem: types.NavbarProblemsetProblem) {
-    this.activeProblem = problem;
-    this.$emit('navigate-to-problem', { problem });
-  }
+function onNavigateToProblem(problem: types.NavbarProblemsetProblem) {
+  activeProblem.value = problem;
+  emit('navigate-to-problem', { problem });
+}
 
-  onRunSubmitted(run: { code: string; language: string }): void {
-    this.$emit('submit-run', { ...run, problem: this.activeProblem });
-  }
+function onRunSubmitted(run: { code: string; language: string }): void {
+  emit('submit-run', { ...run, problem: activeProblem.value });
+}
 
-  onRunAdminDetails(request: SubmissionRequest): void {
-    this.$emit('show-run', {
-      ...request,
-      isAdmin: this.isAdmin,
-      hash: `#runs/all/show-run:${request.guid}`,
-    });
-    this.currentPopupDisplayed = PopupDisplayed.RunDetails;
-  }
+function onRunAdminDetails(request: SubmissionRequest): void {
+  emit('show-run', {
+    ...request,
+    isAdmin: isAdmin,
+    hash: `#runs/all/show-run:${request.guid}`,
+  });
+  currentPopupDisplayed.value = PopupDisplayed.RunDetails;
+}
 
-  onRunDetails(request: SubmissionRequest): void {
-    this.$emit('show-run', {
-      ...request,
-      hash: `#problems/${this.activeProblemAlias}/show-run:${request.guid}`,
-    });
-  }
+function onRunDetails(request: SubmissionRequest): void {
+  emit('show-run', {
+    ...request,
+    hash: `#problems/${activeProblemAlias.value}/show-run:${request.guid}`,
+  });
+}
 
-  onRunExecuted(): void {
-    this.$emit('execute-run', { target: this });
-  }
+function onRunExecuted(): void {
+  emit('execute-run', { target: {} });
+}
 
-  @Watch('problem')
-  onActiveProblemChanged(newValue: types.NavbarProblemsetProblem | null): void {
-    const currentProblem = this.currentAssignment.problems?.find(
+watch(
+  () => props.problem,
+  (newValue) => {
+    const currentProblem = props.currentAssignment.problems?.find(
       ({ alias }: { alias: string }) => alias === newValue?.alias,
     );
     if (!newValue || !currentProblem) {
-      this.activeProblem = null;
-      this.$emit('reset-hash', { selectedTab: 'problems', alias: null });
+      activeProblem.value = null;
+      emit('reset-hash', { selectedTab: 'problems', alias: null });
       return;
     }
-    this.onNavigateToProblem(newValue);
-  }
+    onNavigateToProblem(newValue);
+  },
+);
 
-  @Watch('problemInfo')
-  onProblemInfoChanged(newValue: types.ProblemInfo | null): void {
+watch(
+  () => props.problemInfo,
+  (newValue) => {
     if (!newValue) {
       return;
     }
-    this.currentNextSubmissionTimestamp =
+    currentNextSubmissionTimestamp.value =
       newValue.nextSubmissionTimestamp ?? null;
-    this.currentNextExecutionTimestamp =
+    currentNextExecutionTimestamp.value =
       newValue.nextExecutionTimestamp ?? null;
-  }
+  },
+);
 
-  @Watch('runDetailsData')
-  onRunDetailsChanged(newValue: types.RunDetails): void {
-    this.currentRunDetailsData = newValue;
-  }
-}
+watch(
+  () => props.runDetailsData,
+  (newValue) => {
+    currentRunDetailsData.value = newValue ?? null;
+  },
+);
 </script>
 
 <style lang="scss" scoped>

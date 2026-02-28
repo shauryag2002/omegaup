@@ -9,21 +9,21 @@
         </p>
         <p>
           <span class="font-weight-bold">{{ T.courseCloneCreatedBy }}: </span>
-          <omegaup-username
+          <OmegaupUsername
             :classname="classname"
             :username="username"
             :linkify="true"
-          ></omegaup-username>
+          ></OmegaupUsername>
         </p>
         <div class="d-flex align-items-baseline">
           <span class="font-weight-bold mr-2 text-nowrap">
             {{ T.wordsDescription }}:
           </span>
-          <omegaup-markdown
+          <OmegaupMarkdown
             :full-width="true"
             :markdown="course.description"
             class="flex-grow-1 description-content"
-          ></omegaup-markdown>
+          ></OmegaupMarkdown>
         </div>
         <li
           v-for="assignment of course.assignments"
@@ -32,60 +32,47 @@
           {{ assignment.name }}
         </li>
       </div>
-      <omegaup-course-clone
+      <OmegaupCourseClone
         :initial-alias="aliasWithUsername"
         :initial-name="course.name"
         @clone="
           (alias, name, startTime) =>
-            $emit('clone', alias, name, token, startTime)
+            emit('clone', alias, name, token, startTime)
         "
-      ></omegaup-course-clone>
+      ></OmegaupCourseClone>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import T from '../../lang';
 import { types } from '../../api_types';
-import course_Clone from './Clone.vue';
-import DatePicker from '../DatePicker.vue';
-import omegaup_Username from '../user/Username.vue';
-import omegaup_Markdown from '../Markdown.vue';
+import OmegaupCourseClone from './Clone.vue';
+import OmegaupUsername from '../user/Username.vue';
+import OmegaupMarkdown from '../Markdown.vue';
 
-import {
-  FontAwesomeIcon,
-  FontAwesomeLayers,
-  FontAwesomeLayersText,
-} from '@fortawesome/vue-fontawesome';
-import { fas } from '@fortawesome/free-solid-svg-icons';
-import { library } from '@fortawesome/fontawesome-svg-core';
-library.add(fas);
+const props = defineProps<{
+  course: types.CourseDetails;
+  username: string;
+  classname: string;
+  token: string;
+  currentUsername: string;
+}>();
 
-@Component({
-  components: {
-    'omegaup-course-clone': course_Clone,
-    'omegaup-datepicker': DatePicker,
-    'omegaup-markdown': omegaup_Markdown,
-    'omegaup-username': omegaup_Username,
-    'font-awesome-icon': FontAwesomeIcon,
-    'font-awesome-layers': FontAwesomeLayers,
-    'font-awesome-layers-text': FontAwesomeLayersText,
-  },
-})
-export default class CourseCloneWithToken extends Vue {
-  @Prop() course!: types.CourseDetails;
-  @Prop() username!: string;
-  @Prop() classname!: string;
-  @Prop() token!: string;
-  @Prop() currentUsername!: string;
+const emit = defineEmits<{
+  (
+    e: 'clone',
+    alias: string,
+    name: string,
+    token: string,
+    startTime: Date,
+  ): void;
+}>();
 
-  T = T;
-
-  get aliasWithUsername(): string {
-    return `${this.course.alias}_${this.currentUsername}`;
-  }
-}
+const aliasWithUsername = computed(
+  () => `${props.course.alias}_${props.currentUsername}`,
+);
 </script>
 
 <style lang="scss" scoped>

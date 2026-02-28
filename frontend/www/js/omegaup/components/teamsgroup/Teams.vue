@@ -17,11 +17,11 @@
       <tbody>
         <tr v-for="identity in teams" :key="identity.username">
           <td>
-            <omegaup-user-username
+            <OmegaupUserUsername
               :classname="identity.classname"
               :linkify="true"
               :username="identity.username"
-            ></omegaup-user-username>
+            ></OmegaupUserUsername>
           </td>
           <td data-group-team-name>{{ identity.name }}</td>
           <td>
@@ -50,7 +50,7 @@
               class="btn btn-link"
               :data-remove-identity="identity.username"
               :title="T.groupEditMembersRemove"
-              @click="$emit('remove', identity.username)"
+              @click="emit('remove', identity.username)"
             >
               <font-awesome-icon :icon="['fas', 'trash-alt']" />
             </button>
@@ -58,24 +58,24 @@
         </tr>
       </tbody>
     </table>
-    <omegaup-identity-edit
+    <OmegaupIdentityEdit
       v-if="formToShow === AvailableForms.Edit"
       :countries="countries"
       :identity="identity"
       :search-result-schools="searchResultSchools"
       @update-search-result-schools="
-        (query) => $emit('update-search-result-schools', query)
+        (query) => emit('update-search-result-schools', query)
       "
       @cancel="onCancel"
       @edit-identity-member="onEditIdentityTeam"
-    ></omegaup-identity-edit>
-    <omegaup-identity-change-password
+    ></OmegaupIdentityEdit>
+    <OmegaupIdentityChangePassword
       v-if="formToShow === AvailableForms.ChangePassword"
       :username="username"
       @emit-cancel="onCancel"
       @emit-change-password="onChangePasswordTeam"
-    ></omegaup-identity-change-password>
-    <omegaup-identity-members
+    ></OmegaupIdentityChangePassword>
+    <OmegaupIdentityMembers
       v-if="formToShow === AvailableForms.AddMembers"
       :team-username="username"
       :teams-members="
@@ -83,26 +83,35 @@
       "
       :search-result-users="searchResultUsers"
       @update-search-result-users="
-        (query) => $emit('update-search-result-users', query)
+        (query) => emit('update-search-result-users', query)
       "
       @cancel="onCancel"
       @change-password-identity="
-        (request) => $emit('change-password-identity', request)
+        (request) => emit('change-password-identity', request)
       "
-      @add-members="(request) => $emit('add-members', request)"
-      @remove-member="(request) => $emit('remove-member', request)"
-    ></omegaup-identity-members>
+      @add-members="(request) => emit('add-members', request)"
+      @remove-member="(request) => emit('remove-member', request)"
+    ></OmegaupIdentityMembers>
   </div>
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+export enum AvailableForms {
+  None,
+  Edit,
+  ChangePassword,
+  AddMembers,
+}
+</script>
+
+<script setup lang="ts">
+import { ref } from 'vue';
 import { dao, types } from '../../api_types';
 import T from '../../lang';
-import user_Username from '../user/Username.vue';
-import identity_Edit from '../identity/Edit.vue';
-import identity_ChangePassword from '../identity/ChangePassword.vue';
-import teamsgroup_Members from './Members.vue';
+import OmegaupUserUsername from '../user/Username.vue';
+import OmegaupIdentityEdit from '../identity/Edit.vue';
+import OmegaupIdentityChangePassword from '../identity/ChangePassword.vue';
+import OmegaupIdentityMembers from './Members.vue';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import {
@@ -113,73 +122,86 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 library.add(faEdit, faLock, faTrashAlt, faUsers);
 
-export enum AvailableForms {
-  None,
-  Edit,
-  ChangePassword,
-  AddMembers,
+const props = withDefaults(
+  defineProps<{
+    teams: types.Identity[];
+    countries: Array<dao.Countries>;
+    searchResultUsers: types.ListItem[];
+    searchResultSchools: types.SchoolListItem[];
+    teamsMembers?: types.TeamMember[];
+  }>(),
+  {
+    teamsMembers: () => [],
+  },
+);
+
+const emit = defineEmits<{
+  (e: 'update-identity-team', identity: types.Identity): void;
+  (e: 'update-search-result-schools', query: string): void;
+  (e: 'update-search-result-users', query: string): void;
+  (
+    e: 'edit-identity-team',
+    response: { originalUsername: string; identity: types.Identity },
+  ): void;
+  (
+    e: 'change-password-identity-team',
+    request: {
+      username: string | null;
+      newPassword: string;
+      newPasswordRepeat: string;
+    },
+  ): void;
+  (e: 'change-password-identity', request: any): void;
+  (e: 'add-members', request: any): void;
+  (e: 'remove-member', request: any): void;
+  (e: 'remove', name: string): void;
+  (e: 'cancel', component: any): void;
+}>();
+
+const identity = ref<types.Identity | null>(null);
+const username = ref<string | null>(null);
+const formToShow = ref<AvailableForms>(AvailableForms.None);
+
+function onEdit(ident: types.Identity): void {
+  identity.value = ident;
+  formToShow.value = AvailableForms.Edit;
+  username.value = ident.username;
+  emit('update-identity-team', identity.value);
 }
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-    'omegaup-user-username': user_Username,
-    'omegaup-identity-edit': identity_Edit,
-    'omegaup-identity-change-password': identity_ChangePassword,
-    'omegaup-identity-members': teamsgroup_Members,
-  },
-})
-export default class Teams extends Vue {
-  @Prop() teams!: types.Identity[];
-  @Prop() countries!: Array<dao.Countries>;
-  @Prop() searchResultUsers!: types.ListItem[];
-  @Prop() searchResultSchools!: types.SchoolListItem[];
-  @Prop({ default: () => [] }) teamsMembers!: types.TeamMember[];
+function onChangePass(user: string): void {
+  formToShow.value = AvailableForms.ChangePassword;
+  username.value = user;
+}
 
-  T = T;
-  AvailableForms = AvailableForms;
-  identity: null | types.Identity = null;
-  username: null | string = null;
-  formToShow: AvailableForms = AvailableForms.None;
+function onAddMembers(user: string): void {
+  formToShow.value = AvailableForms.AddMembers;
+  username.value = user;
+}
 
-  onEdit(identity: types.Identity): void {
-    this.identity = identity;
-    this.formToShow = AvailableForms.Edit;
-    this.username = identity.username;
-    this.$emit('update-identity-team', this.identity);
-  }
+function onChangePasswordTeam(
+  newPassword: string,
+  newPasswordRepeat: string,
+): void {
+  emit('change-password-identity-team', {
+    username: username.value,
+    newPassword,
+    newPasswordRepeat,
+  });
+  onCancel();
+}
 
-  onChangePass(username: string): void {
-    this.formToShow = AvailableForms.ChangePassword;
-    this.username = username;
-  }
+function onEditIdentityTeam(response: {
+  originalUsername: string;
+  identity: types.Identity;
+}): void {
+  emit('edit-identity-team', response);
+  onCancel();
+}
 
-  onAddMembers(username: string): void {
-    this.formToShow = AvailableForms.AddMembers;
-    this.username = username;
-  }
-
-  onChangePasswordTeam(newPassword: string, newPasswordRepeat: string): void {
-    this.$emit('change-password-identity-team', {
-      username: this.username,
-      newPassword,
-      newPasswordRepeat,
-    });
-    this.onCancel();
-  }
-
-  onEditIdentityTeam(response: {
-    originalUsername: string;
-    identity: types.Identity;
-  }): void {
-    this.$emit('edit-identity-team', response);
-    this.onCancel();
-  }
-
-  onCancel(): void {
-    this.identity = null;
-    this.formToShow = AvailableForms.None;
-    this.username = null;
-  }
+function onCancel(): void {
+  identity.value = null;
+  formToShow.value = AvailableForms.None;
+  username.value = null;
 }
 </script>

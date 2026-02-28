@@ -55,7 +55,7 @@
             <td>
               <button
                 class="btn btn-secondary btn-sm"
-                @click="$emit('revoke-api-token', apiToken.name)"
+                @click="emit('revoke-api-token', apiToken.name)"
               >
                 {{ T.apiTokenRevoke }}
               </button>
@@ -67,44 +67,40 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as time from '../../time';
 
-import {
-  FontAwesomeIcon,
-  FontAwesomeLayers,
-  FontAwesomeLayersText,
-} from '@fortawesome/vue-fontawesome';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 library.add(fas);
 
-@Component({
-  components: {
-    'font-awesome-icon': FontAwesomeIcon,
-    'font-awesome-layers': FontAwesomeLayers,
-    'font-awesome-layers-text': FontAwesomeLayersText,
+withDefaults(
+  defineProps<{
+    apiTokens?: types.ApiToken[];
+  }>(),
+  {
+    apiTokens: () => [],
   },
-})
-export default class ManageApiTokens extends Vue {
-  @Prop({ default: () => [] }) apiTokens!: types.ApiToken[];
+);
 
-  T = T;
-  time = time;
+const emit = defineEmits<{
+  (e: 'create-api-token', name: string | null): void;
+  (e: 'revoke-api-token', name: string): void;
+}>();
 
-  tokenName = null;
+const tokenName = ref<string | null>(null);
 
-  handleCreateApiToken() {
-    this.$emit('create-api-token', this.tokenName);
-    this.tokenName = null; // Clear the tokenName value
-  }
+function handleCreateApiToken(): void {
+  emit('create-api-token', tokenName.value);
+  tokenName.value = null; // Clear the tokenName value
+}
 
-  formatTime(value: Date) {
-    return time.formatDateTime(value);
-  }
+function formatTime(value: Date): string {
+  return time.formatDateTime(value);
 }
 </script>
 

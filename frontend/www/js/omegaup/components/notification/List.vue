@@ -30,42 +30,40 @@
         {{ T.notificationsMarkAllAsRead }} ✔️
       </a>
       <transition-group name="list"
-        ><omegaup-notification
+        ><OmegaupNotification
           v-for="notification in notifications"
           :key="notification.notification_id"
           data-notification-list
           :notification="notification"
           @remove="readSingleNotification"
-        ></omegaup-notification
-      ></transition-group>
+      /></transition-group>
     </div>
   </li>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
 import { types } from '../../api_types';
 import T from '../../lang';
-import Notification from './Notification.vue';
+import OmegaupNotification from './Notification.vue';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faBell } from '@fortawesome/free-solid-svg-icons';
 library.add(faBell);
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-    'omegaup-notification': Notification,
-  },
-})
-export default class NotificationList extends Vue {
-  @Prop() notifications!: types.Notification[];
-  T = T;
+defineProps<{
+  notifications: types.Notification[];
+}>();
 
-  readSingleNotification(notification: types.Notification, url?: string): void {
-    this.$emit('read', [notification], url);
-  }
+const emit = defineEmits<{
+  (e: 'read', notifications: types.Notification[], url: string | null): void;
+}>();
+
+function readSingleNotification(
+  notification: types.Notification,
+  url?: string,
+): void {
+  emit('read', [notification], url ?? null);
 }
 </script>
 

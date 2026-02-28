@@ -50,7 +50,7 @@
                   class="btn btn-primary"
                   data-dismiss="modal"
                   data-button-confirm
-                  @click="$emit('generate', certificateCutoff)"
+                  @click="emit('generate', certificateCutoff)"
                 >
                   {{ T.wordsConfirm }}
                 </button>
@@ -63,16 +63,18 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 
-@Component
-export default class Certificates extends Vue {
-  @Prop() certificatesDetails!: types.ContestCertificatesAdminDetails;
+const props = defineProps<{
+  certificatesDetails: types.ContestCertificatesAdminDetails;
+}>();
 
-  T = T;
-  certificateCutoff = this.certificatesDetails.certificateCutoff;
-}
+const emit = defineEmits<{
+  (e: 'generate', cutoff: number): void;
+}>();
+
+const certificateCutoff = ref(props.certificatesDetails.certificateCutoff);
 </script>

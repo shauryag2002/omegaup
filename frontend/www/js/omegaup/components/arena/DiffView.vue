@@ -1,9 +1,9 @@
 <template>
-  <div ref="cm-editor"></div>
+  <div ref="cmEditor"></div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Ref } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
 import * as CodeMirror from 'codemirror';
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/addon/merge/merge.css';
@@ -18,29 +18,28 @@ require('codemirror/addon/merge/merge.js');
 const MergeView =
   CodeMirror.MergeView ?? (CodeMirror as any)?.default.MergeView;
 
-@Component
-export default class DiffView extends Vue {
-  @Prop() left!: string;
-  @Prop() right!: string;
-  @Ref('cm-editor') private readonly cmEditor!: HTMLElement;
+const props = defineProps<{
+  left: string;
+  right: string;
+}>();
 
-  private editor: CodeMirror.MergeView.MergeViewEditor | null = null;
+const cmEditor = ref<HTMLElement | null>(null);
+let editor: CodeMirror.MergeView.MergeViewEditor | null = null;
 
-  mounted() {
-    if (this.editor) return;
-    this.editor = MergeView(this.cmEditor, {
-      collapseIdentical: true,
-      connect: 'align',
-      lineNumbers: true,
-      mode: 'text/plain',
-      orig: this.right,
-      origRight: this.left,
-      readOnly: true,
-      revertButtons: false,
-      showDifferences: true,
-      tabSize: 2,
-      value: this.right,
-    });
-  }
-}
+onMounted(() => {
+  if (editor || !cmEditor.value) return;
+  editor = MergeView(cmEditor.value, {
+    collapseIdentical: true,
+    connect: 'align',
+    lineNumbers: true,
+    mode: 'text/plain',
+    orig: props.right,
+    origRight: props.left,
+    readOnly: true,
+    revertButtons: false,
+    showDifferences: true,
+    tabSize: 2,
+    value: props.right,
+  });
+});
 </script>

@@ -5,14 +5,14 @@
       class="px-2 py-4 row justify-content-center align-items-center text-center"
     >
       <div class="col-lg-6 d-flex justify-content-center">
-        <badge-3d class="badge-icon-wrapper">
+        <Badge3D class="badge-icon-wrapper">
           <img
             :class="{ 'badge-icon-gray': !badge.assignation_time }"
             :src="iconUrl"
             :alt="name"
             class="badge-icon-img"
           />
-        </badge-3d>
+        </Badge3D>
       </div>
       <figcaption class="col-lg-6 p-0 mt-4 mt-lg-0 badge-description">
         {{ description }}
@@ -42,66 +42,58 @@
           {{ assignationDate }}
         </div>
         <div class="badge-text">
-          <omegaup-markdown :markdown="ownedMessage"></omegaup-markdown>
+          <OmegaupMarkdown :markdown="ownedMessage"></OmegaupMarkdown>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as time from '../../time';
-import omegaup_Markdown from '../Markdown.vue';
+import OmegaupMarkdown from '../Markdown.vue';
 import Badge3D from './Badge3D.vue';
 
-@Component({
-  components: {
-    'omegaup-markdown': omegaup_Markdown,
-    'badge-3d': Badge3D,
-  },
-})
-export default class BadgeDetails extends Vue {
-  @Prop() badge!: types.Badge;
+const props = defineProps<{
+  badge: types.Badge;
+}>();
 
-  T = T;
+const name = computed((): string => {
+  return T[`badge_${props.badge.badge_alias}_name`];
+});
 
-  get name(): string {
-    return T[`badge_${this.badge.badge_alias}_name`];
-  }
+const description = computed((): string => {
+  return T[`badge_${props.badge.badge_alias}_description`];
+});
 
-  get description(): string {
-    return T[`badge_${this.badge.badge_alias}_description`];
-  }
+const iconUrl = computed((): string => {
+  return `/media/dist/badges/${props.badge.badge_alias}.svg`;
+});
 
-  get iconUrl(): string {
-    return `/media/dist/badges/${this.badge.badge_alias}.svg`;
-  }
+const ownedMessage = computed((): string => {
+  return props.badge.assignation_time
+    ? `<span class="badge-text-icon">😁</span> ${T.badgeAssignationTimeMessage}`
+    : `<span class="badge-text-icon">😞</span> ${T.badgeNotAssignedMessage}`;
+});
 
-  get ownedMessage(): string {
-    return this.badge.assignation_time
-      ? `<span class="badge-text-icon">😁</span> ${T.badgeAssignationTimeMessage}`
-      : `<span class="badge-text-icon">😞</span> ${T.badgeNotAssignedMessage}`;
-  }
+const firstAssignationDate = computed((): string => {
+  return props.badge.first_assignation
+    ? time.formatDate(props.badge.first_assignation)
+    : '';
+});
 
-  get firstAssignationDate(): string {
-    return this.badge.first_assignation
-      ? time.formatDate(this.badge.first_assignation)
-      : '';
-  }
+const assignationDate = computed((): string => {
+  return props.badge.assignation_time
+    ? time.formatDate(props.badge.assignation_time)
+    : '';
+});
 
-  get assignationDate(): string {
-    return this.badge.assignation_time
-      ? time.formatDate(this.badge.assignation_time)
-      : '';
-  }
-
-  get ownersNumber(): string {
-    return `${this.badge.owners_count}/${this.badge.total_users}`;
-  }
-}
+const ownersNumber = computed((): string => {
+  return `${props.badge.owners_count}/${props.badge.total_users}`;
+});
 </script>
 
 <style lang="scss" scoped>

@@ -32,30 +32,21 @@
   </ul>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
-import omegaup_Markdown from '../Markdown.vue';
 
-@Component({
-  components: {
-    'omegaup-markdown': omegaup_Markdown,
-  },
-})
-export default class GraderStatus extends Vue {
-  @Prop() status!: string;
-  @Prop() error!: string;
-  @Prop() graderInfo!: types.GraderStatus | null;
+const props = defineProps<{
+  status: string;
+  error: string;
+  graderInfo: types.GraderStatus | null;
+}>();
 
-  T = T;
-  ui = ui;
-
-  get graderStatusMessage(): string {
-    return this.status === 'ok' ? 'Grader OK' : 'Grader DOWN';
-  }
-}
+const graderStatusMessage = computed((): string => {
+  return props.status === 'ok' ? 'Grader OK' : 'Grader DOWN';
+});
 </script>
 
 <style lang="scss" scoped>

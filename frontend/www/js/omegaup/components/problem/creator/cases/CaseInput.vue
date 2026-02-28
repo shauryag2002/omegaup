@@ -47,63 +47,79 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { ref, computed } from 'vue';
+import { useStore } from 'vuex';
 import { NIL } from 'uuid';
-import { Component, Vue, Prop } from 'vue-property-decorator';
-import { namespace } from 'vuex-class';
 import T from '../../../../lang';
 
-const casesStore = namespace('casesStore');
+const store = useStore();
 
-@Component
-export default class CaseInput extends Vue {
-  @Prop({ default: '' }) name!: string;
-  @Prop({ default: NIL }) group!: string;
-  @Prop({ default: 0 }) points!: number;
-  @Prop({ default: true }) autoPoints!: boolean;
-  @Prop({ default: false }) editMode!: boolean;
+const props = withDefaults(
+  defineProps<{
+    name?: string;
+    group?: string;
+    points?: number;
+    autoPoints?: boolean;
+    editMode?: boolean;
+  }>(),
+  {
+    name: '',
+    group: NIL,
+    points: 0,
+    autoPoints: true,
+    editMode: false,
+  },
+);
 
-  // This return the group name, and the group ID of all groups in the store. Matching the required type for the select component./
-  @casesStore.Getter('getGroupIdsAndNames') storedGroups!: {
-    value: string;
-    text: string;
-  }[];
+const caseName = ref(props.name);
+const caseGroup = ref(props.group);
+const casePoints = ref<number>(props.points);
+const caseAutoPoints = ref<boolean>(props.autoPoints);
 
-  caseName = this.name;
-  caseGroup = this.group;
-  casePoints: number = this.points;
-  caseAutoPoints: boolean = this.autoPoints;
+// This return the group name, and the group ID of all groups in the store. Matching the required type for the select component./
+const storedGroups = computed(
+  () =>
+    store.getters['casesStore/getGroupIdsAndNames'] as {
+      value: string;
+      text: string;
+    }[],
+);
 
-  T = T;
-
-  toggleAutoPoints() {
-    this.caseAutoPoints = !this.caseAutoPoints;
-    if (this.caseAutoPoints) {
-      this.casePoints = 0;
-    }
-  }
-
-  // getGroupIdsAndNames getter is not instant, we need to wait for it to be defined otherwise the app will crash
-  get options() {
-    const noGroup = { value: NIL, text: T.problemCreatorNoGroup };
-    if (!this.storedGroups) {
-      return [noGroup];
-    }
-    if (
-      this.editMode &&
-      !this.storedGroups.find((group) => group.value === this.group)
-    ) {
-      this.caseGroup = NIL;
-    }
-    return [noGroup, ...this.storedGroups];
-  }
-
-  formatter(text: string) {
-    return text.toLowerCase().replace(/[^a-zA-Z0-9_-]/g, '');
-  }
-
-  pointsFormatter(points: number) {
-    return Math.max(points, 0);
+function toggleAutoPoints() {
+  caseAutoPoints.value = !caseAutoPoints.value;
+  if (caseAutoPoints.value) {
+    casePoints.value = 0;
   }
 }
+
+// getGroupIdsAndNames getter is not instant, we need to wait for it to be defined otherwise the app will crash
+const options = computed(() => {
+  const noGroup = { value: NIL, text: T.problemCreatorNoGroup };
+  if (!storedGroups.value) {
+    return [noGroup];
+  }
+  if (
+    props.editMode &&
+    !storedGroups.value.find((group) => group.value === props.group)
+  ) {
+    caseGroup.value = NIL;
+  }
+  return [noGroup, ...storedGroups.value];
+});
+
+function formatter(text: string) {
+  return text.toLowerCase().replace(/[^a-zA-Z0-9_-]/g, '');
+}
+
+function pointsFormatter(points: number) {
+  return Math.max(points, 0);
+}
+
+defineExpose({
+  caseName,
+  caseGroup,
+  casePoints,
+  caseAutoPoints,
+});
 </script>

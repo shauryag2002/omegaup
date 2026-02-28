@@ -38,21 +38,21 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Emit } from 'vue-property-decorator';
+<script setup lang="ts">
 import { types } from '../../api_types';
 import T from '../../lang';
 
-@Component
-export default class Links extends Vue {
-  @Prop() data!: types.Contest;
+const props = defineProps<{
+  data: types.Contest;
+}>();
 
-  T = T;
-  contest = this.data;
+const emit = defineEmits<{
+  (e: 'download-csv-scoreboard', contestAlias: string): void;
+}>();
 
-  @Emit('download-csv-scoreboard')
-  onDownloadCsv(contestAlias: string): string {
-    return contestAlias;
-  }
+const contest = props.data;
+
+function onDownloadCsv(contestAlias: string): void {
+  emit('download-csv-scoreboard', contestAlias);
 }
 </script>

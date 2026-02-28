@@ -112,14 +112,14 @@
             <template v-if="showProblem">
               <label class="col-6 col-sm pr-1 font-weight-bold"
                 >{{ T.wordsProblem }}:
-                <omegaup-common-typeahead
+                <OmegaupCommonTypeahead
                   data-search-problem
                   :existing-options="searchResultProblems"
                   :value.sync="filterProblem"
                   @update-existing-options="
-                    (query) => $emit('update-search-result-problems', query)
+                    (query) => emit('update-search-result-problems', query)
                   "
-                ></omegaup-common-typeahead>
+                ></OmegaupCommonTypeahead>
               </label>
               <button
                 type="button"
@@ -134,13 +134,13 @@
             <template v-if="showUser">
               <label class="col-5 col-sm font-weight-bold"
                 >{{ T.contestParticipant }}:
-                <omegaup-common-typeahead
+                <OmegaupCommonTypeahead
                   data-search-username
                   :existing-options="searchResultUsers"
                   :value.sync="filterUsername"
                   :max-results="10"
                   @update-existing-options="updateSearchResultUsers"
-                ></omegaup-common-typeahead>
+                ></OmegaupCommonTypeahead>
               </label>
             </template>
           </div>
@@ -207,14 +207,14 @@
                 <button
                   v-else-if="useNewSubmissionButton"
                   class="w-100"
-                  @click="$emit('new-submission')"
+                  @click="emit('new-submission')"
                 >
                   {{ newSubmissionDescription }}
                 </button>
                 <a
                   v-else
                   :href="newSubmissionUrl"
-                  @click="$emit('new-submission')"
+                  @click="emit('new-submission')"
                   >{{ newSubmissionDescription }}</a
                 >
               </td>
@@ -233,7 +233,7 @@
                 class="text-break-all text-nowrap"
                 :data-username="run.username"
               >
-                <omegaup-user-username
+                <OmegaupUserUsername
                   :classname="run.classname"
                   :username="run.username"
                   :country="run.country_id"
@@ -244,7 +244,7 @@
                     (username) =>
                       (filterUsername = { key: username, value: username })
                   "
-                ></omegaup-user-username>
+                ></OmegaupUserUsername>
                 <a :href="`/profile/${run.username}/`" class="ml-2">
                   <font-awesome-icon :icon="['fas', 'external-link-alt']" />
                 </a>
@@ -315,7 +315,7 @@
                 <button
                   v-if="requestFeedback"
                   class="details btn-outline-dark btn-sm"
-                  @click="$emit('request-feedback', run.guid)"
+                  @click="emit('request-feedback', run.guid)"
                 >
                   <font-awesome-icon
                     :title="T.courseRequestFeedback"
@@ -352,7 +352,7 @@
                       v-if="showRejudge"
                       :data-actions-rejudge="run.guid"
                       class="btn-link dropdown-item"
-                      @click="$emit('rejudge', run)"
+                      @click="emit('rejudge', run)"
                     >
                       {{ T.arenaRunsActionsRejudge }}
                     </button>
@@ -363,7 +363,7 @@
                           :data-actions-disqualify-by-guid="run.guid"
                           class="btn-link dropdown-item"
                           @click="
-                            $emit('disqualify', {
+                            emit('disqualify', {
                               run,
                               disqualificationType: DisqualificationType.ByGUID,
                             })
@@ -376,7 +376,7 @@
                             :data-actions-disqualify-by-problem="run.guid"
                             class="btn-link dropdown-item"
                             @click="
-                              $emit('disqualify', {
+                              emit('disqualify', {
                                 run,
                                 disqualificationType:
                                   DisqualificationType.ByProblem,
@@ -389,7 +389,7 @@
                             :data-actions-disqualify-by-user="run.guid"
                             class="btn-link dropdown-item"
                             @click="
-                              $emit('disqualify', {
+                              emit('disqualify', {
                                 run,
                                 disqualificationType:
                                   DisqualificationType.ByUser,
@@ -404,7 +404,7 @@
                         v-else-if="run.type === 'disqualified'"
                         :data-actions-requalify="run.guid"
                         class="btn-link dropdown-item"
-                        @click="$emit('requalify', run)"
+                        @click="emit('requalify', run)"
                       >
                         {{ T.arenaRunsActionsRequalify }}
                       </button>
@@ -419,56 +419,23 @@
       </div>
     </div>
     <slot name="runs">
-      <omegaup-overlay
+      <OmegaupOverlay
         :show-overlay="currentPopupDisplayed !== PopupDisplayed.None"
         @hide-overlay="onPopupDismissed"
       >
         <template #popup>
-          <omegaup-arena-rundetails-popup
+          <OmegaupArenaRundetailsPopup
             v-show="currentPopupDisplayed === PopupDisplayed.RunDetails"
             :data="currentRunDetailsData"
             @dismiss="onPopupDismissed"
-          ></omegaup-arena-rundetails-popup>
+          ></OmegaupArenaRundetailsPopup>
         </template>
-      </omegaup-overlay>
+      </OmegaupOverlay>
     </slot>
   </div>
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch, Emit } from 'vue-property-decorator';
-import T from '../../lang';
-import { types } from '../../api_types';
-import * as time from '../../time';
-import user_Username from '../user/Username.vue';
-import common_Typeahead from '../common/Typeahead.vue';
-import arena_RunDetailsPopup from './RunDetailsPopup.vue';
-import omegaup_Overlay from '../Overlay.vue';
-
-import { library } from '@fortawesome/fontawesome-svg-core';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import {
-  faQuestionCircle,
-  faRedoAlt,
-  faBan,
-  faSearchPlus,
-  faExternalLinkAlt,
-  faTimes,
-} from '@fortawesome/free-solid-svg-icons';
-library.add(faQuestionCircle);
-library.add(faRedoAlt);
-library.add(faBan);
-library.add(faSearchPlus);
-library.add(faExternalLinkAlt);
-library.add(faTimes);
-
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  interface JQuery {
-    popover(action: string): JQuery;
-  }
-}
-
 export enum DisqualificationType {
   ByGUID,
   ByProblem,
@@ -488,404 +455,474 @@ export enum PopupDisplayed {
   Reviewer,
 }
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-    'omegaup-arena-rundetails-popup': arena_RunDetailsPopup,
-    'omegaup-overlay': omegaup_Overlay,
-    'omegaup-common-typeahead': common_Typeahead,
-    'omegaup-user-username': user_Username,
-  },
-})
-export default class Runs extends Vue {
-  @Prop({ default: false }) isContestFinished!: boolean;
-  @Prop({ default: true }) isProblemsetOpened!: boolean;
-  @Prop({ default: false }) showContest!: boolean;
-  @Prop({ default: false }) showDetails!: boolean;
-  @Prop({ default: false }) showDisqualify!: boolean;
-  @Prop({ default: false }) showPager!: boolean;
-  @Prop({ default: false }) showPoints!: boolean;
-  @Prop({ default: false }) showProblem!: boolean;
-  @Prop({ default: false }) showRejudge!: boolean;
-  @Prop({ default: false }) showUser!: boolean;
-  @Prop({ default: false }) useNewSubmissionButton!: boolean;
-  @Prop({ default: null }) contestAlias!: string | null;
-  @Prop({ default: null }) problemAlias!: string | null;
-  @Prop({ default: () => [] }) problemsetProblems!: types.ProblemsetProblem[];
-  @Prop({ default: null }) username!: string | null;
-  @Prop({ default: 100 }) rowCount!: number;
-  @Prop() runs!: null | types.Run[];
-  @Prop() searchResultUsers!: types.ListItem[];
-  @Prop({ default: null }) runDetailsData!: types.RunDetails | null;
-  @Prop({ default: PopupDisplayed.None }) popupDisplayed!: PopupDisplayed;
-  @Prop({ default: null }) guid!: null | string;
-  @Prop({ default: false }) showAllRuns!: boolean;
-  @Prop() totalRuns!: number;
-  @Prop() searchResultProblems!: types.ListItem[];
-  @Prop() requestFeedback!: boolean;
-  @Prop({ default: false }) inContest!: boolean;
-
-  PopupDisplayed = PopupDisplayed;
-  T = T;
-  time = time;
-  DisqualificationType = DisqualificationType;
-
-  filterLanguage: string = '';
-  filterOffset: number = 0;
-  filterProblem: null | types.ListItem = null;
-  filterStatus: string = '';
-  filterUsername: null | types.ListItem = null;
-  filterVerdict: string = '';
-  filterContest: string = '';
-  filters: { name: string; value: string }[] = [];
-  currentRunDetailsData = this.runDetailsData;
-  currentPopupDisplayed = this.popupDisplayed;
-
-  get currentPage(): number {
-    return this.filterOffset + 1;
-  }
-
-  get filteredRuns(): types.Run[] {
-    if (
-      !this.filterLanguage &&
-      !this.filterProblem &&
-      !this.filterStatus &&
-      !this.filterUsername &&
-      !this.filterContest &&
-      !this.filterVerdict
-    ) {
-      return this.sortedRuns;
-    }
-    return this.sortedRuns.filter((run) => {
-      if (this.filterVerdict) {
-        if (this.filterVerdict == 'NO-AC') {
-          if (run.verdict == 'AC') {
-            return false;
-          }
-        } else if (run.verdict != this.filterVerdict) {
-          return false;
-        }
-      }
-      if (this.filterLanguage && run.language !== this.filterLanguage) {
-        return false;
-      }
-      if (this.filterProblem && run.alias !== this.filterProblem.key) {
-        return false;
-      }
-      if (this.filterStatus && run.status !== this.filterStatus) {
-        return false;
-      }
-      if (this.filterUsername && run.username !== this.filterUsername.key) {
-        return false;
-      }
-      if (this.filterContest && run.contest_alias !== this.filterContest) {
-        return false;
-      }
-      return true;
-    });
-  }
-
-  get filtersExcludingOffset(): { name: string; value: string }[] {
-    return this.filters.filter((filter) => filter.name !== 'offset');
-  }
-
-  get sortedRuns(): types.Run[] {
-    if (!this.runs) {
-      return [];
-    }
-    return this.runs
-      .slice()
-      .sort((a, b) => b.time.getTime() - a.time.getTime());
-  }
-
-  get newSubmissionUrl(): string {
-    if (this.isProblemsetOpened) {
-      return `#problems/${this.problemAlias}/new-run`;
-    }
-    return `/arena/${this.contestAlias}/`;
-  }
-
-  get newSubmissionDescription(): string {
-    if (this.isProblemsetOpened) {
-      return T.wordsNewSubmissions;
-    }
-    return T.arenaContestNotOpened;
-  }
-
-  memory(run: types.Run): string {
-    if (
-      run.status == 'ready' &&
-      run.verdict != 'JE' &&
-      run.verdict != 'VE' &&
-      run.verdict != 'CE'
-    ) {
-      let prefix = '';
-      if (run.verdict == 'MLE') {
-        prefix = '>';
-      }
-      return `${prefix}${(run.memory / (1024 * 1024)).toFixed(2)} MB`;
-    } else {
-      return '—';
-    }
-  }
-
-  penalty(run: types.Run): string {
-    if (
-      run.status == 'ready' &&
-      run.verdict != 'JE' &&
-      run.verdict != 'VE' &&
-      run.verdict != 'CE'
-    ) {
-      return run.penalty.toFixed(2);
-    }
-    return '—';
-  }
-
-  percentage(run: types.Run): string {
-    if (
-      run.status == 'ready' &&
-      run.verdict != 'JE' &&
-      run.verdict != 'VE' &&
-      run.verdict != 'CE'
-    ) {
-      return `${(run.score * 100).toFixed(2)}%`;
-    }
-    return '—';
-  }
-
-  points(run: types.Run): string {
-    if (
-      run.status == 'ready' &&
-      run.verdict != 'JE' &&
-      run.verdict != 'VE' &&
-      run.verdict != 'CE' &&
-      typeof run.contest_score !== 'undefined'
-    ) {
-      return run.contest_score.toFixed(2);
-    }
-    return '—';
-  }
-
-  runtime(run: types.Run): string {
-    if (
-      run.status == 'ready' &&
-      run.verdict != 'JE' &&
-      run.verdict != 'VE' &&
-      run.verdict != 'CE'
-    ) {
-      let prefix = '';
-      if (run.verdict == 'TLE') {
-        prefix = '>';
-      }
-      return `${prefix}${(run.runtime / 1000).toFixed(2)} s`;
-    }
-    return '—';
-  }
-
-  showVerdictHelp(ev: Event): void {
-    $(ev.target as HTMLElement).popover('show');
-  }
-
-  statusClass(run: types.Run): string {
-    if (run.status != 'ready') return '';
-    if (run.type == 'disqualified') return 'status-disqualified';
-    if (run.verdict == 'AC') {
-      return 'status-ac';
-    }
-    if (run.verdict == 'TLE') {
-      return 'status-tle';
-    }
-    if (run.verdict == 'MLE') {
-      return 'status-mle';
-    }
-    if (run.verdict == 'WA') {
-      return 'status-wa';
-    }
-    if (run.verdict == 'CE') {
-      return 'status-ce';
-    }
-    if (run.verdict == 'JE' || run.verdict == 'VE') {
-      return 'status-je-ve';
-    }
-    return '';
-  }
-
-  status(run: types.Run): string {
-    if (run.type == 'disqualified') return T.arenaRunsActionsDisqualified;
-
-    return run.status == 'ready' ? run.verdict : run.status;
-  }
-
-  statusHelp(run: types.Run): string {
-    if (run.status != 'ready' || run.verdict == 'AC') {
-      return '';
-    }
-
-    if (run.language == 'kj' || run.language == 'kp') {
-      if (run.verdict == 'RTE' || run.verdict == 'RE') {
-        return T.verdictHelpKarelRTE;
-      } else if (run.verdict == 'TLE' || run.verdict == 'TO') {
-        return T.verdictHelpKarelTLE;
-      }
-    }
-    if (run.type == 'disqualified') return T.verdictHelpDisqualified;
-    const verdict = T[`verdict${run.verdict}`];
-    const verdictHelp = T[`verdictHelp${run.verdict}`];
-
-    return `${verdict}: ${verdictHelp}`;
-  }
-
-  onRunDetails(run: types.Run): void {
-    this.$emit('details', {
-      guid: run.guid,
-      isAdmin: true,
-      hash: `#runs/all/show-run:${run.guid}`,
-    });
-    this.currentPopupDisplayed = PopupDisplayed.RunDetails;
-  }
-
-  onPopupDismissed(): void {
-    this.currentPopupDisplayed = PopupDisplayed.None;
-    this.currentRunDetailsData = null;
-    this.$emit('reset-hash');
-  }
-
-  @Watch('runDetailsData')
-  onRunDetailsChanged(newValue: types.RunDetails): void {
-    this.currentRunDetailsData = newValue;
-  }
-
-  @Watch('username')
-  onUsernameChanged(newValue: string | null) {
-    if (!newValue) {
-      this.filterUsername = null;
-      return;
-    }
-    this.filterUsername = { key: newValue, value: newValue };
-  }
-
-  @Watch('problemAlias')
-  onProblemAliasChanged(newValue: string | null) {
-    if (!newValue) {
-      this.filterProblem = null;
-      return;
-    }
-    this.filterProblem = { key: newValue, value: newValue };
-  }
-
-  @Watch('filterLanguage')
-  onFilterLanguageChanged(newValue: string) {
-    this.onEmitFilterChanged({ filter: 'language', value: newValue });
-  }
-
-  @Watch('filterOffset')
-  onFilterOffsetChanged(newValue: number) {
-    this.$emit('filter-changed', { filter: 'offset', value: `${newValue}` });
-  }
-
-  @Watch('filterProblem')
-  onFilterProblemChanged(newValue: null | types.ListItem) {
-    if (!newValue) {
-      this.onEmitFilterChanged({ filter: 'problem', value: null });
-      return;
-    }
-    this.onEmitFilterChanged({ filter: 'problem', value: newValue.key });
-  }
-
-  @Watch('filterStatus')
-  onFilterStatusChanged(newValue: string) {
-    this.onEmitFilterChanged({ filter: 'status', value: newValue });
-  }
-
-  @Watch('filterUsername')
-  onFilterUsernameChanged(newValue: null | types.ListItem) {
-    if (!newValue) {
-      this.onEmitFilterChanged({ filter: 'username', value: null });
-      return;
-    }
-    this.onEmitFilterChanged({ filter: 'username', value: newValue.key });
-  }
-
-  @Watch('filterVerdict')
-  onFilterVerdictChanged(newValue: string) {
-    this.onEmitFilterChanged({ filter: 'verdict', value: newValue });
-  }
-
-  @Emit('filter-changed')
-  onEmitFilterChanged({
-    filter,
-    value,
-  }: {
-    filter: string;
-    value: null | string;
-  }): void {
-    this.filterOffset = 0;
-    if (!value) {
-      this.filters = this.filters.filter((item) => item.name !== filter);
-      return;
-    }
-    if (filter === 'contest') {
-      // This field does not appear as filter
-      this.filterContest = value;
-    }
-    const currentFilter = this.filters.find((item) => item.name === filter);
-    if (!currentFilter) {
-      this.filters.push({ name: filter, value: value });
-    } else {
-      currentFilter.value = value;
-    }
-  }
-
-  onRemoveFilter(filter: string): void {
-    if (filter === 'all') {
-      this.filterLanguage = '';
-      this.filterProblem = null;
-      this.filterStatus = '';
-      this.filterUsername = null;
-      this.filterVerdict = '';
-      this.filterContest = '';
-      this.filterOffset = 0;
-
-      this.filters = [];
-      return;
-    }
-    switch (filter) {
-      case 'language':
-        this.filterLanguage = '';
-        break;
-      case 'problem':
-        this.filterProblem = null;
-        break;
-      case 'status':
-        this.filterStatus = '';
-        break;
-      case 'username':
-        this.filterUsername = null;
-        break;
-      case 'verdict':
-        this.filterVerdict = '';
-        break;
-      case 'contest':
-        this.filterContest = '';
-    }
-    this.filters = this.filters.filter((item) => item.name !== filter);
-  }
-
-  updateSearchResultUsers(query: string): void {
-    if (this.problemsetProblems.length !== 0 && this.contestAlias) {
-      this.$emit('update-search-result-users-contest', {
-        query,
-        contestAlias: this.contestAlias,
-      });
-      return;
-    }
-    this.$emit('update-search-result-users', { query });
-  }
-
-  setFilterProblem(problemAlias: string): void {
-    this.filterProblem = { key: problemAlias, value: problemAlias };
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface JQuery {
+    popover(action: string): JQuery;
   }
 }
+</script>
+
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue';
+import T from '../../lang';
+import { types } from '../../api_types';
+import * as time from '../../time';
+import OmegaupUserUsername from '../user/Username.vue';
+import OmegaupCommonTypeahead from '../common/Typeahead.vue';
+import OmegaupArenaRundetailsPopup from './RunDetailsPopup.vue';
+import OmegaupOverlay from '../Overlay.vue';
+
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import {
+  faQuestionCircle,
+  faRedoAlt,
+  faBan,
+  faSearchPlus,
+  faExternalLinkAlt,
+  faTimes,
+} from '@fortawesome/free-solid-svg-icons';
+library.add(faQuestionCircle);
+library.add(faRedoAlt);
+library.add(faBan);
+library.add(faSearchPlus);
+library.add(faExternalLinkAlt);
+library.add(faTimes);
+
+const props = withDefaults(
+  defineProps<{
+    isContestFinished?: boolean;
+    isProblemsetOpened?: boolean;
+    showContest?: boolean;
+    showDetails?: boolean;
+    showDisqualify?: boolean;
+    showPager?: boolean;
+    showPoints?: boolean;
+    showProblem?: boolean;
+    showRejudge?: boolean;
+    showUser?: boolean;
+    useNewSubmissionButton?: boolean;
+    contestAlias?: string | null;
+    problemAlias?: string | null;
+    problemsetProblems?: types.ProblemsetProblem[];
+    username?: string | null;
+    rowCount?: number;
+    runs: null | types.Run[];
+    searchResultUsers: types.ListItem[];
+    runDetailsData?: types.RunDetails | null;
+    popupDisplayed?: PopupDisplayed;
+    guid?: null | string;
+    showAllRuns?: boolean;
+    totalRuns: number;
+    searchResultProblems: types.ListItem[];
+    requestFeedback: boolean;
+    inContest?: boolean;
+  }>(),
+  {
+    isContestFinished: false,
+    isProblemsetOpened: true,
+    showContest: false,
+    showDetails: false,
+    showDisqualify: false,
+    showPager: false,
+    showPoints: false,
+    showProblem: false,
+    showRejudge: false,
+    showUser: false,
+    useNewSubmissionButton: false,
+    contestAlias: null,
+    problemAlias: null,
+    problemsetProblems: () => [],
+    username: null,
+    rowCount: 100,
+    runDetailsData: null,
+    popupDisplayed: PopupDisplayed.None,
+    guid: null,
+    showAllRuns: false,
+    inContest: false,
+  },
+);
+
+const emit = defineEmits<{
+  (
+    e: 'details',
+    request: { guid: string; isAdmin: boolean; hash: string },
+  ): void;
+  (e: 'rejudge', run: types.Run): void;
+  (
+    e: 'disqualify',
+    request: { run: types.Run; disqualificationType: DisqualificationType },
+  ): void;
+  (e: 'requalify', run: types.Run): void;
+  (
+    e: 'filter-changed',
+    request: { filter: string; value: null | string },
+  ): void;
+  (
+    e: 'update-search-result-users-contest',
+    request: { query: string; contestAlias: string },
+  ): void;
+  (e: 'update-search-result-users', request: { query: string }): void;
+  (e: 'update-search-result-problems', query: string): void;
+  (e: 'new-submission'): void;
+  (e: 'reset-hash'): void;
+  (e: 'request-feedback', guid: string): void;
+}>();
+
+const filterLanguage = ref<string>('');
+const filterOffset = ref<number>(0);
+const filterProblem = ref<null | types.ListItem>(null);
+const filterStatus = ref<string>('');
+const filterUsername = ref<null | types.ListItem>(null);
+const filterVerdict = ref<string>('');
+const filterContest = ref<string>('');
+const filters = ref<{ name: string; value: string }[]>([]);
+const currentRunDetailsData = ref(props.runDetailsData);
+const currentPopupDisplayed = ref(props.popupDisplayed);
+
+const currentPage = computed((): number => {
+  return filterOffset.value + 1;
+});
+
+const sortedRuns = computed((): types.Run[] => {
+  if (!props.runs) {
+    return [];
+  }
+  return props.runs.slice().sort((a, b) => b.time.getTime() - a.time.getTime());
+});
+
+const filteredRuns = computed((): types.Run[] => {
+  if (
+    !filterLanguage.value &&
+    !filterProblem.value &&
+    !filterStatus.value &&
+    !filterUsername.value &&
+    !filterContest.value &&
+    !filterVerdict.value
+  ) {
+    return sortedRuns.value;
+  }
+  return sortedRuns.value.filter((run) => {
+    if (filterVerdict.value) {
+      if (filterVerdict.value == 'NO-AC') {
+        if (run.verdict == 'AC') {
+          return false;
+        }
+      } else if (run.verdict != filterVerdict.value) {
+        return false;
+      }
+    }
+    if (filterLanguage.value && run.language !== filterLanguage.value) {
+      return false;
+    }
+    if (filterProblem.value && run.alias !== filterProblem.value.key) {
+      return false;
+    }
+    if (filterStatus.value && run.status !== filterStatus.value) {
+      return false;
+    }
+    if (filterUsername.value && run.username !== filterUsername.value.key) {
+      return false;
+    }
+    if (filterContest.value && run.contest_alias !== filterContest.value) {
+      return false;
+    }
+    return true;
+  });
+});
+
+const filtersExcludingOffset = computed((): {
+  name: string;
+  value: string;
+}[] => {
+  return filters.value.filter((filter) => filter.name !== 'offset');
+});
+
+const newSubmissionUrl = computed((): string => {
+  if (props.isProblemsetOpened) {
+    return `#problems/${props.problemAlias}/new-run`;
+  }
+  return `/arena/${props.contestAlias}/`;
+});
+
+const newSubmissionDescription = computed((): string => {
+  if (props.isProblemsetOpened) {
+    return T.wordsNewSubmissions;
+  }
+  return T.arenaContestNotOpened;
+});
+
+function memory(run: types.Run): string {
+  if (
+    run.status == 'ready' &&
+    run.verdict != 'JE' &&
+    run.verdict != 'VE' &&
+    run.verdict != 'CE'
+  ) {
+    let prefix = '';
+    if (run.verdict == 'MLE') {
+      prefix = '>';
+    }
+    return `${prefix}${(run.memory / (1024 * 1024)).toFixed(2)} MB`;
+  } else {
+    return '—';
+  }
+}
+
+function penalty(run: types.Run): string {
+  if (
+    run.status == 'ready' &&
+    run.verdict != 'JE' &&
+    run.verdict != 'VE' &&
+    run.verdict != 'CE'
+  ) {
+    return run.penalty.toFixed(2);
+  }
+  return '—';
+}
+
+function percentage(run: types.Run): string {
+  if (
+    run.status == 'ready' &&
+    run.verdict != 'JE' &&
+    run.verdict != 'VE' &&
+    run.verdict != 'CE'
+  ) {
+    return `${(run.score * 100).toFixed(2)}%`;
+  }
+  return '—';
+}
+
+function points(run: types.Run): string {
+  if (
+    run.status == 'ready' &&
+    run.verdict != 'JE' &&
+    run.verdict != 'VE' &&
+    run.verdict != 'CE' &&
+    typeof run.contest_score !== 'undefined'
+  ) {
+    return run.contest_score.toFixed(2);
+  }
+  return '—';
+}
+
+function runtime(run: types.Run): string {
+  if (
+    run.status == 'ready' &&
+    run.verdict != 'JE' &&
+    run.verdict != 'VE' &&
+    run.verdict != 'CE'
+  ) {
+    let prefix = '';
+    if (run.verdict == 'TLE') {
+      prefix = '>';
+    }
+    return `${prefix}${(run.runtime / 1000).toFixed(2)} s`;
+  }
+  return '—';
+}
+
+function showVerdictHelp(ev: Event): void {
+  $(ev.target as HTMLElement).popover('show');
+}
+
+function statusClass(run: types.Run): string {
+  if (run.status != 'ready') return '';
+  if (run.type == 'disqualified') return 'status-disqualified';
+  if (run.verdict == 'AC') {
+    return 'status-ac';
+  }
+  if (run.verdict == 'TLE') {
+    return 'status-tle';
+  }
+  if (run.verdict == 'MLE') {
+    return 'status-mle';
+  }
+  if (run.verdict == 'WA') {
+    return 'status-wa';
+  }
+  if (run.verdict == 'CE') {
+    return 'status-ce';
+  }
+  if (run.verdict == 'JE' || run.verdict == 'VE') {
+    return 'status-je-ve';
+  }
+  return '';
+}
+
+function status(run: types.Run): string {
+  if (run.type == 'disqualified') return T.arenaRunsActionsDisqualified;
+  return run.status == 'ready' ? run.verdict : run.status;
+}
+
+function statusHelp(run: types.Run): string {
+  if (run.status != 'ready' || run.verdict == 'AC') {
+    return '';
+  }
+  if (run.language == 'kj' || run.language == 'kp') {
+    if (run.verdict == 'RTE' || run.verdict == 'RE') {
+      return T.verdictHelpKarelRTE;
+    } else if (run.verdict == 'TLE' || run.verdict == 'TO') {
+      return T.verdictHelpKarelTLE;
+    }
+  }
+  if (run.type == 'disqualified') return T.verdictHelpDisqualified;
+  const verdict = T[`verdict${run.verdict}`];
+  const verdictHelp = T[`verdictHelp${run.verdict}`];
+  return `${verdict}: ${verdictHelp}`;
+}
+
+function onRunDetails(run: types.Run): void {
+  emit('details', {
+    guid: run.guid,
+    isAdmin: true,
+    hash: `#runs/all/show-run:${run.guid}`,
+  });
+  currentPopupDisplayed.value = PopupDisplayed.RunDetails;
+}
+
+function onPopupDismissed(): void {
+  currentPopupDisplayed.value = PopupDisplayed.None;
+  currentRunDetailsData.value = null;
+  emit('reset-hash');
+}
+
+function onEmitFilterChanged({
+  filter,
+  value,
+}: {
+  filter: string;
+  value: null | string;
+}): void {
+  filterOffset.value = 0;
+  if (!value) {
+    filters.value = filters.value.filter((item) => item.name !== filter);
+    emit('filter-changed', { filter, value });
+    return;
+  }
+  if (filter === 'contest') {
+    filterContest.value = value;
+  }
+  const currentFilter = filters.value.find((item) => item.name === filter);
+  if (!currentFilter) {
+    filters.value.push({ name: filter, value: value });
+  } else {
+    currentFilter.value = value;
+  }
+  emit('filter-changed', { filter, value });
+}
+
+function onRemoveFilter(filter: string): void {
+  if (filter === 'all') {
+    filterLanguage.value = '';
+    filterProblem.value = null;
+    filterStatus.value = '';
+    filterUsername.value = null;
+    filterVerdict.value = '';
+    filterContest.value = '';
+    filterOffset.value = 0;
+    filters.value = [];
+    return;
+  }
+  switch (filter) {
+    case 'language':
+      filterLanguage.value = '';
+      break;
+    case 'problem':
+      filterProblem.value = null;
+      break;
+    case 'status':
+      filterStatus.value = '';
+      break;
+    case 'username':
+      filterUsername.value = null;
+      break;
+    case 'verdict':
+      filterVerdict.value = '';
+      break;
+    case 'contest':
+      filterContest.value = '';
+  }
+  filters.value = filters.value.filter((item) => item.name !== filter);
+}
+
+function updateSearchResultUsers(query: string): void {
+  if (props.problemsetProblems.length !== 0 && props.contestAlias) {
+    emit('update-search-result-users-contest', {
+      query,
+      contestAlias: props.contestAlias,
+    });
+    return;
+  }
+  emit('update-search-result-users', { query });
+}
+
+function setFilterProblem(problemAlias: string): void {
+  filterProblem.value = { key: problemAlias, value: problemAlias };
+}
+
+// Watchers
+watch(
+  () => props.runDetailsData,
+  (newValue) => {
+    currentRunDetailsData.value = newValue;
+  },
+);
+
+watch(
+  () => props.username,
+  (newValue) => {
+    if (!newValue) {
+      filterUsername.value = null;
+      return;
+    }
+    filterUsername.value = { key: newValue, value: newValue };
+  },
+);
+
+watch(
+  () => props.problemAlias,
+  (newValue) => {
+    if (!newValue) {
+      filterProblem.value = null;
+      return;
+    }
+    filterProblem.value = { key: newValue, value: newValue };
+  },
+);
+
+watch(filterLanguage, (newValue) => {
+  onEmitFilterChanged({ filter: 'language', value: newValue });
+});
+
+watch(filterOffset, (newValue) => {
+  emit('filter-changed', { filter: 'offset', value: `${newValue}` });
+});
+
+watch(filterProblem, (newValue) => {
+  if (!newValue) {
+    onEmitFilterChanged({ filter: 'problem', value: null });
+    return;
+  }
+  onEmitFilterChanged({ filter: 'problem', value: newValue.key });
+});
+
+watch(filterStatus, (newValue) => {
+  onEmitFilterChanged({ filter: 'status', value: newValue });
+});
+
+watch(filterUsername, (newValue) => {
+  if (!newValue) {
+    onEmitFilterChanged({ filter: 'username', value: null });
+    return;
+  }
+  onEmitFilterChanged({ filter: 'username', value: newValue.key });
+});
+
+watch(filterVerdict, (newValue) => {
+  onEmitFilterChanged({ filter: 'verdict', value: newValue });
+});
 </script>
 
 <style lang="scss" scoped>

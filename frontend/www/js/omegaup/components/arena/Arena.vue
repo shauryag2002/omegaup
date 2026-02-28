@@ -65,65 +65,72 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Emit } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import { Tab } from '../problem/Details.vue';
 
-@Component
-export default class Arena extends Vue {
-  @Prop({ default: false }) shouldShowRuns!: boolean;
-  @Prop({ default: true }) shouldShowRanking!: boolean;
-  @Prop({ default: () => [] }) clarifications!: types.Clarification[];
-  @Prop() title!: string;
-  @Prop() activeTab!: string;
-  @Prop() backgroundClass!: string;
+const props = withDefaults(
+  defineProps<{
+    shouldShowRuns?: boolean;
+    shouldShowRanking?: boolean;
+    clarifications?: types.Clarification[];
+    title?: string;
+    activeTab: string;
+    backgroundClass?: string;
+  }>(),
+  {
+    shouldShowRuns: false,
+    shouldShowRanking: true,
+    clarifications: () => [],
+  },
+);
 
-  T = T;
-  selectedTab = this.activeTab;
-  clarificationsHaveBeenRead = false;
+const emit = defineEmits<{
+  (e: 'update:activeTab', tab: string): void;
+}>();
 
-  get unreadClarifications() {
-    return (
-      this.activeTab !== 'clarifications' && !this.clarificationsHaveBeenRead
-    );
+const selectedTab = ref(props.activeTab);
+const clarificationsHaveBeenRead = ref(false);
+
+const unreadClarifications = computed(
+  () =>
+    props.activeTab !== 'clarifications' && !clarificationsHaveBeenRead.value,
+);
+
+const availableTabs = computed<Tab[]>(() => {
+  const tabs = [
+    {
+      name: 'problems',
+      text: T.wordsProblems,
+      visible: true,
+    },
+    {
+      name: 'ranking',
+      text: T.wordsRanking,
+      visible: props.shouldShowRanking,
+    },
+    {
+      name: 'runs',
+      text: T.wordsRuns,
+      visible: props.shouldShowRuns,
+    },
+    {
+      name: 'clarifications',
+      text: T.wordsClarifications,
+      visible: true,
+    },
+  ];
+  return tabs.filter((tab) => tab.visible);
+});
+
+function onTabSelected(tabName: string): void {
+  if (tabName === 'clarifications') {
+    clarificationsHaveBeenRead.value = true;
   }
-
-  get availableTabs(): Tab[] {
-    const tabs = [
-      {
-        name: 'problems',
-        text: T.wordsProblems,
-        visible: true,
-      },
-      {
-        name: 'ranking',
-        text: T.wordsRanking,
-        visible: this.shouldShowRanking,
-      },
-      {
-        name: 'runs',
-        text: T.wordsRuns,
-        visible: this.shouldShowRuns,
-      },
-      {
-        name: 'clarifications',
-        text: T.wordsClarifications,
-        visible: true,
-      },
-    ];
-    return tabs.filter((tab) => tab.visible);
-  }
-
-  @Emit('update:activeTab')
-  onTabSelected(tabName: string): string {
-    if (tabName === 'clarifications') {
-      this.clarificationsHaveBeenRead = true;
-    }
-    this.selectedTab = tabName;
-    return this.selectedTab;
-  }
+  selectedTab.value = tabName;
+  emit('update:activeTab', selectedTab.value);
 }
 </script>
 

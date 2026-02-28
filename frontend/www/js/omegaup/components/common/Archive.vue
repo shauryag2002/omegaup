@@ -43,22 +43,22 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
 import T from '../../lang';
 
-@Component
-export default class Archive extends Vue {
-  @Prop() alreadyArchived!: boolean;
-  @Prop() archiveHelpText!: string;
-  @Prop() archiveHeaderTitle!: string;
-  @Prop() archiveButtonDescription!: string;
-  @Prop() archiveConfirmText!: string;
+const props = defineProps<{
+  alreadyArchived: boolean;
+  archiveHelpText: string;
+  archiveHeaderTitle: string;
+  archiveButtonDescription: string;
+  archiveConfirmText: string;
+}>();
 
-  T = T;
+const emit = defineEmits<{
+  (e: 'archive', value: boolean): void;
+}>();
 
-  onArchive(): void {
-    this.$emit('archive', !this.alreadyArchived);
-  }
+function onArchive(): void {
+  emit('archive', !props.alreadyArchived);
 }
 </script>

@@ -111,7 +111,7 @@
         </div>
       </div>
     </div>
-    <omegaup-common-confirmation
+    <OmegaupCommonConfirmation
       v-if="showConfirmation"
       data-confirm-report
       :question="T.demotionProblemMultipleQuestion"
@@ -120,15 +120,15 @@
       @close="showConfirmation = false"
       @yes="markResolution(true)"
       @no="markResolution(false)"
-    ></omegaup-common-confirmation>
+    ></OmegaupCommonConfirmation>
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import { omegaup } from '../../omegaup';
 import T from '../../lang';
-import confirmation from '../common/Confirmation.vue';
+import OmegaupCommonConfirmation from '../common/Confirmation.vue';
 
 interface QualityNominationContents {
   original: string;
@@ -136,44 +136,60 @@ interface QualityNominationContents {
   reason: string;
 }
 
-@Component({
-  components: {
-    'omegaup-common-confirmation': confirmation,
-  },
-})
-export default class QualityNominationDetails extends Vue {
-  @Prop() author!: omegaup.User;
-  @Prop() contents!: QualityNominationContents;
-  @Prop() initialRationale!: string;
-  @Prop() nomination!: string;
-  @Prop() nominator!: omegaup.User;
-  @Prop() problem!: omegaup.Problem;
-  @Prop() qualitynomination_id!: number;
-  @Prop() reviewer!: boolean;
-  @Prop() votes!: omegaup.NominationVote[];
+const props = defineProps<{
+  author: omegaup.User;
+  contents: QualityNominationContents;
+  initialRationale: string;
+  nomination: string;
+  nominator: omegaup.User;
+  problem: omegaup.Problem;
+  qualitynomination_id: number;
+  reviewer: boolean;
+  votes: omegaup.NominationVote[];
+}>();
 
-  T = T;
-  rationale = this.initialRationale;
-  showConfirmation = false;
-  status = 'banned';
+const emit = defineEmits<{
+  (
+    e: 'mark-resolution',
+    data: {
+      rationale: string;
+      problem: omegaup.Problem;
+      qualitynomination_id: number;
+    },
+    status: string,
+    all: boolean,
+  ): void;
+}>();
 
-  userUrl(alias: string): string {
-    return `/profile/${alias}/`;
-  }
+const rationale = ref(props.initialRationale);
+const showConfirmation = ref(false);
+const status = ref('banned');
 
-  problemUrl(alias: string): string {
-    return `/arena/problem/${alias}/`;
-  }
+function userUrl(alias: string): string {
+  return `/profile/${alias}/`;
+}
 
-  markResolution(all: boolean): void {
-    this.showConfirmation = false;
-    this.$emit('mark-resolution', this, this.status, all);
-  }
+function problemUrl(alias: string): string {
+  return `/arena/problem/${alias}/`;
+}
 
-  showConfirmationDialog(status: string): void {
-    this.status = status;
-    this.showConfirmation = true;
-  }
+function markResolution(all: boolean): void {
+  showConfirmation.value = false;
+  emit(
+    'mark-resolution',
+    {
+      rationale: rationale.value,
+      problem: props.problem,
+      qualitynomination_id: props.qualitynomination_id,
+    },
+    status.value,
+    all,
+  );
+}
+
+function showConfirmationDialog(newStatus: string): void {
+  status.value = newStatus;
+  showConfirmation.value = true;
 }
 </script>
 

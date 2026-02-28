@@ -3,7 +3,7 @@
     <div class="card-body">
       <div class="form-group">
         <label class="font-weight-bold">{{ T.wordsPublicTags }}</label>
-        <vue-typeahead-bootstrap
+        <VueTypeaheadBootstrap
           v-if="canAddNewTags"
           v-model="newPublicTag"
           data-tags-input
@@ -15,7 +15,7 @@
           :input-class="errors.includes('public_tags') ? 'is-invalid' : ''"
           @hit="addPublicTag"
         >
-        </vue-typeahead-bootstrap>
+        </VueTypeaheadBootstrap>
       </div>
       <table class="table table-striped">
         <thead>
@@ -52,7 +52,7 @@
                 :disabled="selectedPublicTags.length < 2 && !isLecture"
                 @click="removeTag(tag, /*public=*/ true)"
               >
-                <font-awesome-icon :icon="['fas', 'trash']" />
+                <FontAwesomeIcon :icon="['fas', 'trash']" />
               </button>
             </td>
           </tr>
@@ -103,7 +103,7 @@
                 class="btn btn-danger"
                 @click="removeTag(tag, false /* public */)"
               >
-                <font-awesome-icon :icon="['fas', 'trash']" />
+                <FontAwesomeIcon :icon="['fas', 'trash']" />
               </button>
             </td>
           </tr>
@@ -149,11 +149,11 @@
         </div>
       </div>
       <div class="form-group">
-        <omegaup-toggle-switch
+        <OmegaupToggleSwitch
           :value.sync="allowTags"
           :checked-value="allowTags"
           :text-description="T.problemEditFormAllowUserAddTags"
-        ></omegaup-toggle-switch>
+        ></OmegaupToggleSwitch>
       </div>
     </div>
     <input
@@ -165,105 +165,114 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import T from '../../lang';
 import VueTypeaheadBootstrap from 'vue-typeahead-bootstrap';
-import omegaup_ToggleSwitch from '../ToggleSwitch.vue';
+import OmegaupToggleSwitch from '../ToggleSwitch.vue';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 library.add(faTrash);
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-    VueTypeaheadBootstrap,
-    'omegaup-toggle-switch': omegaup_ToggleSwitch,
+const props = withDefaults(
+  defineProps<{
+    problemLevel?: string | null;
+    publicTags: string[];
+    selectedPublicTags: string[];
+    selectedPrivateTags: string[];
+    levelTags: string[];
+    alias: string;
+    title?: string;
+    initialAllowTags?: boolean;
+    canAddNewTags?: boolean;
+    isCreate?: boolean;
+    errors?: string[];
+    isLecture: boolean;
+  }>(),
+  {
+    problemLevel: null,
+    title: '',
+    initialAllowTags: true,
+    canAddNewTags: false,
+    isCreate: false,
+    errors: () => [],
   },
-})
-export default class ProblemTags extends Vue {
-  @Prop({ default: null }) problemLevel!: string | null;
-  @Prop() publicTags!: string[];
-  @Prop() selectedPublicTags!: string[];
-  @Prop() selectedPrivateTags!: string[];
-  @Prop() levelTags!: string[];
-  @Prop() alias!: string;
-  @Prop({ default: '' }) title!: string;
-  @Prop({ default: true }) initialAllowTags!: boolean;
-  @Prop({ default: false }) canAddNewTags!: boolean;
-  @Prop({ default: false }) isCreate!: boolean;
-  @Prop({ default: () => [] }) errors!: string[];
-  @Prop() isLecture!: boolean;
+);
 
-  T = T;
-  allowTags = this.initialAllowTags;
-  problemLevelTag: string | null = this.problemLevel;
-  newPrivateTag = '';
-  newPublicTag = '';
+const emit = defineEmits<{
+  (e: 'emit-add-tag', alias: string, tag: string, isPublic: boolean): void;
+  (e: 'emit-remove-tag', alias: string, tag: string, isPublic: boolean): void;
+  (e: 'select-problem-level', level: string): void;
+  (e: 'emit-update-problem-level', level?: string): void;
+  (
+    e: 'emit-change-allow-user-add-tag',
+    alias: string,
+    title: string,
+    value: boolean,
+  ): void;
+}>();
 
-  addPublicTag(tag: string): void {
-    if (this.canAddNewTags && !this.selectedPublicTags.includes(tag)) {
-      this.$emit('emit-add-tag', this.alias, tag, true);
-    }
-    this.newPublicTag = '';
+const allowTags = ref(props.initialAllowTags);
+const problemLevelTag = ref<string | null>(props.problemLevel);
+const newPrivateTag = ref('');
+const newPublicTag = ref('');
+
+function addPublicTag(tag: string): void {
+  if (props.canAddNewTags && !props.selectedPublicTags.includes(tag)) {
+    emit('emit-add-tag', props.alias, tag, true);
   }
+  newPublicTag.value = '';
+}
 
-  addPrivateTag(): void {
-    if (
-      this.canAddNewTags &&
-      this.newPrivateTag !== '' &&
-      !this.selectedPrivateTags.includes(this.newPrivateTag)
-    ) {
-      this.$emit('emit-add-tag', this.alias, this.newPrivateTag, false);
-      this.newPrivateTag = '';
-    }
-  }
-
-  removeTag(tag: string, isPublic: boolean): void {
-    if (this.canAddNewTags) {
-      this.$emit('emit-remove-tag', this.alias, tag, isPublic);
-    }
-  }
-
-  onSelectProblemLevel(): void {
-    if (this.problemLevelTag) {
-      this.$emit('select-problem-level', this.problemLevelTag);
-    }
-  }
-
-  onUpdateProblemLevel(): void {
-    if (this.problemLevelTag) {
-      this.$emit('emit-update-problem-level', this.problemLevelTag);
-    }
-  }
-
-  onDeleteProblemLevel(): void {
-    this.$emit('emit-update-problem-level');
-    this.problemLevelTag = null;
-  }
-
-  publicTagsSerializer(tagname: string): string {
-    if (Object.prototype.hasOwnProperty.call(T, tagname)) {
-      return T[tagname];
-    }
-    return tagname;
-  }
-
-  @Watch('allowTags')
-  onPropertyChanged(newValue: boolean): void {
-    if (!this.canAddNewTags) {
-      return;
-    }
-    this.$emit(
-      'emit-change-allow-user-add-tag',
-      this.alias,
-      this.title,
-      newValue,
-    );
+function addPrivateTag(): void {
+  if (
+    props.canAddNewTags &&
+    newPrivateTag.value !== '' &&
+    !props.selectedPrivateTags.includes(newPrivateTag.value)
+  ) {
+    emit('emit-add-tag', props.alias, newPrivateTag.value, false);
+    newPrivateTag.value = '';
   }
 }
+
+function removeTag(tag: string, isPublic: boolean): void {
+  if (props.canAddNewTags) {
+    emit('emit-remove-tag', props.alias, tag, isPublic);
+  }
+}
+
+function onSelectProblemLevel(): void {
+  if (problemLevelTag.value) {
+    emit('select-problem-level', problemLevelTag.value);
+  }
+}
+
+function onUpdateProblemLevel(): void {
+  if (problemLevelTag.value) {
+    emit('emit-update-problem-level', problemLevelTag.value);
+  }
+}
+
+function onDeleteProblemLevel(): void {
+  emit('emit-update-problem-level');
+  problemLevelTag.value = null;
+}
+
+function publicTagsSerializer(tagname: string): string {
+  if (Object.prototype.hasOwnProperty.call(T, tagname)) {
+    return T[tagname];
+  }
+  return tagname;
+}
+
+watch(allowTags, (newValue: boolean) => {
+  if (!props.canAddNewTags) {
+    return;
+  }
+  emit('emit-change-allow-user-add-tag', props.alias, props.title, newValue);
+});
 </script>
 
 <style>

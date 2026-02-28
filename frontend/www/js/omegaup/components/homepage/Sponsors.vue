@@ -13,19 +13,16 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
-
-@Component
-export default class Sponsors extends Vue {
-  @Prop() title!: string;
-  @Prop() logos!: {
+<script setup lang="ts">
+defineProps<{
+  title: string;
+  logos: {
     src: string;
     alt: string;
     href: string;
     class: string;
   }[];
-}
+}>();
 </script>
 
 <style lang="scss" scoped>

@@ -6,33 +6,24 @@
       </h4>
     </div>
     <div class="panel-body">
-      <omegaup-markdown
+      <OmegaupMarkdown
         :markdown="
           ui.formatString(T.certificateDetailsBody, {
             uuid: encodeURIComponent(uuid),
           })
         "
-      ></omegaup-markdown>
+      />
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
 import T from '../../lang';
 import * as ui from '../../ui';
 
-import omegaup_Markdown from '../Markdown.vue';
+import OmegaupMarkdown from '../Markdown.vue';
 
-@Component({
-  components: {
-    'omegaup-markdown': omegaup_Markdown,
-  },
-})
-export default class CertificateDetails extends Vue {
-  @Prop() uuid!: string;
-
-  T = T;
-  ui = ui;
-}
+defineProps<{
+  uuid: string;
+}>();
 </script>

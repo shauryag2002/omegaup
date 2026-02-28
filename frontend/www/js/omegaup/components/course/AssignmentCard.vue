@@ -66,12 +66,10 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
 import { types } from '../../api_types';
 import * as ui from '../../ui';
 import T from '../../lang';
-import omegaup_Markdown from '../Markdown.vue';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
@@ -82,20 +80,11 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 library.add(faChalkboardTeacher, faFileAlt, faListAlt);
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-    'omegaup-markdown': omegaup_Markdown,
-  },
-})
-export default class AssignmentCard extends Vue {
-  @Prop() courseAlias!: string;
-  @Prop() assignment!: types.CourseAssignment;
-  @Prop() studentProgress!: number;
-
-  T = T;
-  ui = ui;
-}
+defineProps<{
+  courseAlias: string;
+  assignment: types.CourseAssignment;
+  studentProgress: number;
+}>();
 </script>
 
 <style lang="scss" scoped>

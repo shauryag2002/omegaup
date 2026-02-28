@@ -9,19 +9,19 @@
             v-model="currentMarkdown"
             data-problem-creator-editor-markdown
             class="wmd-input"
-            @change="currentMarkdown = $event.target.value"
+            @change="currentMarkdown = ($event.target as HTMLTextAreaElement).value"
             @paste="handlePaste"
             @drop="handleDrop"
           ></textarea>
         </div>
         <div class="col-md-6 d-flex flex-column">
-          <omegaup-markdown
+          <ProblemMarkdown
             data-problem-creator-previewer-markdown
             :markdown="
               T.problemCreatorMarkdownPreviewInitialRender + currentMarkdown
             "
             preview="true"
-          ></omegaup-markdown>
+          />
         </div>
       </div>
       <div class="row">
@@ -40,118 +40,133 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Ref, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed, watch, onMounted } from 'vue';
+import { useStore } from 'vuex';
 import * as Markdown from '@/third_party/js/pagedown/Markdown.Editor.js';
 import * as markdown from '../../../../markdown';
 import T from '../../../../lang';
 import * as ui from '../../../../ui';
 import ProblemMarkdown from '../../ProblemMarkdown.vue';
 
+const store = useStore();
+
 const markdownConverter = new markdown.Converter({
   preview: true,
 });
 
-@Component({
-  components: {
-    'omegaup-markdown': ProblemMarkdown,
+// Template refs
+const markdownButtonBar = ref<HTMLDivElement>();
+const markdownInput = ref<HTMLTextAreaElement>();
+
+// Props
+const props = withDefaults(
+  defineProps<{
+    currentMarkdownProp?: string;
+  }>(),
+  {
+    currentMarkdownProp: T.problemCreatorEmpty,
   },
-})
-export default class StatementTab extends Vue {
-  @Ref() readonly markdownButtonBar!: HTMLDivElement;
-  @Ref() readonly markdownInput!: HTMLTextAreaElement;
+);
 
-  @Prop({ default: T.problemCreatorEmpty }) currentMarkdownProp!: string;
+// Emits
+const emit = defineEmits<{
+  (e: 'show-update-success-message'): void;
+}>();
 
-  T = T;
-  ui = ui;
-  markdownEditor: Markdown.Editor | null = null;
+// State
+let markdownEditor: Markdown.Editor | null = null;
 
-  // 256 KB limit for images
-  readonly MAX_IMAGE_SIZE = 256 * 1024;
+// 256 KB limit for images
+const MAX_IMAGE_SIZE = 256 * 1024;
 
-  currentMarkdownInternal: string = T.problemCreatorEmpty;
+const currentMarkdownInternal = ref<string>(T.problemCreatorEmpty);
 
-  get currentMarkdown(): string {
-    return this.currentMarkdownInternal;
+// Computed
+const currentMarkdown = computed({
+  get: () => currentMarkdownInternal.value,
+  set: (newMarkdown: string) => {
+    currentMarkdownInternal.value = newMarkdown;
+  },
+});
+
+// Watch
+watch(
+  () => props.currentMarkdownProp,
+  () => {
+    currentMarkdown.value = props.currentMarkdownProp;
+  },
+);
+
+// Lifecycle
+onMounted(() => {
+  markdownEditor = new Markdown.Editor(markdownConverter.converter, '', {
+    panels: {
+      buttonBar: markdownButtonBar.value,
+      preview: null,
+      input: markdownInput.value,
+    },
+  });
+  markdownEditor.run();
+});
+
+// Methods
+function updateMarkdown() {
+  store.commit('updateMarkdown', currentMarkdown.value);
+  emit('show-update-success-message');
+}
+
+/**
+ * Validates image file size and shows error if too large.
+ * @param file The file to validate
+ * @returns true if valid, false if too large
+ */
+function validateImageSize(file: File): boolean {
+  if (file.size > MAX_IMAGE_SIZE) {
+    ui.error(
+      ui.formatString(
+        T.problemCreatorMarkdownImageTooLarge ??
+          'The image is too large. The maximum allowed size is %(limit). Please use a smaller image.',
+        {
+          limit: '256 KB',
+        },
+      ),
+    );
+    return false;
   }
-  set currentMarkdown(newMarkdown: string) {
-    this.currentMarkdownInternal = newMarkdown;
-  }
+  return true;
+}
 
-  @Watch('currentMarkdownProp')
-  onCurrentMarkdownPropChanged() {
-    this.currentMarkdown = this.currentMarkdownProp;
-  }
+/**
+ * Handles paste events to validate image sizes before insertion.
+ */
+function handlePaste(event: ClipboardEvent): void {
+  const items = event.clipboardData?.items;
+  if (!items) return;
 
-  mounted(): void {
-    this.markdownEditor = new Markdown.Editor(markdownConverter.converter, '', {
-      panels: {
-        buttonBar: this.markdownButtonBar,
-        preview: null,
-        input: this.markdownInput,
-      },
-    });
-    this.markdownEditor.run();
-  }
-
-  updateMarkdown() {
-    this.$store.commit('updateMarkdown', this.currentMarkdown);
-    this.$emit('show-update-success-message');
-  }
-
-  /**
-   * Validates image file size and shows error if too large.
-   * @param file The file to validate
-   * @returns true if valid, false if too large
-   */
-  private validateImageSize(file: File): boolean {
-    if (file.size > this.MAX_IMAGE_SIZE) {
-      ui.error(
-        ui.formatString(
-          T.problemCreatorMarkdownImageTooLarge ??
-            'The image is too large. The maximum allowed size is %(limit). Please use a smaller image.',
-          {
-            limit: '256 KB',
-          },
-        ),
-      );
-      return false;
-    }
-    return true;
-  }
-
-  /**
-   * Handles paste events to validate image sizes before insertion.
-   */
-  handlePaste(event: ClipboardEvent): void {
-    const items = event.clipboardData?.items;
-    if (!items) return;
-
-    for (const item of items) {
-      if (item.type.startsWith('image/')) {
-        const file = item.getAsFile();
-        if (file && !this.validateImageSize(file)) {
-          event.preventDefault();
-          return;
-        }
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      const file = item.getAsFile();
+      if (file && !validateImageSize(file)) {
+        event.preventDefault();
+        return;
       }
     }
   }
+}
 
-  /**
-   * Handles drop events to validate image sizes before insertion.
-   */
-  handleDrop(event: DragEvent): void {
-    const files = event.dataTransfer?.files;
-    if (!files) return;
+/**
+ * Handles drop events to validate image sizes before insertion.
+ */
+function handleDrop(event: DragEvent): void {
+  const files = event.dataTransfer?.files;
+  if (!files) return;
 
-    for (const file of files) {
-      if (file.type.startsWith('image/')) {
-        if (!this.validateImageSize(file)) {
-          event.preventDefault();
-          return;
-        }
+  for (const file of files) {
+    if (file.type.startsWith('image/')) {
+      if (!validateImageSize(file)) {
+        event.preventDefault();
+        return;
       }
     }
   }

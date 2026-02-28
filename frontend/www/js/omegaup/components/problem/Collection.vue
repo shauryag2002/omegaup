@@ -17,16 +17,16 @@
       <div class="card-body panel-body">
         <div class="container-fluid px-0">
           <div class="row d-flex justify-content-center">
-            <omegaup-problem-collection
+            <OmegaupProblemCollection
               v-for="(collection, idx) in problemCount"
               :key="idx"
               :title="getName(collection.name)"
               class="educational-level-card"
             >
               <template #icon>
-                <font-awesome-icon
+                <FontAwesomeIcon
                   :icon="['fas', getProblemLevelIcon(collection.name)]"
-                ></font-awesome-icon>
+                />
               </template>
               <template #problem-count>
                 <p class="card-text">
@@ -47,7 +47,7 @@
                   >{{ T.problemcollectionViewProblems }}</a
                 >
               </template>
-            </omegaup-problem-collection>
+            </OmegaupProblemCollection>
           </div>
         </div>
       </div>
@@ -61,52 +61,43 @@
       <div class="card-body panel-body">
         <div class="container-fluid">
           <div class="row d-flex justify-content-center">
-            <omegaup-problem-collection :title="T.problemCollectionAuthors">
+            <OmegaupProblemCollection :title="T.problemCollectionAuthors">
               <template #icon>
-                <font-awesome-icon class="mt-3" :icon="['fas', 'users']">
-                </font-awesome-icon>
+                <FontAwesomeIcon class="mt-3" :icon="['fas', 'users']" />
               </template>
               <template #button>
                 <a class="btn btn-primary" href="/problem/collection/author/">{{
                   T.problemcollectionViewProblems
                 }}</a>
               </template>
-            </omegaup-problem-collection>
-            <omegaup-problem-collection
+            </OmegaupProblemCollection>
+            <OmegaupProblemCollection
               :title="T.problemCollectionRandomLanguageProblem"
             >
               <template #icon>
-                <font-awesome-icon class="mt-3" :icon="['fas', 'cogs']" />
+                <FontAwesomeIcon class="mt-3" :icon="['fas', 'cogs']" />
               </template>
               <template #button>
                 <a class="btn btn-primary" href="/problem/random/language/">{{
                   T.problemcollectionViewProblems
                 }}</a>
               </template>
-            </omegaup-problem-collection>
-            <omegaup-problem-collection
+            </OmegaupProblemCollection>
+            <OmegaupProblemCollection
               :title="T.problemCollectionRandomKarelProblem"
             >
               <template #icon>
-                <font-awesome-icon
-                  class="mt-3"
-                  :icon="['fas', 'random']"
-                ></font-awesome-icon>
+                <FontAwesomeIcon class="mt-3" :icon="['fas', 'random']" />
               </template>
               <template #button>
                 <a class="btn btn-primary" href="/problem/random/karel/">{{
                   T.problemcollectionViewProblems
                 }}</a>
               </template>
-            </omegaup-problem-collection>
-            <omegaup-problem-collection
-              :title="T.problemCollectionSearchProblem"
-            >
+            </OmegaupProblemCollection>
+            <OmegaupProblemCollection :title="T.problemCollectionSearchProblem">
               <template #icon>
-                <font-awesome-icon
-                  class="mt-3"
-                  :icon="['fas', 'search']"
-                ></font-awesome-icon>
+                <FontAwesomeIcon class="mt-3" :icon="['fas', 'search']" />
               </template>
               <template #button>
                 <button
@@ -116,14 +107,14 @@
                   {{ T.wordsSearch }}
                 </button>
               </template>
-            </omegaup-problem-collection>
+            </OmegaupProblemCollection>
             <!-- TODO: Migrar el problem finder a BS4 (solo para eliminar algunos estilos) -->
-            <omegaup-problem-finder-wizard
+            <OmegaupProblemFinderWizard
               v-show="showFinderWizard"
               :possible-tags="allTags"
               @close="showFinderWizard = false"
-              @search-problems="$emit('search-problems', $event)"
-            ></omegaup-problem-finder-wizard>
+              @search-problems="emit('search-problems', $event)"
+            />
           </div>
         </div>
       </div>
@@ -131,13 +122,13 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import T from '../../lang';
 import { types } from '../../api_types';
 import * as ui from '../../ui';
-import problem_Collection from './CollectionProblem.vue';
-import problem_FinderWizard from './FinderWizard.vue';
+import OmegaupProblemCollection from './CollectionProblem.vue';
+import OmegaupProblemFinderWizard from './FinderWizard.vue';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
@@ -154,17 +145,19 @@ import {
   faSearch,
   faCogs,
 } from '@fortawesome/free-solid-svg-icons';
-library.add(faRobot);
-library.add(faLaptopCode);
-library.add(faSquareRootAlt);
-library.add(faProjectDiagram);
-library.add(faSitemap);
-library.add(faTrophy);
-library.add(faCode);
-library.add(faUsers);
-library.add(faRandom);
-library.add(faSearch);
-library.add(faCogs);
+library.add(
+  faRobot,
+  faLaptopCode,
+  faSquareRootAlt,
+  faProjectDiagram,
+  faSitemap,
+  faTrophy,
+  faCode,
+  faUsers,
+  faRandom,
+  faSearch,
+  faCogs,
+);
 
 const problemLevelIcons: { [key: string]: string } = {
   problemLevelBasicKarel: 'robot',
@@ -179,30 +172,26 @@ const problemLevelIcons: { [key: string]: string } = {
   problemCollectionSearchProblem: 'search',
 };
 
-@Component({
-  components: {
-    'omegaup-problem-collection': problem_Collection,
-    FontAwesomeIcon,
-    'omegaup-problem-finder-wizard': problem_FinderWizard,
-  },
-})
-export default class Collection extends Vue {
-  @Prop() levelTags!: string[];
-  @Prop() problemCount!: { name: string; problems_per_tag: number }[];
-  @Prop() allTags!: types.Tag[];
-  T = T;
-  ui = ui;
-  showFinderWizard = false;
+defineProps<{
+  levelTags: string[];
+  problemCount: { name: string; problems_per_tag: number }[];
+  allTags: types.Tag[];
+}>();
 
-  getProblemLevelIcon(problemLevel: string): string {
-    if (Object.prototype.hasOwnProperty.call(problemLevelIcons, problemLevel))
-      return problemLevelIcons[problemLevel];
-    return 'icon';
-  }
+const emit = defineEmits<{
+  (e: 'search-problems', value: unknown): void;
+}>();
 
-  getName(alias: string): string {
-    return T[alias];
-  }
+const showFinderWizard = ref(false);
+
+function getProblemLevelIcon(problemLevel: string): string {
+  if (Object.prototype.hasOwnProperty.call(problemLevelIcons, problemLevel))
+    return problemLevelIcons[problemLevel];
+  return 'icon';
+}
+
+function getName(alias: string): string {
+  return T[alias];
 }
 </script>
 

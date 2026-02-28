@@ -11,15 +11,11 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
 import T from '../../lang';
 import { types } from '../../api_types';
 
-@Component
-export default class Upcoming extends Vue {
-  @Prop() contests!: types.ContestAdminDetails[];
-
-  T = T;
-}
+defineProps<{
+  contests: types.ContestAdminDetails[];
+}>();
 </script>

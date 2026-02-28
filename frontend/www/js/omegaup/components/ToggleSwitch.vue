@@ -16,28 +16,36 @@
   </label>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch, Emit } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 
 export enum ToggleSwitchSize {
   Small = 'small',
   Large = 'large',
 }
 
-@Component
-export default class ToggleSwitch extends Vue {
-  @Prop({ default: 'Check' }) textDescription!: string;
-  @Prop({ default: true }) checkedValue!: boolean;
-  @Prop({ default: ToggleSwitchSize.Large }) size!: ToggleSwitchSize;
+const props = withDefaults(
+  defineProps<{
+    textDescription?: string;
+    checkedValue?: boolean;
+    size?: ToggleSwitchSize;
+  }>(),
+  {
+    textDescription: 'Check',
+    checkedValue: true,
+    size: ToggleSwitchSize.Large,
+  },
+);
 
-  currentCheckedValue = this.checkedValue;
+const emit = defineEmits<{
+  (e: 'update:value', value: boolean): void;
+}>();
 
-  @Watch('currentCheckedValue')
-  @Emit('update:value')
-  onUpdateInput(newValue: boolean): boolean {
-    return newValue;
-  }
-}
+const currentCheckedValue = ref(props.checkedValue);
+
+watch(currentCheckedValue, (newValue) => {
+  emit('update:value', newValue);
+});
 </script>
 
 <style scoped lang="scss">

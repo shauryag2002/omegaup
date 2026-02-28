@@ -113,29 +113,24 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
 
-@Component
-export default class Report extends Vue {
-  @Prop() contestReport!: types.ContestReport[];
-  @Prop() contestAlias!: string;
+defineProps<{
+  contestReport: types.ContestReport[];
+  contestAlias: string;
+}>();
 
-  T = T;
-  ui = ui;
+function getTotalPoints(points: null | number): number {
+  return points ?? 0;
+}
 
-  getTotalPoints(points: null | number): number {
-    return points ?? 0;
-  }
-
-  getGroups(
-    problem: types.ScoreboardRankingProblem,
-  ): types.ScoreboardRankingProblemDetailsGroup[] {
-    return problem.run_details?.details?.groups ?? [];
-  }
+function getGroups(
+  problem: types.ScoreboardRankingProblem,
+): types.ScoreboardRankingProblemDetailsGroup[] {
+  return problem.run_details?.details?.groups ?? [];
 }
 </script>
 

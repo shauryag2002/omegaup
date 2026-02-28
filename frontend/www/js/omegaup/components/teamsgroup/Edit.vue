@@ -44,15 +44,13 @@
         class="tab-pane active"
         role="tabpanel"
       >
-        <omegaup-teams-group-form
+        <OmegaupTeamsGroupForm
           :name="name"
           :alias="alias"
           :description="description"
           :number-of-contestants="numberOfContestants"
-          @update-teams-group="
-            (request) => $emit('update-teams-group', request)
-          "
-        ></omegaup-teams-group-form>
+          @update-teams-group="(request) => emit('update-teams-group', request)"
+        ></OmegaupTeamsGroupForm>
       </div>
 
       <div
@@ -60,7 +58,7 @@
         class="tab-pane active"
         role="tabpanel"
       >
-        <omegaup-teams-group-teams
+        <OmegaupTeamsGroupTeams
           :teams="currentTeamsIdentities"
           :alias="alias"
           :countries="countries"
@@ -68,28 +66,26 @@
           :search-result-schools="searchResultSchools"
           :teams-members="teamsMembers"
           @update-identity-team="
-            (identity) => $emit('update-identity-team', identity)
+            (identity) => emit('update-identity-team', identity)
           "
           @update-search-result-users="
-            (query) => $emit('update-search-result-users', query)
+            (query) => emit('update-search-result-users', query)
           "
           @update-search-result-schools="
-            (query) => $emit('update-search-result-schools', query)
+            (query) => emit('update-search-result-schools', query)
           "
-          @edit-identity-team="
-            (request) => $emit('edit-identity-team', request)
-          "
+          @edit-identity-team="(request) => emit('edit-identity-team', request)"
           @change-password-identity-team="
-            (request) => $emit('change-password-identity-team', request)
+            (request) => emit('change-password-identity-team', request)
           "
           @change-password-identity="
-            (request) => $emit('change-password-identity', request)
+            (request) => emit('change-password-identity', request)
           "
-          @add-members="(request) => $emit('add-members', request)"
-          @remove-member="(request) => $emit('remove-member', request)"
-          @remove="(name) => $emit('remove', name)"
-          @cancel="(teamComponent) => $emit('cancel', teamComponent)"
-        ></omegaup-teams-group-teams>
+          @add-members="(request) => emit('add-members', request)"
+          @remove-member="(request) => emit('remove-member', request)"
+          @remove="(name) => emit('remove', name)"
+          @cancel="(teamComponent) => emit('cancel', teamComponent)"
+        ></OmegaupTeamsGroupTeams>
       </div>
 
       <div
@@ -97,81 +93,100 @@
         class="tab-pane active"
         role="tabpanel"
       >
-        <omegaup-teams-group-upload
+        <OmegaupTeamsGroupUpload
           :team-error-row="teamErrorRow"
           :search-result-users="searchResultUsers"
           :number-of-contestants="numberOfContestants"
           :is-loading.sync="isLoading"
-          @bulk-identities="
-            (identities) => $emit('bulk-identities', identities)
-          "
-          @download-teams="(identities) => $emit('download-teams', identities)"
-          @read-csv="(source) => $emit('read-csv', source)"
-          @invalid-file="$emit('invalid-file')"
+          @bulk-identities="(identities) => emit('bulk-identities', identities)"
+          @download-teams="(identities) => emit('download-teams', identities)"
+          @read-csv="(source) => emit('read-csv', source)"
+          @invalid-file="emit('invalid-file')"
           @update-search-result-users="
-            (query) => $emit('update-search-result-users', query)
+            (query) => emit('update-search-result-users', query)
           "
-        ></omegaup-teams-group-upload>
+        ></OmegaupTeamsGroupUpload>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
-import teamsgroup_FormUpdate from './FormUpdate.vue';
-import teamsgroup_Upload from './Upload.vue';
-import teamsgroup_Teams from './Teams.vue';
-import T from '../../lang';
-import { dao, types } from '../../api_types';
-import * as ui from '../../ui';
-
 export enum AvailableTabs {
   Edit = 'edit',
   Teams = 'teams',
   Upload = 'upload',
 }
+</script>
 
-@Component({
-  components: {
-    'omegaup-teams-group-form': teamsgroup_FormUpdate,
-    'omegaup-teams-group-upload': teamsgroup_Upload,
-    'omegaup-teams-group-teams': teamsgroup_Teams,
+<script setup lang="ts">
+import { ref, watch } from 'vue';
+import OmegaupTeamsGroupForm from './FormUpdate.vue';
+import OmegaupTeamsGroupUpload from './Upload.vue';
+import OmegaupTeamsGroupTeams from './Teams.vue';
+import T from '../../lang';
+import { dao, types } from '../../api_types';
+import * as ui from '../../ui';
+
+const props = withDefaults(
+  defineProps<{
+    alias: string;
+    name: string;
+    description: string;
+    numberOfContestants: number;
+    countries: dao.Countries[];
+    isOrganizer: boolean;
+    tab: AvailableTabs;
+    teamsIdentities?: types.Identity[];
+    teamsMembers?: types.TeamMember[];
+    teamErrorRow: string | null;
+    searchResultUsers: types.ListItem[];
+    searchResultSchools: types.SchoolListItem[];
+    isLoading: boolean;
+  }>(),
+  {
+    teamsIdentities: () => [],
+    teamsMembers: () => [],
   },
-})
-export default class TeamsGroupEdit extends Vue {
-  @Prop() alias!: string;
-  @Prop() name!: string;
-  @Prop() description!: string;
-  @Prop() numberOfContestants!: number;
-  @Prop() countries!: dao.Countries[];
-  @Prop() isOrganizer!: boolean;
-  @Prop() tab!: AvailableTabs;
-  @Prop({ default: () => [] }) teamsIdentities!: types.Identity[];
-  @Prop({ default: () => [] }) teamsMembers!: types.TeamMember[];
-  @Prop() teamErrorRow!: null | string;
-  @Prop() searchResultUsers!: types.ListItem[];
-  @Prop() searchResultSchools!: types.SchoolListItem[];
-  @Prop() isLoading!: boolean;
+);
 
-  T = T;
-  ui = ui;
-  AvailableTabs = AvailableTabs;
-  selectedTab: AvailableTabs = this.tab;
-  currentTeamsIdentities = this.teamsIdentities;
+const emit = defineEmits<{
+  (e: 'update-teams-group', request: any): void;
+  (e: 'update-identity-team', identity: any): void;
+  (e: 'update-search-result-users', query: string): void;
+  (e: 'update-search-result-schools', query: string): void;
+  (e: 'edit-identity-team', request: any): void;
+  (e: 'change-password-identity-team', request: any): void;
+  (e: 'change-password-identity', request: any): void;
+  (e: 'add-members', request: any): void;
+  (e: 'remove-member', request: any): void;
+  (e: 'remove', name: string): void;
+  (e: 'cancel', component: any): void;
+  (e: 'bulk-identities', identities: any): void;
+  (e: 'download-teams', identities: any): void;
+  (e: 'read-csv', source: any): void;
+  (e: 'invalid-file'): void;
+}>();
 
-  @Watch('tab')
-  onTabChanged(newValue: AvailableTabs): void {
-    if (!Object.values(AvailableTabs).includes(this.tab)) {
-      this.selectedTab = AvailableTabs.Teams;
+const selectedTab = ref<AvailableTabs>(props.tab);
+const currentTeamsIdentities = ref(props.teamsIdentities);
+const isLoading = ref(props.isLoading);
+
+watch(
+  () => props.tab,
+  (newValue) => {
+    if (!Object.values(AvailableTabs).includes(props.tab)) {
+      selectedTab.value = AvailableTabs.Teams;
       return;
     }
-    this.selectedTab = newValue;
-  }
+    selectedTab.value = newValue;
+  },
+);
 
-  @Watch('teamsIdentities')
-  onTeamsIdentitiesChanged(newValue: types.Identity[]): void {
-    this.currentTeamsIdentities = newValue;
-  }
-}
+watch(
+  () => props.teamsIdentities,
+  (newValue) => {
+    currentTeamsIdentities.value = newValue;
+  },
+);
 </script>

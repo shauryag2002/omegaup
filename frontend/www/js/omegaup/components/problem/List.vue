@@ -13,7 +13,7 @@
       </button>
     </div>
     <div class="d-flex align-items-center search-header-sticky-top">
-      <omegaup-problem-search-bar
+      <ProblemSearchBar
         class="searchbar-width"
         :language="language"
         :languages="languages"
@@ -22,18 +22,18 @@
         :only-quality-seal="onlyQualitySeal"
         :search-result-problems="searchResultProblems"
         @update-search-result-problems="
-          (query) => $emit('update-search-result-problems', query)
+          (query) => emit('update-search-result-problems', query)
         "
-      ></omegaup-problem-search-bar>
+      ></ProblemSearchBar>
     </div>
     <!-- TODO: Migrar el problem finder a BS4 (solo para eliminar algunos estilos) -->
-    <omegaup-problem-finder
+    <ProblemFinderWizard
       v-show="showFinderWizard"
       :possible-tags="wizardTags"
       @close="showFinderWizard = false"
       @search-problems="wizardSearch"
-    ></omegaup-problem-finder>
-    <omegaup-problem-base-list
+    ></ProblemFinderWizard>
+    <ProblemBaseList
       :problems="problems"
       :logged-in="loggedIn"
       :selected-tags="selectedTags"
@@ -51,55 +51,52 @@
       :column-name="columnName"
       :path="'/problem/'"
       @apply-filter="
-        (columnName, sortOrder) => $emit('apply-filter', columnName, sortOrder)
+        (columnName, sortOrder) => emit('apply-filter', columnName, sortOrder)
       "
-    ></omegaup-problem-base-list>
+    ></ProblemBaseList>
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import { omegaup } from '../../omegaup';
 import T from '../../lang';
 import { types } from '../../api_types';
 
-import problem_FinderWizard from './FinderWizard.vue';
-import problem_SearchBar from './SearchBar.vue';
-import problem_BaseList from './BaseList.vue';
+import ProblemFinderWizard from './FinderWizard.vue';
+import ProblemSearchBar from './SearchBar.vue';
+import ProblemBaseList from './BaseList.vue';
 
-@Component({
-  components: {
-    'omegaup-problem-base-list': problem_BaseList,
-    'omegaup-problem-finder': problem_FinderWizard,
-    'omegaup-problem-search-bar': problem_SearchBar,
-  },
-})
-export default class List extends Vue {
-  @Prop() problems!: omegaup.Problem;
-  @Prop() loggedIn!: boolean;
-  @Prop() selectedTags!: string[];
-  @Prop() pagerItems!: types.PageItem[];
-  @Prop() wizardTags!: omegaup.Tag[];
-  @Prop() language!: string;
-  @Prop() languages!: string[];
-  @Prop() keyword!: string;
-  @Prop() modes!: string[];
-  @Prop() columns!: string[];
-  @Prop() mode!: string;
-  @Prop() column!: string;
-  @Prop() tags!: string[];
-  @Prop() onlyQualitySeal!: boolean;
-  @Prop() sortOrder!: string;
-  @Prop() columnName!: string;
-  @Prop() searchResultProblems!: types.ListItem[];
+defineProps<{
+  problems: omegaup.Problem;
+  loggedIn: boolean;
+  selectedTags: string[];
+  pagerItems: types.PageItem[];
+  wizardTags: omegaup.Tag[];
+  language: string;
+  languages: string[];
+  keyword: string;
+  modes: string[];
+  columns: string[];
+  mode: string;
+  column: string;
+  tags: string[];
+  onlyQualitySeal: boolean;
+  sortOrder: string;
+  columnName: string;
+  searchResultProblems: types.ListItem[];
+}>();
 
-  T = T;
-  omegaup = omegaup;
-  showFinderWizard = false;
+const emit = defineEmits<{
+  (e: 'update-search-result-problems', query: string): void;
+  (e: 'apply-filter', columnName: string, sortOrder: string): void;
+  (e: 'wizard-search', queryParameters: omegaup.QueryParameters): void;
+}>();
 
-  wizardSearch(queryParameters: omegaup.QueryParameters): void {
-    this.$emit('wizard-search', queryParameters);
-  }
+const showFinderWizard = ref(false);
+
+function wizardSearch(queryParameters: omegaup.QueryParameters): void {
+  emit('wizard-search', queryParameters);
 }
 </script>
 

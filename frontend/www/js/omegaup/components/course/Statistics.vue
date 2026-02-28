@@ -18,9 +18,9 @@
   <!-- panel -->
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { Chart } from 'highcharts-vue';
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { ref, computed } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 
@@ -39,312 +39,318 @@ const ORDERED_VERDICTS = [
   'VE',
 ];
 
-@Component({
-  components: {
-    highcharts: Chart,
-  },
-})
-export default class Statistics extends Vue {
-  @Prop() course!: types.CourseDetails;
-  @Prop() problemStats!: types.CourseProblemStatistics[];
-  @Prop() verdicts!: types.CourseProblemVerdict[];
-  T = T;
-  // chart options
-  selected = this.completedScoreChartOptions;
-  options = [
-    { value: this.averageChartOptions, text: T.courseStatisticsAverageScore },
-    {
-      value: this.completedScoreChartOptions,
-      text: T.courseStatisticsStudentsCompleted,
-    },
-    {
-      value: this.highScoreChartOptions,
-      text: T.courseStatisticsStudentsAbove,
-    },
-    {
-      value: this.lowScoreChartOptions,
-      text: T.courseStatisticsStudentsScored,
-    },
-    { value: this.runsChartOptions, text: T.courseStatisticsAverageRuns },
-    { value: this.verdictChartOptions, text: T.courseStatisticsVerdicts },
-    { value: this.varianceChartOptions, text: T.courseStatisticsVariance },
-    { value: this.minimumChartOptions, text: T.courseStatisticsMinimumScore },
-    { value: this.maximumChartOptions, text: T.courseStatisticsMaximumScore },
-  ];
-  // get chart options
-  get varianceChartOptions() {
-    return this.createChartOptions(
-      T.courseStatisticsScoreVariance,
-      '{y}',
-      T.courseStatisticsVariance,
-      this.getStatistic('variance'),
-      this.getMaxStat('variance'),
-      this.problems,
-    );
-  }
-  get averageChartOptions() {
-    return this.createChartOptions(
-      T.courseStatisticsAverageScore,
-      '{y}',
-      T.wordsScore,
-      this.getStatistic('average'),
-      this.maxPoints,
-      this.problems,
-    );
-  }
-  get highScoreChartOptions() {
-    return this.createChartOptions(
-      T.courseStatisticsStudentsAbove,
-      '{y} %',
-      T.wordsPercentage,
-      this.getStatistic('high_score_percentage'),
-      100,
-      this.problems,
-    );
-  }
-  get completedScoreChartOptions() {
-    return this.createChartOptions(
-      T.courseStatisticsStudentsCompleted,
-      '{y} %',
-      T.wordsPercentage,
-      this.getStatistic('completed_score_percentage'),
-      100,
-      this.problems,
-    );
-  }
-  get lowScoreChartOptions() {
-    return this.createChartOptions(
-      T.courseStatisticsStudentsScored,
-      '{y} %',
-      T.wordsPercentage,
-      this.getStatistic('low_score_percentage'),
-      100,
-      this.problems,
-    );
-  }
-  get minimumChartOptions() {
-    return this.createChartOptions(
-      T.courseStatisticsMinimumScore,
-      '{y}',
-      T.wordsScore,
-      this.getStatistic('minimum'),
-      this.maxPoints,
-      this.problems,
-    );
-  }
-  get maximumChartOptions() {
-    return this.createChartOptions(
-      T.courseStatisticsMaximumScore,
-      '{y}',
-      T.wordsScore,
-      this.getStatistic('maximum'),
-      this.maxPoints,
-      this.problems,
-    );
-  }
-  get runsChartOptions() {
-    return this.createChartOptions(
-      T.courseStatisticsAverageRuns,
-      '{y}',
-      T.wordsRuns,
-      this.getStatistic('avg_runs'),
-      this.getMaxStat('avg_runs'),
-      this.problems,
-    );
-  }
-  get verdictChartOptions() {
-    return {
-      chart: {
-        type: 'bar',
-        height:
-          this.problems.length < 15 ? null : `${this.problems.length * 3}%`,
-      },
-      title: {
-        text: T.courseStatisticsVerdicts,
-      },
-      xAxis: {
-        categories: this.problems,
-        title: T.wordsProblem,
-        min: 0,
-      },
-      yAxis: {
-        min: 0,
-        max: 100,
-        title: T.wordsRuns,
-        reversedStacks: false,
-      },
-      tooltip: {},
-      plotOptions: {
-        series: {
-          stacking: 'normal',
-          pointWidth: 15,
-        },
-        bar: {
-          dataLabels: {
-            enabled: true,
-            format: '{y} %',
-          },
-        },
-      },
-      series: this.verdictStats,
-    };
-  }
-  // helper functions
-  get problems() {
-    return this.problemStats.map(
-      (problem) => `${problem.assignment_alias} - ${problem.problem_alias}`,
-    );
-  }
-  get maxPoints() {
-    let maxPoints = 0;
-    for (const problem of this.problemStats) {
-      if (problem.max_points > maxPoints) maxPoints = problem.max_points;
-    }
-    return maxPoints;
-  }
-  getMaxStat(statistic: 'variance' | 'avg_runs') {
-    let max = 0;
-    for (const stat of this.getStatistic(statistic)) {
-      if (stat > max) max = stat;
-    }
-    return max;
-  }
-  problemIndices() {
-    const indices: {
-      [assignmentAlias: string]: { [problemAlias: string]: number };
-    } = {};
-    this.problemStats.forEach((problem, index) => {
-      if (
-        !Object.prototype.hasOwnProperty.call(indices, problem.assignment_alias)
-      )
-        indices[problem.assignment_alias] = {};
-      indices[problem.assignment_alias][problem.problem_alias] = index;
-    });
-    return indices;
-  }
-  get runsPerAssignment() {
-    const problems: string[] = this.problems;
-    const problemIndices = this.problemIndices();
-    let runSum: number[] = new Array(problems.length).fill(0);
-    for (const stat of this.verdicts) {
-      runSum[problemIndices[stat.assignment_alias][stat.problem_alias]] +=
-        stat.runs;
-    }
-    return runSum;
-  }
-  verdictList(): string[] {
-    let verdicts: string[] = [];
-    for (const stat of this.verdicts) {
-      if (stat.verdict && !verdicts.includes(stat.verdict))
-        verdicts.push(stat.verdict);
-    }
-    return verdicts;
-  }
-  get verdictStats() {
-    const verdicts: string[] = this.verdictList();
-    const assignmentRuns: number[] = this.runsPerAssignment;
-    const problemCount: number = this.problems.length;
-    let series: { name: string; data: number[] }[] = [];
-    const indices = this.problemIndices();
-    const verdictIndices: { [verdict: string]: number } = {};
-    verdicts.forEach((verdict, index) => {
-      verdictIndices[verdict] = index;
-    });
-    // create zero-d out runs 2D array
-    const runs: number[][] = verdicts.map(() =>
-      new Array(problemCount).fill(0),
-    );
-    // fill runs with verdict runs
-    for (const stat of this.verdicts) {
-      if (!stat.verdict) break;
-      runs[verdictIndices[stat.verdict]][
-        indices[stat.assignment_alias][stat.problem_alias]
-      ] += stat.runs;
-    }
-    // turn verdict run sums to percent
-    for (let i = 0; i < runs.length; i++) {
-      for (let j = 0; j < runs[i].length; j++) {
-        if (assignmentRuns[j])
-          runs[i][j] = parseFloat(
-            ((runs[i][j] / assignmentRuns[j]) * 100).toFixed(1),
-          );
-      }
-    }
+const props = defineProps<{
+  course: types.CourseDetails;
+  problemStats: types.CourseProblemStatistics[];
+  verdicts: types.CourseProblemVerdict[];
+}>();
 
-    for (const verdictName of ORDERED_VERDICTS) {
-      if (!verdicts.includes(verdictName)) {
-        continue;
-      }
-      series.push({
-        name: verdictName,
-        data: runs[verdicts.indexOf(verdictName)],
-      });
-    }
+// helper functions
+const problems = computed<string[]>(() => {
+  return props.problemStats.map(
+    (problem) => `${problem.assignment_alias} - ${problem.problem_alias}`,
+  );
+});
 
-    return series;
+const maxPoints = computed<number>(() => {
+  let max = 0;
+  for (const problem of props.problemStats) {
+    if (problem.max_points > max) max = problem.max_points;
   }
-  getStatistic(
-    name:
-      | 'variance'
-      | 'average'
-      | 'avg_runs'
-      | 'completed_score_percentage'
-      | 'high_score_percentage'
-      | 'low_score_percentage'
-      | 'maximum'
-      | 'minimum',
-  ) {
-    return this.problemStats.map((problem) =>
-      parseFloat((problem[name] || 0).toFixed(1)),
-    );
+  return max;
+});
+
+function getMaxStat(statistic: 'variance' | 'avg_runs'): number {
+  let max = 0;
+  for (const stat of getStatistic(statistic)) {
+    if (stat > max) max = stat;
   }
-  // yLabel = '{y}' or '{y} %'
-  // yName = data type (percentage, score, etc.)
-  // data = getStatistics("chart_type")
-  // yMax = get maxPoints() or getMaxStat
-  createChartOptions(
-    title: string,
-    yLabel: string,
-    yName: string,
-    data: number[],
-    yMax: number,
-    problems: string[],
-  ) {
-    return {
-      chart: {
-        type: 'bar',
-        height: data.length < 15 ? null : `${data.length * 3}%`,
-      },
-      title: {
-        text: title,
-      },
-      xAxis: {
-        categories: problems,
-        title: T.wordsProblem,
-        min: 0,
-      },
-      yAxis: {
-        min: 0,
-        max: yMax,
-        title: yName,
-      },
-      tooltip: {},
-      plotOptions: {
-        bar: {
-          dataLabels: {
-            enabled: true,
-            format: yLabel,
-          },
-        },
-      },
-      series: [
-        {
-          name: yName,
-          data: data,
-          pointWidth: 15,
-        },
-      ],
-    };
-  }
+  return max;
 }
+
+function problemIndices(): {
+  [assignmentAlias: string]: { [problemAlias: string]: number };
+} {
+  const indices: {
+    [assignmentAlias: string]: { [problemAlias: string]: number };
+  } = {};
+  props.problemStats.forEach((problem, index) => {
+    if (
+      !Object.prototype.hasOwnProperty.call(indices, problem.assignment_alias)
+    )
+      indices[problem.assignment_alias] = {};
+    indices[problem.assignment_alias][problem.problem_alias] = index;
+  });
+  return indices;
+}
+
+const runsPerAssignment = computed<number[]>(() => {
+  const probs: string[] = problems.value;
+  const indices = problemIndices();
+  let runSum: number[] = new Array(probs.length).fill(0);
+  for (const stat of props.verdicts) {
+    runSum[indices[stat.assignment_alias][stat.problem_alias]] += stat.runs;
+  }
+  return runSum;
+});
+
+function verdictList(): string[] {
+  let verdictsList: string[] = [];
+  for (const stat of props.verdicts) {
+    if (stat.verdict && !verdictsList.includes(stat.verdict))
+      verdictsList.push(stat.verdict);
+  }
+  return verdictsList;
+}
+
+const verdictStats = computed(() => {
+  const verdictsList: string[] = verdictList();
+  const assignmentRuns: number[] = runsPerAssignment.value;
+  const problemCount: number = problems.value.length;
+  let series: { name: string; data: number[] }[] = [];
+  const indices = problemIndices();
+  const verdictIndices: { [verdict: string]: number } = {};
+  verdictsList.forEach((verdict, index) => {
+    verdictIndices[verdict] = index;
+  });
+  // create zero-d out runs 2D array
+  const runs: number[][] = verdictsList.map(() =>
+    new Array(problemCount).fill(0),
+  );
+  // fill runs with verdict runs
+  for (const stat of props.verdicts) {
+    if (!stat.verdict) break;
+    runs[verdictIndices[stat.verdict]][
+      indices[stat.assignment_alias][stat.problem_alias]
+    ] += stat.runs;
+  }
+  // turn verdict run sums to percent
+  for (let i = 0; i < runs.length; i++) {
+    for (let j = 0; j < runs[i].length; j++) {
+      if (assignmentRuns[j])
+        runs[i][j] = parseFloat(
+          ((runs[i][j] / assignmentRuns[j]) * 100).toFixed(1),
+        );
+    }
+  }
+
+  for (const verdictName of ORDERED_VERDICTS) {
+    if (!verdictsList.includes(verdictName)) {
+      continue;
+    }
+    series.push({
+      name: verdictName,
+      data: runs[verdictsList.indexOf(verdictName)],
+    });
+  }
+
+  return series;
+});
+
+function getStatistic(
+  name:
+    | 'variance'
+    | 'average'
+    | 'avg_runs'
+    | 'completed_score_percentage'
+    | 'high_score_percentage'
+    | 'low_score_percentage'
+    | 'maximum'
+    | 'minimum',
+): number[] {
+  return props.problemStats.map((problem) =>
+    parseFloat((problem[name] || 0).toFixed(1)),
+  );
+}
+
+// yLabel = '{y}' or '{y} %'
+// yName = data type (percentage, score, etc.)
+// data = getStatistic("chart_type")
+// yMax = get maxPoints or getMaxStat
+function createChartOptions(
+  title: string,
+  yLabel: string,
+  yName: string,
+  data: number[],
+  yMax: number,
+  probs: string[],
+) {
+  return {
+    chart: {
+      type: 'bar',
+      height: data.length < 15 ? null : `${data.length * 3}%`,
+    },
+    title: {
+      text: title,
+    },
+    xAxis: {
+      categories: probs,
+      title: T.wordsProblem,
+      min: 0,
+    },
+    yAxis: {
+      min: 0,
+      max: yMax,
+      title: yName,
+    },
+    tooltip: {},
+    plotOptions: {
+      bar: {
+        dataLabels: {
+          enabled: true,
+          format: yLabel,
+        },
+      },
+    },
+    series: [
+      {
+        name: yName,
+        data: data,
+        pointWidth: 15,
+      },
+    ],
+  };
+}
+
+// get chart options
+const varianceChartOptions = computed(() => {
+  return createChartOptions(
+    T.courseStatisticsScoreVariance,
+    '{y}',
+    T.courseStatisticsVariance,
+    getStatistic('variance'),
+    getMaxStat('variance'),
+    problems.value,
+  );
+});
+const averageChartOptions = computed(() => {
+  return createChartOptions(
+    T.courseStatisticsAverageScore,
+    '{y}',
+    T.wordsScore,
+    getStatistic('average'),
+    maxPoints.value,
+    problems.value,
+  );
+});
+const highScoreChartOptions = computed(() => {
+  return createChartOptions(
+    T.courseStatisticsStudentsAbove,
+    '{y} %',
+    T.wordsPercentage,
+    getStatistic('high_score_percentage'),
+    100,
+    problems.value,
+  );
+});
+const completedScoreChartOptions = computed(() => {
+  return createChartOptions(
+    T.courseStatisticsStudentsCompleted,
+    '{y} %',
+    T.wordsPercentage,
+    getStatistic('completed_score_percentage'),
+    100,
+    problems.value,
+  );
+});
+const lowScoreChartOptions = computed(() => {
+  return createChartOptions(
+    T.courseStatisticsStudentsScored,
+    '{y} %',
+    T.wordsPercentage,
+    getStatistic('low_score_percentage'),
+    100,
+    problems.value,
+  );
+});
+const minimumChartOptions = computed(() => {
+  return createChartOptions(
+    T.courseStatisticsMinimumScore,
+    '{y}',
+    T.wordsScore,
+    getStatistic('minimum'),
+    maxPoints.value,
+    problems.value,
+  );
+});
+const maximumChartOptions = computed(() => {
+  return createChartOptions(
+    T.courseStatisticsMaximumScore,
+    '{y}',
+    T.wordsScore,
+    getStatistic('maximum'),
+    maxPoints.value,
+    problems.value,
+  );
+});
+const runsChartOptions = computed(() => {
+  return createChartOptions(
+    T.courseStatisticsAverageRuns,
+    '{y}',
+    T.wordsRuns,
+    getStatistic('avg_runs'),
+    getMaxStat('avg_runs'),
+    problems.value,
+  );
+});
+const verdictChartOptions = computed(() => {
+  return {
+    chart: {
+      type: 'bar',
+      height:
+        problems.value.length < 15 ? null : `${problems.value.length * 3}%`,
+    },
+    title: {
+      text: T.courseStatisticsVerdicts,
+    },
+    xAxis: {
+      categories: problems.value,
+      title: T.wordsProblem,
+      min: 0,
+    },
+    yAxis: {
+      min: 0,
+      max: 100,
+      title: T.wordsRuns,
+      reversedStacks: false,
+    },
+    tooltip: {},
+    plotOptions: {
+      series: {
+        stacking: 'normal',
+        pointWidth: 15,
+      },
+      bar: {
+        dataLabels: {
+          enabled: true,
+          format: '{y} %',
+        },
+      },
+    },
+    series: verdictStats.value,
+  };
+});
+
+// chart options
+const selected = ref(completedScoreChartOptions.value);
+const options = computed(() => [
+  { value: averageChartOptions.value, text: T.courseStatisticsAverageScore },
+  {
+    value: completedScoreChartOptions.value,
+    text: T.courseStatisticsStudentsCompleted,
+  },
+  {
+    value: highScoreChartOptions.value,
+    text: T.courseStatisticsStudentsAbove,
+  },
+  {
+    value: lowScoreChartOptions.value,
+    text: T.courseStatisticsStudentsScored,
+  },
+  { value: runsChartOptions.value, text: T.courseStatisticsAverageRuns },
+  { value: verdictChartOptions.value, text: T.courseStatisticsVerdicts },
+  { value: varianceChartOptions.value, text: T.courseStatisticsVariance },
+  { value: minimumChartOptions.value, text: T.courseStatisticsMinimumScore },
+  { value: maximumChartOptions.value, text: T.courseStatisticsMaximumScore },
+]);
 </script>

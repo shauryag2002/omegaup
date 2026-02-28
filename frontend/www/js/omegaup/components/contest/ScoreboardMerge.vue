@@ -6,7 +6,7 @@
     <div class="card-body">
       <div class="row align-items-end">
         <div class="form-group col-md-8" data-merge-contest-name>
-          <multiselect
+          <Multiselect
             :value="selectedContests"
             :options="contestAliases"
             :multiple="true"
@@ -15,7 +15,7 @@
             :placeholder="T.contestScoreboardMergeChoseContests"
             @remove="onRemove"
             @select="onSelect"
-          ></multiselect>
+          ></Multiselect>
         </div>
         <div class="form-group col-md-4 text-right">
           <button
@@ -96,45 +96,41 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Emit } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed } from 'vue';
 import T from '../../lang';
 import * as ui from '../../ui';
 import { types } from '../../api_types';
 import Multiselect from 'vue-multiselect';
 
-@Component({
-  components: {
-    Multiselect,
-  },
-})
-export default class ScoreboardMerge extends Vue {
-  @Prop() availableContests!: types.ContestListItem[];
-  @Prop() scoreboard!: types.MergedScoreboardEntry[];
-  @Prop() showPenalty!: boolean;
-  @Prop() aliases!: string[];
+const props = defineProps<{
+  availableContests: types.ContestListItem[];
+  scoreboard: types.MergedScoreboardEntry[];
+  showPenalty: boolean;
+  aliases: string[];
+}>();
 
-  T = T;
-  ui = ui;
-  selectedContests: string[] = [];
+const emit = defineEmits<{
+  (e: 'get-scoreboard', contests: string[]): void;
+}>();
 
-  get contestAliases(): string[] {
-    return this.availableContests.map((contest) => contest.alias);
-  }
+const selectedContests = ref<string[]>([]);
 
-  onRemove(contest: string) {
-    const index = this.selectedContests.indexOf(contest);
-    this.selectedContests.splice(index, 1);
-  }
+const contestAliases = computed((): string[] => {
+  return props.availableContests.map((contest) => contest.alias);
+});
 
-  onSelect(contest: string) {
-    this.selectedContests.push(contest);
-  }
+function onRemove(contest: string): void {
+  const index = selectedContests.value.indexOf(contest);
+  selectedContests.value.splice(index, 1);
+}
 
-  @Emit('get-scoreboard')
-  onDisplayTable(): string[] {
-    return this.selectedContests;
-  }
+function onSelect(contest: string): void {
+  selectedContests.value.push(contest);
+}
+
+function onDisplayTable(): void {
+  emit('get-scoreboard', selectedContests.value);
 }
 </script>
 

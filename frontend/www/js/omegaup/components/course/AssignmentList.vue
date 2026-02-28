@@ -23,20 +23,20 @@
                 v-tooltip="T.courseAssignmentReorder"
                 class="btn btn-link"
               >
-                <font-awesome-icon icon="arrows-alt" />
+                <FontAwesomeIcon icon="arrows-alt" />
               </button>
             </td>
             <td class="align-middle">
               <template v-if="assignment.assignment_type === 'homework'">
-                <font-awesome-icon icon="file-alt" />
+                <FontAwesomeIcon icon="file-alt" />
                 <span class="ml-2">{{ T.wordsHomework }}</span>
               </template>
               <template v-else-if="assignment.assignment_type === 'lesson'">
-                <font-awesome-icon icon="chalkboard-teacher" />
+                <FontAwesomeIcon icon="chalkboard-teacher" />
                 <span class="ml-2">{{ T.wordsLesson }}</span>
               </template>
               <template v-else>
-                <font-awesome-icon icon="list-alt" />
+                <FontAwesomeIcon icon="list-alt" />
                 <span class="ml-2">{{ T.wordsExam }}</span>
               </template>
             </td>
@@ -48,16 +48,16 @@
                 v-tooltip="T.courseAssignmentEdit"
                 data-course-edit-content-button
                 class="btn btn-link"
-                @click="$emit('emit-edit', assignment)"
+                @click="emit('emit-edit', assignment)"
               >
-                <font-awesome-icon icon="edit" />
+                <FontAwesomeIcon icon="edit" />
               </button>
               <button
                 v-tooltip="T.courseAddProblemsAdd"
                 class="btn btn-link"
-                @click="$emit('emit-add-problems', assignment)"
+                @click="emit('emit-add-problems', assignment)"
               >
-                <font-awesome-icon icon="list-alt" />
+                <FontAwesomeIcon icon="list-alt" />
               </button>
               <button
                 v-if="assignment.has_runs"
@@ -66,15 +66,15 @@
                 data-toggle="tooltip"
                 data-placement="bottom"
               >
-                <font-awesome-icon icon="trash" class="disabled" />
+                <FontAwesomeIcon icon="trash" class="disabled" />
               </button>
               <button
                 v-else
                 v-tooltip="T.courseAssignmentDelete"
                 class="btn btn-link"
-                @click="$emit('emit-delete', assignment)"
+                @click="emit('emit-delete', assignment)"
               >
-                <font-awesome-icon icon="trash" />
+                <FontAwesomeIcon icon="trash" />
               </button>
             </td>
           </tr>
@@ -104,7 +104,7 @@
                 data-course-add-new-content
                 class="btn btn-primary"
                 type="submit"
-                @click.prevent="$emit('emit-new')"
+                @click.prevent="emit('emit-new')"
               >
                 {{ T.courseAddContent }}
               </button>
@@ -116,72 +116,68 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import { omegaup } from '../../omegaup';
 import { types } from '../../api_types';
 import T from '../../lang';
 import 'v-tooltip/dist/v-tooltip.css';
-import { VTooltip } from 'v-tooltip';
+import { VTooltip as vTooltip } from 'v-tooltip';
 
-import {
-  FontAwesomeIcon,
-  FontAwesomeLayers,
-  FontAwesomeLayersText,
-} from '@fortawesome/vue-fontawesome';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 library.add(fas);
 
-@Component({
-  components: {
-    'font-awesome-icon': FontAwesomeIcon,
-    'font-awesome-layers': FontAwesomeLayers,
-    'font-awesome-layers-text': FontAwesomeLayersText,
-  },
-  directives: {
-    tooltip: VTooltip,
-  },
-})
-export default class CourseAssignmentList extends Vue {
-  @Prop() content!: types.CourseAssignment[];
-  @Prop() courseAlias!: string;
-  @Prop() assignmentFormMode!: omegaup.AssignmentFormMode;
+const AssignmentFormMode = omegaup.AssignmentFormMode;
 
-  contentOrderChanged = false;
-  T = T;
-  AssignmentFormMode = omegaup.AssignmentFormMode;
-  currentContent: types.CourseAssignment[] = this.content;
+const props = defineProps<{
+  content: types.CourseAssignment[];
+  courseAlias: string;
+  assignmentFormMode: omegaup.AssignmentFormMode;
+}>();
 
-  assignmentUrl(assignment: omegaup.Assignment): string {
-    return `/course/${this.courseAlias}/assignment/${assignment.alias}/`;
-  }
+const emit = defineEmits<{
+  (e: 'emit-edit', assignment: types.CourseAssignment): void;
+  (e: 'emit-add-problems', assignment: types.CourseAssignment): void;
+  (e: 'emit-delete', assignment: types.CourseAssignment): void;
+  (e: 'emit-new'): void;
+  (e: 'emit-sort-content', courseAlias: string, aliases: string[]): void;
+}>();
 
-  sortContent(event: any): void {
-    this.currentContent.splice(
-      event.newIndex,
-      0,
-      this.currentContent.splice(event.oldIndex, 1)[0],
-    );
-    this.contentOrderChanged = true;
-  }
+const contentOrderChanged = ref(false);
+const currentContent = ref(props.content);
 
-  saveNewOrder(): void {
-    this.contentOrderChanged = false;
-    this.$emit(
-      'emit-sort-content',
-      this.courseAlias,
-      this.currentContent.map(
-        (assignment: types.CourseAssignment) => assignment.alias,
-      ),
-    );
-  }
-
-  @Watch('content')
-  onContentChanged(newValue: types.CourseAssignment[]): void {
-    this.currentContent = newValue;
-  }
+function assignmentUrl(assignment: omegaup.Assignment): string {
+  return `/course/${props.courseAlias}/assignment/${assignment.alias}/`;
 }
+
+function sortContent(event: any): void {
+  currentContent.value.splice(
+    event.newIndex,
+    0,
+    currentContent.value.splice(event.oldIndex, 1)[0],
+  );
+  contentOrderChanged.value = true;
+}
+
+function saveNewOrder(): void {
+  contentOrderChanged.value = false;
+  emit(
+    'emit-sort-content',
+    props.courseAlias,
+    currentContent.value.map(
+      (assignment: types.CourseAssignment) => assignment.alias,
+    ),
+  );
+}
+
+watch(
+  () => props.content,
+  (newValue: types.CourseAssignment[]) => {
+    currentContent.value = newValue;
+  },
+);
 </script>
 
 <style lang="scss" scoped>

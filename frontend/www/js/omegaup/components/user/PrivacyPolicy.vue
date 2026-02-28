@@ -2,7 +2,7 @@
   <div class="card">
     <h3 class="card-header">{{ T.wordsPrivacyPolicy }}</h3>
     <div class="card-body">
-      <omegaup-markdown :markdown="policyMarkdown"></omegaup-markdown>
+      <OmegaupMarkdown :markdown="policyMarkdown" />
       <form @submit.prevent="$emit('submit')">
         <div class="top-margin text-center">
           <label class="mr-5"
@@ -23,23 +23,26 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import T from '../../lang';
 
-import omegaup_Markdown from '../Markdown.vue';
+import OmegaupMarkdown from '../Markdown.vue';
 
-@Component({
-  components: {
-    'omegaup-markdown': omegaup_Markdown,
+const props = withDefaults(
+  defineProps<{
+    policyMarkdown: string;
+    agreed?: boolean;
+    saved: boolean;
+  }>(),
+  {
+    agreed: false,
   },
-})
-export default class UserPrivacyPolicy extends Vue {
-  @Prop() policyMarkdown!: string;
-  @Prop({ default: false }) agreed!: boolean;
-  @Prop() saved!: boolean;
+);
 
-  T = T;
-  currentAgreed = this.agreed;
-}
+defineEmits<{
+  (e: 'submit'): void;
+}>();
+
+const currentAgreed = ref(props.agreed);
 </script>

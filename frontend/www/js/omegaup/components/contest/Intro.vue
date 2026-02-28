@@ -14,11 +14,11 @@
         >
           <!-- Wait for contest start -->
           <div v-if="now < contest.start_time.getTime()">
-            <omegaup-countdown
+            <OmegaupCountdown
               :target-time="contest.start_time"
               :countdown-format="omegaup.CountdownFormat.ContestHasNotStarted"
               @finish="now = Date.now()"
-            ></omegaup-countdown>
+            ></OmegaupCountdown>
           </div>
 
           <div v-if="now > contest.start_time.getTime()">
@@ -36,11 +36,11 @@
               >
                 {{ T.aboutToStart }}
               </p>
-              <omegaup-markdown
+              <OmegaupMarkdown
                 v-if="needsBasicInformation"
                 :markdown="T.contestBasicInformationNeeded"
               >
-              </omegaup-markdown>
+              </OmegaupMarkdown>
               <ul
                 v-if="needsBasicInformation"
                 :class="['list-unstyled', 'text-muted', 'font-weight-light']"
@@ -66,9 +66,9 @@
               </ul>
 
               <template v-if="requestsUserInformation !== 'no'">
-                <omegaup-markdown
+                <OmegaupMarkdown
                   :markdown="(statement && statement.markdown) || ''"
-                ></omegaup-markdown>
+                ></OmegaupMarkdown>
                 <p>
                   <label>
                     <input
@@ -101,7 +101,7 @@
             <!-- Must register -->
             <form
               v-else
-              @submit.prevent="$emit('request-access', contest.alias)"
+              @submit.prevent="emit('request-access', contest.alias)"
             >
               <template v-if="!contest.user_registration_requested">
                 <p>{{ T.mustRegisterToJoinContest }}</p>
@@ -155,7 +155,7 @@
       <hr />
       <div>
         <h3 class="ml-4">{{ T.registerForContestChallenges }}</h3>
-        <omegaup-markdown :markdown="contest.description"></omegaup-markdown>
+        <OmegaupMarkdown :markdown="contest.description"></OmegaupMarkdown>
       </div>
       <div>
         <h3 class="ml-4">{{ T.registerForContestRules }}</h3>
@@ -188,151 +188,147 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
 import { omegaup } from '../../omegaup';
-import omegaup_Countdown from '../Countdown.vue';
-import omegaup_Markdown from '../Markdown.vue';
+import OmegaupCountdown from '../Countdown.vue';
+import OmegaupMarkdown from '../Markdown.vue';
 
-@Component({
-  components: {
-    'omegaup-countdown': omegaup_Countdown,
-    'omegaup-markdown': omegaup_Markdown,
+const props = withDefaults(
+  defineProps<{
+    contest: types.ContestAdminDetails;
+    isLoggedIn: boolean;
+    requestsUserInformation: string;
+    needsBasicInformation: boolean;
+    statement: types.PrivacyStatement;
+    shouldShowModalToLoginWithRegisteredIdentity?: boolean;
+    userBasicInformation: types.UserBasicInformation;
+  }>(),
+  {
+    shouldShowModalToLoginWithRegisteredIdentity: false,
   },
-})
-export default class ContestIntro extends Vue {
-  @Prop() contest!: types.ContestAdminDetails;
-  @Prop() isLoggedIn!: boolean;
-  @Prop() requestsUserInformation!: string;
-  @Prop() needsBasicInformation!: boolean;
-  @Prop() statement!: types.PrivacyStatement;
-  @Prop({ default: false })
-  shouldShowModalToLoginWithRegisteredIdentity!: boolean;
-  @Prop() userBasicInformation!: types.UserBasicInformation;
+);
 
-  T = T;
-  ui = ui;
-  omegaup = omegaup;
-  penaltyTypes = {
-    none: T.contestNewFormNoPenalty,
-    problem_open: T.contestNewFormByProblem,
-    contest_start: T.contestNewFormByContests,
-    runtime: T.contestNewFormByRuntime,
+const emit = defineEmits<{
+  (e: 'open-contest', request: types.ConsentStatement): void;
+  (e: 'request-access', alias: string): void;
+}>();
+
+const penaltyTypes: Record<string, string> = {
+  none: T.contestNewFormNoPenalty,
+  problem_open: T.contestNewFormByProblem,
+  contest_start: T.contestNewFormByContests,
+  runtime: T.contestNewFormByRuntime,
+};
+const feedbackTypes: Record<string, string> = {
+  detailed: T.contestNewFormImmediateFeedbackDesc,
+  none: '',
+  summary: T.contestNewFormImmediateSummaryFeedbackDesc,
+};
+const shareUserInformation = ref<boolean | null>(null);
+const now = ref(Date.now());
+
+const redirectURL = computed((): string => {
+  const url = encodeURIComponent(window.location.pathname);
+  return `/login/?redirect=${url}`;
+});
+
+const logoutLink = computed((): string => {
+  const url = encodeURIComponent(window.location.pathname);
+  return `/logout/?redirect=${url}`;
+});
+
+const differentStartsDescription = computed((): string => {
+  return ui.formatString(T.contestIntroDifferentStarts, {
+    window_length: formatTimeInRules(props.contest?.window_length ?? 0),
+  });
+});
+
+const scoreboardDescription = computed((): string => {
+  const contest = props.contest;
+  if (!contest.scoreboard || !contest.finish_time || !contest.start_time) {
+    return '';
+  }
+  if (contest.scoreboard === 100) {
+    return T.contestIntroScoreboardTimePercentOneHundred;
+  }
+  if (contest.scoreboard === 0) {
+    return T.contestIntroScoreboardTimePercentZero;
+  }
+  const minutesPercentage = Math.floor(
+    (contest.scoreboard / 100) *
+      ((contest.finish_time.getTime() - contest.start_time.getTime()) / 60000),
+  );
+  return ui.formatString(T.contestIntroScoreboardTimePercent, {
+    window_length: formatTimeInRules(minutesPercentage),
+  });
+});
+
+const submissionsGapDescription = computed((): string => {
+  if (!props.contest.submissions_gap) {
+    return '';
+  }
+  return ui.formatString(T.contestIntroSubmissionsSeparationDesc, {
+    window_length: formatTimeInRules(props.contest.submissions_gap / 60),
+  });
+});
+
+const penaltyDescription = computed((): string => {
+  return ui.formatString(T.contestIntroPenaltyDesc, {
+    window_length: formatTimeInRules(props.contest.penalty),
+  });
+});
+
+const pointsDecayDescription = computed((): string => {
+  return ui.formatString(T.contestNewFormDecrementFactor, {
+    window_length: props.contest.points_decay_factor,
+  });
+});
+
+const isButtonDisabled = computed((): boolean => {
+  return (
+    props.needsBasicInformation ||
+    (shareUserInformation.value === null &&
+      props.requestsUserInformation !== 'no') ||
+    (props.requestsUserInformation === 'required' &&
+      !shareUserInformation.value)
+  );
+});
+
+const userInfoStatus = computed(() => {
+  return {
+    country: props.userBasicInformation?.country
+      ? 'text-success'
+      : 'text-danger',
+    state: props.userBasicInformation?.state ? 'text-success' : 'text-danger',
+    school: props.userBasicInformation?.school ? 'text-success' : 'text-danger',
   };
-  feedbackTypes = {
-    detailed: T.contestNewFormImmediateFeedbackDesc,
-    none: '',
-    summary: T.contestNewFormImmediateSummaryFeedbackDesc,
+});
+
+function formatTimeInRules(timeInMinutes?: number): string {
+  if (!timeInMinutes) {
+    return '';
+  }
+  const hours = Math.floor(timeInMinutes / 60);
+  if (hours <= 0) {
+    return `${timeInMinutes}m`;
+  }
+  const minutes = timeInMinutes % 60;
+  return `${hours}h${minutes}m`;
+}
+
+function onStartContest(): void {
+  const request: types.ConsentStatement = {
+    contest_alias: props.contest.alias,
+    share_user_information: shareUserInformation.value ?? false,
   };
-  shareUserInformation = null;
-  now = Date.now();
-
-  get redirectURL(): string {
-    const url = encodeURIComponent(window.location.pathname);
-    return `/login/?redirect=${url}`;
+  if (props.requestsUserInformation !== 'no') {
+    request.privacy_git_object_id = props.statement.gitObjectId;
+    request.statement_type = props.statement.statementType;
   }
-
-  get logoutLink(): string {
-    const url = encodeURIComponent(window.location.pathname);
-    return `/logout/?redirect=${url}`;
-  }
-
-  get differentStartsDescription(): string {
-    return ui.formatString(T.contestIntroDifferentStarts, {
-      window_length: this.formatTimeInRules(this.contest?.window_length ?? 0),
-    });
-  }
-
-  get scoreboardDescription(): string {
-    const contest = this.contest;
-    if (!contest.scoreboard || !contest.finish_time || !contest.start_time) {
-      return '';
-    }
-    if (contest.scoreboard === 100) {
-      return T.contestIntroScoreboardTimePercentOneHundred;
-    }
-    if (contest.scoreboard === 0) {
-      return T.contestIntroScoreboardTimePercentZero;
-    }
-    const minutesPercentage = Math.floor(
-      (contest.scoreboard / 100) *
-        ((contest.finish_time.getTime() - contest.start_time.getTime()) /
-          60000),
-    );
-    return ui.formatString(T.contestIntroScoreboardTimePercent, {
-      window_length: this.formatTimeInRules(minutesPercentage),
-    });
-  }
-
-  get submissionsGapDescription(): string {
-    if (!this.contest.submissions_gap) {
-      return '';
-    }
-    return ui.formatString(T.contestIntroSubmissionsSeparationDesc, {
-      window_length: this.formatTimeInRules(this.contest.submissions_gap / 60),
-    });
-  }
-
-  get penaltyDescription(): string {
-    return ui.formatString(T.contestIntroPenaltyDesc, {
-      window_length: this.formatTimeInRules(this.contest.penalty),
-    });
-  }
-
-  get pointsDecayDescription(): string {
-    return ui.formatString(T.contestNewFormDecrementFactor, {
-      window_length: this.contest.points_decay_factor,
-    });
-  }
-
-  get isButtonDisabled(): boolean {
-    return (
-      this.needsBasicInformation ||
-      (this.shareUserInformation === null &&
-        this.requestsUserInformation !== 'no') ||
-      (this.requestsUserInformation === 'required' &&
-        !this.shareUserInformation)
-    );
-  }
-
-  get userInfoStatus() {
-    return {
-      country: this.userBasicInformation?.country
-        ? 'text-success'
-        : 'text-danger',
-      state: this.userBasicInformation?.state ? 'text-success' : 'text-danger',
-      school: this.userBasicInformation?.school
-        ? 'text-success'
-        : 'text-danger',
-    };
-  }
-
-  formatTimeInRules(timeInMinutes?: number): string {
-    if (!timeInMinutes) {
-      return '';
-    }
-    const hours = Math.floor(timeInMinutes / 60);
-    if (hours <= 0) {
-      return `${timeInMinutes}m`;
-    }
-    const minutes = timeInMinutes % 60;
-    return `${hours}h${minutes}m`;
-  }
-
-  onStartContest(): void {
-    const request: types.ConsentStatement = {
-      contest_alias: this.contest.alias,
-      share_user_information: this.shareUserInformation ?? false,
-    };
-    if (this.requestsUserInformation !== 'no') {
-      request.privacy_git_object_id = this.statement.gitObjectId;
-      request.statement_type = this.statement.statementType;
-    }
-
-    this.$emit('open-contest', request);
-  }
+  emit('open-contest', request);
 }
 </script>

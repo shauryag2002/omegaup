@@ -2,12 +2,12 @@
   <tr :class="studentProgress.username">
     <th scope="row" class="text-center align-middle">
       <a :href="studentProgressUrl">
-        <omegaup-user-username
+        <OmegaupUserUsername
           :classname="studentProgress.classname"
           :username="studentProgress.username"
           :name="studentProgress.name"
           :country="studentProgress.country_id"
-        ></omegaup-user-username>
+        ></OmegaupUserUsername>
       </a>
     </th>
     <td data-global-score class="text-center font-weight-bold align-middle">
@@ -53,136 +53,121 @@
   </tr>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import { types } from '../../api_types';
 import * as ui from '../../ui';
 import T from '../../lang';
 import 'v-tooltip/dist/v-tooltip.css';
-import { VTooltip } from 'v-tooltip';
-import user_Username from '../user/Username.vue';
+import { VTooltip as vTooltip } from 'v-tooltip';
+import OmegaupUserUsername from '../user/Username.vue';
 
-@Component({
-  directives: {
-    tooltip: VTooltip,
+const props = defineProps<{
+  courseAlias: string;
+  studentProgress: types.StudentProgressInCourse;
+  assignmentsProblems: types.AssignmentsProblemsPoints[];
+}>();
+
+function getProgressByAssignment(assignmentAlias: string): string {
+  const score =
+    assignmentAlias in props.studentProgress.assignments
+      ? props.studentProgress.assignments[assignmentAlias].progress
+      : 0;
+  return `${score.toFixed(0)}%`;
+}
+
+function getPointsByAssignment(assignmentAlias: string): string {
+  const score =
+    assignmentAlias in props.studentProgress.assignments
+      ? props.studentProgress.assignments[assignmentAlias].score
+      : 0;
+  return ui.formatString(T.studentProgressPoints, {
+    points: score.toFixed(0),
+  });
+}
+
+function getProgressByAssignmentProblem(
+  assignmentAlias: string,
+  problemAlias: string,
+): string {
+  const score =
+    assignmentAlias in props.studentProgress.assignments &&
+    problemAlias in props.studentProgress.assignments[assignmentAlias].problems
+      ? props.studentProgress.assignments[assignmentAlias].problems[
+          problemAlias
+        ].progress
+      : 0;
+  return score.toFixed(0);
+}
+
+function getPointsByAssignmentProblem(
+  assignmentAlias: string,
+  problemAlias: string,
+): string {
+  const score =
+    assignmentAlias in props.studentProgress.assignments &&
+    problemAlias in props.studentProgress.assignments[assignmentAlias].problems
+      ? props.studentProgress.assignments[assignmentAlias].problems[
+          problemAlias
+        ].progress
+      : 0;
+  return score.toFixed(0);
+}
+
+function getProblemColor(
+  assignmentAlias: string,
+  problem: {
+    alias: string;
+    isExtraProblem: boolean;
+    order: number;
+    points: number;
+    title: string;
   },
-  components: {
-    'omegaup-user-username': user_Username,
+): string {
+  if (problem.points === 0) {
+    return 'invisible';
+  }
+
+  const problemProgress =
+    assignmentAlias in props.studentProgress.assignments &&
+    problem.alias in props.studentProgress.assignments[assignmentAlias].problems
+      ? props.studentProgress.assignments[assignmentAlias].problems[
+          problem.alias
+        ].progress
+      : 0;
+  if (problemProgress > 70) return 'box bg-green';
+  if (problemProgress >= 50) return 'box bg-yellow';
+  if (problemProgress > 0) return 'box bg-red';
+  return 'box bg-black';
+}
+
+function getProgressTooltipDescription(
+  assignmentAlias: string,
+  problem: {
+    alias: string;
+    isExtraProblem: boolean;
+    order: number;
+    points: number;
+    title: string;
   },
-})
-export default class StudentProgress extends Vue {
-  @Prop() courseAlias!: string;
-  @Prop() studentProgress!: types.StudentProgressInCourse;
-  @Prop() assignmentsProblems!: types.AssignmentsProblemsPoints[];
+): string {
+  return ui.formatString(T.studentProgressTooltipDescription, {
+    problem: problem.title,
+    score: getPointsByAssignmentProblem(assignmentAlias, problem.alias),
+    progress: getProgressByAssignmentProblem(assignmentAlias, problem.alias),
+    points: problem.points,
+  });
+}
 
-  T = T;
-  ui = ui;
+const studentProgressUrl = computed<string>(() => {
+  return `/course/${props.courseAlias}/student/${props.studentProgress.username}/`;
+});
 
-  getProgressByAssignment(assignmentAlias: string): string {
-    const score =
-      assignmentAlias in this.studentProgress.assignments
-        ? this.studentProgress.assignments[assignmentAlias].progress
-        : 0;
-    return `${score.toFixed(0)}%`;
-  }
-
-  getPointsByAssignment(assignmentAlias: string): string {
-    const score =
-      assignmentAlias in this.studentProgress.assignments
-        ? this.studentProgress.assignments[assignmentAlias].score
-        : 0;
-    return ui.formatString(T.studentProgressPoints, {
-      points: score.toFixed(0),
-    });
-  }
-
-  getProgressByAssignmentProblem(
-    assignmentAlias: string,
-    problemAlias: string,
-  ): string {
-    const score =
-      assignmentAlias in this.studentProgress.assignments &&
-      problemAlias in this.studentProgress.assignments[assignmentAlias].problems
-        ? this.studentProgress.assignments[assignmentAlias].problems[
-            problemAlias
-          ].progress
-        : 0;
-    return score.toFixed(0);
-  }
-
-  getPointsByAssignmentProblem(
-    assignmentAlias: string,
-    problemAlias: string,
-  ): string {
-    const score =
-      assignmentAlias in this.studentProgress.assignments &&
-      problemAlias in this.studentProgress.assignments[assignmentAlias].problems
-        ? this.studentProgress.assignments[assignmentAlias].problems[
-            problemAlias
-          ].progress
-        : 0;
-    return score.toFixed(0);
-  }
-
-  getProblemColor(
-    assignmentAlias: string,
-    problem: {
-      alias: string;
-      isExtraProblem: boolean;
-      order: number;
-      points: number;
-      title: string;
-    },
-  ): string {
-    if (problem.points === 0) {
-      return 'invisible';
-    }
-
-    const problemProgress =
-      assignmentAlias in this.studentProgress.assignments &&
-      problem.alias in
-        this.studentProgress.assignments[assignmentAlias].problems
-        ? this.studentProgress.assignments[assignmentAlias].problems[
-            problem.alias
-          ].progress
-        : 0;
-    if (problemProgress > 70) return 'box bg-green';
-    if (problemProgress >= 50) return 'box bg-yellow';
-    if (problemProgress > 0) return 'box bg-red';
-    return 'box bg-black';
-  }
-
-  getProgressTooltipDescription(
-    assignmentAlias: string,
-    problem: {
-      alias: string;
-      isExtraProblem: boolean;
-      order: number;
-      points: number;
-      title: string;
-    },
-  ): string {
-    return ui.formatString(T.studentProgressTooltipDescription, {
-      problem: problem.title,
-      score: this.getPointsByAssignmentProblem(assignmentAlias, problem.alias),
-      progress: this.getProgressByAssignmentProblem(
-        assignmentAlias,
-        problem.alias,
-      ),
-      points: problem.points,
-    });
-  }
-
-  get studentProgressUrl(): string {
-    return `/course/${this.courseAlias}/student/${this.studentProgress.username}/`;
-  }
-
-  getStudentProgressUrlWithAssignmentAndProblem(
-    selectedAssignment: string,
-    selectedProblem: string,
-  ): string {
-    return `/course/${this.courseAlias}/student/${this.studentProgress.username}/assignment/${selectedAssignment}/#${selectedProblem}`;
-  }
+function getStudentProgressUrlWithAssignmentAndProblem(
+  selectedAssignment: string,
+  selectedProblem: string,
+): string {
+  return `/course/${props.courseAlias}/student/${props.studentProgress.username}/assignment/${selectedAssignment}/#${selectedProblem}`;
 }
 </script>
 

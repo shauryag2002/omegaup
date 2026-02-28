@@ -40,15 +40,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
-
+<script setup lang="ts">
 import T from '../../lang';
-
-@Component
-export default class Intro extends Vue {
-  T = T;
-}
 </script>
 
 <style lang="scss" scoped>

@@ -30,42 +30,49 @@
   </b-collapse>
 </template>
 
-<script lang="ts">
-import { Component, Prop, Vue, Watch, Inject } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed, watch, inject } from 'vue';
 import T from '../../../../lang';
 import * as ui from '@/js/omegaup/ui';
-@Component
-export default class DeleteConfirmationForm extends Vue {
-  @Inject('problemAlias') readonly alias!: string;
-  @Prop({ required: true }) visible!: boolean;
-  @Prop({ required: true }) itemName!: string;
-  @Prop({ required: false }) itemId!: string;
-  @Prop({ required: true }) onCancel!: () => void;
-  T = T;
-  commitMessage: string = '';
-  @Watch('visible')
-  onVisibleChange(newValue: boolean) {
+
+const alias = inject<string>('problemAlias')!;
+
+const props = defineProps<{
+  visible: boolean;
+  itemName: string;
+  itemId?: string;
+  onCancel: () => void;
+}>();
+
+const commitMessage = ref('');
+
+watch(
+  () => props.visible,
+  (newValue: boolean) => {
     if (newValue) {
-      this.commitMessage = `${T.problemEditDeletingPrefix} ${this.itemName}`;
+      commitMessage.value = `${T.problemEditDeletingPrefix} ${props.itemName}`;
     } else {
-      this.commitMessage = '';
+      commitMessage.value = '';
     }
+  },
+);
+
+const contentsPayload = computed((): string => {
+  return JSON.stringify({
+    id: props.itemId,
+  });
+});
+
+function onSubmit(e: Event) {
+  if (!commitMessage.value.trim()) {
+    ui.error(T.editFieldRequired);
+    e.preventDefault();
   }
-  get contentsPayload(): string {
-    return JSON.stringify({
-      id: this.itemId,
-    });
-  }
-  onSubmit(e: Event) {
-    if (!this.commitMessage.trim()) {
-      ui.error(T.editFieldRequired);
-      e.preventDefault();
-    }
-  }
-  handleCancel() {
-    this.onCancel();
-    this.commitMessage = '';
-  }
+}
+
+function handleCancel() {
+  props.onCancel();
+  commitMessage.value = '';
 }
 </script>
 

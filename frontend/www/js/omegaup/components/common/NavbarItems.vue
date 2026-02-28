@@ -239,44 +239,41 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import T from '../../lang';
 import { getExternalUrl } from '../../urlHelper';
 
-@Component
-export default class NavbarItems extends Vue {
-  @Prop() omegaUpLockDown!: boolean;
-  @Prop() inContest!: boolean;
-  @Prop() isLoggedIn!: boolean;
-  @Prop() isReviewer!: boolean;
-  @Prop() isAdmin!: boolean;
-  @Prop() isMainUserIdentity!: boolean;
-  @Prop() navbarSection!: string;
-  @Prop() isUnder13User!: boolean;
+defineProps<{
+  omegaUpLockDown: boolean;
+  inContest: boolean;
+  isLoggedIn: boolean;
+  isReviewer: boolean;
+  isAdmin: boolean;
+  isMainUserIdentity: boolean;
+  navbarSection: string;
+  isUnder13User: boolean;
+}>();
 
-  T = T;
+const OmegaUpBlogURL = computed((): string => {
+  return getExternalUrl('OmegaUpBlogURL');
+});
 
-  get OmegaUpBlogURL(): string {
-    return getExternalUrl('OmegaUpBlogURL');
-  }
+const YouTubeTutorialsURL = computed((): string => {
+  return getExternalUrl('YouTubeTutorialsURL');
+});
 
-  get YouTubeTutorialsURL(): string {
-    return getExternalUrl('YouTubeTutorialsURL');
-  }
+const DiscordInviteURL = computed((): string => {
+  return getExternalUrl('DiscordInviteURL');
+});
 
-  get DiscordInviteURL(): string {
-    return getExternalUrl('DiscordInviteURL');
-  }
+const AlgorithmsBookURL = computed((): string => {
+  return getExternalUrl('AlgorithmsBookURL');
+});
 
-  get AlgorithmsBookURL(): string {
-    return getExternalUrl('AlgorithmsBookURL');
-  }
-
-  get CompetitiveProgrammingBookURL(): string {
-    return getExternalUrl('CompetitiveProgrammingBookURL');
-  }
-}
+const CompetitiveProgrammingBookURL = computed((): string => {
+  return getExternalUrl('CompetitiveProgrammingBookURL');
+});
 </script>
 
 <style lang="scss" scoped>

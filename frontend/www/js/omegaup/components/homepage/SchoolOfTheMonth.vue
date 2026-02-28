@@ -12,11 +12,11 @@
       class="card-body text-center d-flex flex-column justify-content-center"
     >
       <h5 class="card-title">
-        <omegaup-countryflag
+        <OmegaupCountryflag
           v-if="schoolOfTheMonth.country_id !== null"
           :country="schoolOfTheMonth.country_id"
           class="mr-1"
-        ></omegaup-countryflag>
+        ></OmegaupCountryflag>
         <a :href="`/schools/profile/${schoolOfTheMonth.school_id}/`">{{
           schoolOfTheMonth.name
         }}</a>
@@ -35,10 +35,10 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import { omegaup } from '../../omegaup';
-import CountryFlag from '../CountryFlag.vue';
+import OmegaupCountryflag from '../CountryFlag.vue';
 import T from '../../lang';
 import { getBlogUrl } from '../../urlHelper';
 
@@ -47,21 +47,13 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 library.add(faInfoCircle);
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-    'omegaup-countryflag': CountryFlag,
-  },
-})
-export default class SchoolOfTheMonth extends Vue {
-  @Prop() schoolOfTheMonth!: omegaup.SchoolOfTheMonth;
+defineProps<{
+  schoolOfTheMonth: omegaup.SchoolOfTheMonth;
+}>();
 
-  T = T;
-
-  get NewSchoolofTheMonthFeatureURL(): string {
-    return getBlogUrl('NewSchoolofTheMonthFeatureURL');
-  }
-}
+const NewSchoolofTheMonthFeatureURL = computed<string>(() => {
+  return getBlogUrl('NewSchoolofTheMonthFeatureURL');
+});
 </script>
 
 <style lang="scss" scoped>

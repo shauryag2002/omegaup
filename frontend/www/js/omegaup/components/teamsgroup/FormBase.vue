@@ -6,7 +6,7 @@
         class="needs-validation"
         data-teams-group
         @submit.prevent="
-          $emit('submit', {
+          emit('submit', {
             name: currentName,
             description: currentDescription,
             numberOfContestants: currentNumberOfContestants,
@@ -89,47 +89,59 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch, Emit } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import T from '../../lang';
 
-@Component
-export default class TeamsGroupFormBase extends Vue {
-  @Prop() alias!: null | string;
-  @Prop() description!: null | string;
-  @Prop() name!: null | string;
-  @Prop({ default: 3 }) numberOfContestants!: number;
-  @Prop({ default: 10 }) maxNumberOfContestants!: number;
-  @Prop({ default: 1 }) minNumberOfContestants!: number;
+const props = withDefaults(
+  defineProps<{
+    alias: string | null;
+    description: string | null;
+    name: string | null;
+    numberOfContestants?: number;
+    maxNumberOfContestants?: number;
+    minNumberOfContestants?: number;
+  }>(),
+  {
+    numberOfContestants: 3,
+    maxNumberOfContestants: 10,
+    minNumberOfContestants: 1,
+  },
+);
 
-  T = T;
-  currentAlias: null | string = this.alias;
-  currentDescription: null | string = this.description;
-  currentName: null | string = this.name;
-  currentNumberOfContestants: number = this.numberOfContestants;
+const emit = defineEmits<{
+  (
+    e: 'submit',
+    payload: {
+      name: string | null;
+      description: string | null;
+      numberOfContestants: number;
+    },
+  ): void;
+  (e: 'update:alias', value: string | null): void;
+  (e: 'update:description', value: string | null): void;
+  (e: 'update:name', value: string | null): void;
+  (e: 'update:numberOfContestants', value: number): void;
+}>();
 
-  @Watch('currentAlias')
-  @Emit('update:alias')
-  onAliasUpdated(newValue: string): string {
-    return newValue;
-  }
+const currentAlias = ref<string | null>(props.alias);
+const currentDescription = ref<string | null>(props.description);
+const currentName = ref<string | null>(props.name);
+const currentNumberOfContestants = ref(props.numberOfContestants);
 
-  @Watch('currentDescription')
-  @Emit('update:description')
-  onDescriptionUpdated(newValue: string): string {
-    return newValue;
-  }
+watch(currentAlias, (newValue) => {
+  emit('update:alias', newValue);
+});
 
-  @Watch('currentName')
-  @Emit('update:name')
-  onNameUpdated(newValue: string): string {
-    return newValue;
-  }
+watch(currentDescription, (newValue) => {
+  emit('update:description', newValue);
+});
 
-  @Watch('currentNumberOfContestants')
-  @Emit('update:numberOfContestants')
-  onNumberOfContestantsUpdated(newValue: number): number {
-    return newValue;
-  }
-}
+watch(currentName, (newValue) => {
+  emit('update:name', newValue);
+});
+
+watch(currentNumberOfContestants, (newValue) => {
+  emit('update:numberOfContestants', newValue);
+});
 </script>

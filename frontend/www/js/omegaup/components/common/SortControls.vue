@@ -12,8 +12,8 @@
   </span>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import { omegaup } from '../../omegaup';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
@@ -33,38 +33,42 @@ library.add(
   faExchangeAlt,
 );
 
-@Component({
-  components: {
-    FontAwesomeIcon,
+const props = withDefaults(
+  defineProps<{
+    column: string;
+    sortOrder: omegaup.SortOrder;
+    columnType?: omegaup.ColumnType;
+    columnName: string;
+  }>(),
+  {
+    columnType: omegaup.ColumnType.Number,
   },
-})
-export default class SortControls extends Vue {
-  @Prop() column!: string;
-  @Prop() sortOrder!: omegaup.SortOrder;
-  @Prop({ default: omegaup.ColumnType.Number }) columnType!: omegaup.ColumnType;
-  @Prop() columnName!: string;
+);
 
-  get iconDisplayed(): string {
-    if (this.sortOrder === omegaup.SortOrder.Descending) {
-      if (this.columnType === omegaup.ColumnType.Number) {
-        return 'sort-amount-down';
-      }
-      return 'sort-alpha-down';
+defineEmits<{
+  (e: 'apply-filter', column: string, toggleSort: string): void;
+}>();
+
+const iconDisplayed = computed((): string => {
+  if (props.sortOrder === omegaup.SortOrder.Descending) {
+    if (props.columnType === omegaup.ColumnType.Number) {
+      return 'sort-amount-down';
     }
-    if (this.columnType === omegaup.ColumnType.Number) {
-      return 'sort-amount-up';
-    }
-    return 'sort-alpha-up';
+    return 'sort-alpha-down';
   }
+  if (props.columnType === omegaup.ColumnType.Number) {
+    return 'sort-amount-up';
+  }
+  return 'sort-alpha-up';
+});
 
-  get selected(): boolean {
-    return this.column === this.columnName;
-  }
+const selected = computed((): boolean => {
+  return props.column === props.columnName;
+});
 
-  get toggleSort(): string {
-    return this.sortOrder === omegaup.SortOrder.Ascending
-      ? omegaup.SortOrder.Descending
-      : omegaup.SortOrder.Ascending;
-  }
-}
+const toggleSort = computed((): string => {
+  return props.sortOrder === omegaup.SortOrder.Ascending
+    ? omegaup.SortOrder.Descending
+    : omegaup.SortOrder.Ascending;
+});
 </script>

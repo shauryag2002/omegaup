@@ -91,8 +91,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue';
 import T from '../../lang';
 import { LinkableResource } from '../../linkable_resource';
 
@@ -101,75 +101,81 @@ interface SortOption {
   title: string;
 }
 
-/**
- * Creates a two-dimensional paginated table, with the number of columns passed
- * as a prop and the number of rows being calculated taking into account the number
- * of items per page, total items and the number of columns.
- */
-@Component
-export default class GridPaginator extends Vue {
-  @Prop() items!: LinkableResource[];
-  @Prop() itemsPerPage!: number;
-  @Prop({ default: 3 }) columns!: number;
-  @Prop() title!: string;
-  @Prop({ default: false }) showPageOffset!: boolean;
-  @Prop({ default: false }) shouldShowFilterInput!: boolean;
-  @Prop({ default: () => [] }) sortOptions!: SortOption[];
+const props = withDefaults(
+  defineProps<{
+    items: LinkableResource[];
+    itemsPerPage: number;
+    columns?: number;
+    title: string;
+    showPageOffset?: boolean;
+    shouldShowFilterInput?: boolean;
+    sortOptions?: SortOption[];
+  }>(),
+  {
+    columns: 3,
+    showPageOffset: false,
+    shouldShowFilterInput: false,
+    sortOptions: () => [],
+  },
+);
 
-  private T = T;
-  private currentPageNumber = 0;
-  private currentSortOption =
-    this.sortOptions.length > 0 ? this.sortOptions[0].value : '';
-  filter: null | string = null;
-  filteredItems: LinkableResource[] = this.items;
+const emit = defineEmits<{
+  (e: 'sort-option-change', value: string): void;
+}>();
 
-  private nextPage(): void {
-    this.currentPageNumber++;
+const currentPageNumber = ref(0);
+const currentSortOption = ref(
+  props.sortOptions.length > 0 ? props.sortOptions[0].value : '',
+);
+const filter = ref<string | null>(null);
+const filteredItems = ref<LinkableResource[]>(props.items);
+
+function nextPage(): void {
+  currentPageNumber.value++;
+}
+
+function previousPage(): void {
+  currentPageNumber.value--;
+}
+
+const rowsPerPage = computed((): number => {
+  return Math.floor(props.itemsPerPage / props.columns);
+});
+
+const totalPagesCount = computed((): number => {
+  const totalRows = Math.ceil(filteredItems.value.length / props.columns);
+  return Math.ceil(totalRows / rowsPerPage.value);
+});
+
+const itemsRows = computed((): LinkableResource[][] => {
+  const groups = [];
+  for (let i = 0; i < filteredItems.value.length; i += props.columns) {
+    groups.push(filteredItems.value.slice(i, i + props.columns));
   }
+  return groups;
+});
 
-  private previousPage(): void {
-    this.currentPageNumber--;
-  }
+const paginatedItems = computed((): LinkableResource[][] => {
+  const start = currentPageNumber.value * rowsPerPage.value;
+  const end = start + rowsPerPage.value;
+  return itemsRows.value.slice(start, end);
+});
 
-  private get totalPagesCount(): number {
-    const totalRows = Math.ceil(this.filteredItems.length / this.columns);
-    return Math.ceil(totalRows / this.rowsPerPage);
-  }
+const filterByProblemText = computed((): string => {
+  return T.userProfileProblemsFilter;
+});
 
-  private get rowsPerPage(): number {
-    return Math.floor(this.itemsPerPage / this.columns);
-  }
-
-  private get itemsRows(): LinkableResource[][] {
-    const groups = [];
-    for (let i = 0; i < this.filteredItems.length; i += this.columns) {
-      groups.push(this.filteredItems.slice(i, i + this.columns));
-    }
-    return groups;
-  }
-
-  private get paginatedItems(): LinkableResource[][] {
-    const start = this.currentPageNumber * this.rowsPerPage;
-    const end = start + this.rowsPerPage;
-    return this.itemsRows.slice(start, end);
-  }
-
-  get filterByProblemText(): string {
-    return T.userProfileProblemsFilter;
-  }
-
-  @Watch('filter')
-  onFilterChange(newFilter: string) {
-    this.filteredItems = this.items.filter((item: LinkableResource) =>
+watch(filter, (newFilter) => {
+  if (newFilter) {
+    filteredItems.value = props.items.filter((item: LinkableResource) =>
       item.toString().toLowerCase().includes(newFilter.toLowerCase()),
     );
   }
+});
 
-  @Watch('currentSortOption')
-  onCurrentSortOptionChange(newSelector: string) {
-    this.$emit('sort-option-change', newSelector);
-  }
-}
+watch(currentSortOption, (newSelector) => {
+  emit('sort-option-change', newSelector);
+});
 </script>
 
 <style>

@@ -61,53 +61,58 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { ref, computed } from 'vue';
+import { useStore } from 'vuex';
 import { GroupID } from '../../../../problem/creator/types';
 import { NIL } from 'uuid';
-import { Component, Vue } from 'vue-property-decorator';
-import { namespace } from 'vuex-class';
 import T from '../../../../lang';
 
-const casesStore = namespace('casesStore');
+const store = useStore();
 
-@Component
-export default class MultipleCasesInput extends Vue {
-  multipleCasesPrefix = '';
-  multipleCasesSuffix = '';
-  multipleCasesCount = 1;
-  multipleCasesGroup: GroupID = NIL;
+const multipleCasesPrefix = ref('');
+const multipleCasesSuffix = ref('');
+const multipleCasesCount = ref(1);
+const multipleCasesGroup = ref<GroupID>(NIL);
 
-  T = T;
+const storedGroups = computed(
+  () =>
+    store.getters['casesStore/getGroupIdsAndNames'] as {
+      value: string;
+      text: string;
+    }[],
+);
 
-  @casesStore.Getter('getGroupIdsAndNames') storedGroups!: {
-    value: string;
-    text: string;
-  }[];
-
-  get options() {
-    const noGroup = { value: NIL, text: T.problemCreatorNoGroup };
-    if (!this.storedGroups) {
-      return [noGroup];
-    }
-    return [noGroup, ...this.storedGroups];
+const options = computed(() => {
+  const noGroup = { value: NIL, text: T.problemCreatorNoGroup };
+  if (!storedGroups.value) {
+    return [noGroup];
   }
+  return [noGroup, ...storedGroups.value];
+});
 
-  get caseNamePreview() {
-    return `${this.formatter(this.multipleCasesPrefix)}1${this.formatter(
-      this.multipleCasesSuffix,
-    )}, ${this.formatter(this.multipleCasesPrefix)}2${this.formatter(
-      this.multipleCasesSuffix,
-    )}...`;
-  }
+const caseNamePreview = computed(() => {
+  return `${formatter(multipleCasesPrefix.value)}1${formatter(
+    multipleCasesSuffix.value,
+  )}, ${formatter(multipleCasesPrefix.value)}2${formatter(
+    multipleCasesSuffix.value,
+  )}...`;
+});
 
-  // Ensure that the prefix and suffix always contain alphanumeric characters in addition to _ and -
-  formatter(text: string) {
-    return text.toLowerCase().replace(/[^a-zA-Z0-9_-]/g, '');
-  }
-
-  // Ensures the number is always above 1
-  numberFormatter(number: number) {
-    return Math.max(number, 1);
-  }
+// Ensure that the prefix and suffix always contain alphanumeric characters in addition to _ and -
+function formatter(text: string) {
+  return text.toLowerCase().replace(/[^a-zA-Z0-9_-]/g, '');
 }
+
+// Ensures the number is always above 1
+function numberFormatter(number: number) {
+  return Math.max(number, 1);
+}
+
+defineExpose({
+  multipleCasesPrefix,
+  multipleCasesSuffix,
+  multipleCasesCount,
+  multipleCasesGroup,
+});
 </script>

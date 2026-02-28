@@ -106,32 +106,28 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import T from '../../lang';
 
-@Component
-export default class Settings extends Vue {
-  @Prop() timeLimit!: number;
-  @Prop() extraWallTime!: number;
-  @Prop() memoryLimit!: number;
-  @Prop() outputLimit!: number;
-  @Prop() inputLimit!: number;
-  @Prop() overallWallTimeLimit!: number;
-  @Prop() validatorTimeLimit!: number;
-  @Prop() errors!: Array<string>;
-  @Prop() currentLanguages!: string;
-  @Prop() validator!: string;
+const props = defineProps<{
+  timeLimit: number;
+  extraWallTime: number;
+  memoryLimit: number;
+  outputLimit: number;
+  inputLimit: number;
+  overallWallTimeLimit: number;
+  validatorTimeLimit: number;
+  errors: Array<string>;
+  currentLanguages: string;
+  validator: string;
+}>();
 
-  T = T;
+const currentOverallWallTimeLimit = ref(props.overallWallTimeLimit);
 
-  currentOverallWallTimeLimit = this.overallWallTimeLimit;
-
-  @Watch('currentOverallWallTimeLimit')
-  onOverallWallTimeLimitChanged(newVal: number) {
-    if (newVal > 60000) {
-      this.currentOverallWallTimeLimit = 60000;
-    }
+watch(currentOverallWallTimeLimit, (newVal: number) => {
+  if (newVal > 60000) {
+    currentOverallWallTimeLimit.value = 60000;
   }
-}
+});
 </script>

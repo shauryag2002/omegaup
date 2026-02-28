@@ -1,5 +1,6 @@
 <template>
   <input
+    ref="inputEl"
     v-model="stringValue"
     :name="name"
     :min="minDateStr"
@@ -14,74 +15,90 @@
   />
 </template>
 
-<script lang="ts">
-import { Vue, Component, Watch, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed, watch, onMounted } from 'vue';
 import T from '../lang';
 import * as time from '../time';
 import '../../../third_party/js/bootstrap-datepicker.js';
 
-@Component
-export default class DatePicker extends Vue {
-  T = T;
+const props = withDefaults(
+  defineProps<{
+    name?: string;
+    value: Date;
+    enabled?: boolean;
+    format?: string;
+    isInvalid?: boolean;
+    min?: Date | null;
+    max?: Date | null;
+  }>(),
+  {
+    name: '',
+    enabled: true,
+    format: () => T.datePickerFormat,
+    isInvalid: false,
+    min: null,
+    max: null,
+  },
+);
 
-  @Prop({ default: '' }) name!: string;
-  @Prop() value!: Date;
-  @Prop({ default: true }) enabled!: boolean;
-  @Prop({ default: T.datePickerFormat }) format!: string;
-  @Prop({ default: false }) isInvalid!: boolean;
-  @Prop({ default: null }) min!: Date | null;
-  @Prop({ default: null }) max!: Date | null;
+const emit = defineEmits<{
+  (e: 'input', value: Date): void;
+}>();
 
-  private usedFallback: boolean = false;
-  private stringValue: string = time.formatDateLocal(this.value);
+const inputEl = ref<HTMLInputElement | null>(null);
+const usedFallback = ref(false);
+const stringValue = ref(time.formatDateLocal(props.value));
 
-  get minDateStr() {
-    return this.min?.toISOString()?.split('T')?.[0];
+const minDateStr = computed(() => {
+  return props.min?.toISOString()?.split('T')?.[0];
+});
+
+const maxDateStr = computed(() => {
+  return props.max?.toISOString()?.split('T')?.[0];
+});
+
+function mountedFallback(): void {
+  usedFallback.value = true;
+  $(inputEl.value!)
+    .datepicker({
+      weekStart: 1,
+      format: props.format,
+    })
+    .on('changeDate', (ev: any) => {
+      emit('input', ev.date);
+    })
+    .datepicker('setValue', props.value);
+}
+
+onMounted(() => {
+  if (inputEl.value && inputEl.value.type === 'text') {
+    // Even though we declared the input as having date type,
+    // browsers that don't support it will silently change the type to text.
+    // In that case, use the bootstrap datepicker.
+    mountedFallback();
   }
+});
 
-  get maxDateStr() {
-    return this.max?.toISOString()?.split('T')?.[0];
-  }
-
-  mounted() {
-    if ((this.$el as HTMLInputElement).type === 'text') {
-      // Even though we declared the input as having date type,
-      // browsers that don't support it will silently change the type to text.
-      // In that case, use the bootstrap datepicker.
-      this.mountedFallback();
-    }
-  }
-
-  private mountedFallback() {
-    this.usedFallback = true;
-    $(this.$el)
-      .datepicker({
-        weekStart: 1,
-        format: this.format,
-      })
-      .on('changeDate', (ev) => {
-        this.$emit('input', ev.date);
-      })
-      .datepicker('setValue', this.value);
-  }
-
-  @Watch('stringValue')
-  onStringValueChanged(newStringValue: string) {
-    if (this.usedFallback) {
+watch(
+  () => stringValue.value,
+  (newStringValue: string) => {
+    if (usedFallback.value) {
       // If the fallback was used, we don't need to update anything.
       return;
     }
-    this.$emit('input', time.parseDateLocal(newStringValue));
-  }
+    emit('input', time.parseDateLocal(newStringValue));
+  },
+);
 
-  @Watch('value')
-  onPropertyChanged(newValue: Date) {
-    this.stringValue = time.formatDateLocal(newValue);
-    if (this.usedFallback) {
-      $(this.$el).datepicker('setValue', newValue);
+watch(
+  () => props.value,
+  (newValue: Date) => {
+    stringValue.value = time.formatDateLocal(newValue);
+    if (usedFallback.value) {
+      $(inputEl.value!).datepicker('setValue', newValue);
     }
-  }
-}
+  },
+);
 </script>
 
 <style>

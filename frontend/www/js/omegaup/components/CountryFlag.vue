@@ -11,24 +11,23 @@
   </span>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import T from '../lang';
 
-@Component
-export default class CountryFlag extends Vue {
-  @Prop() country!: string;
+const props = defineProps<{
+  country: string;
+}>();
 
-  get flagUrl(): string {
-    if (!this.country || this.country === '') return '';
-    return `/media/flags/${this.country.toLowerCase()}.png`;
-  }
+const flagUrl = computed((): string => {
+  if (!props.country || props.country === '') return '';
+  return `/media/flags/${props.country.toLowerCase()}.png`;
+});
 
-  get displayTitle(): string {
-    if (this.country === 'xx') {
-      return T.countryNotSet;
-    }
-    return this.country;
+const displayTitle = computed((): string => {
+  if (props.country === 'xx') {
+    return T.countryNotSet;
   }
-}
+  return props.country;
+});
 </script>
