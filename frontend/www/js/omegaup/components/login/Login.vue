@@ -103,9 +103,8 @@ import T from '../../lang';
 import omegaup_PasswordInput from '../common/PasswordInput.vue';
 import 'intro.js/introjs.css';
 import introJs from 'intro.js';
-import VueCookies from 'vue-cookies';
+import { getCookie, setCookie } from '../../cookies';
 
-Vue.use(VueCookies, { expire: -1 });
 
 @Component({
   components: {
@@ -145,7 +144,7 @@ export default class Login extends Vue {
   }
 
   maybeStartIntro(): void {
-    if (this.introStarted || this.$cookies.get('has-visited-login')) {
+    if (this.introStarted || getCookie('has-visited-login')) {
       return;
     }
     if (this.activeTab !== 'login') {
@@ -153,7 +152,7 @@ export default class Login extends Vue {
     }
 
     this.$nextTick(() => {
-      if (this.introStarted || this.$cookies.get('has-visited-login')) {
+      if (this.introStarted || getCookie('has-visited-login')) {
         return;
       }
       const title = T.loginFormInteractiveGuideTitle;
@@ -200,7 +199,7 @@ export default class Login extends Vue {
           steps,
         })
         .start();
-      this.$cookies.set('has-visited-login', true, -1);
+      setCookie('has-visited-login', true);
     });
   }
 

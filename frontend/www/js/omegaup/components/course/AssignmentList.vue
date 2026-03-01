@@ -121,8 +121,8 @@ import { ref, watch } from 'vue';
 import { omegaup } from '../../omegaup';
 import { types } from '../../api_types';
 import T from '../../lang';
-import 'v-tooltip/dist/v-tooltip.css';
-import { VTooltip as vTooltip } from 'v-tooltip';
+import 'floating-vue/dist/style.css';
+import { vTooltip } from 'floating-vue';
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';

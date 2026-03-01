@@ -13,7 +13,7 @@
 <script lang="ts">
 import { defineComponent, ref, computed, watch, onMounted } from 'vue';
 import T from '../../lang';
-import { codemirror } from 'vue-codemirror-lite';
+import CodemirrorEditor from '../common/CodemirrorEditor.vue';
 
 export const languageModeMap: {
   [language: string]: string;
@@ -75,7 +75,7 @@ export interface EditorOptions {
 export default defineComponent({
   name: 'CodeView',
   components: {
-    'codemirror-editor': codemirror,
+    'codemirror-editor': CodemirrorEditor,
   },
   props: {
     language: { type: String, default: 'cpp17-gcc' },
@@ -84,18 +84,13 @@ export default defineComponent({
   },
   emits: ['change', 'input', 'change-language'],
   setup(props, { emit, expose }) {
-    const cmWrapper = ref<InstanceType<typeof codemirror> | null>(null);
+    const cmWrapper = ref<InstanceType<typeof CodemirrorEditor> | null>(null);
     const mode = ref(
       languageModeMap[props.language] || languageModeMap['cpp17-gcc'],
     );
 
     function refresh() {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore vue-codemirror-lite does not declare `editor` as a legitimate
-      // property, so TypeScript cannot know about it.
-      // It's also possible for the actual editor to not have been set yet if
-      // this method is used before the mounted event handler is called.
-      (cmWrapper.value as any)?.editor?.refresh();
+      (cmWrapper.value as any)?.refresh();
     }
 
     const editorOptions = computed(

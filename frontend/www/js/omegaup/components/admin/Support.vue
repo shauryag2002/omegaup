@@ -292,7 +292,6 @@
                 />
                 <div class="input-group-append">
                   <button
-                    v-clipboard="() => link"
                     :disabled="!link"
                     class="btn btn-outline-secondary"
                     name="copy"
@@ -300,9 +299,7 @@
                     data-copy-to-clipboard
                     :aria-label="T.passwordCopyToken"
                     :title="T.passwordCopyToken"
-                    @click.prevent="
-                      ui.success(T.passwordResetLinkCopiedToClipboard)
-                    "
+                    @click.prevent="copyAndNotify(link)"
                   >
                     <font-awesome-icon icon="clipboard" />
                   </button>
@@ -373,7 +370,6 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, Emit, Watch } from 'vue-property-decorator';
-import Clipboard from 'v-clipboard';
 import T from '../../lang';
 import * as ui from '../../ui';
 import * as time from '../../time';
@@ -389,7 +385,6 @@ import {
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 library.add(fas);
-Vue.use(Clipboard);
 
 export interface UpdateEmailRequest {
   email: string;
@@ -616,6 +611,11 @@ export default class AdminSupport extends Vue {
     this.currentMaintenanceMessageEn = '';
     this.currentMaintenanceMessagePt = '';
     this.currentMaintenanceType = 'info';
+  }
+
+  copyAndNotify(text: string): void {
+    navigator.clipboard.writeText(text);
+    ui.success(T.passwordResetLinkCopiedToClipboard);
   }
 }
 </script>

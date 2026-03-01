@@ -32,7 +32,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, getCurrentInstance } from 'vue';
+import { ref, onMounted } from 'vue';
+import { getCookie } from '../../../cookies';
 import CreatorHeader from './Header.vue';
 import CreatorTabs from './Tabs.vue';
 import T from '../../../lang';
@@ -55,9 +56,7 @@ onMounted(() => {
 });
 
 function launchIntro() {
-  const instance = getCurrentInstance();
-  const cookies = (instance?.proxy as any)?.$cookies;
-  if (!cookies?.get('has-visited-problem-creator')) {
+  if (!getCookie('has-visited-problem-creator')) {
     introJs()
       .setOptions({
         nextLabel: T.interactiveGuideNextButton,

@@ -230,8 +230,8 @@ import * as ui from '../../ui';
 import OmegaupCommonPaginator from '../common/Paginator.vue';
 import OmegaupCommonSortControls from '../common/SortControls.vue';
 
-import 'v-tooltip/dist/v-tooltip.css';
-import { VTooltip } from 'v-tooltip';
+import 'floating-vue/dist/style.css';
+import { vTooltip as VTooltip } from 'floating-vue';
 import { getBlogUrl } from '../../urlHelper';
 
 import { library } from '@fortawesome/fontawesome-svg-core';

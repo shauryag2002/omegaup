@@ -168,7 +168,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import T from '../../lang';
-import VueTypeaheadBootstrap from 'vue-typeahead-bootstrap';
+import VueTypeaheadBootstrap from '../common/TypeaheadBootstrap.vue';
 import OmegaupToggleSwitch from '../ToggleSwitch.vue';
 
 import { library } from '@fortawesome/fontawesome-svg-core';

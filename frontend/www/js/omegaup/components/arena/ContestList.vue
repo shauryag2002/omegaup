@@ -464,7 +464,6 @@ import {
 } from 'bootstrap-vue';
 import ContestCard from './ContestCard.vue';
 import ContestSkeleton from './ContestSkeleton.vue';
-import infiniteScroll from 'vue-infinite-scroll';
 Vue.use(TabsPlugin);
 Vue.use(CardPlugin);
 Vue.use(DropdownPlugin);
@@ -506,9 +505,6 @@ export interface UrlParams {
     'omegaup-contest-card': ContestCard,
     'omegaup-contest-skeleton': ContestSkeleton,
     FontAwesomeIcon,
-  },
-  directives: {
-    infiniteScroll,
   },
 })
 class ArenaContestList extends Vue {

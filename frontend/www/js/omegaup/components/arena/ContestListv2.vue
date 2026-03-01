@@ -420,7 +420,6 @@ import {
   LayoutPlugin,
   TabsPlugin,
 } from 'bootstrap-vue';
-import infiniteScroll from 'vue-infinite-scroll';
 import ContestCard from './ContestCard.vue';
 import ContestSkeleton from './ContestSkeleton.vue';
 Vue.use(TabsPlugin);
@@ -465,9 +464,6 @@ export interface UrlParams {
     'omegaup-contest-card': ContestCard,
     'omegaup-contest-skeleton': ContestSkeleton,
     FontAwesomeIcon,
-  },
-  directives: {
-    infiniteScroll,
   },
 })
 class ArenaContestList extends Vue {

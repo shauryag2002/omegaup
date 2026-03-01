@@ -304,15 +304,16 @@ import T from '../../lang';
 import * as ui from '../../ui';
 import 'intro.js/introjs.css';
 import introJs from 'intro.js';
-import VueCookies from 'vue-cookies';
+import { getCookie, setCookie } from '../../cookies';
 import { getBlogUrl } from '../../urlHelper';
 import omegaup_PasswordInput from '../common/PasswordInput.vue';
-Vue.use(VueCookies, { expire: -1 });
+import { VueRecaptcha } from 'vue-recaptcha';
 
 @Component({
   components: {
     'omegaup-markdown': omegaup_Markdown,
     'omegaup-password-input': omegaup_PasswordInput,
+    'vue-recaptcha': VueRecaptcha,
   },
 })
 export default class Signup extends Vue {
@@ -407,7 +408,7 @@ export default class Signup extends Vue {
           steps,
         })
         .start();
-      this.$cookies.set('has-visited-signup', true, -1);
+      setCookie('has-visited-signup', true);
     });
   }
 

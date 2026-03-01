@@ -18,8 +18,8 @@
 </template>
 
 <script setup lang="ts">
-import 'v-tooltip/dist/v-tooltip.css';
-import { VTooltip as vTooltip } from 'v-tooltip';
+import 'floating-vue/dist/style.css';
+import { vTooltip } from 'floating-vue';
 
 defineProps<{
   title: string;

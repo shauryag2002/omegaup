@@ -34,11 +34,10 @@ import problemCreator_Cases_Sidebar from './Sidebar.vue';
 import probleCreator_Cases_AddPanel from './AddPanel.vue';
 import introJs from 'intro.js';
 import 'intro.js/introjs.css';
-import VueCookies from 'vue-cookies';
+import { getCookie, setCookie } from '../../../../cookies';
 import T from '../../../../lang';
 import { TabIndex } from '../Tabs.vue';
 
-Vue.use(VueCookies, { expire: -1 });
 
 @Component({
   components: {
@@ -79,7 +78,7 @@ export default class CasesTab extends Vue {
   }
 
   startIntroGuide() {
-    if (!this.$cookies.get('has-visited-cases-tab')) {
+    if (!getCookie('has-visited-cases-tab')) {
       this.$nextTick(() => {
         const intro = introJs();
 
@@ -113,7 +112,7 @@ export default class CasesTab extends Vue {
         });
 
         intro.start();
-        this.$cookies.set('has-visited-cases-tab', true, -1);
+        setCookie('has-visited-cases-tab', true);
       });
     }
   }

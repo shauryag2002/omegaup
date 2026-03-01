@@ -28,7 +28,7 @@
 import { ref, computed, watch } from 'vue';
 import T from '../../lang';
 import { types } from '../../api_types';
-import VueTypeaheadBootstrap from 'vue-typeahead-bootstrap';
+import VueTypeaheadBootstrap from '../common/TypeaheadBootstrap.vue';
 
 const props = withDefaults(
   defineProps<{

@@ -356,8 +356,8 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
-export const EventBus = new Vue();
+import eventBus from '../../eventBus';
+export { eventBus as EventBus };
 </script>
 
 <script setup lang="ts">
@@ -365,6 +365,7 @@ import { ref, computed } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
+import eventBus from '../../eventBus';
 import OmegaupNotificationsClarifications from '../notification/Clarifications.vue';
 import OmegaupNotificationList from '../notification/List.vue';
 import OmegaupMarkdown from '../Markdown.vue';
@@ -484,7 +485,7 @@ function readNotifications(
 }
 
 function emitActiveTab(tab: AvailableTabs): void {
-  EventBus.$emit('update:activeTab', tab);
+  eventBus.emit('update:activeTab', tab);
   if (
     window.location.pathname === '/login' ||
     window.location.pathname === '/login/'

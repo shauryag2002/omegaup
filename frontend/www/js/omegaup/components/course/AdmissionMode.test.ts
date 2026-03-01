@@ -1,6 +1,4 @@
 import { mount, shallowMount } from '@vue/test-utils';
-import Vue from 'vue';
-import Clipboard from 'v-clipboard';
 
 import T from '../../lang';
 
@@ -8,8 +6,6 @@ import course_AdmissionMode from './AdmissionMode.vue';
 import { AdmissionMode } from '../common/Publish.vue';
 
 describe('AdmissionMode.vue', () => {
-  Vue.use(Clipboard);
-
   it('Should handle admission mode as curator', () => {
     const wrapper = mount(course_AdmissionMode, {
       propsData: {

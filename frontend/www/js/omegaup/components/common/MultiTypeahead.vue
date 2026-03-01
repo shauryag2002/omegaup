@@ -20,8 +20,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import TagsInput from '@voerro/vue-tagsinput';
-import '@voerro/vue-tagsinput/dist/style.css';
+import TagsInput from './TagsInput.vue';
 import T from '../../lang';
 import { types } from '../../api_types';
 

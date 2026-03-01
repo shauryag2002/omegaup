@@ -23,7 +23,6 @@
                 checked: `${T.wordsKarel}`,
                 unchecked: `${T.wordsAnyLanguage}`,
               }"
-              :value="karel"
               :width="160"
             ></ToggleButton>
             <TagsInput
@@ -78,11 +77,10 @@ import T from '../../lang';
 // https://binarcode.github.io/vue-form-wizard/
 import { FormWizard, TabContent } from 'vue-form-wizard';
 import 'vue-form-wizard/dist/vue-form-wizard.min.css';
-// https://www.npmjs.com/package/vue-js-toggle-button
-import { ToggleButton } from 'vue-js-toggle-button';
-// https://github.com/voerro/vue-tagsinput
-import TagsInput from '@voerro/vue-tagsinput';
-import '@voerro/vue-tagsinput/dist/style.css';
+// Native toggle button component
+import ToggleButton from '../common/ToggleButton.vue';
+// Native tag input component
+import TagsInput from '../common/TagsInput.vue';
 // https://nightcatsama.github.io/vue-slider-component/
 import VueSlider from 'vue-slider-component';
 import 'vue-slider-component/theme/default.css';

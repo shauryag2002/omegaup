@@ -5,8 +5,7 @@ import * as ui from '../ui';
 import T from '../lang';
 import { createApp, h, reactive } from 'vue';
 import login_Signin, { AvailableTabs } from '../components/login/Signin.vue';
-import { EventBus } from '../components/common/Navbar.vue';
-import VueRecaptcha from 'vue-recaptcha';
+import eventBus from '../eventBus';
 
 OmegaUp.on('ready', () => {
   function loginAndRedirect(
@@ -172,5 +171,5 @@ OmegaUp.on('ready', () => {
     state.initialActiveTab = tab;
     window.location.hash = `#${tab}`;
   };
-  EventBus.$on('update:activeTab', onActiveTab);
+  eventBus.on('update:activeTab', onActiveTab);
 });

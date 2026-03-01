@@ -280,7 +280,6 @@ module.exports = {
     extensions: ['.ts', '.js', '.vue', '.json'],
     alias: {
       vue$: path.resolve(__dirname, './frontend/www/js/omegaup/vue-compat.ts'),
-      'vue-async-computed': 'vue-async-computed/dist/vue-async-computed.js',
       jszip: 'jszip/dist/jszip.js',
       pako: 'pako/dist/pako.min.js',
       '@': path.resolve(__dirname, './frontend/www/'),

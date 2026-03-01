@@ -24,8 +24,8 @@
 import { computed } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
-import 'v-tooltip/dist/v-tooltip.css';
-import { VTooltip as vTooltip } from 'v-tooltip';
+import 'floating-vue/dist/style.css';
+import { vTooltip } from 'floating-vue';
 import Badge3D from './Badge3D.vue';
 
 const props = defineProps<{

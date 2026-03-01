@@ -50,10 +50,9 @@
             />
             <div class="form-inline">
               <button
-                v-clipboard="courseURL"
                 class="btn btn-primary"
                 type="button"
-                @click="copiedToClipboard = true"
+                @click="copyAndNotify(courseURL)"
               >
                 {{ T.wordsCopyToClipboard }}
               </button>
@@ -96,7 +95,6 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
-import Clipboard from 'v-clipboard';
 import T from '../../lang';
 import omegaup_Markdown from '../Markdown.vue';
 import omegaup_ToggleSwitch from '../ToggleSwitch.vue';
@@ -110,7 +108,6 @@ import {
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 library.add(fas);
-Vue.use(Clipboard);
 
 @Component({
   components: {
@@ -138,6 +135,11 @@ export default class CourseAdmissionMode extends Vue {
       admissionMode: this.currentAdmissionMode,
       showInPublicCoursesList: this.currentShowInPublicCoursesList,
     });
+  }
+
+  copyAndNotify(text: string): void {
+    navigator.clipboard.writeText(text);
+    this.copiedToClipboard = true;
   }
 
   @Watch('copiedToClipboard')

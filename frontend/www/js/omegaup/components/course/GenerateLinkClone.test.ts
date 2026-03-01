@@ -1,14 +1,10 @@
 import { shallowMount } from '@vue/test-utils';
-import Vue from 'vue';
-import Clipboard from 'v-clipboard';
 
 import T from '../../lang';
 
 import course_GenerateLinkClone from './GenerateLinkClone.vue';
 
 describe('GenerateLinkClone.vue', () => {
-  Vue.use(Clipboard);
-
   it('Should handle a link with valid token', async () => {
     const wrapper = shallowMount(course_GenerateLinkClone, {
       propsData: {

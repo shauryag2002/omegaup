@@ -86,7 +86,7 @@ import OmegaupOverlayPopup from '../OverlayPopup.vue';
 import { AvailableViews } from './DemotionPopup.vue';
 import OmegaupRadioSwitch from '../RadioSwitch.vue';
 import T from '../../lang';
-import VueTypeaheadBootstrap from 'vue-typeahead-bootstrap';
+import VueTypeaheadBootstrap from '../common/TypeaheadBootstrap.vue';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';

@@ -58,8 +58,8 @@ import { computed } from 'vue';
 import { types } from '../../api_types';
 import * as ui from '../../ui';
 import T from '../../lang';
-import 'v-tooltip/dist/v-tooltip.css';
-import { VTooltip as vTooltip } from 'v-tooltip';
+import 'floating-vue/dist/style.css';
+import { vTooltip } from 'floating-vue';
 import OmegaupUserUsername from '../user/Username.vue';
 
 const props = defineProps<{

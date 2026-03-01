@@ -27,8 +27,6 @@ module.exports = {
   moduleDirectories: ['node_modules'],
   moduleNameMapper: {
     '^vue$': '@vue/compat',
-    'vue-async-computed-decorator':
-      '<rootDir>/node_modules/vue-async-computed-decorator/dist/index.js',
     '^@/(.*)$': '<rootDir>/frontend/www/$1',
     '\\.(css|less)$':
       '<rootDir>/frontend/www/js/omegaup/__mocks__/styleMock.js',
@@ -47,7 +45,7 @@ module.exports = {
     '.*\\.[jt]sx?$': ['babel-jest', babelConfig],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(vue-.*|@vue/.*|@voerro/vue-tagsinput|monaco-editor|monaco-editor-core)/)',
+    'node_modules/(?!(vue-.*|@vue/.*|monaco-editor|monaco-editor-core)/)',
   ],
   testEnvironmentOptions: {
     url: 'http://localhost:8001/',

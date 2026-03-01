@@ -46,13 +46,12 @@
           </td>
           <td class="d-flex align-items-center">
             <button
-              v-clipboard="getVerificationLink(certificate.verification_code)"
               copy-to-clipboard
               class="btn btn-primary mr-2"
               type="button"
               :title="T.certificateListMineCopyToClipboard"
               :data-code="certificate.verification_code"
-              @click="onCopyVerificationLink"
+              @click="copyAndNotify(getVerificationLink(certificate.verification_code))"
             >
               <font-awesome-icon icon="clipboard" />
             </button>
@@ -76,7 +75,6 @@
 
 <script lang="ts">
 import { Vue, Component, Prop } from 'vue-property-decorator';
-import Clipboard from 'v-clipboard';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
@@ -88,7 +86,6 @@ import {
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 library.add(fas);
-Vue.use(Clipboard);
 
 @Component({
   components: {
@@ -127,6 +124,11 @@ export default class Mine extends Vue {
     return ui.formatString(T.certificateListMineCourse, {
       course_name: name,
     });
+  }
+
+  copyAndNotify(text: string): void {
+    navigator.clipboard.writeText(text);
+    this.$emit('show-copy-message');
   }
 
   onCopyVerificationLink(): void {

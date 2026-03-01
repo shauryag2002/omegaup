@@ -130,8 +130,9 @@
           tag="tbody"
           :animation="200"
           handle=".drag-handle"
+          item-key="lineID"
         >
-          <tr v-for="line in lines" :key="line.lineID">
+          <template #item="{ element: line }">
             <td>
               <b-container fluid class="bg-light">
                 <b-row class="d-flex justify-content-between" align-v="center">
@@ -410,6 +411,7 @@
               </b-container>
             </td>
           </tr>
+          </template>
         </draggable>
         <tbody>
           <tr>

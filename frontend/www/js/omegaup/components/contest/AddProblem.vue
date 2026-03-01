@@ -182,8 +182,8 @@ import T from '../../lang';
 import OmegaupProblemVersions from '../problem/Versions.vue';
 import OmegaupCommonTypeahead from '../common/Typeahead.vue';
 import OmegaupRadioSwitch from '../RadioSwitch.vue';
-import 'v-tooltip/dist/v-tooltip.css';
-import { VTooltip as vTooltip } from 'v-tooltip';
+import 'floating-vue/dist/style.css';
+import { vTooltip } from 'floating-vue';
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';

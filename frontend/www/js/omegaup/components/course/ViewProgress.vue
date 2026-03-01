@@ -152,20 +152,16 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
 import { omegaup } from '../../omegaup';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
-import AsyncComputedPlugin from 'vue-async-computed';
-import AsyncComputed from 'vue-async-computed-decorator';
 import JSZip from 'jszip';
 import common_SortControls from '../common/SortControls.vue';
 import course_StudentProgress from './StudentProgress.vue';
 import common_Paginator from '../common/Paginator.vue';
 import { toCsv, TableCell, Percentage } from '../../csv';
-
-Vue.use(AsyncComputedPlugin);
 
 export function escapeXml(cell: TableCell): string {
   if (typeof cell !== 'string') return '';
@@ -318,9 +314,18 @@ export default class CourseViewProgress extends Vue {
     );
   }
 
-  @AsyncComputed()
-  async odsDataUrl(): Promise<string> {
-    if (!this.progressTable) return '';
+  odsDataUrl: string = '';
+
+  @Watch('progressTable', { immediate: true })
+  onProgressTableChanged(): void {
+    this.computeOdsDataUrl();
+  }
+
+  async computeOdsDataUrl(): Promise<void> {
+    if (!this.progressTable) {
+      this.odsDataUrl = '';
+      return;
+    }
     let zip = new JSZip();
     zip.file('mimetype', 'application/vnd.oasis.opendocument.spreadsheet', {
       compression: 'STORE',
@@ -383,7 +388,7 @@ export default class CourseViewProgress extends Vue {
     </office:body>
   </office:document-content>`,
     );
-    return window.URL.createObjectURL(
+    this.odsDataUrl = window.URL.createObjectURL(
       await zip.generateAsync({
         type: 'blob',
         mimeType: 'application/ods',
