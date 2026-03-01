@@ -36,14 +36,9 @@ module.exports = {
     sugar: '<rootDir>/frontend/www/js/omegaup/__mocks__/sugar.js',
   },
   setupFilesAfterEnv: ['<rootDir>/frontend/www/js/omegaup/test.setup.ts'],
-  globals: {
-    'vue-jest': {
-      babelConfig,
-    },
-  },
   transform: {
     '.*\\.vue$': [
-      'vue-jest',
+      '@vue/vue3-jest',
       {
         babelConfig,
       },

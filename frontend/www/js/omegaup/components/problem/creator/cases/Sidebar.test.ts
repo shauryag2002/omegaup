@@ -1,9 +1,9 @@
-import { createLocalVue, shallowMount, mount } from '@vue/test-utils';
+import { shallowMount, mount } from '@vue/test-utils';
 
 import Sidebar from './Sidebar.vue';
-import BootstrapVue, { IconsPlugin, BButton } from 'bootstrap-vue';
+import { createBootstrap, BButton } from 'bootstrap-vue-next';
 import store from '@/js/omegaup/problem/creator/store';
-import Vue from 'vue';
+import { nextTick } from 'vue';
 import {
   generateCase,
   generateGroup,
@@ -11,9 +11,6 @@ import {
 
 import T from '../../../../lang';
 
-const localVue = createLocalVue();
-localVue.use(BootstrapVue);
-localVue.use(IconsPlugin);
 
 describe('Sidebar.vue', () => {
   // Total 6 buttons are rendered initially on this page.
@@ -30,12 +27,12 @@ describe('Sidebar.vue', () => {
   });
 
   it('Should contain buttons and Groups text', async () => {
-    const wrapper = shallowMount(Sidebar, { localVue, store });
+    const wrapper = shallowMount(Sidebar, { global: { plugins: [store, createBootstrap()] } });
 
     const buttons = wrapper.findAllComponents(BButton);
     expect(buttons.length).toBe(initialButtonsCount);
     let shouldContainAddText = false;
-    buttons.wrappers.forEach((button) => {
+    buttons.forEach((button) => {
       if (button.text() === T.problemCreatorAdd) shouldContainAddText = true;
     });
     expect(shouldContainAddText).toBe(true);
@@ -43,7 +40,7 @@ describe('Sidebar.vue', () => {
   });
 
   it('should show ungrouped testcases', async () => {
-    const wrapper = shallowMount(Sidebar, { localVue, store });
+    const wrapper = shallowMount(Sidebar, { global: { plugins: [store, createBootstrap()] } });
 
     expect(wrapper.text()).toContain(T.problemCreatorUngrouped);
 
@@ -58,7 +55,7 @@ describe('Sidebar.vue', () => {
     store.commit('casesStore/addGroup', newGroup1);
     expect(store.state.casesStore.groups[0]).toBe(newGroup1);
 
-    await Vue.nextTick();
+    await nextTick();
 
     expect(wrapper.findAll('b-dropdown-item-stub').length).toBe(4);
     expect(
@@ -66,21 +63,21 @@ describe('Sidebar.vue', () => {
     ).toContain('ungroupedCase1');
 
     store.commit('casesStore/deleteGroup', newGroup1.groupID);
-    await Vue.nextTick();
+    await nextTick();
     expect(wrapper.findAll('b-dropdown-item-stub').length).toBe(3);
 
     store.commit('casesStore/addGroup', newGroup1);
     store.commit('casesStore/addGroup', newGroup2);
-    await Vue.nextTick();
+    await nextTick();
     expect(wrapper.findAll('b-dropdown-item-stub').length).toBe(5);
 
     store.commit('casesStore/deleteUngroupedCases');
-    await Vue.nextTick();
+    await nextTick();
     expect(wrapper.findAll('b-dropdown-item-stub').length).toBe(3);
   });
 
   it('should show groups and cases inside them', async () => {
-    const wrapper = shallowMount(Sidebar, { localVue, store });
+    const wrapper = shallowMount(Sidebar, { global: { plugins: [store, createBootstrap()] } });
 
     const newGroup1 = generateGroup({
       name: 'group1',
@@ -94,8 +91,8 @@ describe('Sidebar.vue', () => {
     store.commit('casesStore/addGroup', newGroup2);
     expect(store.state.casesStore.groups).toStrictEqual([newGroup1, newGroup2]);
 
-    await Vue.nextTick();
-    await Vue.nextTick();
+    await nextTick();
+    await nextTick();
 
     const totalDropdownItemsCount = 13;
     // There are
@@ -129,7 +126,7 @@ describe('Sidebar.vue', () => {
     store.commit('casesStore/addCase', newCase2);
     store.commit('casesStore/addCase', newCase3);
 
-    await Vue.nextTick();
+    await nextTick();
 
     // The number of dropdown stubs should be equal to
     // (#dropdown-stubs) = 5*(#groups) + 2 (for ungrouped cases) + 1 (for validate points)
@@ -144,7 +141,7 @@ describe('Sidebar.vue', () => {
     ).toBe(6);
 
     store.commit('casesStore/deleteGroupCases', newGroup2.groupID);
-    await Vue.nextTick();
+    await nextTick();
     expect(
       group2.element.parentElement?.querySelectorAll('b-dropdown-item-stub')
         .length,
@@ -154,26 +151,26 @@ describe('Sidebar.vue', () => {
       groupID: newGroup1.groupID,
       caseID: newCase1.caseID,
     });
-    await Vue.nextTick();
+    await nextTick();
     expect(
       group1.element.parentElement?.querySelectorAll('b-dropdown-item-stub')
         .length,
     ).toBe(6);
 
     store.commit('casesStore/deleteGroup', newGroup1.groupID);
-    await Vue.nextTick();
+    await nextTick();
     expect(wrapper.findAll('b-dropdown-item-stub').length).toBe(8);
   });
 
   it('Should modify a group', async () => {
-    const wrapper = mount(Sidebar, { localVue, store: store });
+    const wrapper = mount(Sidebar, { global: { plugins: [store, createBootstrap()] } });
 
     const newGroup = generateGroup({
       name: 'group',
       autoPoints: true,
     });
     store.commit('casesStore/addGroup', newGroup);
-    await Vue.nextTick();
+    await nextTick();
 
     const editButton = wrapper.find(
       '[data-sidebar-edit-group-dropdown="edit group"]',
@@ -212,13 +209,13 @@ describe('Sidebar.vue', () => {
   });
 
   it('Should download a group', async () => {
-    const wrapper = mount(Sidebar, { localVue, store: store });
+    const wrapper = mount(Sidebar, { global: { plugins: [store, createBootstrap()] } });
 
     const newGroup = generateGroup({
       name: 'group',
     });
     store.commit('casesStore/addGroup', newGroup);
-    await Vue.nextTick();
+    await nextTick();
 
     const downloadInButton = wrapper.find(
       '[data-sidebar-edit-group-dropdown="download .in"]',
@@ -239,7 +236,7 @@ describe('Sidebar.vue', () => {
   });
 
   it('Should validate and fix points', async () => {
-    const wrapper = mount(Sidebar, { localVue, store });
+    const wrapper = mount(Sidebar, { global: { plugins: [store, createBootstrap()] } });
 
     const fixedPointsGroup1 = generateGroup({
       name: 'fixedPointsGroup',
@@ -372,7 +369,7 @@ describe('Sidebar.vue', () => {
     store.commit('casesStore/addCase', newCase9);
     store.commit('casesStore/addCase', newCase10);
 
-    await Vue.nextTick();
+    await nextTick();
 
     const validatePointsDropdownItem = wrapper.find(
       '[data-sidebar-validate-points-dropdown-item]',
