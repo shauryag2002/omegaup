@@ -11,7 +11,6 @@ import {
   generateGroup,
 } from '@/js/omegaup/problem/creator/modules/cases';
 
-
 describe('Header.vue', () => {
   it('Should contain the header buttons and problem name input', async () => {
     const wrapper = shallowMount(Header, { store });

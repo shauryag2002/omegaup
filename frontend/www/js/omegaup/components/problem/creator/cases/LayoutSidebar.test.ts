@@ -10,7 +10,6 @@ import {
   generateGroup,
 } from '@/js/omegaup/problem/creator/modules/cases';
 
-
 describe('LayoutSidebar.vue', () => {
   store.commit('casesStore/addNewLayout');
   const newUngroupedCasegroup = generateGroup({

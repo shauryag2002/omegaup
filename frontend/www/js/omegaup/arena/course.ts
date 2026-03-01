@@ -5,7 +5,7 @@ import * as api from '../api';
 import * as ui from '../ui';
 import T from '../lang';
 
-import Vue from 'vue';
+import { createApp, h, reactive } from 'vue';
 import arena_Course from '../components/arena/Course.vue';
 import { getOptionsFromLocation, getProblemAndRunDetails } from './location';
 import {
@@ -96,454 +96,442 @@ OmegaUp.on('ready', async () => {
     );
   }
 
-  const arenaCourse = new Vue({
-    el: '#main-container',
-    components: {
-      'omegaup-arena-course': arena_Course,
-    },
-    data: () => ({
-      problemInfo: problemDetails,
-      problem,
-      problems: payload.currentAssignment.problems,
-      popupDisplayed,
-      showNewClarificationPopup,
-      guid,
-      problemAlias,
-      searchResultUsers: [] as types.ListItem[],
-      runDetailsData: runDetails,
-      nextSubmissionTimestamp,
-      nextExecutionTimestamp,
-      shouldShowFirstAssociatedIdentityRunWarning:
-        payload.shouldShowFirstAssociatedIdentityRunWarning,
-      feedbackMap,
-      feedbackThreadMap,
-    }),
-    render: function (createElement) {
-      return createElement('omegaup-arena-course', {
-        props: {
-          clarifications: clarificationStore.state.clarifications,
-          course: payload.courseDetails,
-          currentAssignment: payload.currentAssignment,
-          problemInfo: this.problemInfo,
-          problem: this.problem,
-          problemAlias: this.problemAlias,
-          problems: this.problems,
-          popupDisplayed: this.popupDisplayed,
-          scoreboard: payload.scoreboard,
-          showNewClarificationPopup: this.showNewClarificationPopup,
-          showRanking: payload.showRanking,
-          activeTab,
-          guid: this.guid,
-          runs: myRunsStore.state.runs,
-          allRuns: runsStore.state.runs,
-          totalRuns: runsStore.state.totalRuns,
-          searchResultUsers: this.searchResultUsers,
-          runDetailsData: this.runDetailsData,
-          nextSubmissionTimestamp: this.nextSubmissionTimestamp,
-          nextExecutionTimestamp: this.nextExecutionTimestamp,
-          socketStatus: socketStore.state.socketStatus,
-          shouldShowFirstAssociatedIdentityRunWarning: this
-            .shouldShowFirstAssociatedIdentityRunWarning,
-          feedbackMap: this.feedbackMap,
-          feedbackThreadMap: this.feedbackThreadMap,
-          currentUsername: commonPayload.currentUsername,
-          currentUserClassName: commonPayload.userClassname,
-        },
-        on: {
-          'navigate-to-assignment': ({
-            assignmentAliasToShow,
-            courseAlias,
-          }: {
-            assignmentAliasToShow: string;
-            courseAlias: string;
-          }) => {
-            window.location.href = `/course/${courseAlias}/assignment/${assignmentAliasToShow}/`;
-          },
-          'navigate-to-problem': ({
-            problem,
-          }: {
-            problem: types.NavbarProblemsetProblem;
-          }) => {
-            navigateToProblem({
-              type: NavigationType.ForSingleProblemOrCourse,
-              problem,
-              target: arenaCourse,
-              problems: this.problems,
-              problemsetId: payload.currentAssignment.problemset_id,
-            });
-          },
-          'update-search-result-users-assignment': ({
-            query,
-          }: {
-            query: string;
-          }) => {
-            api.Course.searchUsers({
-              query,
-              course_alias: payload.courseDetails.alias,
-              assignment_alias: payload.currentAssignment.alias,
-            })
-              .then(({ results }) => {
-                this.searchResultUsers = results.map(
-                  ({ key, value }: types.ListItem) => ({
-                    key,
-                    value: `${ui.escape(key)} (<strong>${ui.escape(
-                      value,
-                    )}</strong>)`,
-                  }),
-                );
-              })
-              .catch(ui.apiError);
-          },
-          'request-feedback': (guid: string) => {
-            if (!window.confirm(T.requestFeedbackConfirm)) {
-              return;
-            }
-            api.Course.requestFeedback({
-              course_alias: payload.courseDetails.alias,
-              assignment_alias: payload.currentAssignment.alias,
-              guid,
-            })
-              .then(() => {
-                ui.success(T.requestFeedback);
-              })
-              .catch(ui.apiError);
-          },
-          'show-run': (request: SubmissionRequest) => {
-            api.Run.details({ run_alias: request.guid })
-              .then((runDetails) => {
-                this.runDetailsData = showSubmission({ request, runDetails });
-
-                ({ feedbackMap, feedbackThreadMap } = getFeedbackMap(
-                  this.runDetailsData.feedback,
-                ));
-                this.feedbackMap = feedbackMap;
-                this.feedbackThreadMap = feedbackThreadMap;
-
-                if (request.hash) {
-                  window.location.hash = request.hash;
-                }
-              })
-              .catch((run) => {
-                submitRunFailed({
-                  error: run.error,
-                  errorname: run.errorname,
-                  run,
-                });
-              });
-          },
-          'execute-run': ({
-            target,
-          }: {
-            target: Vue & { currentNextExecutionTimestamp: Date };
-          }) => {
-            api.Run.execute()
-              .then(time.remoteTimeAdapter)
-              .then((response) => {
-                target.currentNextExecutionTimestamp =
-                  response.nextExecutionTimestamp;
-              })
-              .catch(ui.apiError);
-          },
-          'submit-run': ({
-            problem,
-            code,
-            language,
-          }: {
-            code: string;
-            language: string;
-            problem: types.NavbarProblemsetProblem;
-          }) => {
-            api.Run.create({
-              problemset_id: payload.currentAssignment.problemset_id,
-              problem_alias: problem.alias,
-              language: language,
-              source: code,
-            })
-              .then(time.remoteTimeAdapter)
-              .then((response) => {
-                submitRun({
-                  guid: response.guid,
-                  submitDelay: response.submit_delay,
-                  language,
-                  username: commonPayload.currentUsername,
-                  classname: commonPayload.userClassname,
-                  problemAlias: problem.alias,
-                });
-              })
-              .catch((run) => {
-                submitRunFailed({
-                  error: run.error,
-                  errorname: run.errorname,
-                  run,
-                });
-              });
-          },
-          'new-clarification': ({
-            clarification,
-            clearForm,
-          }: {
-            clarification: types.Clarification;
-            clearForm: () => void;
-          }) => {
-            if (!clarification) {
-              return;
-            }
-            api.Clarification.create({
-              course_alias: payload.courseDetails.alias,
-              assignment_alias: payload.currentAssignment.alias,
-              problem_alias: clarification.problem_alias,
-              username: clarification.author,
-              message: clarification.message,
-            })
-              .then(() => {
-                clearForm();
-                refreshCourseClarifications({
-                  courseAlias: payload.courseDetails.alias,
-                  type: CourseClarificationType.AllProblems,
-                });
-              })
-              .catch(ui.apiError);
-          },
-          'clarification-response': (clarification: types.Clarification) => {
-            api.Clarification.update(clarification)
-              .then(() => {
-                refreshCourseClarifications({
-                  courseAlias: payload.courseDetails.alias,
-                  type: CourseClarificationType.AllProblems,
-                });
-              })
-              .catch(ui.apiError);
-          },
-          'update:activeTab': (tabName: string) => {
-            history.replaceState({ tabName }, 'updateTab', `#${tabName}`);
-          },
-          rejudge: (run: types.Run) => {
-            api.Run.rejudge({ run_alias: run.guid, debug: false })
-              .then(() => {
-                run.status = 'rejudging';
-                updateRunFallback({ run });
-              })
-              .catch(ui.ignoreError);
-          },
-          requalify: (run: types.Run) => {
-            api.Run.requalify({ run_alias: run.guid })
-              .then(() => {
-                run.type = 'normal';
-                updateRunFallback({ run });
-              })
-              .catch(ui.ignoreError);
-          },
-          'apply-filter': ({
-            filter,
-            value,
-          }: {
-            filter:
-              | 'verdict'
-              | 'language'
-              | 'username'
-              | 'status'
-              | 'offset'
-              | 'execution'
-              | 'output';
-            value: string;
-          }) => {
-            if (value != '') {
-              const newFilter: RunFilters = { [filter]: value };
-              runsStore.commit('applyFilter', newFilter);
-            } else {
-              runsStore.commit('removeFilter', filter);
-            }
-            refreshRuns();
-          },
-          disqualify: ({ run }: { run: types.Run }) => {
-            if (!window.confirm(T.runDisqualifyConfirm)) {
-              return;
-            }
-            api.Run.disqualify({ run_alias: run.guid })
-              .then(() => {
-                run.type = 'disqualified';
-                updateRunFallback({ run });
-              })
-              .catch(ui.ignoreError);
-          },
-          'reset-hash': ({
-            selectedTab,
-            alias,
-          }: {
-            selectedTab: string;
-            alias: null | string;
-          }) => {
-            resetHash(selectedTab, alias);
-          },
-          'submit-promotion': ({
-            solved,
-            tried,
-            quality,
-            difficulty,
-          }: {
-            solved: boolean;
-            tried: boolean;
-            quality: string;
-            difficulty: string;
-          }) => {
-            const contents: {
-              before_ac?: boolean;
-              difficulty?: number;
-              quality?: number;
-            } = {};
-            if (!solved && tried) {
-              contents.before_ac = true;
-            }
-            if (difficulty !== '') {
-              contents.difficulty = Number.parseInt(difficulty, 10);
-            }
-            if (quality !== '') {
-              contents.quality = Number.parseInt(quality, 10);
-            }
-            api.QualityNomination.create({
-              problem_alias: this.problemInfo?.alias,
-              nomination: 'suggestion',
-              contents: JSON.stringify(contents),
-            })
-              .then(() => {
-                component.currentPopupDisplayed = PopupDisplayed.None;
-                ui.reportEvent('quality-nomination', 'submit');
-                ui.dismissNotifications();
-              })
-              .catch(ui.apiError);
-          },
-          'dismiss-promotion': ({
-            solved,
-            tried,
-            isDismissed,
-          }: {
-            solved: boolean;
-            tried: boolean;
-            isDismissed: boolean;
-          }) => {
-            const contents: { before_ac?: boolean } = {};
-            if (!solved && tried) {
-              contents.before_ac = true;
-            }
-            if (!isDismissed) {
-              return;
-            }
-            api.QualityNomination.create({
-              problem_alias: this.problemInfo?.alias,
-              nomination: 'dismissal',
-              contents: JSON.stringify(contents),
-            })
-              .then(() => {
-                ui.reportEvent('quality-nomination', 'dismiss');
-                ui.info(T.qualityNominationRateProblemDesc);
-              })
-              .catch(ui.apiError);
-          },
-          'set-feedback': ({
-            guid,
-            feedback,
-            isUpdate,
-          }: {
-            guid: string;
-            feedback: string;
-            isUpdate: boolean;
-          }) => {
-            api.Submission.setFeedback({
-              guid,
-              course_alias: payload.courseDetails.alias,
-              assignment_alias: payload.currentAssignment.alias,
-              feedback,
-            })
-              .then(() => {
-                component.currentPopupDisplayed = PopupDisplayed.None;
-                ui.success(
-                  isUpdate
-                    ? T.feedbackSuccessfullyUpdated
-                    : T.feedbackSuccessfullyAdded,
-                );
-              })
-              .catch(ui.error);
-          },
-          'new-submission-popup-displayed': () => {
-            if (this.shouldShowFirstAssociatedIdentityRunWarning) {
-              this.shouldShowFirstAssociatedIdentityRunWarning = false;
-              ui.warning(T.firstSumbissionWithIdentity);
-            }
-          },
-          'save-feedback-list': ({
-            feedbackList,
-            guid,
-          }: {
-            feedbackList: { lineNumber: number; feedback: string }[];
-            guid: string;
-          }) => {
-            api.Submission.setFeedbackList({
-              guid,
-              course_alias: payload.courseDetails.alias,
-              assignment_alias: payload.currentAssignment.alias,
-              feedback_list: JSON.stringify(feedbackList),
-            })
-              .then(() => {
-                ui.success(T.feedbackSuccessfullyAdded);
-                resetHash('runs', null);
-                api.Run.getSubmissionFeedback({
-                  run_alias: guid,
-                }).then((response) => {
-                  component.feedbackMap.forEach((feedback) => {
-                    feedback.submissionFeedbackId = response.find(
-                      (fb) => fb.range_bytes_start == feedback.lineNumber,
-                    )?.submission_feedback_id;
-                    feedback.status = FeedbackStatus.Saved;
-                  });
-                });
-
-                component.currentPopupDisplayed = PopupDisplayed.None;
-              })
-              .catch(ui.apiError);
-          },
-          'submit-feedback-thread': ({
-            feedback,
-            guid,
-          }: {
-            feedback: ArenaCourseFeedback;
-            guid: string;
-          }) => {
-            api.Submission.setFeedback({
-              guid,
-              course_alias: payload.courseDetails.alias,
-              assignment_alias: payload.currentAssignment.alias,
-              feedback: feedback.text,
-              range_bytes_start: feedback.lineNumber,
-              submission_feedback_id: feedback.submissionFeedbackId,
-            })
-              .then(({ submissionFeedbackThread }) => {
-                ui.success(T.feedbackSuccessfullyAdded);
-                resetHash('runs', null);
-                if (
-                  submissionFeedbackThread &&
-                  submissionFeedbackThread.submission_feedback_thread_id &&
-                  submissionFeedbackThread.identity_id
-                ) {
-                  feedbackThreadMap.set(
-                    submissionFeedbackThread.submission_feedback_thread_id,
-                    {
-                      author: commonPayload.currentUsername,
-                      authorClassname: commonPayload.userClassname,
-                      lineNumber: feedback.lineNumber,
-                      text: feedback.text,
-                      status: FeedbackStatus.Saved,
-                    },
-                  );
-                }
-                component.currentPopupDisplayed = PopupDisplayed.None;
-              })
-              .catch(ui.error);
-          },
-        },
-        ref: 'component',
-      });
-    },
+  const state = reactive({
+    problemInfo: problemDetails,
+    problem,
+    problems: payload.currentAssignment.problems,
+    popupDisplayed,
+    showNewClarificationPopup,
+    guid,
+    problemAlias,
+    searchResultUsers: [] as types.ListItem[],
+    runDetailsData: runDetails,
+    nextSubmissionTimestamp,
+    nextExecutionTimestamp,
+    shouldShowFirstAssociatedIdentityRunWarning:
+      payload.shouldShowFirstAssociatedIdentityRunWarning,
+    feedbackMap,
+    feedbackThreadMap,
   });
+
+  const app = createApp({
+    render: () =>
+      h(arena_Course, {
+        clarifications: clarificationStore.state.clarifications,
+        course: payload.courseDetails,
+        currentAssignment: payload.currentAssignment,
+        problemInfo: state.problemInfo,
+        problem: state.problem,
+        problemAlias: state.problemAlias,
+        problems: state.problems,
+        popupDisplayed: state.popupDisplayed,
+        scoreboard: payload.scoreboard,
+        showNewClarificationPopup: state.showNewClarificationPopup,
+        showRanking: payload.showRanking,
+        activeTab,
+        guid: state.guid,
+        runs: myRunsStore.state.runs,
+        allRuns: runsStore.state.runs,
+        totalRuns: runsStore.state.totalRuns,
+        searchResultUsers: state.searchResultUsers,
+        runDetailsData: state.runDetailsData,
+        nextSubmissionTimestamp: state.nextSubmissionTimestamp,
+        nextExecutionTimestamp: state.nextExecutionTimestamp,
+        socketStatus: socketStore.state.socketStatus,
+        shouldShowFirstAssociatedIdentityRunWarning: this
+          .shouldShowFirstAssociatedIdentityRunWarning,
+        feedbackMap: state.feedbackMap,
+        feedbackThreadMap: state.feedbackThreadMap,
+        currentUsername: commonPayload.currentUsername,
+        currentUserClassName: commonPayload.userClassname,
+        onNavigateToAssignment: ({
+          assignmentAliasToShow,
+          courseAlias,
+        }: {
+          assignmentAliasToShow: string;
+          courseAlias: string;
+        }) => {
+          window.location.href = `/course/${courseAlias}/assignment/${assignmentAliasToShow}/`;
+        },
+        onNavigateToProblem: ({
+          problem,
+        }: {
+          problem: types.NavbarProblemsetProblem;
+        }) => {
+          navigateToProblem({
+            type: NavigationType.ForSingleProblemOrCourse,
+            problem,
+            target: arenaCourse,
+            problems: state.problems,
+            problemsetId: payload.currentAssignment.problemset_id,
+          });
+        },
+        onUpdateSearchResultUsersAssignment: ({ query }: { query: string }) => {
+          api.Course.searchUsers({
+            query,
+            course_alias: payload.courseDetails.alias,
+            assignment_alias: payload.currentAssignment.alias,
+          })
+            .then(({ results }) => {
+              state.searchResultUsers = results.map(
+                ({ key, value }: types.ListItem) => ({
+                  key,
+                  value: `${ui.escape(key)} (<strong>${ui.escape(
+                    value,
+                  )}</strong>)`,
+                }),
+              );
+            })
+            .catch(ui.apiError);
+        },
+        onRequestFeedback: (guid: string) => {
+          if (!window.confirm(T.requestFeedbackConfirm)) {
+            return;
+          }
+          api.Course.requestFeedback({
+            course_alias: payload.courseDetails.alias,
+            assignment_alias: payload.currentAssignment.alias,
+            guid,
+          })
+            .then(() => {
+              ui.success(T.requestFeedback);
+            })
+            .catch(ui.apiError);
+        },
+        onShowRun: (request: SubmissionRequest) => {
+          api.Run.details({ run_alias: request.guid })
+            .then((runDetails) => {
+              state.runDetailsData = showSubmission({ request, runDetails });
+
+              ({ feedbackMap, feedbackThreadMap } = getFeedbackMap(
+                state.runDetailsData.feedback,
+              ));
+              state.feedbackMap = feedbackMap;
+              state.feedbackThreadMap = feedbackThreadMap;
+
+              if (request.hash) {
+                window.location.hash = request.hash;
+              }
+            })
+            .catch((run) => {
+              submitRunFailed({
+                error: run.error,
+                errorname: run.errorname,
+                run,
+              });
+            });
+        },
+        onExecuteRun: ({
+          target,
+        }: {
+          target: Vue & { currentNextExecutionTimestamp: Date };
+        }) => {
+          api.Run.execute()
+            .then(time.remoteTimeAdapter)
+            .then((response) => {
+              target.currentNextExecutionTimestamp =
+                response.nextExecutionTimestamp;
+            })
+            .catch(ui.apiError);
+        },
+        onSubmitRun: ({
+          problem,
+          code,
+          language,
+        }: {
+          code: string;
+          language: string;
+          problem: types.NavbarProblemsetProblem;
+        }) => {
+          api.Run.create({
+            problemset_id: payload.currentAssignment.problemset_id,
+            problem_alias: problem.alias,
+            language: language,
+            source: code,
+          })
+            .then(time.remoteTimeAdapter)
+            .then((response) => {
+              submitRun({
+                guid: response.guid,
+                submitDelay: response.submit_delay,
+                language,
+                username: commonPayload.currentUsername,
+                classname: commonPayload.userClassname,
+                problemAlias: problem.alias,
+              });
+            })
+            .catch((run) => {
+              submitRunFailed({
+                error: run.error,
+                errorname: run.errorname,
+                run,
+              });
+            });
+        },
+        onNewClarification: ({
+          clarification,
+          clearForm,
+        }: {
+          clarification: types.Clarification;
+          clearForm: () => void;
+        }) => {
+          if (!clarification) {
+            return;
+          }
+          api.Clarification.create({
+            course_alias: payload.courseDetails.alias,
+            assignment_alias: payload.currentAssignment.alias,
+            problem_alias: clarification.problem_alias,
+            username: clarification.author,
+            message: clarification.message,
+          })
+            .then(() => {
+              clearForm();
+              refreshCourseClarifications({
+                courseAlias: payload.courseDetails.alias,
+                type: CourseClarificationType.AllProblems,
+              });
+            })
+            .catch(ui.apiError);
+        },
+        onClarificationResponse: (clarification: types.Clarification) => {
+          api.Clarification.update(clarification)
+            .then(() => {
+              refreshCourseClarifications({
+                courseAlias: payload.courseDetails.alias,
+                type: CourseClarificationType.AllProblems,
+              });
+            })
+            .catch(ui.apiError);
+        },
+        'onUpdate:activeTab': (tabName: string) => {
+          history.replaceState({ tabName }, 'updateTab', `#${tabName}`);
+        },
+        rejudge: (run: types.Run) => {
+          api.Run.rejudge({ run_alias: run.guid, debug: false })
+            .then(() => {
+              run.status = 'rejudging';
+              updateRunFallback({ run });
+            })
+            .catch(ui.ignoreError);
+        },
+        requalify: (run: types.Run) => {
+          api.Run.requalify({ run_alias: run.guid })
+            .then(() => {
+              run.type = 'normal';
+              updateRunFallback({ run });
+            })
+            .catch(ui.ignoreError);
+        },
+        onApplyFilter: ({
+          filter,
+          value,
+        }: {
+          filter:
+            | 'verdict'
+            | 'language'
+            | 'username'
+            | 'status'
+            | 'offset'
+            | 'execution'
+            | 'output';
+          value: string;
+        }) => {
+          if (value != '') {
+            const newFilter: RunFilters = { [filter]: value };
+            runsStore.commit('applyFilter', newFilter);
+          } else {
+            runsStore.commit('removeFilter', filter);
+          }
+          refreshRuns();
+        },
+        disqualify: ({ run }: { run: types.Run }) => {
+          if (!window.confirm(T.runDisqualifyConfirm)) {
+            return;
+          }
+          api.Run.disqualify({ run_alias: run.guid })
+            .then(() => {
+              run.type = 'disqualified';
+              updateRunFallback({ run });
+            })
+            .catch(ui.ignoreError);
+        },
+        onResetHash: ({
+          selectedTab,
+          alias,
+        }: {
+          selectedTab: string;
+          alias: null | string;
+        }) => {
+          resetHash(selectedTab, alias);
+        },
+        onSubmitPromotion: ({
+          solved,
+          tried,
+          quality,
+          difficulty,
+        }: {
+          solved: boolean;
+          tried: boolean;
+          quality: string;
+          difficulty: string;
+        }) => {
+          const contents: {
+            before_ac?: boolean;
+            difficulty?: number;
+            quality?: number;
+          } = {};
+          if (!solved && tried) {
+            contents.before_ac = true;
+          }
+          if (difficulty !== '') {
+            contents.difficulty = Number.parseInt(difficulty, 10);
+          }
+          if (quality !== '') {
+            contents.quality = Number.parseInt(quality, 10);
+          }
+          api.QualityNomination.create({
+            problem_alias: state.problemInfo?.alias,
+            nomination: 'suggestion',
+            contents: JSON.stringify(contents),
+          })
+            .then(() => {
+              component.currentPopupDisplayed = PopupDisplayed.None;
+              ui.reportEvent('quality-nomination', 'submit');
+              ui.dismissNotifications();
+            })
+            .catch(ui.apiError);
+        },
+        onDismissPromotion: ({
+          solved,
+          tried,
+          isDismissed,
+        }: {
+          solved: boolean;
+          tried: boolean;
+          isDismissed: boolean;
+        }) => {
+          const contents: { before_ac?: boolean } = {};
+          if (!solved && tried) {
+            contents.before_ac = true;
+          }
+          if (!isDismissed) {
+            return;
+          }
+          api.QualityNomination.create({
+            problem_alias: state.problemInfo?.alias,
+            nomination: 'dismissal',
+            contents: JSON.stringify(contents),
+          })
+            .then(() => {
+              ui.reportEvent('quality-nomination', 'dismiss');
+              ui.info(T.qualityNominationRateProblemDesc);
+            })
+            .catch(ui.apiError);
+        },
+        onSetFeedback: ({
+          guid,
+          feedback,
+          isUpdate,
+        }: {
+          guid: string;
+          feedback: string;
+          isUpdate: boolean;
+        }) => {
+          api.Submission.setFeedback({
+            guid,
+            course_alias: payload.courseDetails.alias,
+            assignment_alias: payload.currentAssignment.alias,
+            feedback,
+          })
+            .then(() => {
+              component.currentPopupDisplayed = PopupDisplayed.None;
+              ui.success(
+                isUpdate
+                  ? T.feedbackSuccessfullyUpdated
+                  : T.feedbackSuccessfullyAdded,
+              );
+            })
+            .catch(ui.error);
+        },
+        onNewSubmissionPopupDisplayed: () => {
+          if (state.shouldShowFirstAssociatedIdentityRunWarning) {
+            state.shouldShowFirstAssociatedIdentityRunWarning = false;
+            ui.warning(T.firstSumbissionWithIdentity);
+          }
+        },
+        onSaveFeedbackList: ({
+          feedbackList,
+          guid,
+        }: {
+          feedbackList: { lineNumber: number; feedback: string }[];
+          guid: string;
+        }) => {
+          api.Submission.setFeedbackList({
+            guid,
+            course_alias: payload.courseDetails.alias,
+            assignment_alias: payload.currentAssignment.alias,
+            feedback_list: JSON.stringify(feedbackList),
+          })
+            .then(() => {
+              ui.success(T.feedbackSuccessfullyAdded);
+              resetHash('runs', null);
+              api.Run.getSubmissionFeedback({
+                run_alias: guid,
+              }).then((response) => {
+                component.feedbackMap.forEach((feedback) => {
+                  feedback.submissionFeedbackId = response.find(
+                    (fb) => fb.range_bytes_start == feedback.lineNumber,
+                  )?.submission_feedback_id;
+                  feedback.status = FeedbackStatus.Saved;
+                });
+              });
+
+              component.currentPopupDisplayed = PopupDisplayed.None;
+            })
+            .catch(ui.apiError);
+        },
+        onSubmitFeedbackThread: ({
+          feedback,
+          guid,
+        }: {
+          feedback: ArenaCourseFeedback;
+          guid: string;
+        }) => {
+          api.Submission.setFeedback({
+            guid,
+            course_alias: payload.courseDetails.alias,
+            assignment_alias: payload.currentAssignment.alias,
+            feedback: feedback.text,
+            range_bytes_start: feedback.lineNumber,
+            submission_feedback_id: feedback.submissionFeedbackId,
+          })
+            .then(({ submissionFeedbackThread }) => {
+              ui.success(T.feedbackSuccessfullyAdded);
+              resetHash('runs', null);
+              if (
+                submissionFeedbackThread &&
+                submissionFeedbackThread.submission_feedback_thread_id &&
+                submissionFeedbackThread.identity_id
+              ) {
+                feedbackThreadMap.set(
+                  submissionFeedbackThread.submission_feedback_thread_id,
+                  {
+                    author: commonPayload.currentUsername,
+                    authorClassname: commonPayload.userClassname,
+                    lineNumber: feedback.lineNumber,
+                    text: feedback.text,
+                    status: FeedbackStatus.Saved,
+                  },
+                );
+              }
+              component.currentPopupDisplayed = PopupDisplayed.None;
+            })
+            .catch(ui.error);
+        },
+      }),
+  });
+  app.mount('#main-container');
 
   function getSelectedValidTab(
     tab: string,
@@ -655,7 +643,7 @@ OmegaUp.on('ready', async () => {
     scoreboardToken: null,
     clarificationsOffset: 1,
     clarificationsRowcount: 30,
-    navbarProblems: arenaCourse.problems,
+    navbarProblems: state.problems,
     currentUsername: commonPayload.currentUsername,
     intervalInMilliseconds: 5 * 60 * 1000,
     scoreMode: ScoreMode.Partial,
@@ -678,7 +666,7 @@ OmegaUp.on('ready', async () => {
         type: NavigationType.ForSingleProblemOrCourse,
         problem,
         target: arenaCourse,
-        problems: arenaCourse.problems,
+        problems: state.problems,
         problemsetId: payload.currentAssignment.problemset_id,
         guid,
       });
@@ -687,7 +675,7 @@ OmegaUp.on('ready', async () => {
       const hash = `#problems/${problem.alias}/show-run:${guid}`;
       api.Run.details({ run_alias: guid })
         .then((runDetails) => {
-          arenaCourse.runDetailsData = showSubmission({
+          state.runDetailsData = showSubmission({
             request: {
               guid,
               isAdmin: courseAdmin,
@@ -697,11 +685,11 @@ OmegaUp.on('ready', async () => {
           });
 
           ({ feedbackMap, feedbackThreadMap } = getFeedbackMap(
-            arenaCourse.runDetailsData.feedback,
+            state.runDetailsData.feedback,
           ));
 
-          arenaCourse.feedbackMap = feedbackMap;
-          arenaCourse.feedbackThreadMap = feedbackThreadMap;
+          state.feedbackMap = feedbackMap;
+          state.feedbackThreadMap = feedbackThreadMap;
 
           if (hash) {
             window.location.hash = hash;

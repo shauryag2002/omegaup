@@ -11,7 +11,6 @@ import {
 } from '@/js/omegaup/problem/creator/modules/cases';
 import * as ui from '@/js/omegaup/ui';
 
-
 describe('CasesForm.vue', () => {
   beforeEach(() => {
     store.commit('casesStore/resetStore');

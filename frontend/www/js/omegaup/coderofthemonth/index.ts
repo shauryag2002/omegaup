@@ -3,7 +3,7 @@ import { types } from '../api_types';
 import * as api from '../api';
 import * as ui from '../ui';
 import T from '../lang';
-import Vue from 'vue';
+import { createApp, h, reactive } from 'vue';
 import coderofthemonth_List from '../components/coderofthemonth/List.vue';
 
 OmegaUp.on('ready', () => {
@@ -13,47 +13,39 @@ OmegaUp.on('ready', () => {
   if (selectedTab !== locationHash) {
     window.location.hash = selectedTab;
   }
-  const coderOfTheMonthList = new Vue({
-    el: '#main-container',
-    components: {
-      'omegaup-coder-of-the-month-list': coderofthemonth_List,
-    },
-    data: () => ({
-      coderIsSelected:
-        payload.isMentor && payload.options && payload.options.coderIsSelected,
-    }),
-    render: function (createElement) {
-      return createElement('omegaup-coder-of-the-month-list', {
-        props: {
-          codersOfCurrentMonth: payload.codersOfCurrentMonth,
-          codersOfPreviousMonth: payload.codersOfPreviousMonth,
-          candidatesToCoderOfTheMonth: payload.candidatesToCoderOfTheMonth,
-          isMentor: payload.isMentor,
-          selectedTab,
-          canChooseCoder: payload.isMentor && payload.options?.canChooseCoder,
-          coderIsSelected: this.coderIsSelected,
-          category: payload.category,
-        },
-        on: {
-          'select-coder': (coderUsername: string, category: string) => {
-            api.User.selectCoderOfTheMonth({
-              username: coderUsername,
-              category: category,
-            })
-              .then(() => {
-                ui.success(
-                  payload.category == 'all'
-                    ? T.coderOfTheMonthSelectedSuccessfully
-                    : T.coderOfTheMonthFemaleSelectedSuccessfully,
-                );
-                coderOfTheMonthList.coderIsSelected = true;
-              })
-              .catch(ui.apiError);
-          },
-        },
-      });
-    },
+  const state = reactive({
+    coderIsSelected:
+      payload.isMentor && payload.options && payload.options.coderIsSelected,
   });
+
+  createApp({
+    render: () =>
+      h(coderofthemonth_List, {
+        codersOfCurrentMonth: payload.codersOfCurrentMonth,
+        codersOfPreviousMonth: payload.codersOfPreviousMonth,
+        candidatesToCoderOfTheMonth: payload.candidatesToCoderOfTheMonth,
+        isMentor: payload.isMentor,
+        selectedTab,
+        canChooseCoder: payload.isMentor && payload.options?.canChooseCoder,
+        coderIsSelected: state.coderIsSelected,
+        category: payload.category,
+        onSelectCoder: (coderUsername: string, category: string) => {
+          api.User.selectCoderOfTheMonth({
+            username: coderUsername,
+            category: category,
+          })
+            .then(() => {
+              ui.success(
+                payload.category == 'all'
+                  ? T.coderOfTheMonthSelectedSuccessfully
+                  : T.coderOfTheMonthFemaleSelectedSuccessfully,
+              );
+              state.coderIsSelected = true;
+            })
+            .catch(ui.apiError);
+        },
+      }),
+  }).mount('#main-container');
 
   function getSelectedValidTab(tab: string): string {
     const validTabs = [

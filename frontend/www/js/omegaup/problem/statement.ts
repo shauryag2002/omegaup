@@ -1,4 +1,4 @@
-import Vue from 'vue';
+import { createApp, h } from 'vue';
 
 import { types } from '../api_types';
 import problem_StatementEdit from '../components/problem/StatementEdit.vue';
@@ -45,37 +45,27 @@ OmegaUp.on('ready', () => {
   // Ask the user if they want to restore the last draft
   const markdownStatement =
     localStorage.getItem('wmdinput') || defaultStatement;
-
-  new Vue({
-    el: '#main-container',
-    components: {
-      'omegaup-problem-statementedit': problem_StatementEdit,
-    },
-    render: function (createElement) {
-      return createElement('omegaup-problem-statementedit', {
-        props: {
-          alias: 'problema',
-          title: 'Tu problema',
-          source: 'fuente',
-          problemsetter: {
-            classname: 'user-rank-unranked',
-            name: 'tu-usuario',
-            username: 'tu_usuario',
-          } as types.ProblemsetterInfo,
-          statement: {
-            markdown: markdownStatement,
-            language: 'es',
-            images: {},
-          } as types.ProblemStatement,
-          markdownType: 'statements',
-          showEditControls: false,
+  createApp({
+    render: () =>
+      h(problem_StatementEdit, {
+        alias: 'problema',
+        title: 'Tu problema',
+        source: 'fuente',
+        problemsetter: {
+          classname: 'user-rank-unranked',
+          name: 'tu-usuario',
+          username: 'tu_usuario',
+        } as types.ProblemsetterInfo,
+        statement: {
+          markdown: markdownStatement,
+          language: 'es',
+          images: {},
+        } as types.ProblemStatement,
+        markdownType: 'statements',
+        showEditControls: false,
+        'onUpdate:statement': (statement: types.ProblemStatement) => {
+          localStorage.setItem('wmdinput', statement.markdown);
         },
-        on: {
-          'update:statement': (statement: types.ProblemStatement) => {
-            localStorage.setItem('wmdinput', statement.markdown);
-          },
-        },
-      });
-    },
-  });
+      }),
+  }).mount('#main-container');
 });

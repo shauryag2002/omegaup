@@ -19,8 +19,6 @@ describe('AssignmentList.vue', () => {
     expect(wrapper.text()).toContain(T.courseContentEmpty);
   });
 
-
-
   it('Should handle content list', async () => {
     const wrapper = shallowMount(course_AssignmentList, {
       propsData: {

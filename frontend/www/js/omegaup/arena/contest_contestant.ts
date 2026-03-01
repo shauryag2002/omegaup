@@ -1,4 +1,4 @@
-import Vue from 'vue';
+import { createApp, h, reactive } from 'vue';
 import * as api from '../api';
 import { types } from '../api_types';
 import arena_Contest from '../components/arena/Contest.vue';
@@ -151,331 +151,321 @@ OmegaUp.on('ready', async () => {
     nextExecutionTimestamp = problemDetails?.nextExecutionTimestamp;
   }
 
-  const contestContestant = new Vue({
-    el: '#main-container',
-    components: { 'omegaup-arena-contest': arena_Contest },
-    data: () => ({
-      problemInfo: problemDetails,
-      problem,
-      problems: payload.problems,
-      popupDisplayed,
-      showNewClarificationPopup,
-      guid,
-      problemAlias,
-      digitsAfterDecimalPoint: 2,
-      showPenalty: true,
-      searchResultUsers: [] as types.ListItem[],
-      nextSubmissionTimestamp,
-      nextExecutionTimestamp,
-      runDetailsData: runDetails,
-      shouldShowFirstAssociatedIdentityRunWarning:
-        payload.shouldShowFirstAssociatedIdentityRunWarning,
-      isBlocked,
-      blockedMessage,
-    }),
-    render: function (createElement) {
-      return createElement('omegaup-arena-contest', {
-        props: {
-          lockdown: commonPayload.omegaUpLockDown,
-          contest: payload.contest,
-          contestAdmin,
-          problems: this.problems,
-          users: payload.adminPayload?.users,
-          problemInfo: this.problemInfo,
-          problem: this.problem,
-          clarifications: clarificationStore.state.clarifications,
-          popupDisplayed: this.popupDisplayed,
-          showNewClarificationPopup: this.showNewClarificationPopup,
-          activeTab,
-          guid: this.guid,
-          problemAlias: this.problemAlias,
-          miniRankingUsers: rankingStore.state.miniRankingUsers,
-          ranking: rankingStore.state.ranking,
-          rankingChartOptions: rankingStore.state.rankingChartOptions,
-          lastUpdated: rankingStore.state.lastTimeUpdated,
-          digitsAfterDecimalPoint: this.digitsAfterDecimalPoint,
-          showPenalty: this.showPenalty,
-          socketStatus: socketStore.state.socketStatus,
-          runs: myRunsStore.state.runs,
-          allRuns: runsStore.state.runs,
-          totalRuns: runsStore.state.totalRuns,
-          searchResultUsers: this.searchResultUsers,
-          runDetailsData: this.runDetailsData,
-          nextSubmissionTimestamp: this.nextSubmissionTimestamp,
-          nextExecutionTimestamp: this.nextExecutionTimestamp,
-          shouldShowFirstAssociatedIdentityRunWarning: this
-            .shouldShowFirstAssociatedIdentityRunWarning,
-          submissionDeadline: payload.submissionDeadline,
-          isBlocked: this.isBlocked,
-          blockedMessage: this.blockedMessage,
-        },
-        on: {
-          'navigate-to-problem': ({
-            problem,
-          }: {
-            problem: types.NavbarProblemsetProblem;
-          }) => {
-            navigateToProblem({
-              type: NavigationType.ForContest,
-              problem,
-              target: contestContestant,
-              problems: this.problems,
-              contestAlias: payload.contest.alias,
-              contestMode: getScoreModeEnum(payload.contest.score_mode),
-            });
-          },
-          'update-search-result-users-contest': ({
-            query,
-            contestAlias,
-          }: {
-            query: string;
-            contestAlias: string;
-          }) => {
-            api.Contest.searchUsers({ query, contest_alias: contestAlias })
-              .then(({ results }) => {
-                this.searchResultUsers = results.map(
-                  ({ key, value }: types.ListItem) => ({
-                    key,
-                    value: `${ui.escape(key)} (<strong>${ui.escape(
-                      value,
-                    )}</strong>)`,
-                  }),
-                );
-              })
-              .catch(ui.apiError);
-          },
-          'show-run': (request: SubmissionRequest) => {
-            api.Run.details({ run_alias: request.guid })
-              .then((runDetails) => {
-                this.runDetailsData = showSubmission({ request, runDetails });
-                if (request.hash) {
-                  window.location.hash = request.hash;
-                }
-              })
-              .catch((run) => {
-                submitRunFailed({
-                  error: run.error,
-                  errorname: run.errorname,
-                  run,
-                });
-              })
-              .finally(() => {
-                this.popupDisplayed = PopupDisplayed.None;
-              });
-          },
-          'execute-run': ({
-            target,
-          }: {
-            target: Vue & { currentNextExecutionTimestamp: Date };
-          }) => {
-            api.Run.execute()
-              .then(time.remoteTimeAdapter)
-              .then((response) => {
-                target.currentNextExecutionTimestamp =
-                  response.nextExecutionTimestamp;
-              })
-              .catch(ui.apiError);
-          },
-          'submit-run': ({
-            problem,
-            code,
-            language,
-            target,
-          }: {
-            problem: types.NavbarProblemsetProblem;
-            code: string;
-            language: string;
-            target: Vue & { currentNextSubmissionTimestamp: Date };
-          }) => {
-            api.Run.create({
-              contest_alias: payload.contest.alias,
-              problem_alias: problem.alias,
-              language: language,
-              source: code,
-            })
-              .then(time.remoteTimeAdapter)
-              .then((response) => {
-                submitRun({
-                  guid: response.guid,
-                  submitDelay: response.submit_delay,
-                  language,
-                  username: commonPayload.currentUsername,
-                  classname: commonPayload.userClassname,
-                  problemAlias: problem.alias,
-                });
-                target.currentNextSubmissionTimestamp =
-                  response.nextSubmissionTimestamp;
-
-                if (
-                  Object.prototype.hasOwnProperty.call(
-                    problemsStore.state.problems,
-                    problem.alias,
-                  )
-                ) {
-                  const problemInfo =
-                    problemsStore.state.problems[problem.alias];
-                  problemInfo.nextSubmissionTimestamp =
-                    response.nextSubmissionTimestamp;
-                  problemsStore.commit('addProblem', problemInfo);
-                }
-              })
-              .catch((run) => {
-                submitRunFailed({
-                  error: run.error,
-                  errorname: run.errorname,
-                  run,
-                });
-              });
-          },
-          'new-clarification': ({
-            clarification,
-            clearForm,
-            contestClarificationRequest,
-          }: {
-            clarification: types.Clarification;
-            clearForm: () => void;
-            contestClarificationRequest: ContestClarificationRequest;
-          }) => {
-            if (!clarification) {
-              return;
-            }
-            api.Clarification.create({
-              contest_alias: payload.contest.alias,
-              problem_alias: clarification.problem_alias,
-              username: clarification.author,
-              message: clarification.message,
-            })
-              .then(() => {
-                clearForm();
-                refreshContestClarifications(contestClarificationRequest);
-              })
-              .catch(ui.apiError);
-          },
-          'clarification-response': ({
-            clarification,
-            contestClarificationRequest,
-          }: ContestClarification) => {
-            api.Clarification.update(clarification)
-              .then(() => {
-                refreshContestClarifications(contestClarificationRequest);
-              })
-              .catch(ui.apiError);
-          },
-          rejudge: (run: types.Run) => {
-            api.Run.rejudge({ run_alias: run.guid, debug: false })
-              .then(() => {
-                run.status = 'rejudging';
-                updateRunFallback({ run });
-              })
-              .catch(ui.ignoreError);
-          },
-          requalify: (run: types.Run) => {
-            api.Run.requalify({ run_alias: run.guid })
-              .then(() => {
-                run.type = 'normal';
-                updateRunFallback({ run });
-              })
-              .catch(ui.ignoreError);
-          },
-          disqualify: ({
-            run,
-            disqualificationType,
-          }: {
-            run: types.Run;
-            disqualificationType: DisqualificationType;
-          }) => {
-            const request: {
-              run_alias: null | string;
-              problem_alias: null | string;
-              username: string;
-              contest_alias: null | string;
-            } = {
-              run_alias: run.guid,
-              contest_alias: payload.contest.alias,
-              problem_alias: null,
-              username: run.username,
-            };
-            let message = T.runDisqualifyConfirm;
-            if (disqualificationType === DisqualificationType.ByGUID) {
-              request.contest_alias = null;
-            } else if (disqualificationType === DisqualificationType.ByUser) {
-              request.run_alias = null;
-              message = T.runDisqualifyByUserConfirm;
-            } else if (
-              disqualificationType === DisqualificationType.ByProblem
-            ) {
-              request.run_alias = null;
-              request.problem_alias = run.alias;
-              message = T.runDisqualifyByProblemConfirm;
-            }
-            if (!window.confirm(message)) {
-              return;
-            }
-            api.Run.disqualify(request)
-              .then(({ runs }) => {
-                const filteredRuns = runsStore.state.runs.filter(
-                  (filteredRun) =>
-                    runs.some(
-                      (disqualifiedRun) =>
-                        disqualifiedRun.guid === filteredRun.guid,
-                    ),
-                );
-                for (const disqualifiedRun of filteredRuns) {
-                  disqualifiedRun.type = 'disqualified';
-                  updateRunFallback({ run: disqualifiedRun });
-                }
-              })
-              .catch(ui.ignoreError);
-          },
-          'update:activeTab': (tabName: string) => {
-            history.replaceState({ tabName }, 'updateTab', `#${tabName}`);
-          },
-          'reset-hash': ({
-            selectedTab,
-            alias,
-          }: {
-            selectedTab: string;
-            alias: string;
-          }) => {
-            if (!alias) {
-              history.replaceState(
-                { selectedTab },
-                'resetHash',
-                `#${selectedTab}`,
-              );
-              return;
-            }
-            history.replaceState(
-              { selectedTab, alias },
-              'resetHash',
-              `#${selectedTab}/${alias}`,
-            );
-          },
-          'new-submission-popup-displayed': () => {
-            if (this.shouldShowFirstAssociatedIdentityRunWarning) {
-              this.shouldShowFirstAssociatedIdentityRunWarning = false;
-              ui.warning(T.firstSumbissionWithIdentity);
-            }
-          },
-          'apply-filter': ({
-            filter,
-            value,
-          }: {
-            filter: 'verdict' | 'language' | 'username' | 'status' | 'offset';
-            value: string;
-          }) => {
-            if (value != '') {
-              const newFilter: RunFilters = { [filter]: value };
-              runsStore.commit('applyFilter', newFilter);
-            } else {
-              runsStore.commit('removeFilter', filter);
-            }
-            refreshRuns();
-          },
-        },
-      });
-    },
+  const state = reactive({
+    problemInfo: problemDetails,
+    problem,
+    problems: payload.problems,
+    popupDisplayed,
+    showNewClarificationPopup,
+    guid,
+    problemAlias,
+    digitsAfterDecimalPoint: 2,
+    showPenalty: true,
+    searchResultUsers: [] as types.ListItem[],
+    nextSubmissionTimestamp,
+    nextExecutionTimestamp,
+    runDetailsData: runDetails,
+    shouldShowFirstAssociatedIdentityRunWarning:
+      payload.shouldShowFirstAssociatedIdentityRunWarning,
+    isBlocked,
+    blockedMessage,
   });
+
+  createApp({
+    render: () =>
+      h(arena_Contest, {
+        lockdown: commonPayload.omegaUpLockDown,
+        contest: payload.contest,
+        contestAdmin,
+        problems: state.problems,
+        users: payload.adminPayload?.users,
+        problemInfo: state.problemInfo,
+        problem: state.problem,
+        clarifications: clarificationStore.state.clarifications,
+        popupDisplayed: state.popupDisplayed,
+        showNewClarificationPopup: state.showNewClarificationPopup,
+        activeTab,
+        guid: state.guid,
+        problemAlias: state.problemAlias,
+        miniRankingUsers: rankingStore.state.miniRankingUsers,
+        ranking: rankingStore.state.ranking,
+        rankingChartOptions: rankingStore.state.rankingChartOptions,
+        lastUpdated: rankingStore.state.lastTimeUpdated,
+        digitsAfterDecimalPoint: state.digitsAfterDecimalPoint,
+        showPenalty: state.showPenalty,
+        socketStatus: socketStore.state.socketStatus,
+        runs: myRunsStore.state.runs,
+        allRuns: runsStore.state.runs,
+        totalRuns: runsStore.state.totalRuns,
+        searchResultUsers: state.searchResultUsers,
+        runDetailsData: state.runDetailsData,
+        nextSubmissionTimestamp: state.nextSubmissionTimestamp,
+        nextExecutionTimestamp: state.nextExecutionTimestamp,
+        shouldShowFirstAssociatedIdentityRunWarning: this
+          .shouldShowFirstAssociatedIdentityRunWarning,
+        submissionDeadline: payload.submissionDeadline,
+        isBlocked: state.isBlocked,
+        blockedMessage: state.blockedMessage,
+        onNavigateToProblem: ({
+          problem,
+        }: {
+          problem: types.NavbarProblemsetProblem;
+        }) => {
+          navigateToProblem({
+            type: NavigationType.ForContest,
+            problem,
+            target: contestContestant,
+            problems: state.problems,
+            contestAlias: payload.contest.alias,
+            contestMode: getScoreModeEnum(payload.contest.score_mode),
+          });
+        },
+        onUpdateSearchResultUsersContest: ({
+          query,
+          contestAlias,
+        }: {
+          query: string;
+          contestAlias: string;
+        }) => {
+          api.Contest.searchUsers({ query, contest_alias: contestAlias })
+            .then(({ results }) => {
+              state.searchResultUsers = results.map(
+                ({ key, value }: types.ListItem) => ({
+                  key,
+                  value: `${ui.escape(key)} (<strong>${ui.escape(
+                    value,
+                  )}</strong>)`,
+                }),
+              );
+            })
+            .catch(ui.apiError);
+        },
+        onShowRun: (request: SubmissionRequest) => {
+          api.Run.details({ run_alias: request.guid })
+            .then((runDetails) => {
+              state.runDetailsData = showSubmission({ request, runDetails });
+              if (request.hash) {
+                window.location.hash = request.hash;
+              }
+            })
+            .catch((run) => {
+              submitRunFailed({
+                error: run.error,
+                errorname: run.errorname,
+                run,
+              });
+            })
+            .finally(() => {
+              state.popupDisplayed = PopupDisplayed.None;
+            });
+        },
+        onExecuteRun: ({
+          target,
+        }: {
+          target: Vue & { currentNextExecutionTimestamp: Date };
+        }) => {
+          api.Run.execute()
+            .then(time.remoteTimeAdapter)
+            .then((response) => {
+              target.currentNextExecutionTimestamp =
+                response.nextExecutionTimestamp;
+            })
+            .catch(ui.apiError);
+        },
+        onSubmitRun: ({
+          problem,
+          code,
+          language,
+          target,
+        }: {
+          problem: types.NavbarProblemsetProblem;
+          code: string;
+          language: string;
+          target: Vue & { currentNextSubmissionTimestamp: Date };
+        }) => {
+          api.Run.create({
+            contest_alias: payload.contest.alias,
+            problem_alias: problem.alias,
+            language: language,
+            source: code,
+          })
+            .then(time.remoteTimeAdapter)
+            .then((response) => {
+              submitRun({
+                guid: response.guid,
+                submitDelay: response.submit_delay,
+                language,
+                username: commonPayload.currentUsername,
+                classname: commonPayload.userClassname,
+                problemAlias: problem.alias,
+              });
+              target.currentNextSubmissionTimestamp =
+                response.nextSubmissionTimestamp;
+
+              if (
+                Object.prototype.hasOwnProperty.call(
+                  problemsStore.state.problems,
+                  problem.alias,
+                )
+              ) {
+                const problemInfo = problemsStore.state.problems[problem.alias];
+                problemInfo.nextSubmissionTimestamp =
+                  response.nextSubmissionTimestamp;
+                problemsStore.commit('addProblem', problemInfo);
+              }
+            })
+            .catch((run) => {
+              submitRunFailed({
+                error: run.error,
+                errorname: run.errorname,
+                run,
+              });
+            });
+        },
+        onNewClarification: ({
+          clarification,
+          clearForm,
+          contestClarificationRequest,
+        }: {
+          clarification: types.Clarification;
+          clearForm: () => void;
+          contestClarificationRequest: ContestClarificationRequest;
+        }) => {
+          if (!clarification) {
+            return;
+          }
+          api.Clarification.create({
+            contest_alias: payload.contest.alias,
+            problem_alias: clarification.problem_alias,
+            username: clarification.author,
+            message: clarification.message,
+          })
+            .then(() => {
+              clearForm();
+              refreshContestClarifications(contestClarificationRequest);
+            })
+            .catch(ui.apiError);
+        },
+        onClarificationResponse: ({
+          clarification,
+          contestClarificationRequest,
+        }: ContestClarification) => {
+          api.Clarification.update(clarification)
+            .then(() => {
+              refreshContestClarifications(contestClarificationRequest);
+            })
+            .catch(ui.apiError);
+        },
+        rejudge: (run: types.Run) => {
+          api.Run.rejudge({ run_alias: run.guid, debug: false })
+            .then(() => {
+              run.status = 'rejudging';
+              updateRunFallback({ run });
+            })
+            .catch(ui.ignoreError);
+        },
+        requalify: (run: types.Run) => {
+          api.Run.requalify({ run_alias: run.guid })
+            .then(() => {
+              run.type = 'normal';
+              updateRunFallback({ run });
+            })
+            .catch(ui.ignoreError);
+        },
+        disqualify: ({
+          run,
+          disqualificationType,
+        }: {
+          run: types.Run;
+          disqualificationType: DisqualificationType;
+        }) => {
+          const request: {
+            run_alias: null | string;
+            problem_alias: null | string;
+            username: string;
+            contest_alias: null | string;
+          } = {
+            run_alias: run.guid,
+            contest_alias: payload.contest.alias,
+            problem_alias: null,
+            username: run.username,
+          };
+          let message = T.runDisqualifyConfirm;
+          if (disqualificationType === DisqualificationType.ByGUID) {
+            request.contest_alias = null;
+          } else if (disqualificationType === DisqualificationType.ByUser) {
+            request.run_alias = null;
+            message = T.runDisqualifyByUserConfirm;
+          } else if (disqualificationType === DisqualificationType.ByProblem) {
+            request.run_alias = null;
+            request.problem_alias = run.alias;
+            message = T.runDisqualifyByProblemConfirm;
+          }
+          if (!window.confirm(message)) {
+            return;
+          }
+          api.Run.disqualify(request)
+            .then(({ runs }) => {
+              const filteredRuns = runsStore.state.runs.filter((filteredRun) =>
+                runs.some(
+                  (disqualifiedRun) =>
+                    disqualifiedRun.guid === filteredRun.guid,
+                ),
+              );
+              for (const disqualifiedRun of filteredRuns) {
+                disqualifiedRun.type = 'disqualified';
+                updateRunFallback({ run: disqualifiedRun });
+              }
+            })
+            .catch(ui.ignoreError);
+        },
+        'onUpdate:activeTab': (tabName: string) => {
+          history.replaceState({ tabName }, 'updateTab', `#${tabName}`);
+        },
+        onResetHash: ({
+          selectedTab,
+          alias,
+        }: {
+          selectedTab: string;
+          alias: string;
+        }) => {
+          if (!alias) {
+            history.replaceState(
+              { selectedTab },
+              'resetHash',
+              `#${selectedTab}`,
+            );
+            return;
+          }
+          history.replaceState(
+            { selectedTab, alias },
+            'resetHash',
+            `#${selectedTab}/${alias}`,
+          );
+        },
+        onNewSubmissionPopupDisplayed: () => {
+          if (state.shouldShowFirstAssociatedIdentityRunWarning) {
+            state.shouldShowFirstAssociatedIdentityRunWarning = false;
+            ui.warning(T.firstSumbissionWithIdentity);
+          }
+        },
+        onApplyFilter: ({
+          filter,
+          value,
+        }: {
+          filter: 'verdict' | 'language' | 'username' | 'status' | 'offset';
+          value: string;
+        }) => {
+          if (value != '') {
+            const newFilter: RunFilters = { [filter]: value };
+            runsStore.commit('applyFilter', newFilter);
+          } else {
+            runsStore.commit('removeFilter', filter);
+          }
+          refreshRuns();
+        },
+      }),
+  }).mount('#main-container');
 
   const socket = new EventsSocket({
     disableSockets: false,

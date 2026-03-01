@@ -11,7 +11,6 @@ import {
 
 import T from '../../../../lang';
 
-
 describe('Sidebar.vue', () => {
   // Total 6 buttons are rendered initially on this page.
   // - Layout button

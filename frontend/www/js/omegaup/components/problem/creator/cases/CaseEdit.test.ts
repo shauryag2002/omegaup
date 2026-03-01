@@ -13,7 +13,6 @@ import {
 import T from '../../../../lang';
 import { MatrixDistinctType } from '@/js/omegaup/problem/creator/types';
 
-
 describe('CaseEdit.vue', () => {
   const newUngroupedCasegroup = generateGroup({
     name: 'New Ungrouped Case Group',

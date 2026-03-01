@@ -8,7 +8,6 @@ import problem_Details from './Detailsv2.vue';
 
 import BootstrapVue, { BTab } from 'bootstrap-vue';
 
-
 describe('Detailsv2.vue', () => {
   const problem: types.ProblemDetails = {
     accepted: 4,

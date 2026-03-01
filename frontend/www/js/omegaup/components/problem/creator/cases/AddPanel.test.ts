@@ -8,7 +8,6 @@ import vuexStore from '../../../../problem/creator/store';
 import { StoreState } from '../../../../problem/creator/types';
 import { Store } from 'vuex';
 
-
 describe('AddPanel.vue', () => {
   beforeEach(() => {
     vuexStore.commit('casesStore/resetStore');

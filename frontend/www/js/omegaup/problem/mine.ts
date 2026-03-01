@@ -1,4 +1,4 @@
-import Vue from 'vue';
+import { createApp, h, reactive } from 'vue';
 import problem_Mine from '../components/problem/Mine.vue';
 import { OmegaUp } from '../omegaup';
 import { types } from '../api_types';
@@ -9,106 +9,93 @@ import * as ui from '../ui';
 OmegaUp.on('ready', () => {
   const payload = types.payloadParsers.ProblemsMineInfoPayload();
   let showAllProblems = false;
-  const problemsMine = new Vue({
-    el: '#main-container',
-    components: {
-      'omegaup-problem-mine': problem_Mine,
-    },
-    data: () => ({
-      problems: [] as types.ProblemListItem[],
-      pagerItems: [] as types.PageItem[],
-    }),
-    render: function (createElement) {
-      return createElement('omegaup-problem-mine', {
-        props: {
-          problems: this.problems,
-          privateProblemsAlert: payload.privateProblemsAlert,
-          isSysadmin: payload.isSysadmin,
-          pagerItems: this.pagerItems,
-          visibilityStatuses: payload.visibilityStatuses,
-          query: payload.query,
-        },
-        on: {
-          'change-show-all-problems': (shouldShowAll: boolean) => {
-            showAllProblems = shouldShowAll;
-            showProblems(shouldShowAll);
-          },
-          'change-visibility': (
-            selectedProblems: types.ProblemListItem[],
-            visibility: number,
-          ) => {
-            Promise.all(
-              selectedProblems.map((problem: types.ProblemListItem) =>
-                api.Problem.update({
-                  problem_alias: problem.alias,
-                  visibility: normalizeVisibility(
-                    visibility,
-                    problem.visibility,
-                  ),
-                  message:
-                    visibility === 1
-                      ? 'private -> public'
-                      : 'public -> private',
-                }),
-              ),
-            )
-              .then(() => {
-                ui.success(T.updateItemsSuccess);
-              })
-              .catch((error) => {
-                ui.error(ui.formatString(T.bulkOperationError, error));
-              })
-              .finally(() => {
-                showProblems(showAllProblems);
-              });
-          },
-          'go-to-page': (pageNumber: number) => {
-            if (pageNumber > 0) {
-              showProblems(showAllProblems, pageNumber);
-            }
-          },
-          remove: ({
-            alias,
-            shouldShowAllProblems,
-          }: {
-            alias: string;
-            shouldShowAllProblems: boolean;
-          }) => {
-            api.Problem.delete({ problem_alias: alias })
-              .then(() => {
-                ui.success(T.problemSuccessfullyRemoved);
-                showAllProblems = shouldShowAllProblems;
-                showProblems(shouldShowAllProblems);
-              })
-              .catch(ui.apiError);
-          },
-          'remove-all-problems': ({
-            selectedProblems,
-            shouldShowAllProblems,
-          }: {
-            selectedProblems: types.ProblemListItem[];
-            shouldShowAllProblems: boolean;
-          }) => {
-            Promise.all(
-              selectedProblems.map((problem: types.ProblemListItem) =>
-                api.Problem.delete({ problem_alias: problem.alias }),
-              ),
-            )
-              .then(() => {
-                ui.success(T.problemSuccessfullyRemoved);
-              })
-              .catch((error) => {
-                ui.error(ui.formatString(T.bulkOperationError, error));
-              })
-              .finally(() => {
-                showAllProblems = shouldShowAllProblems;
-                showProblems(shouldShowAllProblems);
-              });
-          },
-        },
-      });
-    },
+  const state = reactive({
+    problems: [] as types.ProblemListItem[],
+    pagerItems: [] as types.PageItem[],
   });
+
+  createApp({
+    render: () =>
+      h(problem_Mine, {
+        problems: state.problems,
+        privateProblemsAlert: payload.privateProblemsAlert,
+        isSysadmin: payload.isSysadmin,
+        pagerItems: state.pagerItems,
+        visibilityStatuses: payload.visibilityStatuses,
+        query: payload.query,
+        onChangeShowAllProblems: (shouldShowAll: boolean) => {
+          showAllProblems = shouldShowAll;
+          showProblems(shouldShowAll);
+        },
+        onChangeVisibility: (
+          selectedProblems: types.ProblemListItem[],
+          visibility: number,
+        ) => {
+          Promise.all(
+            selectedProblems.map((problem: types.ProblemListItem) =>
+              api.Problem.update({
+                problem_alias: problem.alias,
+                visibility: normalizeVisibility(visibility, problem.visibility),
+                message:
+                  visibility === 1 ? 'private -> public' : 'public -> private',
+              }),
+            ),
+          )
+            .then(() => {
+              ui.success(T.updateItemsSuccess);
+            })
+            .catch((error) => {
+              ui.error(ui.formatString(T.bulkOperationError, error));
+            })
+            .finally(() => {
+              showProblems(showAllProblems);
+            });
+        },
+        onGoToPage: (pageNumber: number) => {
+          if (pageNumber > 0) {
+            showProblems(showAllProblems, pageNumber);
+          }
+        },
+        remove: ({
+          alias,
+          shouldShowAllProblems,
+        }: {
+          alias: string;
+          shouldShowAllProblems: boolean;
+        }) => {
+          api.Problem.delete({ problem_alias: alias })
+            .then(() => {
+              ui.success(T.problemSuccessfullyRemoved);
+              showAllProblems = shouldShowAllProblems;
+              showProblems(shouldShowAllProblems);
+            })
+            .catch(ui.apiError);
+        },
+        onRemoveAllProblems: ({
+          selectedProblems,
+          shouldShowAllProblems,
+        }: {
+          selectedProblems: types.ProblemListItem[];
+          shouldShowAllProblems: boolean;
+        }) => {
+          Promise.all(
+            selectedProblems.map((problem: types.ProblemListItem) =>
+              api.Problem.delete({ problem_alias: problem.alias }),
+            ),
+          )
+            .then(() => {
+              ui.success(T.problemSuccessfullyRemoved);
+            })
+            .catch((error) => {
+              ui.error(ui.formatString(T.bulkOperationError, error));
+            })
+            .finally(() => {
+              showAllProblems = shouldShowAllProblems;
+              showProblems(shouldShowAllProblems);
+            });
+        },
+      }),
+  }).mount('#main-container');
 
   function showProblems(showAllProblems: boolean, pageNumber?: number): void {
     (showAllProblems
@@ -122,8 +109,8 @@ OmegaUp.on('ready', () => {
         })
     )
       .then((result) => {
-        problemsMine.pagerItems = result.pagerItems;
-        problemsMine.problems = result.problems;
+        state.pagerItems = result.pagerItems;
+        state.problems = result.problems;
       })
       .catch(ui.apiError);
   }

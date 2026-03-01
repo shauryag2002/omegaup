@@ -7,7 +7,6 @@ import {
 } from '../../notificationsStore';
 import GlobalNotifications from './GlobalNotifications.vue';
 
-
 // Simple stub for markdown component that just renders the text
 const MarkdownStub = {
   props: ['markdown'],

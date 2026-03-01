@@ -8,7 +8,6 @@ import store from '@/js/omegaup/problem/creator/store';
 import { Group } from '@/js/omegaup/problem/creator/types';
 import { v4 as uuid } from 'uuid';
 
-
 const testGroup: Group = {
   groupID: uuid(),
   name: 'omegaup',

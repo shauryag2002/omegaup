@@ -3,14 +3,11 @@ import { messages, types } from '../api_types';
 import * as api from '../api';
 import * as ui from '../ui';
 import T from '../lang';
-import Vue from 'vue';
+import { createApp, h, reactive } from 'vue';
 import course_Edit from '../components/course/Edit.vue';
 import { AdmissionMode } from '../components/common/Publish.vue';
 import Sortable from 'sortablejs';
 
-Vue.directive('Sortable', {
-  inserted: (el: HTMLElement, binding) => {
-    new Sortable(el, binding.value || {});
   },
 });
 
@@ -26,12 +23,7 @@ OmegaUp.on('ready', () => {
     });
   }
 
-  const courseEdit = new Vue({
-    el: '#main-container',
-    components: {
-      'omegaup-course-edit': course_Edit,
-    },
-    data: () => ({
+  const state = reactive({
       data: payload,
       initialTab: window.location.hash
         ? window.location.hash.substring(1)
@@ -42,22 +34,24 @@ OmegaUp.on('ready', () => {
       searchResultProblems: searchResultEmpty,
       searchResultGroups: searchResultEmpty,
       searchResultSchools: searchResultSchools,
-    }),
-    methods: {
+    });
+
+  const methods = {
+  
       refreshCourseAdminDetails: (): void => {
         api.Course.adminDetails({ alias: courseAlias }).then((course) => {
-          courseEdit.data.course = course;
+          state.data.course = course;
         });
       },
       refreshStudentList: (): void => {
         api.Course.listStudents({ course_alias: courseAlias })
           .then((response) => {
-            courseEdit.data.students = response.students;
+            state.data.students = response.students;
           })
           .catch(ui.apiError);
         api.Course.requests({ course_alias: courseAlias })
           .then((response) => {
-            courseEdit.data.identityRequests = response.users;
+            state.data.identityRequests = response.users;
           })
           .catch(ui.apiError);
       },
@@ -82,10 +76,10 @@ OmegaUp.on('ready', () => {
       refreshCourseAdminsAndTeachingAssistants: (): void => {
         api.Course.admins({ course_alias: courseAlias })
           .then((response) => {
-            courseEdit.data.admins = response.admins;
-            courseEdit.data.groupsAdmins = response.group_admins;
-            courseEdit.data.teachingAssistants = response.teaching_assistants;
-            courseEdit.data.groupsTeachingAssistants =
+            state.data.admins = response.admins;
+            state.data.groupsAdmins = response.group_admins;
+            state.data.teachingAssistants = response.teaching_assistants;
+            state.data.groupsTeachingAssistants =
               response.group_teaching_assistants;
           })
           .catch(ui.apiError);
@@ -103,26 +97,26 @@ OmegaUp.on('ready', () => {
             } else {
               ui.success(T.arbitrateRequestDenySuccessfully);
             }
-            courseEdit.refreshStudentList();
+            state.refreshStudentList();
           })
           .catch(ui.apiError);
       },
-    },
-    render: function (createElement) {
-      return createElement('omegaup-course-edit', {
-        props: {
-          data: this.data,
-          initialTab: this.initialTab,
-          invalidParameterName: this.invalidParameterName,
-          token: this.token,
-          searchResultUsers: this.searchResultUsers,
-          searchResultProblems: this.searchResultProblems,
-          searchResultGroups: this.searchResultGroups,
-          searchResultSchools: this.searchResultSchools,
-          readOnly: !this.data.course.is_admin && !this.data.course.is_curator,
-        },
-        on: {
-          'update-search-result-groups': (query: string) => {
+    
+  };
+
+  const app = createApp({
+    methods,
+    render: () => h(course_Edit, {
+data: state.data,
+          initialTab: state.initialTab,
+          invalidParameterName: state.invalidParameterName,
+          token: state.token,
+          searchResultUsers: state.searchResultUsers,
+          searchResultProblems: state.searchResultProblems,
+          searchResultGroups: state.searchResultGroups,
+          searchResultSchools: state.searchResultSchools,
+          readOnly: !state.data.course.is_admin && !state.data.course.is_curator,
+onUpdateSearchResultGroups: (query: string) => {
             api.Group.list({
               query,
             })
@@ -130,9 +124,9 @@ OmegaUp.on('ready', () => {
                 // Groups previously added into the contest should not be
                 // shown in the dropdown
                 const addedGroups = new Set(
-                  this.data.groupsAdmins.map((group) => group.alias),
+                  state.data.groupsAdmins.map((group) => group.alias),
                 );
-                this.searchResultGroups = data
+                state.searchResultGroups = data
                   .filter((group) => !addedGroups.has(group.value))
                   .map((group) => ({
                     key: group.value,
@@ -143,7 +137,7 @@ OmegaUp.on('ready', () => {
               })
               .catch(ui.apiError);
           },
-          'update-search-result-problems': (query: string) => {
+          onUpdateSearchResultProblems: (query: string) => {
             api.Problem.listForTypeahead({
               query,
               search_type: 'all',
@@ -154,7 +148,7 @@ OmegaUp.on('ready', () => {
                 const addedProblems = new Set(
                   component.assignmentProblems.map((problem) => problem.alias),
                 );
-                this.searchResultProblems = data.results
+                state.searchResultProblems = data.results
                   .filter((problem) => !addedProblems.has(problem.key))
                   .map(({ key, value }, index) => ({
                     key,
@@ -165,7 +159,7 @@ OmegaUp.on('ready', () => {
               })
               .catch(ui.apiError);
           },
-          'submit-edit-course': (request: messages.CourseUpdateRequest) => {
+          onSubmitEditCourse: (request: messages.CourseUpdateRequest) => {
             new Promise<number | null>((accept) => {
               if (request.school.key) {
                 accept(request.school.key);
@@ -191,15 +185,15 @@ OmegaUp.on('ready', () => {
                         alias: request.alias,
                       }),
                     );
-                    this.data.course.name = request.name;
+                    state.data.course.name = request.name;
                     window.scrollTo(0, 0);
-                    this.refreshCourseAdminDetails();
+                    state.refreshCourseAdminDetails();
                   })
                   .catch(ui.apiError);
               })
               .catch(ui.apiError);
           },
-          'add-assignment': (params: {
+          onAddAssignment: (params: {
             name: string;
             description: string;
             assignment_type: string;
@@ -213,17 +207,17 @@ OmegaUp.on('ready', () => {
             api.Course.createAssignment(params)
               .then(() => {
                 ui.success(T.courseAssignmentAdded);
-                this.invalidParameterName = '';
-                this.refreshAssignmentsList();
+                state.invalidParameterName = '';
+                state.refreshAssignmentsList();
               })
               .catch((error) => {
                 ui.apiError(error);
                 component.assignmentFormMode = omegaup.AssignmentFormMode.New;
-                this.invalidParameterName = error.parameter || '';
+                state.invalidParameterName = error.parameter || '';
               });
             window.scrollTo(0, 0);
           },
-          'update-assignment': (params: {
+          onUpdateAssignment: (params: {
             name: string;
             description: string;
             assignment_type: string;
@@ -237,16 +231,16 @@ OmegaUp.on('ready', () => {
             api.Course.updateAssignment(params)
               .then(() => {
                 ui.success(T.courseAssignmentUpdated);
-                this.invalidParameterName = '';
-                this.refreshAssignmentsList();
+                state.invalidParameterName = '';
+                state.refreshAssignmentsList();
               })
               .catch((error) => {
                 ui.apiError(error);
                 component.assignmentFormMode = omegaup.AssignmentFormMode.Edit;
-                this.invalidParameterName = error.parameter || '';
+                state.invalidParameterName = error.parameter || '';
               });
           },
-          'delete-assignment': (assignment: types.CourseAssignment) => {
+          onDeleteAssignment: (assignment: types.CourseAssignment) => {
             if (
               !window.confirm(
                 ui.formatString(T.courseAssignmentConfirmDelete, {
@@ -262,11 +256,11 @@ OmegaUp.on('ready', () => {
             })
               .then(() => {
                 ui.success(T.courseAssignmentDeleted);
-                this.refreshAssignmentsList();
+                state.refreshAssignmentsList();
               })
               .catch(ui.apiError);
           },
-          'sort-content': (courseAlias: string, contentAliases: string[]) => {
+          onSortContent: (courseAlias: string, contentAliases: string[]) => {
             api.Course.updateAssignmentsOrder({
               course_alias: courseAlias,
               assignments: JSON.stringify(contentAliases),
@@ -276,7 +270,7 @@ OmegaUp.on('ready', () => {
               })
               .catch(ui.apiError);
           },
-          'get-versions': ({
+          onGetVersions: ({
             request,
             target,
           }: {
@@ -310,7 +304,7 @@ OmegaUp.on('ready', () => {
               })
               .catch(ui.apiError);
           },
-          'add-problem': (
+          onAddProblem: (
             assignment: types.CourseAssignment,
             problem: types.AddedProblem,
           ) => {
@@ -336,14 +330,14 @@ OmegaUp.on('ready', () => {
                     ui.warning(T.warningPublicSolution);
                   }
                 }
-                this.refreshProblemList(assignment);
+                state.refreshProblemList(assignment);
               })
               .catch(ui.apiError);
           },
-          'select-assignment': (assignment: types.CourseAssignment) => {
-            this.refreshProblemList(assignment);
+          onSelectAssignment: (assignment: types.CourseAssignment) => {
+            state.refreshProblemList(assignment);
           },
-          'remove-problem': (
+          onRemoveProblem: (
             assignment: types.CourseAssignment,
             problem: types.ProblemsetProblem,
           ) => {
@@ -367,11 +361,11 @@ OmegaUp.on('ready', () => {
                 } else {
                   ui.success(T.courseAssignmentProblemRemoved);
                 }
-                this.refreshProblemList(assignment);
+                state.refreshProblemList(assignment);
               })
               .catch(ui.apiError);
           },
-          'sort-problems': (
+          onSortProblems: (
             assignmentAlias: string,
             problemsAliases: string[],
           ) => {
@@ -385,21 +379,21 @@ OmegaUp.on('ready', () => {
               })
               .catch(ui.apiError);
           },
-          'tags-problems': (tags: string[]) => {
+          onTagsProblems: (tags: string[]) => {
             api.Problem.list({ tag: tags.join() })
               .then(() => {
-                //this.data.taggedProblems = data.results;
+                //state.data.taggedProblems = data.results;
               })
               .catch(ui.apiError);
           },
-          'update-admission-mode': ({
+          onUpdateAdmissionMode: ({
             admissionMode,
             showInPublicCoursesList,
           }: {
             admissionMode: AdmissionMode;
             showInPublicCoursesList: boolean;
           }) => {
-            courseEdit.data.course.admission_mode = admissionMode;
+            state.data.course.admission_mode = admissionMode;
             api.Course.update({
               alias: courseAlias,
               admission_mode: admissionMode,
@@ -408,12 +402,12 @@ OmegaUp.on('ready', () => {
               .then(() => {
                 ui.success(T.courseEditCourseEdited);
                 if (admissionMode === AdmissionMode.Registration) {
-                  this.refreshStudentList();
+                  state.refreshStudentList();
                 }
               })
               .catch(ui.apiError);
           },
-          'add-student': (ev: {
+          onAddStudent: (ev: {
             participant: null | types.ListItem;
             participants: string;
           }) => {
@@ -439,7 +433,7 @@ OmegaUp.on('ready', () => {
                     participantsWithError.push(result.reason.userEmail);
                   }
                 });
-                this.refreshStudentList();
+                state.refreshStudentList();
                 if (participantsWithError.length === 0) {
                   ui.success(T.courseStudentAdded);
                   return;
@@ -452,105 +446,105 @@ OmegaUp.on('ready', () => {
               })
               .catch(ui.ignoreError);
           },
-          'remove-student': (student: types.StudentProgress) => {
+          onRemoveStudent: (student: types.StudentProgress) => {
             api.Course.removeStudent({
               course_alias: courseAlias,
               usernameOrEmail: student.username,
             })
               .then(() => {
-                this.refreshStudentList();
+                state.refreshStudentList();
                 ui.success(T.courseStudentRemoved);
               })
               .catch(ui.apiError);
           },
-          'accept-request': ({ username }: { username: string }) =>
-            this.arbitrateRequest(username, true),
-          'deny-request': ({ username }: { username: string }) =>
-            this.arbitrateRequest(username, false),
-          'add-admin': (useradmin: string) => {
+          onAcceptRequest: ({ username }: { username: string }) =>
+            state.arbitrateRequest(username, true),
+          onDenyRequest: ({ username }: { username: string }) =>
+            state.arbitrateRequest(username, false),
+          onAddAdmin: (useradmin: string) => {
             api.Course.addAdmin({
               course_alias: courseAlias,
               usernameOrEmail: useradmin,
             })
               .then(() => {
                 ui.success(T.adminAdded);
-                this.refreshCourseAdminsAndTeachingAssistants();
+                state.refreshCourseAdminsAndTeachingAssistants();
               })
               .catch(ui.apiError);
           },
-          'add-teaching-assistant': (username: string) => {
+          onAddTeachingAssistant: (username: string) => {
             api.Course.addTeachingAssistant({
               course_alias: courseAlias,
               usernameOrEmail: username,
             })
               .then(() => {
                 ui.success(T.courseEditTeachingAssistantAddedSuccessfully);
-                this.refreshCourseAdminsAndTeachingAssistants();
+                state.refreshCourseAdminsAndTeachingAssistants();
               })
               .catch(ui.apiError);
           },
-          'remove-admin': (username: string) => {
+          onRemoveAdmin: (username: string) => {
             api.Course.removeAdmin({
               course_alias: courseAlias,
               usernameOrEmail: username,
             })
               .then(() => {
-                this.refreshCourseAdminsAndTeachingAssistants();
+                state.refreshCourseAdminsAndTeachingAssistants();
                 ui.success(T.adminRemoved);
               })
               .catch(ui.apiError);
           },
-          'remove-teaching-assistant': (username: string) => {
+          onRemoveTeachingAssistant: (username: string) => {
             api.Course.removeTeachingAssistant({
               course_alias: courseAlias,
               usernameOrEmail: username,
             })
               .then(() => {
-                this.refreshCourseAdminsAndTeachingAssistants();
+                state.refreshCourseAdminsAndTeachingAssistants();
                 ui.success(T.courseEditTeachingAssistantRemovedSuccessfully);
               })
               .catch(ui.apiError);
           },
-          'add-group-admin': (groupAlias: string) => {
+          onAddGroupAdmin: (groupAlias: string) => {
             api.Course.addGroupAdmin({
               course_alias: courseAlias,
               group: groupAlias,
             })
               .then(() => {
                 ui.success(T.groupAdminAdded);
-                this.refreshCourseAdminsAndTeachingAssistants();
+                state.refreshCourseAdminsAndTeachingAssistants();
               })
               .catch(ui.apiError);
           },
-          'add-group-teaching-assistant': (groupAlias: string) => {
+          onAddGroupTeachingAssistant: (groupAlias: string) => {
             api.Course.addGroupTeachingAssistant({
               course_alias: courseAlias,
               group: groupAlias,
             })
               .then(() => {
                 ui.success(T.courseEditGroupTeachingAssistantAdded);
-                this.refreshCourseAdminsAndTeachingAssistants();
+                state.refreshCourseAdminsAndTeachingAssistants();
               })
               .catch(ui.apiError);
           },
-          'remove-group-admin': (groupAlias: string) => {
+          onRemoveGroupAdmin: (groupAlias: string) => {
             api.Course.removeGroupAdmin({
               course_alias: courseAlias,
               group: groupAlias,
             })
               .then(() => {
-                this.refreshCourseAdminsAndTeachingAssistants();
+                state.refreshCourseAdminsAndTeachingAssistants();
                 ui.success(T.groupAdminRemoved);
               })
               .catch(ui.apiError);
           },
-          'remove-group-teaching-assistant': (groupAlias: string) => {
+          onRemoveGroupTeachingAssistant: (groupAlias: string) => {
             api.Course.removeGroupTeachingAssistant({
               course_alias: courseAlias,
               group: groupAlias,
             })
               .then(() => {
-                this.refreshCourseAdminsAndTeachingAssistants();
+                state.refreshCourseAdminsAndTeachingAssistants();
                 ui.success(T.courseEditGroupTeachingAssistantRemoved);
               })
               .catch(ui.apiError);
@@ -572,7 +566,7 @@ OmegaUp.on('ready', () => {
               })
               .catch(ui.apiError);
           },
-          'generate-link': (alias: string) => {
+          onGenerateLink: (alias: string) => {
             api.Course.generateTokenForCloneCourse({
               course_alias: alias,
             })
@@ -582,7 +576,7 @@ OmegaUp.on('ready', () => {
               })
               .catch(ui.apiError);
           },
-          'archive-course': (alias: string, archive: boolean) => {
+          onArchiveCourse: (alias: string, archive: boolean) => {
             api.Course.archive({
               course_alias: alias,
               archive,
@@ -596,10 +590,10 @@ OmegaUp.on('ready', () => {
               })
               .catch(ui.apiError);
           },
-          'update-search-result-users': (query: string) => {
+          onUpdateSearchResultUsers: (query: string) => {
             api.User.list({ query })
               .then(({ results }) => {
-                this.searchResultUsers = results.map(
+                state.searchResultUsers = results.map(
                   ({ key, value }: types.ListItem) => ({
                     key,
                     value: `${ui.escape(key)} (<strong>${ui.escape(
@@ -610,11 +604,11 @@ OmegaUp.on('ready', () => {
               })
               .catch(ui.apiError);
           },
-          'update-search-result-schools': (query: string) => {
+          onUpdateSearchResultSchools: (query: string) => {
             api.School.list({ query })
               .then(({ results }) => {
                 if (!results.length) {
-                  this.searchResultSchools = [
+                  state.searchResultSchools = [
                     {
                       key: 0,
                       value: query,
@@ -622,7 +616,7 @@ OmegaUp.on('ready', () => {
                   ];
                   return;
                 }
-                this.searchResultSchools = results.map(
+                state.searchResultSchools = results.map(
                   ({ key, value }: types.SchoolListItem) => ({
                     key,
                     value,
@@ -631,20 +625,21 @@ OmegaUp.on('ready', () => {
               })
               .catch(ui.apiError);
           },
-          'invalid-languages': () => {
+          onInvalidLanguages: () => {
             ui.error(T.courseNewFormLanguagesRequired);
-            this.invalidParameterName = 'languages';
+            state.invalidParameterName = 'languages';
           },
-          'clear-language-error': () => {
-            if (this.invalidParameterName === 'languages') {
-              this.invalidParameterName = null;
+          onClearLanguageError: () => {
+            if (state.invalidParameterName === 'languages') {
+              state.invalidParameterName = null;
               ui.dismissNotifications();
             }
           },
-        },
-        ref: 'component',
-      });
-    },
+}),
   });
+  app.directive('Sortable', {
+  inserted: (el: HTMLElement, binding) => {
+    new Sortable(el, binding.value || {});
+  app.mount('#main-container');
   const component = courseEdit.$refs.component as course_Edit;
 });

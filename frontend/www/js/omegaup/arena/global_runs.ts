@@ -1,4 +1,4 @@
-import Vue from 'vue';
+import { createApp, h, reactive } from 'vue';
 
 import arena_Runs, { PopupDisplayed } from '../components/arena/Runs.vue';
 import * as api from '../api';
@@ -27,139 +27,131 @@ OmegaUp.on('ready', async () => {
   } catch (e: any) {
     ui.apiError(e);
   }
-  new Vue({
-    el: '#main-container',
-    components: {
-      'omegaup-arena-runs': arena_Runs,
-    },
-    data: () => ({
-      searchResultUsers: searchResultEmpty,
-      searchResultProblems: searchResultEmpty,
-      popupDisplayed,
-      guid,
-      runDetailsData: runDetails,
-    }),
-    render: function (createElement) {
-      return createElement('omegaup-arena-runs', {
-        props: {
-          contestAlias: 'admin',
-          popupDisplayed: this.popupDisplayed,
-          runs: runsStore.state.runs,
-          showContest: true,
-          showProblem: true,
-          showDetails: true,
-          showDisqualify: true,
-          showPager: true,
-          showRejudge: true,
-          showUser: true,
-          guid: this.guid,
-          searchResultUsers: this.searchResultUsers,
-          searchResultProblems: this.searchResultProblems,
-          runDetailsData: this.runDetailsData,
-          totalRuns: runsStore.state.totalRuns,
-        },
-        on: {
-          details: (request: SubmissionRequest) => {
-            api.Run.details({ run_alias: request.guid })
-              .then((runDetails) => {
-                this.runDetailsData = showSubmission({ request, runDetails });
-                if (request.hash) {
-                  window.location.hash = request.hash;
-                }
-              })
-              .catch((error) => {
-                ui.apiError(error);
-                this.popupDisplayed = PopupDisplayed.None;
-              });
-          },
-          requalify: (run: types.Run) => {
-            api.Run.requalify({ run_alias: run.guid })
-              .then(() => {
-                run.type = 'normal';
-                updateRunFallback({ run });
-              })
-              .catch(ui.ignoreError);
-          },
-          disqualify: ({ run }: { run: types.Run }) => {
-            if (!window.confirm(T.runDisqualifyConfirm)) {
-              return;
-            }
-            api.Run.disqualify({ run_alias: run.guid })
-              .then(() => {
-                run.type = 'disqualified';
-                updateRunFallback({ run });
-              })
-              .catch(ui.ignoreError);
-          },
-          'filter-changed': () => {
-            refreshRuns();
-          },
-          rejudge: (run: types.Run) => {
-            api.Run.rejudge({ run_alias: run.guid, debug: false })
-              .then(() => {
-                run.status = 'rejudging';
-                updateRunFallback({ run });
-              })
-              .catch(ui.ignoreError);
-          },
-          'update-search-result-users': ({ query }: { query: string }) => {
-            api.User.list({ query })
-              .then(({ results }) => {
-                this.searchResultUsers = results.map(
-                  ({ key, value }: types.ListItem) => ({
-                    key,
-                    value: `${ui.escape(key)} (<strong>${ui.escape(
-                      value,
-                    )}</strong>)`,
-                  }),
-                );
-              })
-              .catch(ui.apiError);
-          },
-          'update-search-result-users-contest': ({
-            query,
-            contestAlias,
-          }: {
-            query: string;
-            contestAlias: string;
-          }) => {
-            api.Contest.searchUsers({ query, contest_alias: contestAlias })
-              .then(({ results }) => {
-                this.searchResultUsers = results.map(
-                  ({ key, value }: types.ListItem) => ({
-                    key,
-                    value: `${ui.escape(key)} (<strong>${ui.escape(
-                      value,
-                    )}</strong>)`,
-                  }),
-                );
-              })
-              .catch(ui.apiError);
-          },
-          'update-search-result-problems': (query: string) => {
-            api.Problem.listForTypeahead({
-              query,
-              search_type: 'all',
-            })
-              .then((data) => {
-                this.searchResultProblems = data.results.map(
-                  ({ key, value }, index) => ({
-                    key,
-                    value: `${String(index + 1).padStart(2, '0')}.- ${ui.escape(
-                      value,
-                    )} (<strong>${ui.escape(key)}</strong>)`,
-                  }),
-                );
-              })
-              .catch(ui.apiError);
-          },
-          'reset-hash': () => {
-            history.replaceState({}, '', '#');
-          },
-        },
-      });
-    },
+  const state = reactive({
+    searchResultUsers: searchResultEmpty,
+    searchResultProblems: searchResultEmpty,
+    popupDisplayed,
+    guid,
+    runDetailsData: runDetails,
   });
+
+  createApp({
+    render: () =>
+      h(arena_Runs, {
+        contestAlias: 'admin',
+        popupDisplayed: state.popupDisplayed,
+        runs: runsStore.state.runs,
+        showContest: true,
+        showProblem: true,
+        showDetails: true,
+        showDisqualify: true,
+        showPager: true,
+        showRejudge: true,
+        showUser: true,
+        guid: state.guid,
+        searchResultUsers: state.searchResultUsers,
+        searchResultProblems: state.searchResultProblems,
+        runDetailsData: state.runDetailsData,
+        totalRuns: runsStore.state.totalRuns,
+        details: (request: SubmissionRequest) => {
+          api.Run.details({ run_alias: request.guid })
+            .then((runDetails) => {
+              state.runDetailsData = showSubmission({ request, runDetails });
+              if (request.hash) {
+                window.location.hash = request.hash;
+              }
+            })
+            .catch((error) => {
+              ui.apiError(error);
+              state.popupDisplayed = PopupDisplayed.None;
+            });
+        },
+        requalify: (run: types.Run) => {
+          api.Run.requalify({ run_alias: run.guid })
+            .then(() => {
+              run.type = 'normal';
+              updateRunFallback({ run });
+            })
+            .catch(ui.ignoreError);
+        },
+        disqualify: ({ run }: { run: types.Run }) => {
+          if (!window.confirm(T.runDisqualifyConfirm)) {
+            return;
+          }
+          api.Run.disqualify({ run_alias: run.guid })
+            .then(() => {
+              run.type = 'disqualified';
+              updateRunFallback({ run });
+            })
+            .catch(ui.ignoreError);
+        },
+        onFilterChanged: () => {
+          refreshRuns();
+        },
+        rejudge: (run: types.Run) => {
+          api.Run.rejudge({ run_alias: run.guid, debug: false })
+            .then(() => {
+              run.status = 'rejudging';
+              updateRunFallback({ run });
+            })
+            .catch(ui.ignoreError);
+        },
+        onUpdateSearchResultUsers: ({ query }: { query: string }) => {
+          api.User.list({ query })
+            .then(({ results }) => {
+              state.searchResultUsers = results.map(
+                ({ key, value }: types.ListItem) => ({
+                  key,
+                  value: `${ui.escape(key)} (<strong>${ui.escape(
+                    value,
+                  )}</strong>)`,
+                }),
+              );
+            })
+            .catch(ui.apiError);
+        },
+        onUpdateSearchResultUsersContest: ({
+          query,
+          contestAlias,
+        }: {
+          query: string;
+          contestAlias: string;
+        }) => {
+          api.Contest.searchUsers({ query, contest_alias: contestAlias })
+            .then(({ results }) => {
+              state.searchResultUsers = results.map(
+                ({ key, value }: types.ListItem) => ({
+                  key,
+                  value: `${ui.escape(key)} (<strong>${ui.escape(
+                    value,
+                  )}</strong>)`,
+                }),
+              );
+            })
+            .catch(ui.apiError);
+        },
+        onUpdateSearchResultProblems: (query: string) => {
+          api.Problem.listForTypeahead({
+            query,
+            search_type: 'all',
+          })
+            .then((data) => {
+              state.searchResultProblems = data.results.map(
+                ({ key, value }, index) => ({
+                  key,
+                  value: `${String(index + 1).padStart(2, '0')}.- ${ui.escape(
+                    value,
+                  )} (<strong>${ui.escape(key)}</strong>)`,
+                }),
+              );
+            })
+            .catch(ui.apiError);
+        },
+        onResetHash: () => {
+          history.replaceState({}, '', '#');
+        },
+      }),
+  }).mount('#main-container');
 
   function refreshRuns(): void {
     api.Run.list({

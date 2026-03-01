@@ -1,4 +1,4 @@
-import Vue from 'vue';
+import { createApp, h, reactive } from 'vue';
 import qualitynomination_List from '../components/qualitynomination/List.vue';
 import { OmegaUp } from '../omegaup';
 import * as api from '../api';
@@ -14,76 +14,68 @@ OmegaUp.on('ready', function () {
   );
   const searchResultEmpty: types.ListItem[] = [];
 
-  const nominationsList = new Vue({
-    el: '#main-container',
-    components: {
-      'omegaup-qualitynomination-list': qualitynomination_List,
-    },
-    data: () => ({
-      nominations: [] as types.NominationListItem[],
-      pagerItems: [] as types.PageItem[],
-      pages: 1,
-      searchResultUsers: searchResultEmpty,
-      searchResultProblems: searchResultEmpty,
-    }),
-    render: function (createElement) {
-      return createElement('omegaup-qualitynomination-list', {
-        props: {
-          pages: this.pages,
-          nominations: this.nominations,
-          pagerItems: this.pagerItems,
-          length: payload.length,
-          myView: payload.myView,
-          isAdmin: headerPayload.isAdmin,
-          searchResultUsers: this.searchResultUsers,
-          searchResultProblems: this.searchResultProblems,
-        },
-        on: {
-          'go-to-page': (
-            pageNumber: number,
-            status: string,
-            query: string,
-            column: string,
-          ) => {
-            if (pageNumber > 0) {
-              showNominations(pageNumber, status, query, column);
-            }
-          },
-          'update-search-result-users': (query: string) => {
-            api.User.list({ query })
-              .then(({ results }) => {
-                this.searchResultUsers = results.map(
-                  ({ key, value }: types.ListItem) => ({
-                    key,
-                    value: `${ui.escape(key)} (<strong>${ui.escape(
-                      value,
-                    )}</strong>)`,
-                  }),
-                );
-              })
-              .catch(ui.apiError);
-          },
-          'update-search-result-problems': (query: string) => {
-            api.Problem.listForTypeahead({
-              query,
-              search_type: 'all',
-            })
-              .then((data) => {
-                this.searchResultProblems = data.results.map(
-                  ({ key, value }, index) => ({
-                    key,
-                    value: `${String(index + 1).padStart(2, '0')}.- ${ui.escape(
-                      value,
-                    )} (<strong>${ui.escape(key)}</strong>)`,
-                  }),
-                );
-              })
-              .catch(ui.apiError);
-          },
-        },
-      });
-    },
+  const state = reactive({
+    nominations: [] as types.NominationListItem[],
+    pagerItems: [] as types.PageItem[],
+    pages: 1,
+    searchResultUsers: searchResultEmpty,
+    searchResultProblems: searchResultEmpty,
   });
+
+  createApp({
+    render: () =>
+      h(qualitynomination_List, {
+        pages: state.pages,
+        nominations: state.nominations,
+        pagerItems: state.pagerItems,
+        length: payload.length,
+        myView: payload.myView,
+        isAdmin: headerPayload.isAdmin,
+        searchResultUsers: state.searchResultUsers,
+        searchResultProblems: state.searchResultProblems,
+        onGoToPage: (
+          pageNumber: number,
+          status: string,
+          query: string,
+          column: string,
+        ) => {
+          if (pageNumber > 0) {
+            showNominations(pageNumber, status, query, column);
+          }
+        },
+        onUpdateSearchResultUsers: (query: string) => {
+          api.User.list({ query })
+            .then(({ results }) => {
+              state.searchResultUsers = results.map(
+                ({ key, value }: types.ListItem) => ({
+                  key,
+                  value: `${ui.escape(key)} (<strong>${ui.escape(
+                    value,
+                  )}</strong>)`,
+                }),
+              );
+            })
+            .catch(ui.apiError);
+        },
+        onUpdateSearchResultProblems: (query: string) => {
+          api.Problem.listForTypeahead({
+            query,
+            search_type: 'all',
+          })
+            .then((data) => {
+              state.searchResultProblems = data.results.map(
+                ({ key, value }, index) => ({
+                  key,
+                  value: `${String(index + 1).padStart(2, '0')}.- ${ui.escape(
+                    value,
+                  )} (<strong>${ui.escape(key)}</strong>)`,
+                }),
+              );
+            })
+            .catch(ui.apiError);
+        },
+      }),
+  }).mount('#main-container');
 
   function showNominations(
     pageNumber: number,
@@ -104,17 +96,17 @@ OmegaUp.on('ready', function () {
 
       api.QualityNomination.list(request)
         .then((data) => {
-          nominationsList.nominations = data.nominations;
-          nominationsList.pagerItems = data.pager_items;
-          nominationsList.pages = pageNumber;
+          state.nominations = data.nominations;
+          state.pagerItems = data.pager_items;
+          state.pages = pageNumber;
         })
         .catch(ui.apiError);
     } else {
       api.QualityNomination.myList(request)
         .then((data) => {
-          nominationsList.nominations = data.nominations;
-          nominationsList.pagerItems = data.pager_items;
-          nominationsList.pages = pageNumber;
+          state.nominations = data.nominations;
+          state.pagerItems = data.pager_items;
+          state.pages = pageNumber;
         })
         .catch(ui.apiError);
     }

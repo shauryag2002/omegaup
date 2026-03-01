@@ -6,7 +6,6 @@ import T from '../../../../lang';
 import * as ui from '../../../../ui';
 import StatementTab from './StatementTab.vue';
 
-
 describe('StatementTab.vue', () => {
   it('Should contain markdown buttons and contents and update the store accordingly', async () => {
     const wrapper = shallowMount(StatementTab, {

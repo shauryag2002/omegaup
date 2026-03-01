@@ -1,5 +1,5 @@
 import common_Stats from '../components/common/Stats.vue';
-import Vue from 'vue';
+import { createApp, h, reactive } from 'vue';
 import { OmegaUp } from '../omegaup';
 import T from '../lang';
 import * as api from '../api';
@@ -20,11 +20,11 @@ OmegaUp.on('ready', () => {
   const getStats = (entityType: string): void => {
     if (entityType === 'contest') {
       api.Contest.stats({ contest_alias: payload.alias })
-        .then((s) => Vue.set(statsChart, 'stats', s))
+        .then((s) => (statsChart.stats = s))
         .catch(ui.apiError);
     } else {
       api.Problem.stats({ problem_alias: payload.alias })
-        .then((s) => Vue.set(statsChart, 'stats', s))
+        .then((s) => (statsChart.stats = s))
         .catch(ui.apiError);
     }
   };
@@ -72,145 +72,134 @@ OmegaUp.on('ready', () => {
     return categoriesDistributionValues;
   };
 
-  const statsChart = new Vue({
-    el: '#main-container',
-    components: {
-      'omegaup-common-stats': common_Stats,
+  const state = reactive({
+    stats: payload,
+    verdictChartOptions: {
+      chart: {
+        plotBackgroundColor: null,
+        plotBorderWidth: null,
+        plotShadow: false,
+      },
+      title: {
+        text: ui.formatString(T.wordsVerdictsOf, {
+          alias: payload.alias,
+        }),
+      },
+      plotOptions: {
+        pie: {
+          allowPointSelect: true,
+          cursor: 'pointer',
+          dataLabels: {
+            enabled: true,
+            color: '#000000',
+            connectorColor: '#000000',
+            format: '<b>{point.name}</b>: {point.percentage:.2f}% ({point.y})',
+          },
+        },
+      },
+      series: [
+        {
+          type: 'pie',
+          name: T.wordsProportion,
+          data: normalizeRunCounts(payload),
+        },
+      ],
+      time: {
+        useUTC: true,
+      },
     },
-    data: () => ({
-      stats: payload,
-      verdictChartOptions: {
-        chart: {
-          plotBackgroundColor: null,
-          plotBorderWidth: null,
-          plotShadow: false,
-        },
-        title: {
-          text: ui.formatString(T.wordsVerdictsOf, {
-            alias: payload.alias,
-          }),
-        },
-        plotOptions: {
-          pie: {
-            allowPointSelect: true,
-            cursor: 'pointer',
-            dataLabels: {
-              enabled: true,
-              color: '#000000',
-              connectorColor: '#000000',
-              format:
-                '<b>{point.name}</b>: {point.percentage:.2f}% ({point.y})',
-            },
-          },
-        },
-        series: [
-          {
-            type: 'pie',
-            name: T.wordsProportion,
-            data: normalizeRunCounts(payload),
-          },
-        ],
-        time: {
-          useUTC: true,
+    distributionChartOptions: {
+      chart: { type: 'column' },
+      title: {
+        text: ui.formatString(pointsDistributionLabel, {
+          alias: payload.alias,
+        }),
+      },
+      xAxis: {
+        categories: getCategories(payload),
+        title: { text: T.wordsPointsDistributionInIntervals },
+        labels: {
+          step: 10,
         },
       },
-      distributionChartOptions: {
-        chart: { type: 'column' },
-        title: {
-          text: ui.formatString(pointsDistributionLabel, {
-            alias: payload.alias,
-          }),
-        },
-        xAxis: {
-          categories: getCategories(payload),
-          title: { text: T.wordsPointsDistributionInIntervals },
-          labels: {
-            step: 10,
+      yAxis: { min: 0, title: { text: T.wordsNumberOfContestants } },
+      tooltip: {},
+      plotOptions: { column: { pointPadding: 0.2, borderWidth: 0 } },
+      series: [
+        { name: T.wordsNumberOfContestants, data: getDistribution(payload) },
+      ],
+      time: {
+        useUTC: true,
+      },
+    },
+    pendingChartOptions: {
+      chart: {
+        type: 'spline',
+        marginRight: 10,
+        events: {
+          load: (ev: Event): void => {
+            // set up the updating of the chart each second
+            const series = ((ev.target as unknown) as Highcharts.Chart)
+              .series[0];
+            setInterval(() => {
+              const x = new Date().getTime(), // current time
+                y = state.stats.pending_runs.length;
+              series.addPoint([x, y], true, true);
+            }, updatePendingRunsChartTimeout);
           },
-        },
-        yAxis: { min: 0, title: { text: T.wordsNumberOfContestants } },
-        tooltip: {},
-        plotOptions: { column: { pointPadding: 0.2, borderWidth: 0 } },
-        series: [
-          { name: T.wordsNumberOfContestants, data: getDistribution(payload) },
-        ],
-        time: {
-          useUTC: true,
         },
       },
-      pendingChartOptions: {
-        chart: {
-          type: 'spline',
-          marginRight: 10,
-          events: {
-            load: (ev: Event): void => {
-              // set up the updating of the chart each second
-              const series = ((ev.target as unknown) as Highcharts.Chart)
-                .series[0];
-              setInterval(() => {
-                const x = new Date().getTime(), // current time
-                  y = statsChart.stats.pending_runs.length;
-                series.addPoint([x, y], true, true);
-              }, updatePendingRunsChartTimeout);
-            },
-          },
-        },
-        title: { text: T.wordsSubmissionsNotYetReviewed },
-        xAxis: { type: 'datetime', tickPixelInterval: 200 },
-        yAxis: {
-          title: { text: T.wordsTotal },
-          plotLines: [{ value: 0, width: 1, color: '#808080' }],
-        },
-        tooltip: {
-          format: '<b>{series.name}</b><br/>{point.x}<br/>{point.y}',
-        },
-        legend: { enabled: false },
-        exporting: { enabled: false },
-        series: [
-          {
-            name: T.wordsPendingRuns,
-            data: (() => {
-              // generate an array of random data
-              const data = [];
-              const time = new Date().getTime();
+      title: { text: T.wordsSubmissionsNotYetReviewed },
+      xAxis: { type: 'datetime', tickPixelInterval: 200 },
+      yAxis: {
+        title: { text: T.wordsTotal },
+        plotLines: [{ value: 0, width: 1, color: '#808080' }],
+      },
+      tooltip: {
+        format: '<b>{series.name}</b><br/>{point.x}<br/>{point.y}',
+      },
+      legend: { enabled: false },
+      exporting: { enabled: false },
+      series: [
+        {
+          name: T.wordsPendingRuns,
+          data: (() => {
+            // generate an array of random data
+            const data = [];
+            const time = new Date().getTime();
 
-              for (let i = -5; i <= 0; i++) {
-                data.push({ x: time + i * 1000, y: 0 });
-              }
-              return data;
-            })(),
-          },
-        ],
-        time: {
-          useUTC: true,
+            for (let i = -5; i <= 0; i++) {
+              data.push({ x: time + i * 1000, y: 0 });
+            }
+            return data;
+          })(),
         },
+      ],
+      time: {
+        useUTC: true,
       },
-    }),
-    render: function (createElement) {
-      return createElement('omegaup-common-stats', {
-        props: {
-          stats: this.stats,
-          verdictChartOptions: this.verdictChartOptions,
-          distributionChartOptions: this.distributionChartOptions,
-          pendingChartOptions: this.pendingChartOptions,
-        },
-        on: {
-          'update-series': (series: types.StatsPayload): void => {
-            statsChart.verdictChartOptions.series[0].data = normalizeRunCounts(
-              series,
-            );
-            statsChart.distributionChartOptions.series[0].data = getDistribution(
-              series,
-            );
-            statsChart.distributionChartOptions.xAxis.categories = getCategories(
-              series,
-            );
-            statsChart.stats.pending_runs = series.pending_runs;
-          },
-        },
-      });
     },
   });
+
+  createApp({
+    render: () =>
+      h(common_Stats, {
+        stats: state.stats,
+        verdictChartOptions: state.verdictChartOptions,
+        distributionChartOptions: state.distributionChartOptions,
+        pendingChartOptions: state.pendingChartOptions,
+        onUpdateSeries: (series: types.StatsPayload): void => {
+          state.verdictChartOptions.series[0].data = normalizeRunCounts(series);
+          state.distributionChartOptions.series[0].data = getDistribution(
+            series,
+          );
+          state.distributionChartOptions.xAxis.categories = getCategories(
+            series,
+          );
+          state.stats.pending_runs = series.pending_runs;
+        },
+      }),
+  }).mount('#main-container');
 
   setInterval(() => getStats(payload.entity_type), callStatsApiTimeout);
 });

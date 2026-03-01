@@ -310,10 +310,7 @@ const emit = defineEmits<{
   (e: 'update-assignment', params: UpdateParams): void;
   (e: 'tags-problems', tags: string[]): void;
   (e: 'update-search-result-problems', query: string): void;
-  (
-    e: 'update:assignmentFormMode',
-    mode: omegaup.AssignmentFormMode,
-  ): void;
+  (e: 'update:assignmentFormMode', mode: omegaup.AssignmentFormMode): void;
   (
     e: 'add-problem',
     assignment: types.CourseAssignment,

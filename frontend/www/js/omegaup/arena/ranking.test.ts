@@ -1,6 +1,5 @@
 jest.mock('../../../third_party/js/diff_match_patch.js');
 
-
 import Vuex from 'vuex';
 import { types } from '../api_types';
 import T from '../lang';

@@ -13,7 +13,7 @@ import {
 import * as api from '../api';
 import * as time from '../time';
 
-import Vue from 'vue';
+import { createApp, h, reactive } from 'vue';
 import arena_Course, { Tabs } from '../components/arena/Coursev2.vue';
 
 OmegaUp.on('ready', async () => {
@@ -22,95 +22,84 @@ OmegaUp.on('ready', async () => {
   const locationHash = window.location.hash.substr(1).split('/');
   const activeTab = getSelectedValidTab(locationHash[0]);
   trackRuns();
-
-  new Vue({
-    el: '#main-container',
-    components: {
-      'omegaup-arena-course': arena_Course,
-    },
-    data: () => {
-      return {
-        currentRunDetails: null as types.RunDetails | null,
-      };
-    },
-    render: function (createElement) {
-      return createElement('omegaup-arena-course', {
-        props: {
-          allRuns: runsStore.state.runs,
-          assignment: payload.assignment,
-          course: payload.course,
-          currentProblem: payload.currentProblem,
-          currentRunDetails: this.currentRunDetails,
-          problems: payload.problems,
-          selectedTab: activeTab,
-          scoreboard: payload.scoreboard,
-          userRuns: myRunsStore.state.runs,
-          user: {
-            admin: commonPayload.isAdmin,
-            loggedIn: commonPayload.isLoggedIn,
-            reviewer: commonPayload.isReviewer,
-          },
-        },
-        on: {
-          'show-run-details': (request: SubmissionRequest) => {
-            console.log(request);
-            api.Run.details({ run_alias: request.guid })
-              .then((runDetails) => {
-                console.log(runDetails);
-                this.currentRunDetails = showSubmission({
-                  request,
-                  runDetails,
-                });
-              })
-              .catch((run) => {
-                this.currentRunDetails = null;
-                submitRunFailed({
-                  error: run.error,
-                  errorname: run.errorname,
-                  run,
-                });
-              });
-          },
-          'submit-run': ({
-            code,
-            language,
-          }: {
-            code: string;
-            language: string;
-          }) => {
-            const problem = payload.currentProblem;
-            if (!problem) {
-              return;
-            }
-            api.Run.create({
-              problemset_id: payload.assignment.problemset_id,
-              problem_alias: problem.alias,
-              language: language,
-              source: code,
-            })
-              .then(time.remoteTimeAdapter)
-              .then((response) => {
-                submitRun({
-                  guid: response.guid,
-                  submitDelay: response.submit_delay,
-                  language,
-                  username: commonPayload.currentUsername,
-                  classname: commonPayload.userClassname,
-                  problemAlias: problem.alias,
-                });
-              })
-              .catch((run) => {
-                submitRunFailed({
-                  error: run.error,
-                  errorname: run.errorname,
-                  run,
-                });
-              });
-          },
-        },
-      });
-    },
+  const state = reactive({
+    currentRunDetails: null as types.RunDetails | null,
   });
+
+  createApp({
+    render: () =>
+      h(arena_Course, {
+        allRuns: runsStore.state.runs,
+        assignment: payload.assignment,
+        course: payload.course,
+        currentProblem: payload.currentProblem,
+        currentRunDetails: state.currentRunDetails,
+        problems: payload.problems,
+        selectedTab: activeTab,
+        scoreboard: payload.scoreboard,
+        userRuns: myRunsStore.state.runs,
+        user: {
+          admin: commonPayload.isAdmin,
+          loggedIn: commonPayload.isLoggedIn,
+          reviewer: commonPayload.isReviewer,
+        },
+        onShowRunDetails: (request: SubmissionRequest) => {
+          console.log(request);
+          api.Run.details({ run_alias: request.guid })
+            .then((runDetails) => {
+              console.log(runDetails);
+              state.currentRunDetails = showSubmission({
+                request,
+                runDetails,
+              });
+            })
+            .catch((run) => {
+              state.currentRunDetails = null;
+              submitRunFailed({
+                error: run.error,
+                errorname: run.errorname,
+                run,
+              });
+            });
+        },
+        onSubmitRun: ({
+          code,
+          language,
+        }: {
+          code: string;
+          language: string;
+        }) => {
+          const problem = payload.currentProblem;
+          if (!problem) {
+            return;
+          }
+          api.Run.create({
+            problemset_id: payload.assignment.problemset_id,
+            problem_alias: problem.alias,
+            language: language,
+            source: code,
+          })
+            .then(time.remoteTimeAdapter)
+            .then((response) => {
+              submitRun({
+                guid: response.guid,
+                submitDelay: response.submit_delay,
+                language,
+                username: commonPayload.currentUsername,
+                classname: commonPayload.userClassname,
+                problemAlias: problem.alias,
+              });
+            })
+            .catch((run) => {
+              submitRunFailed({
+                error: run.error,
+                errorname: run.errorname,
+                run,
+              });
+            });
+        },
+      }),
+  }).mount('#main-container');
 
   function getSelectedValidTab(tab: string): string | null {
     if (payload.currentProblem && tab === '') {

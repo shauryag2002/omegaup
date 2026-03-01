@@ -1,7 +1,4 @@
-import Vue from 'vue';
 import Vuex from 'vuex';
-
-Vue.use(Vuex);
 
 export interface SocketState {
   socketStatus: SocketStatus;
@@ -19,7 +16,7 @@ export const socketStoreConfig = {
   },
   mutations: {
     updateSocketStatus(state: SocketState, socketStatus: SocketStatus) {
-      Vue.set(state, 'socketStatus', socketStatus);
+      state.socketStatus = socketStatus;
     },
   },
 };

@@ -1,9 +1,4 @@
-import Vue from 'vue';
 import Vuex, { ActionContext, Store } from 'vuex';
-
-// Vuex plugin registration is required before creating store instances.
-// Vue.use() is idempotent, so multiple registrations are safe.
-Vue.use(Vuex);
 
 /**
  * Message types for notifications, matching Bootstrap alert classes.
@@ -55,33 +50,33 @@ function createStoreConfig() {
         state: NotificationsState,
         payload: { message: string; type: MessageType },
       ) {
-        Vue.set(state, 'message', payload.message);
-        Vue.set(state, 'type', payload.type);
-        Vue.set(state, 'visible', true);
-        Vue.set(state, 'counter', state.counter + 1);
+        state.message = payload.message;
+        state.type = payload.type;
+        state.visible = true;
+        state.counter = state.counter + 1;
       },
 
       hideNotification(state: NotificationsState) {
-        Vue.set(state, 'visible', false);
-        Vue.set(state, 'message', null);
-        Vue.set(state, 'type', null);
+        state.visible = false;
+        state.message = null;
+        state.type = null;
       },
 
       setPosition(state: NotificationsState, position: NotificationPosition) {
-        Vue.set(state, 'position', position);
+        state.position = position;
       },
 
       setAutoHideTimeout(
         state: NotificationsState,
         timeout: ReturnType<typeof setTimeout> | null,
       ) {
-        Vue.set(state, 'autoHideTimeout', timeout);
+        state.autoHideTimeout = timeout;
       },
 
       clearAutoHideTimeout(state: NotificationsState) {
         if (state.autoHideTimeout) {
           clearTimeout(state.autoHideTimeout);
-          Vue.set(state, 'autoHideTimeout', null);
+          state.autoHideTimeout = null;
         }
       },
     },

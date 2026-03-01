@@ -1,10 +1,7 @@
-import Vue from 'vue';
 import Vuex, { Commit } from 'vuex';
 import * as api from '../api';
 import { messages, types } from '../api_types';
 import { UrlParams } from '../components/arena/ContestListv2.vue';
-
-Vue.use(Vuex);
 
 export interface ContestState {
   // The map of contest lists.
@@ -62,11 +59,11 @@ export const contestStoreConfig = {
       );
 
       // Append new contests to the existing list
-      Vue.set(state.contests, name, [...existingContests, ...newContests]);
-      Vue.set(state.countContests, name, response.number_of_results);
+      state.contests[name] = [...existingContests, ...newContests];
+      state.countContests[name] = response.number_of_results;
 
       // Update cache with the full response
-      Vue.set(state.cache, cacheKey, {
+      state.cache[cacheKey] = {
         results: response.results,
         number_of_results: response.number_of_results,
       });

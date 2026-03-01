@@ -5,7 +5,6 @@ import DeleteConfirmationForm from './DeleteConfirmationForm.vue';
 import T from '../../../../lang';
 import * as ui from '@/js/omegaup/ui';
 
-
 describe('DeleteConfirmationForm.vue', () => {
   it('Should set commitMessage when visible changes', async () => {
     const wrapper = shallowMount(DeleteConfirmationForm, {

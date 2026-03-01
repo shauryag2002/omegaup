@@ -1,4 +1,3 @@
-import Vue from 'vue';
 import * as api from '../api';
 import * as ui from '../ui';
 import * as time from '../time';

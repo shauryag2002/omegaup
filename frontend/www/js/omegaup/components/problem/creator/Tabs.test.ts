@@ -7,7 +7,6 @@ import store from '@/js/omegaup/problem/creator/store';
 import T from '../../../lang';
 import Vue from 'vue';
 
-
 describe('Tabs.vue', () => {
   it('Should contain all 4 tabs', async () => {
     const wrapper = mount(Tabs, { store });

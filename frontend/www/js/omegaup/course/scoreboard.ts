@@ -5,7 +5,7 @@ import socketStore from '../arena/socketStore';
 import * as api from '../api';
 import * as ui from '../ui';
 import * as time from '../time';
-import Vue from 'vue';
+import { createApp, h, reactive } from 'vue';
 import { types } from '../api_types';
 import { onRankingChanged } from '../arena/ranking';
 import rankingStore from '../arena/rankingStore';
@@ -30,29 +30,22 @@ OmegaUp.on('ready', () => {
     rankingStore.commit('updateRanking', ranking);
     rankingStore.commit('updateLastTimeUpdated', lastTimeUpdated);
   }
-
-  new Vue({
-    el: '#main-container',
-    components: {
-      'omegaup-arena-scoreboard': arena_Scoreboard,
-    },
-    data: () => ({
-      problems: payload.problems,
-    }),
-    render: function (createElement) {
-      return createElement('omegaup-arena-scoreboard', {
-        props: {
-          problems: this.problems,
-          title: payload.assignment.name,
-          finishTime: payload.assignment.finishTime,
-          socketStatus: socketStore.state.socketStatus,
-          ranking: rankingStore.state.ranking,
-          lastUpdated: rankingStore.state.lastTimeUpdated,
-          showInvitedUsersFilter: false,
-        },
-      });
-    },
+  const state = reactive({
+    problems: payload.problems,
   });
+
+  createApp({
+    render: () =>
+      h(arena_Scoreboard, {
+        problems: state.problems,
+        title: payload.assignment.name,
+        finishTime: payload.assignment.finishTime,
+        socketStatus: socketStore.state.socketStatus,
+        ranking: rankingStore.state.ranking,
+        lastUpdated: rankingStore.state.lastTimeUpdated,
+        showInvitedUsersFilter: false,
+      }),
+  }).mount('#main-container');
 
   const socket = new EventsSocket({
     disableSockets: false,

@@ -6,7 +6,6 @@ import Tabs from './Tabs.vue';
 
 import BootstrapVue, { IconsPlugin } from 'bootstrap-vue';
 
-
 describe('Creator.vue', () => {
   it('Should contain Header and Tabs Components', async () => {
     const wrapper = shallowMount(Creator, {});

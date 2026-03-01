@@ -6,7 +6,6 @@ import AddPanel from './AddPanel.vue';
 import BootstrapVue, { IconsPlugin } from 'bootstrap-vue';
 import Vue from 'vue';
 
-
 describe('Tabs.vue', () => {
   it('Should contain 3 buttons and Groups text', async () => {
     const wrapper = shallowMount(CasesTab);

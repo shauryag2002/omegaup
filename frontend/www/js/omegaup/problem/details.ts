@@ -1,4 +1,4 @@
-import Vue from 'vue';
+import { createApp, h, reactive } from 'vue';
 import problem_Details, {
   PopupDisplayed,
 } from '../components/problem/Details.vue';
@@ -67,245 +67,276 @@ OmegaUp.on('ready', async () => {
     );
   }
 
-  const problemDetailsView = new Vue({
-    el: '#main-container',
-    components: {
-      'omegaup-problem-details': problem_Details,
-    },
-    data: () => ({
-      popupDisplayed,
-      runDetailsData: runDetails,
-      solutionStatus: payload.solutionStatus,
-      solution: null as types.ProblemStatement | null,
-      allowedSolutionsToSee: payload.allowedSolutionsToSee,
-      activeTab: window.location.hash ? locationHash[0] : 'problems',
-      nominationStatus: payload.nominationStatus,
-      hasBeenNominated:
-        payload.nominationStatus?.nominated ||
-        (payload.nominationStatus?.nominatedBeforeAc &&
-          !payload.nominationStatus?.solved),
-      guid,
-      nextSubmissionTimestamp,
-      nextExecutionTimestamp,
-      createdGuid: '',
-      searchResultUsers: searchResultEmpty,
-      searchResultProblems: searchResultEmpty,
-      isBookmarked: payload.isBookmarked,
-      isLoadingBookmark: false,
-    }),
-    render: function (createElement) {
-      return createElement('omegaup-problem-details', {
-        props: {
-          activeTab: this.activeTab,
-          allRuns: runsStore.state.runs,
-          problem: payload.problem,
-          runs: myRunsStore.state.runs,
-          solvers: payload.solvers,
-          user: payload.user,
-          nominationStatus: this.nominationStatus,
-          histogram: payload.histogram,
-          clarifications: clarificationStore.state.clarifications,
-          solutionStatus: this.solutionStatus,
-          solution: this.solution,
-          allowedSolutionsToSee: this.allowedSolutionsToSee,
-          popupDisplayed: this.popupDisplayed,
-          runDetailsData: this.runDetailsData,
-          allowUserAddTags: payload.allowUserAddTags,
-          levelTags: payload.levelTags,
-          problemLevel: payload.problemLevel,
-          publicTags: payload.publicTags,
-          selectedPublicTags: payload.selectedPublicTags,
-          selectedPrivateTags: payload.selectedPrivateTags,
-          hasBeenNominated: this.hasBeenNominated,
-          guid: this.guid,
-          isAdmin: payload.user.admin,
-          showVisibilityIndicators: true,
-          nextSubmissionTimestamp: this.nextSubmissionTimestamp,
-          nextExecutionTimestamp: this.nextExecutionTimestamp,
-          createdGuid: this.createdGuid,
-          shouldShowTabs: true,
-          searchResultUsers: this.searchResultUsers,
-          searchResultProblems: this.searchResultProblems,
-          problemAlias: payload.problem.alias,
-          totalRuns: runsStore.state.totalRuns,
-          bookmarkedStatus: this.isBookmarked,
-        },
-        on: {
-          'show-run': (request: SubmissionRequest) => {
-            api.Run.details({ run_alias: request.guid })
-              .then((runDetails) => {
-                this.runDetailsData = showSubmission({ request, runDetails });
-                if (request.hash) {
-                  window.location.hash = request.hash;
-                }
-              })
-              .catch((run) => {
-                submitRunFailed({
-                  error: run.error,
-                  errorname: run.errorname,
-                  run,
-                });
-              });
-          },
-          'apply-filter': ({
-            filter,
-            value,
-          }: {
-            filter:
-              | 'verdict'
-              | 'language'
-              | 'username'
-              | 'status'
-              | 'offset'
-              | 'execution'
-              | 'output';
-            value: string;
-          }) => {
-            if (value) {
-              runsStore.commit('applyFilter', {
-                [filter]: value,
-              } as RunFilters);
-            } else {
-              runsStore.commit('removeFilter', filter);
-            }
-            refreshRuns();
-          },
-          'submit-run': ({
-            code,
-            language,
-            nominationStatus,
-          }: {
-            code: string;
-            language: string;
-            runs: types.Run[];
-            nominationStatus: types.NominationStatus;
-          }) => {
-            api.Run.create({
-              problem_alias: payload.problem.alias,
-              language: language,
-              source: code,
-            })
-              .then(time.remoteTimeAdapter)
-              .then((response) => {
-                problemDetailsView.nextSubmissionTimestamp =
-                  response.nextSubmissionTimestamp;
-                problemDetailsView.createdGuid = response.guid;
+  const state = reactive({
+    popupDisplayed,
+    runDetailsData: runDetails,
+    solutionStatus: payload.solutionStatus,
+    solution: null as types.ProblemStatement | null,
+    allowedSolutionsToSee: payload.allowedSolutionsToSee,
+    activeTab: window.location.hash ? locationHash[0] : 'problems',
+    nominationStatus: payload.nominationStatus,
+    hasBeenNominated:
+      payload.nominationStatus?.nominated ||
+      (payload.nominationStatus?.nominatedBeforeAc &&
+        !payload.nominationStatus?.solved),
+    guid,
+    nextSubmissionTimestamp,
+    nextExecutionTimestamp,
+    createdGuid: '',
+    searchResultUsers: searchResultEmpty,
+    searchResultProblems: searchResultEmpty,
+    isBookmarked: payload.isBookmarked,
+    isLoadingBookmark: false,
+  });
 
-                submitRun({
-                  guid: response.guid,
-                  submitDelay: response.submit_delay,
-                  language,
-                  username: commonPayload.currentUsername,
-                  classname: commonPayload.userClassname,
-                  problemAlias: payload.problem.alias,
-                });
-                setNominationStatus({
-                  runs: myRunsStore.state.runs,
-                  nominationStatus,
-                });
-              })
-              .catch((run) => {
-                submitRunFailed({
-                  error: run.error,
-                  errorname: run.errorname,
-                  run,
-                });
+  createApp({
+    render: () =>
+      h(problem_Details, {
+        activeTab: state.activeTab,
+        allRuns: runsStore.state.runs,
+        problem: payload.problem,
+        runs: myRunsStore.state.runs,
+        solvers: payload.solvers,
+        user: payload.user,
+        nominationStatus: state.nominationStatus,
+        histogram: payload.histogram,
+        clarifications: clarificationStore.state.clarifications,
+        solutionStatus: state.solutionStatus,
+        solution: state.solution,
+        allowedSolutionsToSee: state.allowedSolutionsToSee,
+        popupDisplayed: state.popupDisplayed,
+        runDetailsData: state.runDetailsData,
+        allowUserAddTags: payload.allowUserAddTags,
+        levelTags: payload.levelTags,
+        problemLevel: payload.problemLevel,
+        publicTags: payload.publicTags,
+        selectedPublicTags: payload.selectedPublicTags,
+        selectedPrivateTags: payload.selectedPrivateTags,
+        hasBeenNominated: state.hasBeenNominated,
+        guid: state.guid,
+        isAdmin: payload.user.admin,
+        showVisibilityIndicators: true,
+        nextSubmissionTimestamp: state.nextSubmissionTimestamp,
+        nextExecutionTimestamp: state.nextExecutionTimestamp,
+        createdGuid: state.createdGuid,
+        shouldShowTabs: true,
+        searchResultUsers: state.searchResultUsers,
+        searchResultProblems: state.searchResultProblems,
+        problemAlias: payload.problem.alias,
+        totalRuns: runsStore.state.totalRuns,
+        bookmarkedStatus: state.isBookmarked,
+        onShowRun: (request: SubmissionRequest) => {
+          api.Run.details({ run_alias: request.guid })
+            .then((runDetails) => {
+              state.runDetailsData = showSubmission({ request, runDetails });
+              if (request.hash) {
+                window.location.hash = request.hash;
+              }
+            })
+            .catch((run) => {
+              submitRunFailed({
+                error: run.error,
+                errorname: run.errorname,
+                run,
               });
-          },
-          'rate-problem-as-reviewer': ({
-            tags,
-            qualitySeal,
-          }: {
-            tags: string[];
-            qualitySeal: boolean;
-          }) => {
-            const contents: { quality_seal?: boolean; tag?: string } = {};
-            if (tags) {
-              contents.tag = tags[0];
-            }
-            contents.quality_seal = qualitySeal;
-            api.QualityNomination.create({
-              problem_alias: payload.problem.alias,
-              nomination: 'quality_tag',
-              contents: JSON.stringify(contents),
-            }).catch(ui.apiError);
-          },
-          'submit-demotion': (source: qualitynomination_Demotion) => {
-            api.QualityNomination.create({
-              problem_alias: payload.problem.alias,
-              nomination: 'demotion',
-              contents: JSON.stringify({
-                rationale: source.rationale || 'N/A',
-                reason: source.selectedReason,
-                original: source.original,
-              }),
-            }).catch(ui.apiError);
-          },
-          'submit-promotion': ({
-            solved,
-            tried,
-            quality,
-            difficulty,
-          }: {
-            solved: boolean;
-            tried: boolean;
-            quality: string;
-            difficulty: string;
-          }) => {
-            const contents: {
-              before_ac?: boolean;
-              difficulty?: number;
-              quality?: number;
-            } = {};
-            if (!solved && tried) {
-              contents.before_ac = true;
-            }
-            if (difficulty !== '') {
-              contents.difficulty = Number.parseInt(difficulty, 10);
-            }
-            if (quality !== '') {
-              contents.quality = Number.parseInt(quality, 10);
-            }
-            api.QualityNomination.create({
-              problem_alias: payload.problem.alias,
-              nomination: 'suggestion',
-              contents: JSON.stringify(contents),
+            });
+        },
+        onApplyFilter: ({
+          filter,
+          value,
+        }: {
+          filter:
+            | 'verdict'
+            | 'language'
+            | 'username'
+            | 'status'
+            | 'offset'
+            | 'execution'
+            | 'output';
+          value: string;
+        }) => {
+          if (value) {
+            runsStore.commit('applyFilter', {
+              [filter]: value,
+            } as RunFilters);
+          } else {
+            runsStore.commit('removeFilter', filter);
+          }
+          refreshRuns();
+        },
+        onSubmitRun: ({
+          code,
+          language,
+          nominationStatus,
+        }: {
+          code: string;
+          language: string;
+          runs: types.Run[];
+          nominationStatus: types.NominationStatus;
+        }) => {
+          api.Run.create({
+            problem_alias: payload.problem.alias,
+            language: language,
+            source: code,
+          })
+            .then(time.remoteTimeAdapter)
+            .then((response) => {
+              state.nextSubmissionTimestamp = response.nextSubmissionTimestamp;
+              state.createdGuid = response.guid;
+
+              submitRun({
+                guid: response.guid,
+                submitDelay: response.submit_delay,
+                language,
+                username: commonPayload.currentUsername,
+                classname: commonPayload.userClassname,
+                problemAlias: payload.problem.alias,
+              });
+              setNominationStatus({
+                runs: myRunsStore.state.runs,
+                nominationStatus,
+              });
             })
-              .then(() => {
-                this.hasBeenNominated = true;
-                ui.reportEvent('quality-nomination', 'submit');
-                ui.dismissNotifications();
-              })
-              .catch(ui.apiError);
-          },
-          'dismiss-promotion': (
-            source: qualitynomination_Promotion,
-            isDismissed: boolean,
-          ) => {
-            const contents: { before_ac?: boolean } = {};
-            if (!source.solved && source.tried) {
-              contents.before_ac = true;
-            }
-            if (!isDismissed) {
-              return;
-            }
-            api.QualityNomination.create({
-              problem_alias: payload.problem.alias,
-              nomination: 'dismissal',
-              contents: JSON.stringify(contents),
+            .catch((run) => {
+              submitRunFailed({
+                error: run.error,
+                errorname: run.errorname,
+                run,
+              });
+            });
+        },
+        onRateProblemAsReviewer: ({
+          tags,
+          qualitySeal,
+        }: {
+          tags: string[];
+          qualitySeal: boolean;
+        }) => {
+          const contents: { quality_seal?: boolean; tag?: string } = {};
+          if (tags) {
+            contents.tag = tags[0];
+          }
+          contents.quality_seal = qualitySeal;
+          api.QualityNomination.create({
+            problem_alias: payload.problem.alias,
+            nomination: 'quality_tag',
+            contents: JSON.stringify(contents),
+          }).catch(ui.apiError);
+        },
+        onSubmitDemotion: (source: qualitynomination_Demotion) => {
+          api.QualityNomination.create({
+            problem_alias: payload.problem.alias,
+            nomination: 'demotion',
+            contents: JSON.stringify({
+              rationale: source.rationale || 'N/A',
+              reason: source.selectedReason,
+              original: source.original,
+            }),
+          }).catch(ui.apiError);
+        },
+        onSubmitPromotion: ({
+          solved,
+          tried,
+          quality,
+          difficulty,
+        }: {
+          solved: boolean;
+          tried: boolean;
+          quality: string;
+          difficulty: string;
+        }) => {
+          const contents: {
+            before_ac?: boolean;
+            difficulty?: number;
+            quality?: number;
+          } = {};
+          if (!solved && tried) {
+            contents.before_ac = true;
+          }
+          if (difficulty !== '') {
+            contents.difficulty = Number.parseInt(difficulty, 10);
+          }
+          if (quality !== '') {
+            contents.quality = Number.parseInt(quality, 10);
+          }
+          api.QualityNomination.create({
+            problem_alias: payload.problem.alias,
+            nomination: 'suggestion',
+            contents: JSON.stringify(contents),
+          })
+            .then(() => {
+              state.hasBeenNominated = true;
+              ui.reportEvent('quality-nomination', 'submit');
+              ui.dismissNotifications();
             })
-              .then(() => {
-                ui.reportEvent('quality-nomination', 'dismiss');
-                ui.info(T.qualityNominationRateProblemDesc);
-              })
-              .catch(ui.apiError);
-          },
-          'unlock-solution': () => {
+            .catch(ui.apiError);
+        },
+        onDismissPromotion: (
+          source: qualitynomination_Promotion,
+          isDismissed: boolean,
+        ) => {
+          const contents: { before_ac?: boolean } = {};
+          if (!source.solved && source.tried) {
+            contents.before_ac = true;
+          }
+          if (!isDismissed) {
+            return;
+          }
+          api.QualityNomination.create({
+            problem_alias: payload.problem.alias,
+            nomination: 'dismissal',
+            contents: JSON.stringify(contents),
+          })
+            .then(() => {
+              ui.reportEvent('quality-nomination', 'dismiss');
+              ui.info(T.qualityNominationRateProblemDesc);
+            })
+            .catch(ui.apiError);
+        },
+        onUnlockSolution: () => {
+          api.Problem.solution(
+            {
+              problem_alias: payload.problem.alias,
+              forfeit_problem: true,
+            },
+            { quiet: true },
+          )
+            .then((data) => {
+              if (!data.solution) {
+                ui.error(T.wordsProblemOrSolutionNotExist);
+                return;
+              }
+              state.solutionStatus = 'unlocked';
+              state.solution = data.solution;
+              ui.info(
+                ui.formatString(T.solutionViewsLeft, {
+                  available: state.allowedSolutionsToSee - 1,
+                  total: 5,
+                }),
+              );
+            })
+            .catch((error) => {
+              if (error.httpStatusCode == 404) {
+                ui.error(T.wordsProblemOrSolutionNotExist);
+                return;
+              }
+              ui.apiError(error);
+            });
+        },
+        onGetAllowedSolutions: () => {
+          api.ProblemForfeited.getCounts()
+            .then((data) => {
+              state.allowedSolutionsToSee = data.allowed - data.seen;
+              if (state.allowedSolutionsToSee <= 0) {
+                ui.warning(T.allowedSolutionsLimitReached);
+              }
+            })
+            .catch(ui.apiError);
+        },
+        onGetSolution: () => {
+          if (payload.solutionStatus === 'unlocked') {
             api.Problem.solution(
-              {
-                problem_alias: payload.problem.alias,
-                forfeit_problem: true,
-              },
+              { problem_alias: payload.problem.alias },
               { quiet: true },
             )
               .then((data) => {
@@ -313,14 +344,7 @@ OmegaUp.on('ready', async () => {
                   ui.error(T.wordsProblemOrSolutionNotExist);
                   return;
                 }
-                this.solutionStatus = 'unlocked';
-                this.solution = data.solution;
-                ui.info(
-                  ui.formatString(T.solutionViewsLeft, {
-                    available: this.allowedSolutionsToSee - 1,
-                    total: 5,
-                  }),
-                );
+                state.solution = data.solution;
               })
               .catch((error) => {
                 if (error.httpStatusCode == 404) {
@@ -329,141 +353,106 @@ OmegaUp.on('ready', async () => {
                 }
                 ui.apiError(error);
               });
-          },
-          'get-allowed-solutions': () => {
-            api.ProblemForfeited.getCounts()
-              .then((data) => {
-                this.allowedSolutionsToSee = data.allowed - data.seen;
-                if (this.allowedSolutionsToSee <= 0) {
-                  ui.warning(T.allowedSolutionsLimitReached);
-                }
-              })
-              .catch(ui.apiError);
-          },
-          'get-solution': () => {
-            if (payload.solutionStatus === 'unlocked') {
-              api.Problem.solution(
-                { problem_alias: payload.problem.alias },
-                { quiet: true },
-              )
-                .then((data) => {
-                  if (!data.solution) {
-                    ui.error(T.wordsProblemOrSolutionNotExist);
-                    return;
-                  }
-                  this.solution = data.solution;
-                })
-                .catch((error) => {
-                  if (error.httpStatusCode == 404) {
-                    ui.error(T.wordsProblemOrSolutionNotExist);
-                    return;
-                  }
-                  ui.apiError(error);
-                });
-            }
-          },
-          'clarification-response': ({
-            clarification,
-          }: ContestClarification) => {
-            api.Clarification.update(clarification)
-              .then(() => {
-                refreshProblemClarifications({
-                  problemAlias: payload.problem.alias,
-                  rowcount: 20,
-                  offset: 0,
-                });
-              })
-              .catch(ui.apiError);
-          },
-          'update:activeTab': (tabName: string) => {
-            history.replaceState({ tabName }, 'updateTab', `#${tabName}`);
-          },
-          'redirect-login-page': () => {
-            window.location.href = `/login/?redirect=${encodeURIComponent(
-              window.location.pathname,
-            )}`;
-          },
-          rejudge: (run: types.Run) => {
-            api.Run.rejudge({ run_alias: run.guid, debug: false })
-              .then(() => {
-                run.status = 'rejudging';
-                updateRunFallback({ run });
-              })
-              .catch(ui.ignoreError);
-          },
-          requalify: (run: types.Run) => {
-            api.Run.requalify({ run_alias: run.guid })
-              .then(() => {
-                run.type = 'normal';
-                updateRunFallback({ run });
-              })
-              .catch(ui.ignoreError);
-          },
-          disqualify: ({ run }: { run: types.Run }) => {
-            if (!window.confirm(T.runDisqualifyConfirm)) {
-              return;
-            }
-            api.Run.disqualify({ run_alias: run.guid })
-              .then(() => {
-                run.type = 'disqualified';
-                updateRunFallback({ run });
-              })
-              .catch(ui.ignoreError);
-          },
-          'update-search-result-users': ({ query }: { query: string }) => {
-            api.User.list({ query })
-              .then(({ results }) => {
-                this.searchResultUsers = results.map(
-                  ({ key, value }: types.ListItem) => ({
-                    key,
-                    value: `${ui.escape(key)} (<strong>${ui.escape(
-                      value,
-                    )}</strong>)`,
-                  }),
-                );
-              })
-              .catch(ui.apiError);
-          },
-          'update-search-result-problems': (query: string) => {
-            api.Problem.listForTypeahead({
-              query,
-              search_type: 'all',
-            })
-              .then((data) => {
-                this.searchResultProblems = data.results.map(
-                  ({ key, value }) => ({
-                    key,
-                    value,
-                  }),
-                );
-              })
-              .catch(ui.apiError);
-          },
-          'toggle-bookmark': (problemAlias: string) => {
-            if (this.isLoadingBookmark) {
-              return;
-            }
-            this.isLoadingBookmark = true;
-            api.ProblemBookmark.toggle({ problem_alias: problemAlias })
-              .then((response) => {
-                this.isBookmarked = response.bookmarked;
-                ui.success(
-                  response.bookmarked
-                    ? T.problemBookmarkAdded
-                    : T.problemBookmarkRemoved,
-                );
-              })
-              .catch((error) => {
-                ui.apiError(error);
-              })
-              .finally(() => {
-                this.isLoadingBookmark = false;
-              });
-          },
+          }
         },
-      });
-    },
-  });
+        onClarificationResponse: ({ clarification }: ContestClarification) => {
+          api.Clarification.update(clarification)
+            .then(() => {
+              refreshProblemClarifications({
+                problemAlias: payload.problem.alias,
+                rowcount: 20,
+                offset: 0,
+              });
+            })
+            .catch(ui.apiError);
+        },
+        'onUpdate:activeTab': (tabName: string) => {
+          history.replaceState({ tabName }, 'updateTab', `#${tabName}`);
+        },
+        onRedirectLoginPage: () => {
+          window.location.href = `/login/?redirect=${encodeURIComponent(
+            window.location.pathname,
+          )}`;
+        },
+        rejudge: (run: types.Run) => {
+          api.Run.rejudge({ run_alias: run.guid, debug: false })
+            .then(() => {
+              run.status = 'rejudging';
+              updateRunFallback({ run });
+            })
+            .catch(ui.ignoreError);
+        },
+        requalify: (run: types.Run) => {
+          api.Run.requalify({ run_alias: run.guid })
+            .then(() => {
+              run.type = 'normal';
+              updateRunFallback({ run });
+            })
+            .catch(ui.ignoreError);
+        },
+        disqualify: ({ run }: { run: types.Run }) => {
+          if (!window.confirm(T.runDisqualifyConfirm)) {
+            return;
+          }
+          api.Run.disqualify({ run_alias: run.guid })
+            .then(() => {
+              run.type = 'disqualified';
+              updateRunFallback({ run });
+            })
+            .catch(ui.ignoreError);
+        },
+        onUpdateSearchResultUsers: ({ query }: { query: string }) => {
+          api.User.list({ query })
+            .then(({ results }) => {
+              state.searchResultUsers = results.map(
+                ({ key, value }: types.ListItem) => ({
+                  key,
+                  value: `${ui.escape(key)} (<strong>${ui.escape(
+                    value,
+                  )}</strong>)`,
+                }),
+              );
+            })
+            .catch(ui.apiError);
+        },
+        onUpdateSearchResultProblems: (query: string) => {
+          api.Problem.listForTypeahead({
+            query,
+            search_type: 'all',
+          })
+            .then((data) => {
+              state.searchResultProblems = data.results.map(
+                ({ key, value }) => ({
+                  key,
+                  value,
+                }),
+              );
+            })
+            .catch(ui.apiError);
+        },
+        onToggleBookmark: (problemAlias: string) => {
+          if (state.isLoadingBookmark) {
+            return;
+          }
+          state.isLoadingBookmark = true;
+          api.ProblemBookmark.toggle({ problem_alias: problemAlias })
+            .then((response) => {
+              state.isBookmarked = response.bookmarked;
+              ui.success(
+                response.bookmarked
+                  ? T.problemBookmarkAdded
+                  : T.problemBookmarkRemoved,
+              );
+            })
+            .catch((error) => {
+              ui.apiError(error);
+            })
+            .finally(() => {
+              state.isLoadingBookmark = false;
+            });
+        },
+      }),
+  }).mount('#main-container');
 
   window.addEventListener(
     'message',
@@ -474,9 +463,8 @@ OmegaUp.on('ready', async () => {
           api.Run.create(e.data.params)
             .then(time.remoteTimeAdapter)
             .then((response) => {
-              problemDetailsView.nextSubmissionTimestamp =
-                response.nextSubmissionTimestamp;
-              problemDetailsView.createdGuid = response.guid;
+              state.nextSubmissionTimestamp = response.nextSubmissionTimestamp;
+              state.createdGuid = response.guid;
               submitRun({
                 guid: response.guid,
                 submitDelay: response.submit_delay,
@@ -498,8 +486,7 @@ OmegaUp.on('ready', async () => {
           api.Run.execute()
             .then(time.remoteTimeAdapter)
             .then((response) => {
-              problemDetailsView.nextExecutionTimestamp =
-                response.nextExecutionTimestamp;
+              state.nextExecutionTimestamp = response.nextExecutionTimestamp;
             })
             .catch((run) => {
               submitRunFailed({
@@ -544,11 +531,11 @@ OmegaUp.on('ready', async () => {
     })
       .then(time.remoteTimeAdapter)
       .then((response) => {
-        if (!problemDetailsView.nominationStatus) return;
+        if (!state.nominationStatus) return;
         onRefreshRuns({ runs: response.runs, totalRuns: response.totalRuns });
         setNominationStatus({
           runs: response.runs,
-          nominationStatus: problemDetailsView.nominationStatus,
+          nominationStatus: state.nominationStatus,
         });
       })
       .catch(ui.apiError);
@@ -559,10 +546,10 @@ OmegaUp.on('ready', async () => {
     for (const run of runs) {
       trackRun({ run });
     }
-    if (problemDetailsView.nominationStatus) {
+    if (state.nominationStatus) {
       setNominationStatus({
         runs: myRunsStore.state.runs,
-        nominationStatus: problemDetailsView.nominationStatus,
+        nominationStatus: state.nominationStatus,
       });
     }
   }
@@ -577,12 +564,12 @@ OmegaUp.on('ready', async () => {
     }, 5 * 60 * 1000);
   }
   if (locationHash.includes('new-run')) {
-    problemDetailsView.popupDisplayed = PopupDisplayed.RunSubmit;
+    state.popupDisplayed = PopupDisplayed.RunSubmit;
   } else if (locationHash[1] && locationHash[1].includes('show-run:')) {
     const showRunRegex = /.*\/show-run:([a-fA-F0-9]+)/;
     const showRunMatch = window.location.hash.match(showRunRegex);
-    problemDetailsView.guid = showRunMatch ? showRunMatch[1] : null;
-    problemDetailsView.popupDisplayed = PopupDisplayed.RunDetails;
+    state.guid = showRunMatch ? showRunMatch[1] : null;
+    state.popupDisplayed = PopupDisplayed.RunDetails;
   } else if (
     (payload.nominationStatus?.solved || payload.nominationStatus?.tried) &&
     !(
@@ -597,6 +584,6 @@ OmegaUp.on('ready', async () => {
     ) &&
     payload.nominationStatus?.canNominateProblem
   ) {
-    problemDetailsView.popupDisplayed = PopupDisplayed.Promotion;
+    state.popupDisplayed = PopupDisplayed.Promotion;
   }
 });

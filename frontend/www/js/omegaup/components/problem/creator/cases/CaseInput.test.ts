@@ -6,7 +6,6 @@ import T from '../../../../lang';
 import Vue from 'vue';
 import store from '@/js/omegaup/problem/creator/store';
 
-
 describe('CaseInput.vue', () => {
   it('Should contain all 4 inputs', async () => {
     const wrapper = shallowMount(CaseInput, {
