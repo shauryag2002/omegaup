@@ -194,7 +194,7 @@ describe('Sidebar.vue', () => {
     const editAutoPointsInput = editModal.find(
       '[data-sidebar-edit-group-modal="edit autoPoints"]',
     );
-    await editAutoPointsInput.setChecked(false);
+    await (editAutoPointsInput as any).setChecked(false);
 
     await editModal.find('button.btn-success').trigger('click');
 

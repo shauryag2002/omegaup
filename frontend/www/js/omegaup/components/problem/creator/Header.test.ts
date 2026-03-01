@@ -25,7 +25,7 @@ describe('Header.vue', () => {
 
     expect(expectedText.length).toBe(buttons.length);
     for (let i = 0; i < expectedText.length; i++) {
-      expect(buttons.at(i).text()).toBe(expectedText[i]);
+      expect(buttons[i].text()).toBe(expectedText[i]);
     }
 
     expect(wrapper.findComponent(BFormInput).exists()).toBe(true);
@@ -44,16 +44,16 @@ describe('Header.vue', () => {
     const buttonsList = wrapper.findAll('button');
     expect(buttonsList.length).toBe(3);
 
-    const resetButton = buttonsList.at(2);
+    const resetButton = buttonsList[2];
     expect(resetButton.exists()).toBe(true);
 
     const testText = 'Hello';
     const emptyText = '';
-    wrapper.vm.$store.state.problemName = testText;
-    wrapper.vm.$store.state.problemMarkdown = testText;
-    wrapper.vm.$store.state.problemCodeContent = testText;
-    wrapper.vm.$store.state.problemCodeExtension = testText;
-    wrapper.vm.$store.state.problemSolutionMarkdown = testText;
+    store.state.problemName = testText;
+    store.state.problemMarkdown = testText;
+    store.state.problemCodeContent = testText;
+    store.state.problemCodeExtension = testText;
+    store.state.problemSolutionMarkdown = testText;
 
     await resetButton.trigger('click');
 
@@ -62,13 +62,11 @@ describe('Header.vue', () => {
 
     expect(window.location.reload).toHaveBeenCalledTimes(1);
 
-    expect(wrapper.vm.$store.state.problemName).toBe(
-      T.problemCreatorNewProblem,
-    );
-    expect(wrapper.vm.$store.state.problemMarkdown).toBe(emptyText);
-    expect(wrapper.vm.$store.state.problemCodeContent).toBe(emptyText);
-    expect(wrapper.vm.$store.state.problemCodeExtension).toBe(emptyText);
-    expect(wrapper.vm.$store.state.problemSolutionMarkdown).toBe(emptyText);
+    expect(store.state.problemName).toBe(T.problemCreatorNewProblem);
+    expect(store.state.problemMarkdown).toBe(emptyText);
+    expect(store.state.problemCodeContent).toBe(emptyText);
+    expect(store.state.problemCodeExtension).toBe(emptyText);
+    expect(store.state.problemSolutionMarkdown).toBe(emptyText);
 
     jest.restoreAllMocks();
     Object.defineProperty(window, 'location', {
@@ -258,23 +256,17 @@ describe('Header.vue', () => {
     ]);
 
     expect(wrapper.vm.nameInternal).toBe(emittedStoreData.problemName);
-    expect(wrapper.vm.$store.state.problemName).toBe(
-      emittedStoreData.problemName,
-    );
-    expect(wrapper.vm.$store.state.problemCodeContent).toBe(
+    expect(store.state.problemName).toBe(emittedStoreData.problemName);
+    expect(store.state.problemCodeContent).toBe(
       emittedStoreData.problemCodeContent,
     );
-    expect(wrapper.vm.$store.state.problemCodeExtension).toBe(
+    expect(store.state.problemCodeExtension).toBe(
       emittedStoreData.problemCodeExtension,
     );
-    expect(wrapper.vm.$store.state.problemMarkdown).toBe(
-      emittedStoreData.problemMarkdown,
-    );
-    expect(wrapper.vm.$store.state.problemSolutionMarkdown).toBe(
+    expect(store.state.problemMarkdown).toBe(emittedStoreData.problemMarkdown);
+    expect(store.state.problemSolutionMarkdown).toBe(
       emittedStoreData.problemSolutionMarkdown,
     );
-    expect(wrapper.vm.$store.state.casesStore).toStrictEqual(
-      emittedStoreData.casesStore,
-    );
+    expect(store.state.casesStore).toStrictEqual(emittedStoreData.casesStore);
   });
 });
