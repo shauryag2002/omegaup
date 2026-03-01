@@ -1,4 +1,4 @@
-import Vuex from 'vuex';
+import { createStore } from 'vuex';
 import { types } from '../api_types';
 import { omegaup } from '../omegaup';
 
@@ -44,4 +44,4 @@ export const rankingStoreConfig = {
   },
 };
 
-export default new Vuex.Store<RankingState>(rankingStoreConfig);
+export default createStore<RankingState>(rankingStoreConfig);

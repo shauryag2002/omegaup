@@ -1,4 +1,4 @@
-import Vuex from 'vuex';
+import { createStore } from 'vuex';
 import { types } from '../api_types';
 
 export interface ClarificationState {
@@ -55,4 +55,4 @@ export const clarificationStoreConfig = {
   },
 };
 
-export default new Vuex.Store<ClarificationState>(clarificationStoreConfig);
+export default createStore<ClarificationState>(clarificationStoreConfig);

@@ -1,4 +1,4 @@
-import Vuex from 'vuex';
+import { createStore } from 'vuex';
 
 export interface MainStoreState {
   username: string | null;
@@ -15,4 +15,4 @@ export const mainStoreConfig = {
   },
 };
 
-export default new Vuex.Store<MainStoreState>(mainStoreConfig);
+export default createStore<MainStoreState>(mainStoreConfig);

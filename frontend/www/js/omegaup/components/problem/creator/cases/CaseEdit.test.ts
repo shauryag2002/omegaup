@@ -1,9 +1,9 @@
 import { shallowMount, mount } from '@vue/test-utils';
 
 import CaseEdit from './CaseEdit.vue';
-import BootstrapVue, { IconsPlugin, BButton } from 'bootstrap-vue';
+import { BButton } from 'bootstrap-vue';
 import store from '@/js/omegaup/problem/creator/store';
-import Vue from 'vue';
+import { nextTick } from 'vue';
 import { NIL as UUID_NIL } from 'uuid';
 import {
   generateCase,
@@ -39,7 +39,7 @@ describe('CaseEdit.vue', () => {
   });
 
   it('Should show an ungrouped case', async () => {
-    const wrapper = shallowMount(CaseEdit, { store: store });
+    const wrapper = shallowMount(CaseEdit, { global: { plugins: [store] } });
 
     const groupID = newUngroupedCasegroup.groupID;
     const caseID = newUngroupedCase.caseID;
@@ -47,7 +47,7 @@ describe('CaseEdit.vue', () => {
       groupID,
       caseID,
     });
-    await Vue.nextTick();
+    await nextTick();
 
     // There are currently 7 bootstrap buttons on the page.
     // - Edit case
@@ -75,7 +75,7 @@ describe('CaseEdit.vue', () => {
   });
 
   it('Should show a grouped case', async () => {
-    const wrapper = shallowMount(CaseEdit, { store: store });
+    const wrapper = shallowMount(CaseEdit, { global: { plugins: [store] } });
 
     const groupID = newGroup.groupID;
     const caseID = newCase.caseID;
@@ -83,7 +83,7 @@ describe('CaseEdit.vue', () => {
       groupID,
       caseID,
     });
-    await Vue.nextTick();
+    await nextTick();
 
     expect(wrapper.text()).toContain(newCase.name);
     expect(wrapper.text()).toContain(newGroup.name);
@@ -98,7 +98,7 @@ describe('CaseEdit.vue', () => {
   });
 
   it('Should delete a case', async () => {
-    const wrapper = mount(CaseEdit, { store });
+    const wrapper = mount(CaseEdit, { global: { plugins: [store] } });
 
     const groupID = newGroup.groupID;
     const caseID = newCase.caseID;
@@ -106,7 +106,7 @@ describe('CaseEdit.vue', () => {
       groupID,
       caseID,
     });
-    await Vue.nextTick();
+    await nextTick();
 
     const caseDeleteButton = wrapper.find('button[data-delete-case]');
     expect(caseDeleteButton.exists()).toBeTruthy();
@@ -125,7 +125,7 @@ describe('CaseEdit.vue', () => {
   });
 
   it('Should add, modify and delete a line', async () => {
-    const wrapper = mount(CaseEdit, { store: store });
+    const wrapper = mount(CaseEdit, { global: { plugins: [store] } });
 
     const groupID = newGroup.groupID;
     const caseID = newCase.caseID;
@@ -133,19 +133,19 @@ describe('CaseEdit.vue', () => {
       groupID,
       caseID,
     });
-    await Vue.nextTick();
+    await nextTick();
 
     expect(wrapper.text()).toContain(newCase.name);
     expect(wrapper.text()).toContain(newGroup.name);
 
     wrapper.vm.addNewLine();
-    await Vue.nextTick();
+    await nextTick();
 
     expect(wrapper.find('table').exists()).toBeTruthy();
     const formInputs = wrapper.findAll('input');
 
-    formInputs.at(0).setValue('testLabel');
-    formInputs.at(1).setValue('testValue');
+    formInputs[0].setValue('testLabel');
+    formInputs[1].setValue('testValue');
     await wrapper.trigger('click');
 
     expect(wrapper.vm.getLinesFromSelectedCase[0].label).toBe('testLabel');
@@ -162,17 +162,17 @@ describe('CaseEdit.vue', () => {
     const dropdowns = wrapper.findAll('a.dropdown-item');
     expect(dropdowns.length).toBe(dropdownItemCount);
 
-    await dropdowns.at(1).trigger('click');
+    await dropdowns[1].trigger('click');
     expect(wrapper.vm.getLinesFromSelectedCase[0].data.kind).toBe('multiline');
 
-    await dropdowns.at(2).trigger('click');
+    await dropdowns[2].trigger('click');
     expect(wrapper.vm.getLinesFromSelectedCase[0].data.kind).toBe('array');
 
-    await dropdowns.at(3).trigger('click');
+    await dropdowns[3].trigger('click');
     expect(wrapper.vm.getLinesFromSelectedCase[0].data.kind).toBe('matrix');
 
     wrapper.vm.deleteLine(wrapper.vm.getLinesFromSelectedCase[0].lineID);
-    await Vue.nextTick();
+    await nextTick();
 
     const formInputsUpdated = wrapper.findAll('input');
 
@@ -181,7 +181,7 @@ describe('CaseEdit.vue', () => {
   });
 
   it('Should write and erase outputs', async () => {
-    const wrapper = mount(CaseEdit, { store: store });
+    const wrapper = mount(CaseEdit, { global: { plugins: [store] } });
 
     const groupID = newGroup.groupID;
     const caseID = newCase.caseID;
@@ -189,7 +189,7 @@ describe('CaseEdit.vue', () => {
       groupID,
       caseID,
     });
-    await Vue.nextTick();
+    await nextTick();
 
     const outputTextarea = wrapper.find('textarea[data-output-textarea]');
     expect(outputTextarea.exists()).toBeTruthy();
@@ -227,7 +227,7 @@ describe('CaseEdit.vue', () => {
     store.commit('casesStore/addCase', newUngroupedCase);
     store.commit('casesStore/addGroup', newGroup);
 
-    const wrapper = mount(CaseEdit, { store: store });
+    const wrapper = mount(CaseEdit, { global: { plugins: [store] } });
 
     const groupID = newUngroupedCasegroup.groupID;
     const caseID = newUngroupedCase.caseID;
@@ -235,7 +235,7 @@ describe('CaseEdit.vue', () => {
       groupID,
       caseID,
     });
-    await Vue.nextTick();
+    await nextTick();
 
     const editButton = wrapper.find('button');
     expect(editButton.text()).toBe(T.caseEditTitle);
@@ -256,7 +256,7 @@ describe('CaseEdit.vue', () => {
 
     await editButton.trigger('click');
 
-    wrapper.vm.caseInputRef.caseGroup = newGroup.groupID;
+    (wrapper.vm as any)['case-input'].caseGroup = newGroup.groupID;
     wrapper.vm.updateCaseInfo();
 
     // There's only one group added to the store.
@@ -302,7 +302,7 @@ describe('CaseEdit.vue', () => {
 
   describe.each(arrayInputMapping)(`An array with:`, (arrayInput) => {
     it(`size ${arrayInput.arrSize}, minimum ${arrayInput.arrLow}, maximum ${arrayInput.arrHigh}, distinct ${arrayInput.distinct}, should have uniqueConstraint ${arrayInput.emptyConstraint} and emptyConstraint ${arrayInput.emptyConstraint}`, async () => {
-      const wrapper = mount(CaseEdit, { store });
+      const wrapper = mount(CaseEdit, { global: { plugins: [store] } });
 
       const array = wrapper.vm
         .getArrayContent(
@@ -395,7 +395,7 @@ describe('CaseEdit.vue', () => {
 
   describe.each(matrixInputMapping)(`A matrix with:`, (matrixInput) => {
     it(`${matrixInput.matrixRows} rows, ${matrixInput.matrixCols} columns, minimum ${matrixInput.matrixLow}, maximum ${matrixInput.matrixHigh}, distinct type ${matrixInput.distinct}, should have emptyConstraint ${matrixInput.emptyConstraint}, rowUniqueConstraint ${matrixInput.rowUniqueConstraint}, colUniqueConstraint ${matrixInput.colUniqueConstraint}`, async () => {
-      const wrapper = mount(CaseEdit, { store });
+      const wrapper = mount(CaseEdit, { global: { plugins: [store] } });
       const matrix = wrapper.vm
         .getMatrixContent(
           matrixInput.matrixRows,
@@ -439,7 +439,7 @@ describe('CaseEdit.vue', () => {
   });
 
   it('Should generate and render arrays', async () => {
-    const wrapper = mount(CaseEdit, { store });
+    const wrapper = mount(CaseEdit, { global: { plugins: [store] } });
 
     const groupID = newGroup.groupID;
     const caseID = newCase.caseID;
@@ -447,17 +447,17 @@ describe('CaseEdit.vue', () => {
       groupID,
       caseID,
     });
-    await Vue.nextTick();
+    await nextTick();
 
     expect(wrapper.text()).toContain(newCase.name);
     expect(wrapper.text()).toContain(newGroup.name);
 
     wrapper.vm.addNewLine();
-    await Vue.nextTick();
+    await nextTick();
 
     const dropdowns = wrapper.findAll('a.dropdown-item');
 
-    await dropdowns.at(2).trigger('click');
+    await dropdowns[2].trigger('click');
     expect(wrapper.vm.getLinesFromSelectedCase[0].data.kind).toBe('array');
 
     const editSVG = wrapper.find('svg.bi-pencil-square');
@@ -481,16 +481,18 @@ describe('CaseEdit.vue', () => {
     await modalBody.find('input[data-array-modal-size]').setValue(5);
     await modalBody.find('input[data-array-modal-min]').setValue(10);
     await modalBody.find('input[data-array-modal-max]').setValue(20);
-    await modalBody.find('input[data-array-modal-checkbox]').setChecked(true);
+    await (modalBody.find(
+      'input[data-array-modal-checkbox]',
+    ) as any).setChecked(true);
 
     await modalButton.trigger('click');
     expect(mockGenerate).toHaveBeenCalledWith(5, 10, 20, true);
     mockGenerate.mockRestore();
 
-    await modalInputs.at(0).setValue(5);
-    await modalInputs.at(1).setValue(10);
-    await modalInputs.at(2).setValue(10);
-    await modalInputs.at(3).setChecked(false);
+    await modalInputs[0].setValue(5);
+    await modalInputs[1].setValue(10);
+    await modalInputs[2].setValue(10);
+    await (modalInputs[3] as any).setChecked(false);
 
     await modalButton.trigger('click');
 
@@ -515,7 +517,7 @@ describe('CaseEdit.vue', () => {
   });
 
   it('Should generate and render matrices', async () => {
-    const wrapper = mount(CaseEdit, { store });
+    const wrapper = mount(CaseEdit, { global: { plugins: [store] } });
 
     const groupID = newGroup.groupID;
     const caseID = newCase.caseID;
@@ -523,7 +525,7 @@ describe('CaseEdit.vue', () => {
       groupID,
       caseID,
     });
-    await Vue.nextTick();
+    await nextTick();
 
     expect(wrapper.text()).toContain(newCase.name);
     expect(wrapper.text()).toContain(newGroup.name);
@@ -531,7 +533,7 @@ describe('CaseEdit.vue', () => {
     const dropdowns = wrapper.findAll('a.dropdown-item');
     expect(dropdowns.length).toBe(4);
 
-    await dropdowns.at(3).trigger('click');
+    await dropdowns[3].trigger('click');
     expect(wrapper.vm.getLinesFromSelectedCase[0].data.kind).toBe('matrix');
 
     const editSVG = wrapper.find('svg.bi-pencil-square');
@@ -606,7 +608,7 @@ describe('CaseEdit.vue', () => {
     `When dropdown:`,
     ({ matrixDistinctType, matrixDistinctEnum }) => {
       it(`${matrixDistinctType} is selected, function should be called with ${matrixDistinctEnum}`, async () => {
-        const wrapper = mount(CaseEdit, { store });
+        const wrapper = mount(CaseEdit, { global: { plugins: [store] } });
 
         const groupID = newGroup.groupID;
         const caseID = newCase.caseID;
@@ -614,11 +616,11 @@ describe('CaseEdit.vue', () => {
           groupID,
           caseID,
         });
-        await Vue.nextTick();
+        await nextTick();
         const dropdowns = wrapper.findAll('a.dropdown-item');
         expect(dropdowns.length).toBe(4);
 
-        await dropdowns.at(3).trigger('click');
+        await dropdowns[3].trigger('click');
         expect(wrapper.vm.getLinesFromSelectedCase[0].data.kind).toBe('matrix');
 
         const editIcon = wrapper.find(`button[data-line-edit-button]`);
@@ -650,7 +652,7 @@ describe('CaseEdit.vue', () => {
   );
 
   it('deletes line, downloads .in and downloads .txt, when corresponding buttons are clicked', async () => {
-    const wrapper = mount(CaseEdit, { store });
+    const wrapper = mount(CaseEdit, { global: { plugins: [store] } });
 
     const groupID = newGroup.groupID;
     const caseID = newCase.caseID;
@@ -659,7 +661,7 @@ describe('CaseEdit.vue', () => {
       caseID,
     });
     store.dispatch('casesStore/deleteLinesForSelectedCase');
-    await Vue.nextTick();
+    await nextTick();
 
     const menuDropdown = wrapper.find('div[data-menu-dropdown]');
     expect(menuDropdown.exists()).toBeTruthy();
@@ -685,7 +687,7 @@ describe('CaseEdit.vue', () => {
     expect(downloadTxtButton.text()).toBe(T.problemCreatorCaseDownloadTxt);
 
     wrapper.vm.addNewLine();
-    await Vue.nextTick();
+    await nextTick();
 
     // Only one line is added.
     expect(wrapper.vm.getLinesFromSelectedCase.length).toBe(1);
@@ -696,7 +698,7 @@ describe('CaseEdit.vue', () => {
 
     wrapper.vm.addNewLine();
     wrapper.vm.addNewLine();
-    await Vue.nextTick();
+    await nextTick();
 
     // Two lines are added, so!
     expect(wrapper.vm.getLinesFromSelectedCase.length).toBe(2);
@@ -713,15 +715,15 @@ describe('CaseEdit.vue', () => {
     });
     expect(filteredDropdowns.length).toBe(2);
 
-    await filteredDropdowns.at(1).trigger('click');
+    await filteredDropdowns[1].trigger('click');
 
     const formInputs = wrapper.findAll('input');
     const formTextArea = wrapper.find('textarea');
 
-    await formInputs.at(0).setValue('testLabel');
-    await formInputs.at(1).setValue('ome g a');
+    await formInputs[0].setValue('testLabel');
+    await formInputs[1].setValue('ome g a');
 
-    await formInputs.at(2).setValue('testLabel');
+    await formInputs[2].setValue('testLabel');
     await formTextArea.setValue('u\np');
 
     expect(

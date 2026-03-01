@@ -396,9 +396,9 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
+import { defineComponent, ref, reactive, computed, watch } from 'vue';
 import problemCreator_LayoutSidebar from './LayoutSidebar.vue';
-import { namespace } from 'vuex-class';
+import { useStore } from 'vuex';
 import T from '../../../../lang';
 import {
   Group,
@@ -408,134 +408,149 @@ import {
 } from '@/js/omegaup/problem/creator/types';
 import JSZip from 'jszip';
 
-const casesStore = namespace('casesStore');
-
-@Component({
+export default defineComponent({
+  name: 'Sidebar',
   components: {
     'omegaup-problem-creator-layout-sidebar': problemCreator_LayoutSidebar,
   },
-})
-export default class Sidebar extends Vue {
-  T = T;
-  showLayoutSidebar = false;
+  props: {
+    showWindow: {
+      type: Boolean,
+      required: true,
+    },
+  },
+  emits: ['open-add-window', 'open-case-edit-window', 'download-zip-file'],
+  setup(props, { emit }) {
+    const store = useStore();
 
-  @Prop() showWindow!: boolean;
-
-  @casesStore.State('groups') groups!: Group[];
-  @casesStore.Getter('getUngroupedCases') ungroupedCases!: Group[];
-  @casesStore.Getter('getGroupsButUngroupedCases')
-  groupsButUngroupedCases!: Group[];
-  @casesStore.Getter('getTotalPointsForUngroupedCases')
-  getTotalPointsForUngroupedCases!: number;
-  @casesStore.Mutation('deleteGroup') deleteGroup!: (groupID: GroupID) => void;
-  @casesStore.Mutation('addLayoutFromSelectedCase')
-  addLayoutFromSelectedCase!: () => void;
-  @casesStore.Mutation('addNewLayout')
-  addNewLayout!: () => void;
-  @casesStore.Mutation('validateAndFixPoints')
-  validateAndFixPoints!: () => void;
-  @casesStore.Mutation('deleteCase') deleteCase!: ({
-    groupID,
-    caseID,
-  }: CaseGroupID) => void;
-  @casesStore.Mutation('deleteGroupCases') deleteGroupCases!: (
-    groupID: GroupID,
-  ) => void;
-  @casesStore.Mutation('deleteUngroupedCases')
-  deleteUngroupedCases!: () => void;
-  @casesStore.Mutation('setSelected') setSelected!: (
-    CaseGroupsIDToBeSelected: CaseGroupID,
-  ) => void;
-  @casesStore.Mutation('updateGroup') updateGroup!: ([
-    groupID,
-    newName,
-    newPoints,
-  ]: [GroupID, string, number]) => void;
-  @casesStore.Getter('getStringifiedLinesFromCaseGroupID')
-  getStringifiedLinesFromCaseGroupID!: (caseGroupID: CaseGroupID) => string;
-
-  validateAndFixPointsModal: boolean = false;
-  showUngroupedCases = false;
-  showCases: { [key: string]: boolean } = {};
-  editGroupModal: { [key: GroupID]: boolean } = {};
-  editGroupName: { [key: GroupID]: string } = {};
-  editGroupPoints: { [key: GroupID]: number } = {};
-  editGroupAutoPoints: { [key: GroupID]: boolean } = {};
-
-  @Watch('groups')
-  onGroupsChanged() {
-    this.editGroupModal = this.groups.reduce((acc, group) => {
-      acc[group.groupID] = false;
-      return acc;
-    }, {} as { [key: string]: boolean });
-    this.editGroupName = this.groups.reduce((acc, group) => {
-      acc[group.groupID] = group.name;
-      return acc;
-    }, {} as { [key: string]: string });
-    this.editGroupPoints = this.groups.reduce((acc, group) => {
-      acc[group.groupID] = group.points;
-      return acc;
-    }, {} as { [key: string]: number });
-    this.editGroupAutoPoints = this.groups.reduce((acc, group) => {
-      acc[group.groupID] = group.autoPoints;
-      return acc;
-    }, {} as { [key: string]: boolean });
-  }
-
-  toggleGroupAutoPoints(groupID: GroupID) {
-    this.editGroupAutoPoints[groupID] = !this.editGroupAutoPoints[groupID];
-    if (this.editGroupAutoPoints[groupID]) {
-      this.editGroupPoints[groupID] = 100;
-    }
-  }
-
-  formatter(text: string) {
-    return text.toLowerCase().replace(/[^a-zA-Z0-9_-]/g, '');
-  }
-
-  pointsFormatter(points: number) {
-    return Math.max(points, 0);
-  }
-
-  updateGroupInfo(groupID: GroupID) {
-    this.updateGroup([
-      groupID,
-      this.editGroupName[groupID],
-      this.editGroupPoints[groupID],
-    ]);
-  }
-
-  editCase(groupID: GroupID, caseID: CaseID) {
-    this.setSelected({
-      groupID: groupID,
-      caseID: caseID,
-    });
-    this.$emit('open-case-edit-window');
-  }
-
-  downloadGroupInput(groupID: GroupID, ext: '.in' | '.txt') {
-    const groupZip: JSZip = new JSZip();
-    const targetGroup = this.groups.find(
-      (_group: Group) => _group.groupID === groupID,
+    const groups = computed<Group[]>(() => store.state.casesStore.groups);
+    const ungroupedCases = computed<Group[]>(
+      () => store.getters['casesStore/getUngroupedCases'],
     );
-    if (!targetGroup) return;
+    const groupsButUngroupedCases = computed<Group[]>(
+      () => store.getters['casesStore/getGroupsButUngroupedCases'],
+    );
+    const getTotalPointsForUngroupedCases = computed<number>(
+      () => store.getters['casesStore/getTotalPointsForUngroupedCases'],
+    );
+    const getStringifiedLinesFromCaseGroupID = computed(
+      () => store.getters['casesStore/getStringifiedLinesFromCaseGroupID'],
+    );
 
-    targetGroup.cases.forEach((_case) => {
-      let fileName = _case.name;
-      const caseGroupID: CaseGroupID = {
-        groupID: targetGroup.groupID,
-        caseID: _case.caseID,
-      };
-      const input = this.getStringifiedLinesFromCaseGroupID(caseGroupID);
-      groupZip?.file(`${fileName}${ext}`, input);
+    const deleteGroup = (groupID: GroupID) =>
+      store.commit('casesStore/deleteGroup', groupID);
+    const addLayoutFromSelectedCase = () =>
+      store.commit('casesStore/addLayoutFromSelectedCase');
+    const addNewLayout = () => store.commit('casesStore/addNewLayout');
+    const validateAndFixPoints = () =>
+      store.commit('casesStore/validateAndFixPoints');
+    const deleteCase = (payload: CaseGroupID) =>
+      store.commit('casesStore/deleteCase', payload);
+    const deleteGroupCases = (groupID: GroupID) =>
+      store.commit('casesStore/deleteGroupCases', groupID);
+    const deleteUngroupedCases = () =>
+      store.commit('casesStore/deleteUngroupedCases');
+    const setSelected = (payload: CaseGroupID) =>
+      store.commit('casesStore/setSelected', payload);
+    const updateGroup = (payload: [GroupID, string, number]) =>
+      store.commit('casesStore/updateGroup', payload);
+
+    const showLayoutSidebar = ref(false);
+    const validateAndFixPointsModal = ref(false);
+    const showUngroupedCases = ref(false);
+    const showCases = reactive<{ [key: string]: boolean }>({});
+    const editGroupModal = reactive<{ [key: GroupID]: boolean }>({});
+    const editGroupName = reactive<{ [key: GroupID]: string }>({});
+    const editGroupPoints = reactive<{ [key: GroupID]: number }>({});
+    const editGroupAutoPoints = reactive<{ [key: GroupID]: boolean }>({});
+
+    watch(groups, (newGroups) => {
+      for (const group of newGroups) {
+        editGroupModal[group.groupID] = false;
+        editGroupName[group.groupID] = group.name;
+        editGroupPoints[group.groupID] = group.points;
+        editGroupAutoPoints[group.groupID] = group.autoPoints;
+      }
     });
 
-    this.$emit('download-zip-file', {
-      fileName: targetGroup.name,
-      zipContent: groupZip,
-    });
-  }
-}
+    const toggleGroupAutoPoints = (groupID: GroupID) => {
+      editGroupAutoPoints[groupID] = !editGroupAutoPoints[groupID];
+      if (editGroupAutoPoints[groupID]) {
+        editGroupPoints[groupID] = 100;
+      }
+    };
+
+    const formatter = (text: string) =>
+      text.toLowerCase().replace(/[^a-zA-Z0-9_-]/g, '');
+
+    const pointsFormatter = (points: number) => Math.max(points, 0);
+
+    const updateGroupInfo = (groupID: GroupID) => {
+      updateGroup([
+        groupID,
+        editGroupName[groupID],
+        editGroupPoints[groupID],
+      ]);
+    };
+
+    const editCase = (groupID: GroupID, caseID: CaseID) => {
+      setSelected({ groupID, caseID });
+      emit('open-case-edit-window');
+    };
+
+    const downloadGroupInput = (groupID: GroupID, ext: '.in' | '.txt') => {
+      const groupZip: JSZip = new JSZip();
+      const targetGroup = groups.value.find(
+        (_group: Group) => _group.groupID === groupID,
+      );
+      if (!targetGroup) return;
+
+      targetGroup.cases.forEach((_case) => {
+        const fileName = _case.name;
+        const caseGroupID: CaseGroupID = {
+          groupID: targetGroup.groupID,
+          caseID: _case.caseID,
+        };
+        const input = getStringifiedLinesFromCaseGroupID.value(caseGroupID);
+        groupZip?.file(`${fileName}${ext}`, input);
+      });
+
+      emit('download-zip-file', {
+        fileName: targetGroup.name,
+        zipContent: groupZip,
+      });
+    };
+
+    return {
+      T,
+      groups,
+      ungroupedCases,
+      groupsButUngroupedCases,
+      getTotalPointsForUngroupedCases,
+      showLayoutSidebar,
+      validateAndFixPointsModal,
+      showUngroupedCases,
+      showCases,
+      editGroupModal,
+      editGroupName,
+      editGroupPoints,
+      editGroupAutoPoints,
+      deleteGroup,
+      addLayoutFromSelectedCase,
+      addNewLayout,
+      validateAndFixPoints,
+      deleteCase,
+      deleteGroupCases,
+      deleteUngroupedCases,
+      toggleGroupAutoPoints,
+      formatter,
+      pointsFormatter,
+      updateGroupInfo,
+      editCase,
+      downloadGroupInput,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>

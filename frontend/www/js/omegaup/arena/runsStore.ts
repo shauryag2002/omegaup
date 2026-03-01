@@ -1,4 +1,4 @@
-import Vuex from 'vuex';
+import { createStore } from 'vuex';
 import { types } from '../api_types';
 
 export interface RunFilters {
@@ -75,7 +75,7 @@ export const runsStoreConfig = {
   },
 };
 
-export const myRunsStore = new Vuex.Store<RunsState>({
+export const myRunsStore = createStore<RunsState>({
   state: {
     runs: [],
     index: {},
@@ -101,4 +101,4 @@ export const myRunsStore = new Vuex.Store<RunsState>({
   },
 });
 
-export const runsStore = new Vuex.Store<RunsState>(runsStoreConfig);
+export const runsStore = createStore<RunsState>(runsStoreConfig);

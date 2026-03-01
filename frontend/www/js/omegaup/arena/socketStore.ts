@@ -1,4 +1,4 @@
-import Vuex from 'vuex';
+import { createStore } from 'vuex';
 
 export interface SocketState {
   socketStatus: SocketStatus;
@@ -21,4 +21,4 @@ export const socketStoreConfig = {
   },
 };
 
-export default new Vuex.Store<SocketState>(socketStoreConfig);
+export default createStore<SocketState>(socketStoreConfig);

@@ -83,137 +83,152 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch } from 'vue-property-decorator';
+import { defineComponent, ref, computed, watch } from 'vue';
 import JSZip from 'jszip';
-import { namespace } from 'vuex-class';
+import { useStore } from 'vuex';
 import T from '../../../lang';
 import * as ui from '../../../ui';
 import { Group, CaseGroupID } from '@/js/omegaup/problem/creator/types';
 
-const casesStore = namespace('casesStore');
+export default defineComponent({
+  name: 'Header',
+  emits: ['upload-zip-file', 'download-zip-file'],
+  setup(props, { emit }) {
+    const store = useStore();
 
-@Component
-export default class Header extends Vue {
-  T = T;
-  zipFile: File | null = null;
-  uploadZipModal: boolean = false;
-  newProblemConfirmationModal: boolean = false;
+    const groups = computed<Group[]>(() => store.state.casesStore.groups);
+    const getStringifiedLinesFromCaseGroupID = computed(
+      () => store.getters['casesStore/getStringifiedLinesFromCaseGroupID'],
+    );
 
-  nameInternal: string = T.problemCreatorEmpty;
-  zip: JSZip = new JSZip();
+    const zipFile = ref<File | null>(null);
+    const uploadZipModal = ref(false);
+    const newProblemConfirmationModal = ref(false);
+    const nameInternal = ref<string>(T.problemCreatorEmpty);
+    const zip = ref(new JSZip());
 
-  @casesStore.State('groups') groups!: Group[];
-  @casesStore.Getter('getStringifiedLinesFromCaseGroupID')
-  getStringifiedLinesFromCaseGroupID!: (caseGroupID: CaseGroupID) => string;
+    const name = computed({
+      get: () => nameInternal.value,
+      set: (newName: string) => {
+        nameInternal.value = newName;
+      },
+    });
 
-  get name(): string {
-    return this.nameInternal;
-  }
-  set name(newName: string) {
-    this.nameInternal = newName;
-  }
+    watch(name, (newProblemName: string) => {
+      store.commit('updateName', newProblemName);
+    });
 
-  readFile(e: HTMLInputElement): File | null {
-    return (e.files && e.files[0]) || null;
-  }
+    const readFile = (e: HTMLInputElement): File | null => {
+      return (e.files && e.files[0]) || null;
+    };
 
-  handleZipFile(ev: Event): void {
-    this.zipFile = this.readFile(ev.target as HTMLInputElement);
-  }
+    const handleZipFile = (ev: Event): void => {
+      zipFile.value = readFile(ev.target as HTMLInputElement);
+    };
 
-  retrieveStore(): void {
-    if (!this.zipFile) {
-      return;
-    }
-    const zipUploaded = new JSZip();
-    zipUploaded
-      .loadAsync(this.zipFile)
-      .then((zipContent) => {
-        const cdpDataFile = zipContent.file('cdp.data');
-        if (!cdpDataFile) {
-          ui.error(T.problemCreatorZipFileIsNotComplete);
-          return;
-        }
-        cdpDataFile.async('text').then((content) => {
-          const storeData = JSON.parse(content);
-          this.$emit('upload-zip-file', storeData);
-          this.name = storeData.problemName;
-          this.$store.replaceState({
-            ...this.$store.state,
-            problemName: storeData.problemName,
-            problemMarkdown: storeData.problemMarkdown,
-            problemCodeContent: storeData.problemCodeContent,
-            problemCodeExtension: storeData.problemCodeExtension,
-            problemSolutionMarkdown: storeData.problemSolutionMarkdown,
-          });
-          if (storeData.casesStore) {
-            this.$store.commit('casesStore/replaceState', storeData.casesStore);
+    const retrieveStore = (): void => {
+      if (!zipFile.value) {
+        return;
+      }
+      const zipUploaded = new JSZip();
+      zipUploaded
+        .loadAsync(zipFile.value)
+        .then((zipContent) => {
+          const cdpDataFile = zipContent.file('cdp.data');
+          if (!cdpDataFile) {
+            ui.error(T.problemCreatorZipFileIsNotComplete);
+            return;
           }
+          cdpDataFile.async('text').then((content) => {
+            const storeData = JSON.parse(content);
+            emit('upload-zip-file', storeData);
+            name.value = storeData.problemName;
+            store.replaceState({
+              ...store.state,
+              problemName: storeData.problemName,
+              problemMarkdown: storeData.problemMarkdown,
+              problemCodeContent: storeData.problemCodeContent,
+              problemCodeExtension: storeData.problemCodeExtension,
+              problemSolutionMarkdown: storeData.problemSolutionMarkdown,
+            });
+            if (storeData.casesStore) {
+              store.commit('casesStore/replaceState', storeData.casesStore);
+            }
+          });
+        })
+        .catch(() => {
+          ui.error(T.problemCreatorZipFileIsNotValid);
         });
-      })
-      .catch(() => {
-        ui.error(T.problemCreatorZipFileIsNotValid);
+    };
+
+    const getStatement = (zipInstance: JSZip) => {
+      const folder = zipInstance.folder('statements');
+      const markdownData = store.state.problemMarkdown;
+      folder?.file('es.markdown', markdownData);
+    };
+
+    const getSolution = (zipInstance: JSZip) => {
+      const folder = zipInstance.folder('solutions');
+      const solutionMarkdownData = store.state.problemSolutionMarkdown;
+      folder?.file('es.markdown', solutionMarkdownData);
+    };
+
+    const getCasesAndTestPlan = (zipInstance: JSZip) => {
+      const folder = zipInstance.folder('cases');
+      let testPlanData: string = '';
+
+      groups.value.forEach((_group) => {
+        _group.cases.forEach((_case) => {
+          let fileName = _case.name;
+          if (_group.ungroupedCase === false) {
+            fileName = _group.name + '.' + fileName;
+          }
+          const caseGroupID: CaseGroupID = {
+            groupID: _group.groupID,
+            caseID: _case.caseID,
+          };
+          const input = getStringifiedLinesFromCaseGroupID.value(caseGroupID);
+          folder?.file(fileName + '.in', input);
+          folder?.file(fileName + '.out', _case.output);
+          testPlanData += fileName + ' ' + _case.points + '\n';
+        });
       });
-  }
 
-  @Watch('name')
-  onNameChanged(newProblemName: string) {
-    this.$store.commit('updateName', newProblemName);
-  }
+      zipInstance.file('testplan', testPlanData);
+      zipInstance.file('cdp.data', JSON.stringify(store.state));
+    };
 
-  getStatement(zip: JSZip) {
-    const folder = zip.folder('statements');
-    const markdownData = this.$store.state.problemMarkdown;
-    folder?.file('es.markdown', markdownData);
-  }
+    const generateProblem = () => {
+      getStatement(zip.value);
+      getSolution(zip.value);
+      getCasesAndTestPlan(zip.value);
 
-  getSolution(zip: JSZip) {
-    const folder = zip.folder('solutions');
-    const solutionMarkdownData = this.$store.state.problemSolutionMarkdown;
-    folder?.file('es.markdown', solutionMarkdownData);
-  }
-
-  getCasesAndTestPlan(zip: JSZip) {
-    const folder = zip.folder('cases');
-    let testPlanData: string = '';
-
-    this.groups.forEach((_group) => {
-      _group.cases.forEach((_case) => {
-        let fileName = _case.name;
-        if (_group.ungroupedCase === false) {
-          fileName = _group.name + '.' + fileName;
-        }
-        const caseGroupID: CaseGroupID = {
-          groupID: _group.groupID,
-          caseID: _case.caseID,
-        };
-        const input = this.getStringifiedLinesFromCaseGroupID(caseGroupID);
-        folder?.file(fileName + '.in', input);
-        folder?.file(fileName + '.out', _case.output);
-        testPlanData += fileName + ' ' + _case.points + '\n';
+      const problemName: string = store.state.problemName;
+      emit('download-zip-file', {
+        fileName: problemName.replace(/ /g, '_'),
+        zipContent: zip.value,
       });
-    });
+    };
 
-    zip.file('testplan', testPlanData);
-    zip.file('cdp.data', JSON.stringify(this.$store.state));
-  }
+    const createNewProblem = () => {
+      store.commit('resetStore');
+      store.commit('casesStore/resetStore');
+      window.location.reload();
+    };
 
-  generateProblem() {
-    this.getStatement(this.zip);
-    this.getSolution(this.zip);
-    this.getCasesAndTestPlan(this.zip);
-
-    const problemName: string = this.$store.state.problemName;
-    this.$emit('download-zip-file', {
-      fileName: problemName.replace(/ /g, '_'),
-      zipContent: this.zip,
-    });
-  }
-
-  createNewProblem() {
-    this.$store.commit('resetStore');
-    this.$store.commit('casesStore/resetStore');
-    window.location.reload();
-  }
-}
+    return {
+      T,
+      name,
+      nameInternal,
+      zip,
+      uploadZipModal,
+      newProblemConfirmationModal,
+      readFile,
+      handleZipFile,
+      retrieveStore,
+      generateProblem,
+      createNewProblem,
+    };
+  },
+});
 </script>

@@ -1,4 +1,4 @@
-import Vuex from 'vuex';
+import { createStore } from 'vuex';
 import { types } from '../api_types';
 
 export interface ProblemState {
@@ -20,4 +20,4 @@ export const storeConfig = {
   },
 };
 
-export default new Vuex.Store<ProblemState>(storeConfig);
+export default createStore<ProblemState>(storeConfig);

@@ -1,4 +1,4 @@
-import Vuex, { Commit } from 'vuex';
+import { createStore, Commit } from 'vuex';
 import * as api from '../api';
 import { messages, types } from '../api_types';
 import { UrlParams } from '../components/arena/ContestListv2.vue';
@@ -66,7 +66,7 @@ export const contestStoreConfig = {
       state.cache[cacheKey] = {
         results: response.results,
         number_of_results: response.number_of_results,
-      });
+      };
     },
   },
   actions: {
@@ -103,4 +103,4 @@ function generateCacheKey(params: UrlParams) {
   return `${params.tab_name}-${params.filter}-${params.sort_order}-${params.query}-${params.page}`;
 }
 
-export default new Vuex.Store<ContestState>(contestStoreConfig);
+export default createStore<ContestState>(contestStoreConfig);

@@ -1,7 +1,7 @@
 // TODO: add return types to each of the getters
 // TODO: move logic from components inside this store
 
-import Vuex, { Commit, StoreOptions } from 'vuex';
+import { createStore, Commit, StoreOptions } from 'vuex';
 
 import * as Util from './util';
 import * as templates from './GraderTemplates';
@@ -924,5 +924,5 @@ const storeOptions: StoreOptions<GraderStore> = {
   },
   strict: true,
 };
-const store = new Vuex.Store<GraderStore>(storeOptions);
+const store = createStore<GraderStore>(storeOptions);
 export default store;

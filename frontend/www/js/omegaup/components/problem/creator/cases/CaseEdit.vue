@@ -469,10 +469,10 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Ref } from 'vue-property-decorator';
+import { defineComponent, ref, computed } from 'vue';
 import T from '../../../../lang';
 import problemCreator_Cases_CaseInput from './CaseInput.vue';
-import { namespace } from 'vuex-class';
+import { useStore } from 'vuex';
 import {
   Case,
   Group,
@@ -491,17 +491,14 @@ import {
 } from '@fortawesome/vue-fontawesome';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap-vue/dist/bootstrap-vue.css';
-import { BNavItemDropdown, FormInputPlugin, ModalPlugin } from 'bootstrap-vue';
+import { BNavItemDropdown } from 'bootstrap-vue';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import draggable from 'vuedraggable';
 library.add(fas);
-Vue.use(FormInputPlugin);
-Vue.use(ModalPlugin);
 
-const casesStore = namespace('casesStore');
-
-@Component({
+export default defineComponent({
+  name: 'CaseEdit',
   components: {
     'omegaup-problem-creator-case-input': problemCreator_Cases_CaseInput,
     'font-awesome-icon': FontAwesomeIcon,
@@ -509,331 +506,349 @@ const casesStore = namespace('casesStore');
     'font-awesome-layers-text': FontAwesomeLayersText,
     draggable: draggable,
   },
-})
-export default class CaseEdit extends Vue {
-  T = T;
-  editCaseModal = false;
+  emits: ['download-input-file'],
+  setup(props, { emit }) {
+    const store = useStore();
 
-  @Ref('case-input') caseInputRef!: problemCreator_Cases_CaseInput;
-
-  arrayModalEdit: boolean = false;
-  matrixModalEdit: boolean = false;
-
-  arrayModalEditArray: string = '';
-  matrixModalEditArray: string = '';
-
-  @casesStore.State('groups') groups!: Group[];
-  @casesStore.Getter('getSelectedCase') getSelectedCase!: Case;
-  @casesStore.Getter('getLinesFromSelectedCase')
-  getLinesFromSelectedCase!: CaseLine[];
-  @casesStore.Getter('getSelectedGroup') getSelectedGroup!: Group;
-
-  @casesStore.Action('editLineKind') editLineKind!: ([lineID, kind]: [
-    LineID,
-    CaseLineKind,
-  ]) => void;
-  @casesStore.Action('editLineValue') editLineValue!: ([lineID, value]: [
-    LineID,
-    string,
-  ]) => void;
-  @casesStore.Mutation('deleteCase') deleteCase!: ({
-    groupID,
-    caseID,
-  }: CaseGroupID) => void;
-  @casesStore.Mutation('updateCase') updateCase!: ([
-    oldGroupID,
-    updateCaseRequest,
-  ]: [GroupID, CaseRequest]) => void;
-  @casesStore.Getter('getStringifiedLinesFromCaseGroupID')
-  getStringifiedLinesFromCaseGroupID!: (caseGroupID: CaseGroupID) => string;
-
-  @casesStore.Action('addNewLine') addNewLine!: () => void;
-  @casesStore.Action('setLines') setLines!: (lines: CaseLine[]) => void;
-  @casesStore.Action('deleteLine') deleteLine!: (line: LineID) => void;
-  @casesStore.Action('deleteLinesForSelectedCase')
-  deleteLinesForSelectedCase!: () => void;
-
-  deleteLines() {
-    this.deleteLinesForSelectedCase();
-    (this.$refs.dropdown as BNavItemDropdown).hide(true);
-  }
-
-  LineDisplayOption = Object.freeze({
-    LINE: 'line',
-    MULTILINE: 'multiline',
-  });
-
-  EditIconDisplayOption = Object.freeze({
-    EDIT_ICON: 'edit_icon',
-  });
-
-  get getLineDisplay() {
-    return (line: CaseLine) => {
-      if (line.data.kind === 'line' || line.data.kind === 'array') {
-        return this.LineDisplayOption.LINE;
-      }
-      return this.LineDisplayOption.MULTILINE;
-    };
-  }
-
-  get getEditIconDisplay() {
-    return (line: CaseLine) => {
-      if (line.data.kind === 'array' || line.data.kind === 'matrix') {
-        return this.EditIconDisplayOption.EDIT_ICON;
-      }
-    };
-  }
-
-  get lines(): CaseLine[] {
-    return this.getLinesFromSelectedCase;
-  }
-
-  set lines(newLines: CaseLine[]) {
-    this.setLines(newLines);
-  }
-
-  lineKindOptions: {
-    type: string;
-    kind: CaseLineKind;
-  }[] = [
-    { type: T.problemCreatorLineLine, kind: 'line' },
-    { type: T.problemCreatorLineMultiline, kind: 'multiline' },
-    { type: T.problemCreatorLineArray, kind: 'array' },
-    { type: T.problemCreatorLineMatrix, kind: 'matrix' },
-  ];
-
-  matrixDistinctOptions: {
-    type: string;
-    distinctType: MatrixDistinctType;
-  }[] = [
-    { type: T.matrixModalDistinctNone, distinctType: MatrixDistinctType.None },
-    { type: T.matrixModalDistinctRow, distinctType: MatrixDistinctType.Rows },
-    {
-      type: T.matrixModalDistinctColumn,
-      distinctType: MatrixDistinctType.Cols,
-    },
-    { type: T.matrixModalDistinctAll, distinctType: MatrixDistinctType.Both },
-  ];
-
-  editModalState(kind: CaseLineKind): void {
-    if (kind === 'array') {
-      this.matrixModalEdit = false;
-      this.arrayModalEdit = true;
-    } else if (kind === 'matrix') {
-      this.arrayModalEdit = false;
-      this.matrixModalEdit = true;
-    }
-  }
-
-  getLineNameFromKind(kind: CaseLineKind): string | undefined {
-    return this.lineKindOptions.find((row) => row.kind === kind)?.type;
-  }
-
-  getDistinctNameFromType(distinctype: MatrixDistinctType): string | undefined {
-    return this.matrixDistinctOptions.find(
-      (row) => row.distinctType === distinctype,
-    )?.type;
-  }
-
-  getDistinctArrayContents(
-    size: number,
-    low: number = 0,
-    high: number = 0,
-  ): string {
-    const generatedArray = new Set<number>();
-    while (generatedArray.size < size) {
-      generatedArray.add(low + Math.floor(Math.random() * (high - low + 1)));
-    }
-    return [...generatedArray].join(' ');
-  }
-
-  getNonDistinctArrayContents(
-    size: number,
-    low: number = 0,
-    high: number = 0,
-  ): string {
-    const generatedArray = [];
-    while (generatedArray.length < size) {
-      generatedArray.push(low + Math.floor(Math.random() * (high - low + 1)));
-    }
-    return [...generatedArray].join(' ');
-  }
-
-  getArrayContent(
-    size: number,
-    low: number = 0,
-    high: number = 0,
-    distinct: boolean = false,
-  ): string {
-    if (distinct && high - low + 1 < size) {
-      return '';
-    }
-    if (distinct) {
-      return this.getDistinctArrayContents(size, low, high);
-    } else {
-      return this.getNonDistinctArrayContents(size, low, high);
-    }
-  }
-
-  getNoneDistinctMatrixContents(
-    rows: number,
-    columns: number,
-    low: number = 0,
-    high: number = 0,
-  ): string {
-    const generatedArray: number[] = this.getNonDistinctArrayContents(
-      rows * columns,
-      low,
-      high,
-    )
-      .split(' ')
-      .map(Number);
-
-    let matrix = [];
-    let index = 0;
-
-    for (let i = 0; i < rows; i++) {
-      let row = [];
-      for (let j = 0; j < columns; j++) {
-        row.push(generatedArray[index]);
-        index++;
-      }
-      matrix.push(row);
-    }
-
-    return matrix.map((row) => row.join(' ')).join('\n');
-  }
-
-  getRowsDistinctMatrixContents(
-    rows: number,
-    columns: number,
-    low: number = 0,
-    high: number = 0,
-  ): string {
-    const generatedRows: Set<number>[] = Array.from(
-      { length: rows },
-      () => new Set<number>(),
+    const groups = computed<Group[]>(() => store.state.casesStore.groups);
+    const getSelectedCase = computed<Case>(
+      () => store.getters['casesStore/getSelectedCase'],
     );
-    for (let i = 0; i < rows; i++) {
-      while (generatedRows[i].size < columns) {
-        generatedRows[i].add(
-          low + Math.floor(Math.random() * (high - low + 1)),
-        );
-      }
-    }
-    return generatedRows.map((row) => [...row].join(' ')).join('\n');
-  }
-
-  getColsDistinctMatrixContents(
-    rows: number,
-    columns: number,
-    low: number = 0,
-    high: number = 0,
-  ): string {
-    const generatedColumns: Set<number>[] = Array.from(
-      { length: columns },
-      () => new Set<number>(),
+    const getLinesFromSelectedCase = computed<CaseLine[]>(
+      () => store.getters['casesStore/getLinesFromSelectedCase'],
     );
-    for (let i = 0; i < columns; i++) {
-      while (generatedColumns[i].size < rows) {
-        generatedColumns[i].add(
-          low + Math.floor(Math.random() * (high - low + 1)),
-        );
-      }
-    }
-    const generatedColumnsList: number[][] = generatedColumns.map((column) =>
-      Array.from(column),
+    const getSelectedGroup = computed<Group>(
+      () => store.getters['casesStore/getSelectedGroup'],
     );
-    const transposedColumnsList: number[][] = generatedColumnsList[0].map(
-      (_, rowIndex) => generatedColumnsList.map((column) => column[rowIndex]),
+    const getStringifiedLinesFromCaseGroupID = computed(
+      () => store.getters['casesStore/getStringifiedLinesFromCaseGroupID'],
     );
-    return transposedColumnsList.map((row) => row.join(' ')).join('\n');
-  }
 
-  getAllDistinctMatrixContents(
-    rows: number,
-    columns: number,
-    low: number = 0,
-    high: number = 0,
-  ): string {
-    const generatedArray: number[] = this.getDistinctArrayContents(
-      rows * columns,
-      low,
-      high,
-    )
-      .split(' ')
-      .map(Number);
+    const editLineKind = (payload: [LineID, CaseLineKind]) =>
+      store.dispatch('casesStore/editLineKind', payload);
+    const editLineValue = (payload: [LineID, string]) =>
+      store.dispatch('casesStore/editLineValue', payload);
+    const deleteCase = (payload: CaseGroupID) =>
+      store.commit('casesStore/deleteCase', payload);
+    const updateCase = (payload: [GroupID, CaseRequest]) =>
+      store.commit('casesStore/updateCase', payload);
+    const addNewLine = () => store.dispatch('casesStore/addNewLine');
+    const setLines = (newLines: CaseLine[]) =>
+      store.dispatch('casesStore/setLines', newLines);
+    const deleteLine = (lineID: LineID) =>
+      store.dispatch('casesStore/deleteLine', lineID);
+    const deleteLinesForSelectedCase = () =>
+      store.dispatch('casesStore/deleteLinesForSelectedCase');
 
-    let matrix = [];
-    let index = 0;
+    const editCaseModal = ref(false);
+    const arrayModalEdit = ref(false);
+    const matrixModalEdit = ref(false);
+    const arrayModalEditArray = ref('');
+    const matrixModalEditArray = ref('');
+    const caseInputRef = ref<InstanceType<
+      typeof problemCreator_Cases_CaseInput
+    > | null>(null);
+    const dropdown = ref<InstanceType<typeof BNavItemDropdown> | null>(null);
 
-    for (let i = 0; i < rows; i++) {
-      let row = [];
-      for (let j = 0; j < columns; j++) {
-        row.push(generatedArray[index]);
-        index++;
-      }
-      matrix.push(row);
-    }
-
-    return matrix.map((row) => row.join(' ')).join('\n');
-  }
-
-  getMatrixContent(
-    rows: number,
-    columns: number,
-    low: number = 0,
-    high: number = 100,
-    distinct: MatrixDistinctType = MatrixDistinctType.None,
-  ): string {
-    if (distinct === 'both' && high - low + 1 < rows * columns) {
-      return '';
-    }
-    if (distinct === 'rows' && high - low + 1 < columns) {
-      return '';
-    }
-    if (distinct === 'cols' && high - low + 1 < rows) {
-      return '';
-    }
-    if (distinct === 'none') {
-      return this.getNoneDistinctMatrixContents(rows, columns, low, high);
-    }
-    if (distinct === 'both') {
-      return this.getAllDistinctMatrixContents(rows, columns, low, high);
-    }
-    if (distinct === 'rows') {
-      return this.getRowsDistinctMatrixContents(rows, columns, low, high);
-    }
-    if (distinct === 'cols') {
-      return this.getColsDistinctMatrixContents(rows, columns, low, high);
-    }
-    return '';
-  }
-
-  updateCaseInfo() {
-    const updateCaseRequest: CaseRequest = {
-      groupID: this.caseInputRef.caseGroup,
-      caseID: this.getSelectedCase.caseID,
-      name: this.caseInputRef.caseName,
-      points: this.caseInputRef.casePoints,
-      autoPoints: this.caseInputRef.caseAutoPoints,
+    const deleteLines = () => {
+      deleteLinesForSelectedCase();
+      dropdown.value?.hide(true);
     };
-    const oldGroupID: GroupID = this.getSelectedGroup.groupID;
-    this.updateCase([oldGroupID, updateCaseRequest]);
-  }
 
-  downloadInputFile(ext: '.txt' | '.in') {
-    const caseGroupID: CaseGroupID = {
-      groupID: this.getSelectedGroup.groupID,
-      caseID: this.getSelectedCase.caseID,
-    };
-    const input = this.getStringifiedLinesFromCaseGroupID(caseGroupID);
-    this.$emit('download-input-file', {
-      fileName: `${this.getSelectedCase.name}${ext}`,
-      fileContent: input,
+    const LineDisplayOption = Object.freeze({
+      LINE: 'line',
+      MULTILINE: 'multiline',
     });
-  }
-}
+
+    const EditIconDisplayOption = Object.freeze({
+      EDIT_ICON: 'edit_icon',
+    });
+
+    const getLineDisplay = (line: CaseLine) => {
+      if (line.data.kind === 'line' || line.data.kind === 'array') {
+        return LineDisplayOption.LINE;
+      }
+      return LineDisplayOption.MULTILINE;
+    };
+
+    const getEditIconDisplay = (line: CaseLine) => {
+      if (line.data.kind === 'array' || line.data.kind === 'matrix') {
+        return EditIconDisplayOption.EDIT_ICON;
+      }
+    };
+
+    const lines = computed({
+      get: () => getLinesFromSelectedCase.value,
+      set: (newLines: CaseLine[]) => setLines(newLines),
+    });
+
+    const lineKindOptions: { type: string; kind: CaseLineKind }[] = [
+      { type: T.problemCreatorLineLine, kind: 'line' },
+      { type: T.problemCreatorLineMultiline, kind: 'multiline' },
+      { type: T.problemCreatorLineArray, kind: 'array' },
+      { type: T.problemCreatorLineMatrix, kind: 'matrix' },
+    ];
+
+    const matrixDistinctOptions: {
+      type: string;
+      distinctType: MatrixDistinctType;
+    }[] = [
+      {
+        type: T.matrixModalDistinctNone,
+        distinctType: MatrixDistinctType.None,
+      },
+      {
+        type: T.matrixModalDistinctRow,
+        distinctType: MatrixDistinctType.Rows,
+      },
+      {
+        type: T.matrixModalDistinctColumn,
+        distinctType: MatrixDistinctType.Cols,
+      },
+      {
+        type: T.matrixModalDistinctAll,
+        distinctType: MatrixDistinctType.Both,
+      },
+    ];
+
+    const editModalState = (kind: CaseLineKind): void => {
+      if (kind === 'array') {
+        matrixModalEdit.value = false;
+        arrayModalEdit.value = true;
+      } else if (kind === 'matrix') {
+        arrayModalEdit.value = false;
+        matrixModalEdit.value = true;
+      }
+    };
+
+    const getLineNameFromKind = (kind: CaseLineKind): string | undefined =>
+      lineKindOptions.find((row) => row.kind === kind)?.type;
+
+    const getDistinctNameFromType = (
+      distinctype: MatrixDistinctType,
+    ): string | undefined =>
+      matrixDistinctOptions.find((row) => row.distinctType === distinctype)
+        ?.type;
+
+    const getDistinctArrayContents = (
+      size: number,
+      low: number = 0,
+      high: number = 0,
+    ): string => {
+      const generatedArray = new Set<number>();
+      while (generatedArray.size < size) {
+        generatedArray.add(low + Math.floor(Math.random() * (high - low + 1)));
+      }
+      return [...generatedArray].join(' ');
+    };
+
+    const getNonDistinctArrayContents = (
+      size: number,
+      low: number = 0,
+      high: number = 0,
+    ): string => {
+      const generatedArray = [];
+      while (generatedArray.length < size) {
+        generatedArray.push(
+          low + Math.floor(Math.random() * (high - low + 1)),
+        );
+      }
+      return [...generatedArray].join(' ');
+    };
+
+    const getArrayContent = (
+      size: number,
+      low: number = 0,
+      high: number = 0,
+      distinct: boolean = false,
+    ): string => {
+      if (distinct && high - low + 1 < size) return '';
+      if (distinct) return getDistinctArrayContents(size, low, high);
+      return getNonDistinctArrayContents(size, low, high);
+    };
+
+    const getNoneDistinctMatrixContents = (
+      rows: number,
+      columns: number,
+      low: number = 0,
+      high: number = 0,
+    ): string => {
+      const generatedArray: number[] = getNonDistinctArrayContents(
+        rows * columns,
+        low,
+        high,
+      )
+        .split(' ')
+        .map(Number);
+      const matrix = [];
+      let index = 0;
+      for (let i = 0; i < rows; i++) {
+        const row = [];
+        for (let j = 0; j < columns; j++) {
+          row.push(generatedArray[index]);
+          index++;
+        }
+        matrix.push(row);
+      }
+      return matrix.map((row) => row.join(' ')).join('\n');
+    };
+
+    const getRowsDistinctMatrixContents = (
+      rows: number,
+      columns: number,
+      low: number = 0,
+      high: number = 0,
+    ): string => {
+      const generatedRows: Set<number>[] = Array.from(
+        { length: rows },
+        () => new Set<number>(),
+      );
+      for (let i = 0; i < rows; i++) {
+        while (generatedRows[i].size < columns) {
+          generatedRows[i].add(
+            low + Math.floor(Math.random() * (high - low + 1)),
+          );
+        }
+      }
+      return generatedRows.map((row) => [...row].join(' ')).join('\n');
+    };
+
+    const getColsDistinctMatrixContents = (
+      rows: number,
+      columns: number,
+      low: number = 0,
+      high: number = 0,
+    ): string => {
+      const generatedColumns: Set<number>[] = Array.from(
+        { length: columns },
+        () => new Set<number>(),
+      );
+      for (let i = 0; i < columns; i++) {
+        while (generatedColumns[i].size < rows) {
+          generatedColumns[i].add(
+            low + Math.floor(Math.random() * (high - low + 1)),
+          );
+        }
+      }
+      const generatedColumnsList: number[][] = generatedColumns.map((column) =>
+        Array.from(column),
+      );
+      const transposedColumnsList: number[][] = generatedColumnsList[0].map(
+        (_, rowIndex) => generatedColumnsList.map((column) => column[rowIndex]),
+      );
+      return transposedColumnsList.map((row) => row.join(' ')).join('\n');
+    };
+
+    const getAllDistinctMatrixContents = (
+      rows: number,
+      columns: number,
+      low: number = 0,
+      high: number = 0,
+    ): string => {
+      const generatedArray: number[] = getDistinctArrayContents(
+        rows * columns,
+        low,
+        high,
+      )
+        .split(' ')
+        .map(Number);
+      const matrix = [];
+      let index = 0;
+      for (let i = 0; i < rows; i++) {
+        const row = [];
+        for (let j = 0; j < columns; j++) {
+          row.push(generatedArray[index]);
+          index++;
+        }
+        matrix.push(row);
+      }
+      return matrix.map((row) => row.join(' ')).join('\n');
+    };
+
+    const getMatrixContent = (
+      rows: number,
+      columns: number,
+      low: number = 0,
+      high: number = 100,
+      distinct: MatrixDistinctType = MatrixDistinctType.None,
+    ): string => {
+      if (distinct === 'both' && high - low + 1 < rows * columns) return '';
+      if (distinct === 'rows' && high - low + 1 < columns) return '';
+      if (distinct === 'cols' && high - low + 1 < rows) return '';
+      if (distinct === 'none')
+        return getNoneDistinctMatrixContents(rows, columns, low, high);
+      if (distinct === 'both')
+        return getAllDistinctMatrixContents(rows, columns, low, high);
+      if (distinct === 'rows')
+        return getRowsDistinctMatrixContents(rows, columns, low, high);
+      if (distinct === 'cols')
+        return getColsDistinctMatrixContents(rows, columns, low, high);
+      return '';
+    };
+
+    const updateCaseInfo = () => {
+      const inputRef = caseInputRef.value as any;
+      if (!inputRef) return;
+      const updateCaseRequest: CaseRequest = {
+        groupID: inputRef.caseGroup,
+        caseID: getSelectedCase.value.caseID,
+        name: inputRef.caseName,
+        points: inputRef.casePoints,
+        autoPoints: inputRef.caseAutoPoints,
+      };
+      const oldGroupID: GroupID = getSelectedGroup.value.groupID;
+      updateCase([oldGroupID, updateCaseRequest]);
+    };
+
+    const downloadInputFile = (ext: '.txt' | '.in') => {
+      const caseGroupID: CaseGroupID = {
+        groupID: getSelectedGroup.value.groupID,
+        caseID: getSelectedCase.value.caseID,
+      };
+      const input = getStringifiedLinesFromCaseGroupID.value(caseGroupID);
+      emit('download-input-file', {
+        fileName: `${getSelectedCase.value.name}${ext}`,
+        fileContent: input,
+      });
+    };
+
+    return {
+      T,
+      groups,
+      getSelectedCase,
+      getSelectedGroup,
+      getLinesFromSelectedCase,
+      getStringifiedLinesFromCaseGroupID,
+      lines,
+      editCaseModal,
+      arrayModalEdit,
+      matrixModalEdit,
+      arrayModalEditArray,
+      matrixModalEditArray,
+      'case-input': caseInputRef,
+      dropdown,
+      editLineKind,
+      editLineValue,
+      deleteCase,
+      addNewLine,
+      deleteLine,
+      deleteLines,
+      LineDisplayOption,
+      EditIconDisplayOption,
+      getLineDisplay,
+      getEditIconDisplay,
+      lineKindOptions,
+      matrixDistinctOptions,
+      editModalState,
+      getLineNameFromKind,
+      getDistinctNameFromType,
+      getArrayContent,
+      getMatrixContent,
+      updateCaseInfo,
+      downloadInputFile,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>

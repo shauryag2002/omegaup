@@ -1,4 +1,4 @@
-import Vuex, { ActionContext, Store } from 'vuex';
+import { createStore, ActionContext, Store } from 'vuex';
 
 /**
  * Message types for notifications, matching Bootstrap alert classes.
@@ -155,7 +155,7 @@ export const createNotificationsStoreConfig = createStoreConfig;
  * Use this for SSR or when you need isolated store instances (e.g., tests).
  */
 export function createNotificationsStore(): Store<NotificationsState> {
-  return new Vuex.Store<NotificationsState>(createStoreConfig());
+  return createStore<NotificationsState>(createStoreConfig());
 }
 
 /**
