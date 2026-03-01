@@ -8,9 +8,6 @@ import course_Edit from '../components/course/Edit.vue';
 import { AdmissionMode } from '../components/common/Publish.vue';
 import Sortable from 'sortablejs';
 
-  },
-});
-
 OmegaUp.on('ready', () => {
   const payload = types.payloadParsers.CourseEditPayload();
   const courseAlias = payload.course.alias;
@@ -638,8 +635,9 @@ onUpdateSearchResultGroups: (query: string) => {
 }),
   });
   app.directive('Sortable', {
-  inserted: (el: HTMLElement, binding) => {
-    new Sortable(el, binding.value || {});
+    mounted: (el: HTMLElement, binding: { value: Sortable.Options }) => {
+      new Sortable(el, binding.value || {});
+    },
+  });
   app.mount('#main-container');
-  const component = courseEdit.$refs.component as course_Edit;
 });
