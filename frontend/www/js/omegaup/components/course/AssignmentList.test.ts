@@ -24,7 +24,7 @@ describe('AssignmentList.vue', () => {
       global: {
         directives: {
           Sortable: {
-            mounted: (el: HTMLElement, binding: any) => {
+            mounted: (el: HTMLElement, binding: import('vue').DirectiveBinding) => {
               new Sortable(el, binding.value || {});
             },
           },

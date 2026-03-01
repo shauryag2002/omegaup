@@ -6,7 +6,6 @@ import T from '../../lang';
 import course_GenerateLinkClone from './GenerateLinkClone.vue';
 
 describe('GenerateLinkClone.vue', () => {
-  
   it('Should handle a link with valid token', async () => {
     const wrapper = shallowMount(course_GenerateLinkClone, {
       props: {

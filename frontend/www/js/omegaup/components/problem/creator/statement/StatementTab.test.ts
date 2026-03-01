@@ -42,9 +42,7 @@ describe('StatementTab.vue', () => {
 
   describe('Image size validation', () => {
     it('Should allow pasting images under 256 KB', async () => {
-      const wrapper = shallowMount(StatementTab, {
-          store,
-      });
+      const wrapper = shallowMount(StatementTab, { global: { plugins: [store, createBootstrap()] } });
 
       const textArea = wrapper.find('textarea.wmd-input');
       const smallFile = new File(['x'.repeat(100 * 1024)], 'small.png', {
@@ -69,9 +67,7 @@ describe('StatementTab.vue', () => {
     });
 
     it('Should reject pasting images over 256 KB and show error', async () => {
-      const wrapper = shallowMount(StatementTab, {
-          store,
-      });
+      const wrapper = shallowMount(StatementTab, { global: { plugins: [store, createBootstrap()] } });
 
       const errorSpy = jest.spyOn(ui, 'error').mockImplementation(() => {});
 
@@ -106,9 +102,7 @@ describe('StatementTab.vue', () => {
     });
 
     it('Should reject dropping images over 256 KB and show error', async () => {
-      const wrapper = shallowMount(StatementTab, {
-          store,
-      });
+      const wrapper = shallowMount(StatementTab, { global: { plugins: [store, createBootstrap()] } });
 
       const errorSpy = jest.spyOn(ui, 'error').mockImplementation(() => {});
 
@@ -135,9 +129,7 @@ describe('StatementTab.vue', () => {
     });
 
     it('Should allow non-image files without size validation', async () => {
-      const wrapper = shallowMount(StatementTab, {
-          store,
-      });
+      const wrapper = shallowMount(StatementTab, { global: { plugins: [store, createBootstrap()] } });
 
       const textArea = wrapper.find('textarea.wmd-input');
       const textFile = new File(['x'.repeat(500 * 1024)], 'large.txt', {

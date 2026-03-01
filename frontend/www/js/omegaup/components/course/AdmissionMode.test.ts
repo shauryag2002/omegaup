@@ -7,7 +7,6 @@ import course_AdmissionMode from './AdmissionMode.vue';
 import { AdmissionMode } from '../common/Publish.vue';
 
 describe('AdmissionMode.vue', () => {
-  
   it('Should handle admission mode as curator', () => {
     const wrapper = mount(course_AdmissionMode, {
       props: {
