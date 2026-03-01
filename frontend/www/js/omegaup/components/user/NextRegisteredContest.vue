@@ -102,11 +102,9 @@ import { omegaup } from '../../omegaup';
 import { getExternalUrl } from '../../urlHelper';
 
 import 'bootstrap/dist/css/bootstrap.css';
-import 'bootstrap-vue/dist/bootstrap-vue.css';
+import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
+import { BCol, BCollapse, BContainer, BRow } from 'bootstrap-vue-next';
 
-import { LayoutPlugin, CollapsePlugin } from 'bootstrap-vue';
-Vue.use(LayoutPlugin);
-Vue.use(CollapsePlugin);
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';

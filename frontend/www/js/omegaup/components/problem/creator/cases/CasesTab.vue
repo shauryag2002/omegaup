@@ -37,6 +37,7 @@ import 'intro.js/introjs.css';
 import { getCookie, setCookie } from '../../../../cookies';
 import T from '../../../../lang';
 import { TabIndex } from '../Tabs.vue';
+import { BCol, BRow } from 'bootstrap-vue-next';
 
 
 @Component({

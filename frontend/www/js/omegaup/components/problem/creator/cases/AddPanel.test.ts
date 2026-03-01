@@ -1,7 +1,6 @@
 import { mount, Wrapper } from '@vue/test-utils';
 
 import AddPanel from './AddPanel.vue';
-import BootstrapVue, { IconsPlugin } from 'bootstrap-vue';
 import T from '../../../../lang';
 import Vue from 'vue';
 import vuexStore from '../../../../problem/creator/store';

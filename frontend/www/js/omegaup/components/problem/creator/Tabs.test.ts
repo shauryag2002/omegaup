@@ -1,7 +1,6 @@
 import { mount } from '@vue/test-utils';
 
 import Tabs from './Tabs.vue';
-import BootstrapVue, { IconsPlugin } from 'bootstrap-vue';
 import store from '@/js/omegaup/problem/creator/store';
 
 import T from '../../../lang';

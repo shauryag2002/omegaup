@@ -46,6 +46,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import T from '../../../../lang';
+import { BFormCheckbox, BFormGroup, BFormInput } from 'bootstrap-vue-next';
 
 const props = withDefaults(
   defineProps<{

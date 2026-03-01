@@ -15,11 +15,7 @@
         >
           <div class="container">
             <div class="row">
-              <BIconPencilFill
-                variant="info"
-                font-scale="1.10"
-                class="mr-1 pt-1"
-              />
+              <FontAwesomeIcon :icon="['fas', 'pen']" class="mr-1 pt-1" />
               {{ T.problemCreatorEditCase }}
             </div>
           </div>
@@ -57,17 +53,13 @@
         >
           <div class="container">
             <div class="row">
-              <BIconTrashFill
-                variant="danger"
-                font-scale="1.20"
-                class="mr-1 pt-1"
-              />
+              <FontAwesomeIcon :icon="['fas', 'trash-can']" class="mr-1 pt-1" />
               {{ T.problemCreatorDeleteCase }}
             </div>
           </div>
         </b-button>
         <b-dropdown
-          ref="dropdown"
+          v-model="dropdown"
           data-menu-dropdown
           variant="light"
           class="h-100"
@@ -75,7 +67,7 @@
           no-caret
         >
           <template #button-content>
-            <BIconThreeDotsVertical />
+            <FontAwesomeIcon :icon="['fas', 'ellipsis-vertical']" />
           </template>
           <b-button
             data-menu-delete-lines
@@ -84,7 +76,7 @@
             @click="deleteLines()"
           >
             <div class="d-flex">
-              <BIconTrash variant="danger" class="pt-1 mr-3" font-scale="1.2" />
+              <FontAwesomeIcon :icon="['fas', 'trash']" class="pt-1 mr-3" />
               {{ T.problemCreatorLinesDelete }}
             </div>
           </b-button>
@@ -96,11 +88,7 @@
             @click="downloadInputFile('.in')"
           >
             <div class="d-flex">
-              <BIconBoxArrowDown
-                variant="info"
-                class="pt-1 mr-3"
-                font-scale="1.2"
-              />
+              <FontAwesomeIcon :icon="['fas', 'box-archive']" class="pt-1 mr-3" />
               {{ T.problemCreatorCaseDownloadIn }}
             </div>
           </b-button>
@@ -111,11 +99,7 @@
             @click="downloadInputFile('.txt')"
           >
             <div class="d-flex">
-              <BIconTextLeft
-                variant="info"
-                class="pt-1 mr-3"
-                font-scale="1.2"
-              />
+              <FontAwesomeIcon :icon="['fas', 'align-left']" class="pt-1 mr-3" />
               {{ T.problemCreatorCaseDownloadTxt }}
             </div>
           </b-button>
@@ -133,6 +117,7 @@
           item-key="lineID"
         >
           <template #item="{ element: line }">
+            <tr>
             <td>
               <b-container fluid class="bg-light">
                 <b-row class="d-flex justify-content-between" align-v="center">
@@ -201,7 +186,7 @@
                       variant="light"
                       @click="editModalState(line.data.kind)"
                     >
-                      <BIconPencilSquare variant="info" font-scale="1.20" />
+                      <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
                     </b-button>
                     <b-modal
                       v-if="line.data.kind === 'array'"
@@ -404,7 +389,7 @@
                       variant="light"
                       @click="deleteLine(line.lineID)"
                     >
-                      <BIconTrashFill variant="danger" font-scale="1.20" />
+                      <FontAwesomeIcon :icon="['fas', 'trash-can']" />
                     </b-button>
                   </b-col>
                 </b-row>
@@ -457,11 +442,7 @@
       >
         <div class="container">
           <div class="row">
-            <BIconPlusSquare
-              variant="info"
-              font-scale="1.25"
-              class="mr-2 pt-1"
-            />
+            <FontAwesomeIcon :icon="['fas', 'square-plus']" class="mr-2 pt-1" />
             {{ T.problemCreatorAddLine }}
           </div>
         </div>
@@ -492,12 +473,12 @@ import {
   FontAwesomeLayersText,
 } from '@fortawesome/vue-fontawesome';
 import 'bootstrap/dist/css/bootstrap.css';
-import 'bootstrap-vue/dist/bootstrap-vue.css';
-import { BNavItemDropdown } from 'bootstrap-vue';
-import { fas } from '@fortawesome/free-solid-svg-icons';
+import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
+import { BButton, BCol, BContainer, BDropdown, BDropdownDivider, BDropdownHeader, BDropdownItem, BFormCheckbox, BFormInput, BFormTextarea, BModal, BRow } from 'bootstrap-vue-next';
+import { faAlignLeft, faBoxArchive, faEllipsisVertical, faEraser, faPen, faPenToSquare, faSort, faSquarePlus, faTrash, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import draggable from 'vuedraggable';
-library.add(fas);
+library.add(faAlignLeft, faBoxArchive, faEllipsisVertical, faEraser, faPen, faPenToSquare, faSort, faSquarePlus, faTrash, faTrashCan);
 
 export default defineComponent({
   name: 'CaseEdit',
@@ -550,11 +531,11 @@ export default defineComponent({
     const caseInputRef = ref<InstanceType<
       typeof problemCreator_Cases_CaseInput
     > | null>(null);
-    const dropdown = ref<InstanceType<typeof BNavItemDropdown> | null>(null);
+    const dropdown = ref(false);
 
     const deleteLines = () => {
       deleteLinesForSelectedCase();
-      dropdown.value?.hide(true);
+      dropdown.value = false;
     };
 
     const LineDisplayOption = Object.freeze({

@@ -524,9 +524,9 @@ import { DisqualificationType } from './Runs.vue';
 import omegaup_Countdown from '../Countdown.vue';
 import omegaup_Overlay from '../Overlay.vue';
 
-import { PaginationPlugin } from 'bootstrap-vue';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { BPagination } from 'bootstrap-vue-next';
 import {
   faQuestionCircle,
   faRedoAlt,
@@ -553,7 +553,6 @@ library.add(faCalendarAlt);
 library.add(faCheckCircle);
 library.add(faTimesCircle);
 
-Vue.use(PaginationPlugin);
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

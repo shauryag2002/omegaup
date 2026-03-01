@@ -2,7 +2,7 @@ import { shallowMount, mount } from '@vue/test-utils';
 import JSZip from 'jszip';
 
 import Header from './Header.vue';
-import { BButton, BFormInput } from 'bootstrap-vue';
+import { BButton, BFormInput } from 'bootstrap-vue-next';
 import store from '@/js/omegaup/problem/creator/store';
 import T from '../../../lang';
 import { nextTick } from 'vue';

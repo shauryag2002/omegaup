@@ -100,6 +100,7 @@ import {
   AddTabTypes,
 } from '@/js/omegaup/problem/creator/types';
 import { NIL, v4 as uuid } from 'uuid';
+import { BAlert, BButton, BCard, BTab, BTabs } from 'bootstrap-vue-next';
 
 const emit = defineEmits<{
   (e: 'close-add-window'): void;

@@ -1,7 +1,7 @@
 import { shallowMount, mount } from '@vue/test-utils';
 
 import CaseEdit from './CaseEdit.vue';
-import { BButton } from 'bootstrap-vue';
+import { BButton } from 'bootstrap-vue-next';
 import store from '@/js/omegaup/problem/creator/store';
 import { nextTick } from 'vue';
 import { NIL as UUID_NIL } from 'uuid';

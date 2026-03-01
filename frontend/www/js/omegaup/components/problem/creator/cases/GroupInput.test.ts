@@ -1,7 +1,6 @@
 import { shallowMount } from '@vue/test-utils';
 
 import GroupInput from './GroupInput.vue';
-import BootstrapVue, { IconsPlugin } from 'bootstrap-vue';
 import T from '../../../../lang';
 import Vue from 'vue';
 

@@ -10,15 +10,13 @@
           class="mr-2"
           @click="showLayoutSidebar = !showLayoutSidebar"
         >
-          <BIconLayoutSidebar />
+          <FontAwesomeIcon :icon="['fas', 'table-columns']" />
         </b-button>
-        <b-sidebar
+        <b-offcanvas
           v-model="showLayoutSidebar"
-          right
+          placement="end"
           :title="T.problemCreatorLayoutWordLayouts"
           shadow
-          no-header-close
-          width="385px"
         >
           <omegaup-problem-creator-layout-sidebar />
           <div class="fixed-bottom">
@@ -54,7 +52,7 @@
               </b-row>
             </b-container>
           </div>
-        </b-sidebar>
+        </b-offcanvas>
         <b-button
           data-add-window
           size="sm"
@@ -64,18 +62,18 @@
           @click="$emit('open-add-window')"
         >
           <span class="d-none d-xl-inline">{{ T.problemCreatorAdd }}</span>
-          <BIconPlusCircle class="d-inline d-xl-none" />
+          <FontAwesomeIcon :icon="['fas', 'circle-plus']" class="d-inline d-xl-none" />
         </b-button>
         <b-dropdown variant="light" size="sm" right no-caret>
           <template #button-content>
-            <BIconThreeDotsVertical />
+            <FontAwesomeIcon :icon="['fas', 'ellipsis-vertical']" />
           </template>
           <b-dropdown-item
             data-sidebar-validate-points-dropdown-item
             @click="validateAndFixPointsModal = !validateAndFixPointsModal"
             ><b-row>
               <div class="ml-6">
-                <BIconBroadcast variant="info" font-scale="1.05" />
+                <FontAwesomeIcon :icon="['fas', 'tower-broadcast']" />
               </div>
               <div class="ml-8">{{ T.problemCreatorValidatePointsButton }}</div>
             </b-row>
@@ -129,12 +127,12 @@
             </b-button>
             <b-dropdown variant="light" size="sm" right no-caret>
               <template #button-content>
-                <BIconThreeDotsVertical />
+                <FontAwesomeIcon :icon="['fas', 'ellipsis-vertical']" />
               </template>
               <b-dropdown-item disabled
                 ><b-row>
                   <div class="ml-6">
-                    <BIconTrash variant="danger" font-scale=".95" />
+                    <FontAwesomeIcon :icon="['fas', 'trash']" />
                   </div>
                   <div class="ml-8">
                     {{ T.problemCreatorDeleteGroup }}
@@ -144,7 +142,7 @@
               <b-dropdown-item @click="deleteUngroupedCases()"
                 ><b-row>
                   <div class="ml-6">
-                    <BIconTrash variant="danger" font-scale=".95" />
+                    <FontAwesomeIcon :icon="['fas', 'trash']" />
                   </div>
                   <div class="ml-8">
                     {{ T.problemCreatorDeleteCases }}
@@ -180,12 +178,12 @@
                 </b-button>
                 <b-dropdown variant="light" size="sm" right no-caret>
                   <template #button-content>
-                    <BIconThreeDotsVertical />
+                    <FontAwesomeIcon :icon="['fas', 'ellipsis-vertical']" />
                   </template>
                   <b-dropdown-item @click="deleteCase({ groupID, caseID: '' })"
                     ><b-row>
                       <div class="ml-6">
-                        <BIconTrash variant="danger" font-scale=".95" />
+                        <FontAwesomeIcon :icon="['fas', 'trash']" />
                       </div>
                       <div class="ml-8">
                         {{ T.problemCreatorDeleteCase }}
@@ -234,14 +232,14 @@
             no-caret
           >
             <template #button-content>
-              <BIconThreeDotsVertical />
+              <FontAwesomeIcon :icon="['fas', 'ellipsis-vertical']" />
             </template>
             <b-dropdown-item
               data-sidebar-edit-group-dropdown="edit group"
               @click="editGroupModal[groupID] = !editGroupModal[groupID]"
               ><b-row>
                 <div class="ml-6">
-                  <BIconPencil variant="info" font-scale=".95" />
+                  <FontAwesomeIcon :icon="['fas', 'pencil']" />
                 </div>
                 <div class="ml-8">{{ T.omegaupTitleGroupsEdit }}</div>
               </b-row>
@@ -251,7 +249,7 @@
               @click="deleteGroup(groupID)"
               ><b-row>
                 <div class="ml-6">
-                  <BIconTrash variant="danger" font-scale=".95" />
+                  <FontAwesomeIcon :icon="['fas', 'trash']" />
                 </div>
                 <div class="ml-8">
                   {{ T.problemCreatorDeleteGroup }}
@@ -263,7 +261,7 @@
               @click="deleteGroupCases(groupID)"
               ><b-row>
                 <div class="ml-6">
-                  <BIconTrash variant="danger" font-scale=".95" />
+                  <FontAwesomeIcon :icon="['fas', 'trash']" />
                 </div>
                 <div class="ml-8">
                   {{ T.problemCreatorDeleteCases }}
@@ -275,7 +273,7 @@
               @click="downloadGroupInput(groupID, '.in')"
               ><b-row>
                 <div class="ml-6">
-                  <BIconBoxArrowDown variant="info" font-scale=".95" />
+                  <FontAwesomeIcon :icon="['fas', 'box-archive']" />
                 </div>
                 <div class="ml-8">
                   {{ T.problemCraetorGroupDownloadIn }}
@@ -287,7 +285,7 @@
               @click="downloadGroupInput(groupID, '.txt')"
               ><b-row>
                 <div class="ml-6">
-                  <BIconTextLeft variant="info" font-scale=".95" />
+                  <FontAwesomeIcon :icon="['fas', 'align-left']" />
                 </div>
                 <div class="ml-8">
                   {{ T.problemCraetorGroupDownloadTxt }}
@@ -321,12 +319,12 @@
                 </b-button>
                 <b-dropdown variant="light" size="sm" right no-caret>
                   <template #button-content>
-                    <BIconThreeDotsVertical />
+                    <FontAwesomeIcon :icon="['fas', 'ellipsis-vertical']" />
                   </template>
                   <b-dropdown-item @click="deleteCase({ groupID, caseID })"
                     ><b-row>
                       <div class="ml-6">
-                        <BIconTrash variant="danger" font-scale=".95" />
+                        <FontAwesomeIcon :icon="['fas', 'trash']" />
                       </div>
                       <div class="ml-8">
                         {{ T.problemCreatorDeleteCase }}
@@ -407,10 +405,16 @@ import {
   CaseGroupID,
 } from '@/js/omegaup/problem/creator/types';
 import JSZip from 'jszip';
+import { BBadge, BButton, BCard, BCollapse, BContainer, BDropdown, BDropdownItem, BFormCheckbox, BFormGroup, BFormInput, BModal, BOffcanvas, BRow } from 'bootstrap-vue-next';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faAlignLeft, faBoxArchive, faCirclePlus, faEllipsisVertical, faPencil, faTableColumns, faTowerBroadcast, faTrash } from '@fortawesome/free-solid-svg-icons';
+library.add(faAlignLeft, faBoxArchive, faCirclePlus, faEllipsisVertical, faPencil, faTableColumns, faTowerBroadcast, faTrash);
 
 export default defineComponent({
   name: 'Sidebar',
   components: {
+    FontAwesomeIcon,
     'omegaup-problem-creator-layout-sidebar': problemCreator_LayoutSidebar,
   },
   props: {

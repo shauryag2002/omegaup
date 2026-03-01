@@ -58,7 +58,7 @@
         </div>
         <div class="form-group text-right">
           <b-button variant="primary" type="submit">
-            <b-icon-cloud-download aria-hidden="true"></b-icon-cloud-download>
+            <FontAwesomeIcon :icon="['fas', 'cloud-arrow-down']" aria-hidden="true" />
             {{ T.wordsDownload }}
           </b-button>
         </div>
@@ -76,17 +76,19 @@ import T from '../../lang';
 
 // Import Bootstrap an BootstrapVue CSS files (order is important)
 import 'bootstrap/dist/css/bootstrap.css';
-import 'bootstrap-vue/dist/bootstrap-vue.css';
+import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
+import { BButton, BCard, BCardBody } from 'bootstrap-vue-next';
 
-// Import Only Required Plugins
-import { ButtonPlugin, CardPlugin, BIconCloudDownload } from 'bootstrap-vue';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faCloudArrowDown } from '@fortawesome/free-solid-svg-icons';
+library.add(faCloudArrowDown);
+
 import { types } from '../../api_types';
-Vue.use(ButtonPlugin);
-Vue.use(CardPlugin);
 
 @Component({
   components: {
-    BIconCloudDownload,
+    FontAwesomeIcon,
   },
 })
 export default class LibinteractiveGen extends Vue {

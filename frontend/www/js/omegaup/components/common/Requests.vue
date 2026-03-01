@@ -88,11 +88,9 @@ import * as time from '../../time';
 import omegaup_Username from '../user/Username.vue';
 
 import 'bootstrap/dist/css/bootstrap.css';
-import 'bootstrap-vue/dist/bootstrap-vue.css';
+import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
+import { BFormInput, BModal } from 'bootstrap-vue-next';
 
-import { FormInputPlugin, ModalPlugin } from 'bootstrap-vue';
-Vue.use(FormInputPlugin);
-Vue.use(ModalPlugin);
 
 @Component({
   components: {

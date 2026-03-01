@@ -67,6 +67,7 @@ import store from '../../../../problem/creator/store';
 import { GroupID } from '../../../../problem/creator/types';
 import { NIL } from 'uuid';
 import T from '../../../../lang';
+import { BCol, BFormGroup, BFormInput, BFormSelect, BRow } from 'bootstrap-vue-next';
 
 const multipleCasesPrefix = ref('');
 const multipleCasesSuffix = ref('');

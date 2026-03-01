@@ -48,11 +48,7 @@
               "
             >
               <div class="d-flex">
-                <BIconPencil
-                  variant="success"
-                  class="pt-1 mr-3"
-                  font-scale="1.2"
-                />
+                <FontAwesomeIcon :icon="['fas', 'pencil']" class="pt-1 mr-3" />
                 {{ T.problemCreatorRenameLayout }}
               </div>
             </b-dropdown-item>
@@ -61,11 +57,7 @@
               @click="enforceLayoutToTheSelectedCase(layout.layoutID)"
             >
               <div class="d-flex">
-                <BIconArrowLeftRight
-                  variant="success"
-                  class="pt-1 mr-3"
-                  font-scale="1.2"
-                />
+                <FontAwesomeIcon :icon="['fas', 'arrows-left-right']" class="pt-1 mr-3" />
                 {{ T.problemCreatorLayoutLoadToSelected }}
               </div>
             </b-dropdown-item>
@@ -74,11 +66,7 @@
               @click="enforceLayoutToAllCases(layout.layoutID)"
             >
               <div class="d-flex">
-                <BIconArrowRepeat
-                  variant="success"
-                  class="pt-1 mr-3"
-                  font-scale="1.2"
-                />
+                <FontAwesomeIcon :icon="['fas', 'arrows-rotate']" class="pt-1 mr-3" />
                 {{ T.problemCreatorLayoutLoadToAll }}
               </div>
             </b-dropdown-item>
@@ -87,11 +75,7 @@
               @click="copyLayout(layout.layoutID)"
             >
               <div class="d-flex">
-                <BIconBoxArrowInDown
-                  variant="success"
-                  class="pt-1 mr-3"
-                  font-scale="1.2"
-                />
+                <FontAwesomeIcon :icon="['fas', 'download']" class="pt-1 mr-3" />
                 {{ T.problemCreatorLayoutCopy }}
               </div>
             </b-dropdown-item>
@@ -100,11 +84,7 @@
               @click="removeLayout(layout.layoutID)"
             >
               <div class="d-flex">
-                <BIconTrash
-                  variant="danger"
-                  class="pt-1 mr-3"
-                  font-scale="1.2"
-                />
+                <FontAwesomeIcon :icon="['fas', 'trash']" class="pt-1 mr-3" />
                 {{ T.problemCreatorLayoutDelete }}
               </div>
             </b-dropdown-item>
@@ -161,10 +141,7 @@
                             :title="T.problemCreatorLineEdit"
                             variant="light"
                           >
-                            <BIconPencilSquare
-                              variant="info"
-                              font-scale="1.20"
-                            />
+                            <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
                           </b-button>
                         </b-col>
                         <b-col cols="2">
@@ -180,10 +157,7 @@
                               ])
                             "
                           >
-                            <BIconTrashFill
-                              variant="danger"
-                              font-scale="1.20"
-                            />
+                            <FontAwesomeIcon :icon="['fas', 'trash-can']" />
                           </b-button>
                         </b-col>
                       </b-row>
@@ -202,11 +176,7 @@
             >
               <div class="container">
                 <div class="row">
-                  <BIconPlusSquare
-                    variant="info"
-                    font-scale="1.25"
-                    class="mr-2 pt-1"
-                  />
+                  <FontAwesomeIcon :icon="['fas', 'square-plus']" class="mr-2 pt-1" />
                   {{ T.problemCreatorLayoutAddLineInfo }}
                 </div>
               </div>
@@ -222,6 +192,11 @@
 import { defineComponent, reactive, computed, watch } from 'vue';
 import { useStore } from 'vuex';
 import T from '../../../../lang';
+import { BButton, BCard, BCardHeader, BCol, BCollapse, BContainer, BDropdown, BDropdownItem, BFormInput, BModal, BRow } from 'bootstrap-vue-next';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faArrowsLeftRight, faArrowsRotate, faDownload, faPenToSquare, faPencil, faSquarePlus, faTrash, faTrashCan } from '@fortawesome/free-solid-svg-icons';
+library.add(faArrowsLeftRight, faArrowsRotate, faDownload, faPenToSquare, faPencil, faSquarePlus, faTrash, faTrashCan);
 import {
   Layout,
   LayoutID,

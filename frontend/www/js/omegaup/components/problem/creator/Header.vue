@@ -16,7 +16,7 @@
         size="sm"
         @click="uploadZipModal = !uploadZipModal"
       >
-        <BIconUpload class="mr-1" />
+        <FontAwesomeIcon :icon="['fas', 'upload']" class="mr-1" />
         <span class="d-none d-md-inline">
           {{ T.problemCreatorLoadProblem }}</span
         >
@@ -48,7 +48,7 @@
         size="sm"
         @click="generateProblem()"
       >
-        <BIconDownload class="mr-1" />
+        <FontAwesomeIcon :icon="['fas', 'download']" class="mr-1" />
         <span class="d-none d-md-inline">
           {{ T.problemCreatorGenerateProblem }}</span
         >
@@ -59,7 +59,7 @@
         size="sm"
         @click="newProblemConfirmationModal = !newProblemConfirmationModal"
       >
-        <BIconPlus class="mr-1" />
+        <FontAwesomeIcon :icon="['fas', 'plus']" class="mr-1" />
         <span class="d-none d-md-inline">
           {{ T.problemCreatorNewProblem }}</span
         >
@@ -89,6 +89,11 @@ import { useStore } from 'vuex';
 import T from '../../../lang';
 import * as ui from '../../../ui';
 import { Group, CaseGroupID } from '@/js/omegaup/problem/creator/types';
+import { BButton, BCol, BFormInput, BModal, BRow } from 'bootstrap-vue-next';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faDownload, faPlus, faUpload } from '@fortawesome/free-solid-svg-icons';
+library.add(faDownload, faPlus, faUpload);
 
 export default defineComponent({
   name: 'Header',

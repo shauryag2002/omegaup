@@ -39,6 +39,7 @@ import CreatorTabs from './Tabs.vue';
 import T from '../../../lang';
 import introJs from 'intro.js';
 import 'intro.js/introjs.css';
+import { BCard, BCol, BContainer, BRow } from 'bootstrap-vue-next';
 
 const emit = defineEmits<{
   (e: 'download-zip-file', zipObject: any): void;

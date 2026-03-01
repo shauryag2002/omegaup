@@ -5,7 +5,7 @@
   >
     <b-card-text class="text-right">
       <a :href="`/contest/${contestAlias}/report/print/`">
-        <b-icon-printer></b-icon-printer>
+        <FontAwesomeIcon :icon="['fas', 'print']" />
       </a>
     </b-card-text>
     <b-card-text
@@ -54,10 +54,11 @@
                 variant="link"
                 @click="row.toggleDetails"
               >
-                <b-icon-caret-down-square
+                <FontAwesomeIcon
                   v-if="row.detailsShowing"
-                ></b-icon-caret-down-square>
-                <b-icon-caret-up-square v-else></b-icon-caret-up-square>
+                  :icon="['fas', 'square-caret-down']"
+                />
+                <FontAwesomeIcon v-else :icon="['fas', 'square-caret-up']" />
               </b-button>
             </template>
             <template #row-details="row">
@@ -85,20 +86,13 @@ import * as ui from '../../ui';
 
 // Import Bootstrap an BootstrapVue CSS files (order is important)
 import 'bootstrap/dist/css/bootstrap.css';
-import 'bootstrap-vue/dist/bootstrap-vue.css';
+import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
+import { BButton, BCard, BCardText, BTable } from 'bootstrap-vue-next';
 
-// Import Only Required Plugins
-import {
-  TablePlugin,
-  ButtonPlugin,
-  CardPlugin,
-  BIconCaretDownSquare,
-  BIconCaretUpSquare,
-  BIconPrinter,
-} from 'bootstrap-vue';
-Vue.use(TablePlugin);
-Vue.use(ButtonPlugin);
-Vue.use(CardPlugin);
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faPrint, faSquareCaretDown, faSquareCaretUp } from '@fortawesome/free-solid-svg-icons';
+library.add(faPrint, faSquareCaretDown, faSquareCaretUp);
 
 interface GroupDetails {
   name: string;
@@ -112,9 +106,7 @@ interface GroupDetails {
 
 @Component({
   components: {
-    BIconCaretDownSquare,
-    BIconCaretUpSquare,
-    BIconPrinter,
+    FontAwesomeIcon,
   },
 })
 export default class Report extends Vue {

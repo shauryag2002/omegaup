@@ -34,6 +34,7 @@
 import { ref, computed, watch, inject } from 'vue';
 import T from '../../../../lang';
 import * as ui from '@/js/omegaup/ui';
+import { BCollapse } from 'bootstrap-vue-next';
 
 const alias = inject<string>('problemAlias')!;
 

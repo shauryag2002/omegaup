@@ -291,9 +291,8 @@ import T from '../../lang';
 import { types } from '../../api_types';
 import omegaup_Markdown from '../Markdown.vue';
 
-import 'bootstrap-vue/dist/bootstrap-vue.css';
-import { ModalPlugin } from 'bootstrap-vue';
-Vue.use(ModalPlugin);
+import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
+import { BModal } from 'bootstrap-vue-next';
 
 @Component({
   components: {

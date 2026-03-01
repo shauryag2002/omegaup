@@ -50,23 +50,14 @@ fetchMock.mockIf(/^\/api\/.*/, (req: Request) => {
 declare global {
   namespace NodeJS {
     interface Global {
-      $: JQuery;
-      jQuery: JQuery;
       document: Document;
       URL: {
         createObjectURL: () => string;
       };
     }
   }
-
-  interface Window {
-    jQuery: JQuery;
-  }
 }
 
-(global as any).jQuery = require('jquery');
-(global as any).$ = (global as any).jQuery;
-window.jQuery = (global as any).jQuery;
 global.URL.createObjectURL = jest.fn();
 
 // This is needed for CodeMirror to work.

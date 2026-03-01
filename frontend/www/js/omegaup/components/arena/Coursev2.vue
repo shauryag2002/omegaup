@@ -2,7 +2,7 @@
   <b-container fluid class="p-5">
     <div>
       <a class="mb-2" :href="`/course/${course.alias}/`">
-        <b-icon-chevron-left></b-icon-chevron-left>
+        <FontAwesomeIcon :icon="['fas', 'chevron-left']" />
         {{ T.arenaCourseAllContent }}
       </a>
       <h2 class="mb-0">{{ course.name }}</h2>
@@ -58,7 +58,7 @@
               :href="`/course/${encodeURIComponent(
                 course.alias,
               )}/arena/${encodeURIComponent(previousAssignment.alias)}/`"
-              ><b-icon-arrow-left-circle-fill></b-icon-arrow-left-circle-fill>
+              ><FontAwesomeIcon :icon="['fas', 'circle-arrow-left']" />
               {{ previousAssignment.name }}
             </b-button>
             <b-button
@@ -69,7 +69,7 @@
                 course.alias,
               )}/arena/${encodeURIComponent(nextAssignment.alias)}/`"
               >{{ nextAssignment.name }}
-              <b-icon-arrow-right-circle-fill></b-icon-arrow-right-circle-fill>
+              <FontAwesomeIcon :icon="['fas', 'circle-arrow-right']" />
             </b-button>
           </div>
         </b-card-header>
@@ -126,15 +126,14 @@ import omegaup_Markdown from '../Markdown.vue';
 import arena_Scoreboard from './Scoreboard.vue';
 import problem_Details from '../problem/Detailsv2.vue';
 
-import {
-  BIconChevronLeft,
-  BIconArrowLeftCircleFill,
-  BIconArrowRightCircleFill,
-  BootstrapVue,
-} from 'bootstrap-vue';
 import 'bootstrap/dist/css/bootstrap.css';
-import 'bootstrap-vue/dist/bootstrap-vue.css';
-Vue.use(BootstrapVue);
+import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
+import { BButton, BCard, BCardHeader, BCol, BContainer, BNav, BNavItem, BRow } from 'bootstrap-vue-next';
+
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faChevronLeft, faCircleArrowLeft, faCircleArrowRight } from '@fortawesome/free-solid-svg-icons';
+library.add(faChevronLeft, faCircleArrowLeft, faCircleArrowRight);
 
 export enum Tabs {
   Summary = 'summary',
@@ -143,9 +142,7 @@ export enum Tabs {
 
 @Component({
   components: {
-    BIconChevronLeft,
-    BIconArrowLeftCircleFill,
-    BIconArrowRightCircleFill,
+    FontAwesomeIcon,
     'omegaup-markdown': omegaup_Markdown,
     'omegaup-arena-scoreboard': arena_Scoreboard,
     'omegaup-problem-details': problem_Details,

@@ -253,6 +253,7 @@ import * as ui from '../../ui';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { BModal } from 'bootstrap-vue-next';
 import {
   faEyeSlash,
   faTrash,
@@ -269,8 +270,6 @@ library.add(
   faExclamationTriangle,
   faBan,
 );
-import { ModalPlugin } from 'bootstrap-vue';
-Vue.use(ModalPlugin);
 
 @Component({
   components: {
