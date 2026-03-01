@@ -3,6 +3,20 @@ import 'process';
 
 import '@testing-library/jest-dom';
 
+import Vue, { configureCompat } from 'vue';
+import type { DirectiveBinding } from 'vue';
+import Sortable from 'sortablejs';
+
+// Configure Vue 3 compatibility mode for tests — default to Vue 2 behavior.
+configureCompat({
+  MODE: 2,
+});
+
+Vue.directive('Sortable', {
+  mounted: (el: HTMLElement, binding: DirectiveBinding) => {
+    new Sortable(el, binding.value || {});
+  },
+});
 
 // Intercept all API calls. Only let `API.Session.currentSession()` work and
 // fail everything else.
@@ -35,23 +49,14 @@ fetchMock.mockIf(/^\/api\/.*/, (req: Request) => {
 declare global {
   namespace NodeJS {
     interface Global {
-      $: JQuery;
-      jQuery: JQuery;
       document: Document;
       URL: {
         createObjectURL: () => string;
       };
     }
   }
-
-  interface Window {
-    jQuery: JQuery;
-  }
 }
 
-(global as any).jQuery = require('jquery');
-(global as any).$ = (global as any).jQuery;
-window.jQuery = (global as any).jQuery;
 global.URL.createObjectURL = jest.fn();
 
 // This is needed for CodeMirror to work.

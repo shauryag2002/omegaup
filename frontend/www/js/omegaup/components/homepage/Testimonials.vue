@@ -59,16 +59,11 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+<script setup lang="ts">
 import T from '../../lang';
 import testimonialsConfig from '../../testimonials.config';
 
-@Component
-export default class Testimonials extends Vue {
-  T = T;
-  testimonials = testimonialsConfig;
-}
+const testimonials = testimonialsConfig;
 </script>
 
 <style lang="scss" scoped>

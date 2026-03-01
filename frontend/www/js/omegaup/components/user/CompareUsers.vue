@@ -11,7 +11,7 @@
             <label class="form-label">{{ T.compareUser1Label }}</label>
             <omegaup-common-typeahead
               :existing-options="searchResultUsers1"
-              :value.sync="selectedUser1"
+              v-model:value="selectedUser1"
               :max-results="10"
               :placeholder="T.compareEnterUsername"
               @update-existing-options="
@@ -28,7 +28,7 @@
             <label class="form-label">{{ T.compareUser2Label }}</label>
             <omegaup-common-typeahead
               :existing-options="searchResultUsers2"
-              :value.sync="selectedUser2"
+              v-model:value="selectedUser2"
               :max-results="10"
               :placeholder="T.compareEnterUsername"
               @update-existing-options="

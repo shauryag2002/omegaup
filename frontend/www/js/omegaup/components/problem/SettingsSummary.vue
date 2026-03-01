@@ -101,8 +101,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
@@ -126,99 +126,106 @@ library.add(
   faBookmark,
 );
 
-@Component({
-  components: {
-    FontAwesomeIcon,
+const props = withDefaults(
+  defineProps<{
+    problem: types.ArenaProblemDetails;
+    problemsetTitle?: null | string;
+    showVisibilityIndicators?: boolean;
+    showEditLink?: boolean;
+    userLoggedIn?: boolean;
+    isBookmarked?: boolean;
+    inContestOrCourse?: boolean;
+  }>(),
+  {
+    problemsetTitle: null,
+    showVisibilityIndicators: false,
+    showEditLink: false,
+    userLoggedIn: false,
+    isBookmarked: false,
+    inContestOrCourse: false,
   },
-})
-export default class ProblemSettingsSummary extends Vue {
-  @Prop() problem!: types.ArenaProblemDetails;
-  @Prop({ default: null }) problemsetTitle!: null | string;
-  @Prop({ default: false }) showVisibilityIndicators!: boolean;
-  @Prop({ default: false }) showEditLink!: boolean;
-  @Prop({ default: false }) userLoggedIn!: boolean;
-  @Prop({ default: false }) isBookmarked!: boolean;
-  @Prop({ default: false }) inContestOrCourse!: boolean;
+);
 
-  T = T;
+const emit = defineEmits<{
+  (e: 'toggle-bookmark', alias: string): void;
+}>();
 
-  onToggleBookmark(): void {
-    this.$emit('toggle-bookmark', this.problem.alias);
-  }
-
-  get title(): string {
-    if (this.showVisibilityIndicators) {
-      return ui.formatString(T.problemSettingsSummaryTitleWithProblemId, {
-        problem_id: this.problem.problem_id,
-        problem_title: this.problem.title,
-      });
-    }
-    if (this.problem.letter && this.problemsetTitle) {
-      return ui.formatString(
-        T.problemSettingsSummaryTitleWithProblemsetTitleAndLetter,
-        {
-          problemset_title: this.problemsetTitle,
-          letter: this.problem.letter,
-          problem_title: this.problem.title,
-        },
-      );
-    }
-    if (this.problem.letter && !this.problemsetTitle) {
-      return ui.formatString(T.problemSettingsSummaryTitleWithLetter, {
-        letter: this.problem.letter,
-        problem_title: this.problem.title,
-      });
-    }
-    return this.problem.title;
-  }
-
-  get memoryLimit(): string {
-    if (!this.problem.settings?.limits.MemoryLimit) {
-      return '';
-    }
-    if (typeof this.problem.settings?.limits.MemoryLimit === 'string') {
-      return this.problem.settings?.limits.MemoryLimit;
-    }
-    const memoryLimit = this.problem.settings?.limits.MemoryLimit as number;
-    return `${memoryLimit / 1024 / 1024} MiB`;
-  }
-
-  get timeLimit(): string {
-    if (!this.problem.settings?.limits.TimeLimit) {
-      return '';
-    }
-    return `${this.problem.settings?.limits.TimeLimit}`;
-  }
-
-  get overallWallTimeLimit(): string {
-    if (!this.problem.settings?.limits.OverallWallTimeLimit) {
-      return '';
-    }
-    return `${this.problem.settings?.limits.OverallWallTimeLimit}`;
-  }
-
-  get inputLimit(): string {
-    if (!this.problem.input_limit) {
-      return '';
-    }
-    return `${this.problem.input_limit / 1024} KiB`;
-  }
-
-  get warningReasons(): string[] {
-    return this.problem.warningReasons ?? [];
-  }
-
-  get showWarningReasons(): boolean {
-    // Only show warning reasons when visibility indicators are active
-    // (which means the user is viewing their own problem details)
-    return this.showVisibilityIndicators;
-  }
-
-  get isBanned(): boolean {
-    // visibility <= -2 indicates banned status
-    return this.problem.visibility <= -2;
-  }
+function onToggleBookmark(): void {
+  emit('toggle-bookmark', props.problem.alias);
 }
+
+const title = computed((): string => {
+  if (props.showVisibilityIndicators) {
+    return ui.formatString(T.problemSettingsSummaryTitleWithProblemId, {
+      problem_id: props.problem.problem_id,
+      problem_title: props.problem.title,
+    });
+  }
+  if (props.problem.letter && props.problemsetTitle) {
+    return ui.formatString(
+      T.problemSettingsSummaryTitleWithProblemsetTitleAndLetter,
+      {
+        problemset_title: props.problemsetTitle,
+        letter: props.problem.letter,
+        problem_title: props.problem.title,
+      },
+    );
+  }
+  if (props.problem.letter && !props.problemsetTitle) {
+    return ui.formatString(T.problemSettingsSummaryTitleWithLetter, {
+      letter: props.problem.letter,
+      problem_title: props.problem.title,
+    });
+  }
+  return props.problem.title;
+});
+
+const memoryLimit = computed((): string => {
+  if (!props.problem.settings?.limits.MemoryLimit) {
+    return '';
+  }
+  if (typeof props.problem.settings?.limits.MemoryLimit === 'string') {
+    return props.problem.settings?.limits.MemoryLimit;
+  }
+  const memLimit = props.problem.settings?.limits.MemoryLimit as number;
+  return `${memLimit / 1024 / 1024} MiB`;
+});
+
+const timeLimit = computed((): string => {
+  if (!props.problem.settings?.limits.TimeLimit) {
+    return '';
+  }
+  return `${props.problem.settings?.limits.TimeLimit}`;
+});
+
+const overallWallTimeLimit = computed((): string => {
+  if (!props.problem.settings?.limits.OverallWallTimeLimit) {
+    return '';
+  }
+  return `${props.problem.settings?.limits.OverallWallTimeLimit}`;
+});
+
+const inputLimit = computed((): string => {
+  if (!props.problem.input_limit) {
+    return '';
+  }
+  return `${props.problem.input_limit / 1024} KiB`;
+});
+
+const warningReasons = computed((): string[] => {
+  return props.problem.warningReasons ?? [];
+});
+
+const showWarningReasons = computed((): boolean => {
+  // Only show warning reasons when visibility indicators are active
+  // (which means the user is viewing their own problem details)
+  return props.showVisibilityIndicators;
+});
+
+const isBanned = computed((): boolean => {
+  // visibility <= -2 indicates banned status
+  return props.problem.visibility <= -2;
+});
 </script>
 
 <style lang="scss" scoped>

@@ -17,11 +17,11 @@
     <tbody>
       <tr v-for="solver in solvers" :key="solver.username">
         <td data-submission-user>
-          <omegaup-username
+          <OmegaupUsername
             :classname="solver.classname"
             :username="solver.username"
             :linkify="true"
-          ></omegaup-username>
+          ></OmegaupUsername>
         </td>
         <td data-submission-language>{{ solver.language }}</td>
         <td data-submission-memory>
@@ -36,24 +36,15 @@
   </table>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
 import T from '../../lang';
 import { types } from '../../api_types';
 import * as time from '../../time';
-import omegaup_Username from '../user/Username.vue';
+import OmegaupUsername from '../user/Username.vue';
 
-@Component({
-  components: {
-    'omegaup-username': omegaup_Username,
-  },
-})
-export default class Solvers extends Vue {
-  @Prop() solvers!: types.BestSolvers[];
-
-  T = T;
-  time = time;
-}
+defineProps<{
+  solvers: types.BestSolvers[];
+}>();
 </script>
 
 <style lang="scss" scoped>

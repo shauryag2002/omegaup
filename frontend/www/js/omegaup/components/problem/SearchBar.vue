@@ -19,18 +19,18 @@
         </a>
       </div>
       <div class="form-group mr-2">
-        <omegaup-common-typeahead
+        <OmegaupCommonTypeahead
           data-problem-keyword-search
           :only-existing-tags="false"
           :max-results="10"
           :existing-options="searchResultProblems"
           :options="searchResultProblems"
-          :value.sync="currentKeyword"
+          v-model:value="currentKeyword"
           :placeholder="T.wordsKeywordSearch"
           @update-existing-options="
             (query) => $emit('update-search-result-problems', query)
           "
-        ></omegaup-common-typeahead>
+        ></OmegaupCommonTypeahead>
         <input type="hidden" name="query" :value="currentKeywordValue" />
       </div>
       <div class="form-group mr-2">
@@ -74,48 +74,47 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed } from 'vue';
 import T from '../../lang';
 import { types } from '../../api_types';
-import common_Typeahead from '../common/Typeahead.vue';
+import OmegaupCommonTypeahead from '../common/Typeahead.vue';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 library.add(faTimes);
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-    'omegaup-common-typeahead': common_Typeahead,
-  },
-})
-export default class ProblemSearchBar extends Vue {
-  @Prop() tags!: string[];
-  @Prop() keyword!: string;
-  @Prop() language!: string;
-  @Prop() languages!: string[];
-  @Prop() onlyQualitySeal!: boolean;
-  @Prop() searchResultProblems!: types.ListItem[];
+const props = defineProps<{
+  tags: string[];
+  keyword: string;
+  language: string;
+  languages: string[];
+  onlyQualitySeal: boolean;
+  searchResultProblems: types.ListItem[];
+}>();
 
-  T = T;
+defineEmits<{
+  (e: 'update-search-result-problems', query: string): void;
+}>();
 
-  currentKeyword: types.ListItem = { key: this.keyword, value: this.keyword };
-  currentLanguage = this.language;
-  currentOnlyQualitySeal = this.onlyQualitySeal;
+const currentKeyword = ref<types.ListItem>({
+  key: props.keyword,
+  value: props.keyword,
+});
+const currentLanguage = ref(props.language);
+const currentOnlyQualitySeal = ref(props.onlyQualitySeal);
 
-  getLanguageText(language: string): string {
-    if (language === 'all') return T.wordsAll;
-    if (language === 'en') return T.wordsEnglish;
-    if (language === 'es') return T.wordsSpanish;
-    return T.wordsPortuguese;
-  }
-
-  get currentKeywordValue(): null | string {
-    return this.currentKeyword?.value ?? null;
-  }
+function getLanguageText(language: string): string {
+  if (language === 'all') return T.wordsAll;
+  if (language === 'en') return T.wordsEnglish;
+  if (language === 'es') return T.wordsSpanish;
+  return T.wordsPortuguese;
 }
+
+const currentKeywordValue = computed((): null | string => {
+  return currentKeyword.value?.value ?? null;
+});
 </script>
 
 <style lang="scss" scoped>

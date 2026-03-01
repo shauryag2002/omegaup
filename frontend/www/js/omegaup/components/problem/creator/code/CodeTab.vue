@@ -80,10 +80,9 @@ import creator_CodeView from '../../../arena/CodeView.vue';
 import { LanguageInfo, supportedLanguages } from '../../../../grader/util';
 import introJs from 'intro.js';
 import 'intro.js/introjs.css';
-import VueCookies from 'vue-cookies';
+import { getCookie, setCookie } from '../../../../cookies';
 import { TabIndex } from '../Tabs.vue';
 
-Vue.use(VueCookies, { expire: -1 });
 
 @Component({
   components: {
@@ -217,7 +216,7 @@ export default class CodeTab extends Vue {
   }
 
   startIntroGuide() {
-    if (!this.$cookies.get('has-visited-code-tab')) {
+    if (!getCookie('has-visited-code-tab')) {
       introJs()
         .setOptions({
           nextLabel: T.interactiveGuideNextButton,
@@ -256,7 +255,7 @@ export default class CodeTab extends Vue {
         })
         .start();
 
-      this.$cookies.set('has-visited-code-tab', true, -1);
+      setCookie('has-visited-code-tab', true);
     }
   }
 }

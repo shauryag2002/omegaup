@@ -8,11 +8,11 @@
           date: time.formatDate(generalFeedback.date),
         })
       }}
-      <omegaup-user-username
+      <OmegaupUserUsername
         :username="generalFeedback.author"
         :classname="generalFeedback.author_classname"
         :linkify="true"
-      ></omegaup-user-username>
+      />
     </div>
     <div v-if="isAdmin" class="feedback-section">
       <a
@@ -34,40 +34,38 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
 import * as time from '../../time';
 
-import user_Username from '../user/Username.vue';
+import OmegaupUserUsername from '../user/Username.vue';
 
-@Component({
-  components: {
-    'omegaup-user-username': user_Username,
+const props = withDefaults(
+  defineProps<{
+    guid: string;
+    isAdmin?: boolean;
+    feedbackOptions?: types.SubmissionFeedback[];
+  }>(),
+  {
+    isAdmin: false,
+    feedbackOptions: () => [],
   },
-})
-export default class SubmissionFeedback extends Vue {
-  @Prop() guid!: string;
-  @Prop({ default: false }) isAdmin!: boolean;
-  @Prop({ default: () => [] }) feedbackOptions!: types.SubmissionFeedback[];
+);
 
-  T = T;
-  ui = ui;
-  time = time;
+const showFeedbackForm = ref(false);
 
-  showFeedbackForm = false;
-  feedback = this.generalFeedback?.feedback ?? null;
+const generalFeedback = computed((): null | types.SubmissionFeedback => {
+  if (!props.feedbackOptions.length) return null;
+  const [feedback] = props.feedbackOptions.filter(
+    (feedback) => feedback.range_bytes_start == null,
+  );
+  return feedback;
+});
 
-  get generalFeedback(): null | types.SubmissionFeedback {
-    if (!this.feedbackOptions.length) return null;
-    const [feedback] = this.feedbackOptions.filter(
-      (feedback) => feedback.range_bytes_start == null,
-    );
-    return feedback;
-  }
-}
+const feedback = ref(generalFeedback.value?.feedback ?? null);
 </script>
 
 <style lang="scss">

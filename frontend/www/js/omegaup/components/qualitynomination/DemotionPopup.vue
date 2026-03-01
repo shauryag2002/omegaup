@@ -1,5 +1,5 @@
 <template>
-  <omegaup-overlay-popup @dismiss="onHide">
+  <OmegaupOverlayPopup @dismiss="onHide">
     <transition name="fade">
       <form data-demotion-popup class="h-auto w-auto">
         <template v-if="currentView === AvailableViews.Question">
@@ -75,43 +75,50 @@
         </template>
       </form>
     </transition>
-  </omegaup-overlay-popup>
+  </OmegaupOverlayPopup>
 </template>
 
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
-import omegaup_OverlayPopup from '../OverlayPopup.vue';
-import T from '../../lang';
-import * as ui from '../../ui';
-
 export enum AvailableViews {
   Content,
   Question,
   Thanks,
 }
+</script>
 
-@Component({
-  components: {
-    'omegaup-overlay-popup': omegaup_OverlayPopup,
-  },
-})
-export default class QualityNominationDemotionPopup extends Vue {
-  AvailableViews = AvailableViews;
-  T = T;
-  ui = ui;
-  rationale = '';
-  original = '';
-  currentView = AvailableViews.Question;
-  selectedReason = '';
+<script setup lang="ts">
+import { ref } from 'vue';
+import OmegaupOverlayPopup from '../OverlayPopup.vue';
+import T from '../../lang';
 
-  onHide(): void {
-    this.$emit('dismiss');
-  }
+const rationale = ref('');
+const original = ref('');
+const currentView = ref(AvailableViews.Question);
+const selectedReason = ref('');
 
-  onSubmit(): void {
-    this.$emit('submit', this);
-    this.currentView = AvailableViews.Thanks;
-    setTimeout(() => this.onHide(), 2000);
-  }
+const emit = defineEmits<{
+  (e: 'dismiss'): void;
+  (
+    e: 'submit',
+    data: {
+      rationale: string;
+      selectedReason: string;
+      original: string;
+    },
+  ): void;
+}>();
+
+function onHide(): void {
+  emit('dismiss');
+}
+
+function onSubmit(): void {
+  emit('submit', {
+    rationale: rationale.value,
+    selectedReason: selectedReason.value,
+    original: original.value,
+  });
+  currentView.value = AvailableViews.Thanks;
+  setTimeout(() => onHide(), 2000);
 }
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <tags-input
+  <TagsInput
     v-model="selectedOptions"
     :existing-tags="existingOptions"
     :typeahead="true"
@@ -12,45 +12,52 @@
     :only-existing-tags="true"
     :typeahead-hide-discard="true"
     @change="updateExistingOptions"
-    @tag-added="$emit('update:value', selectedOptions)"
-    @tag-removed="$emit('update:value', selectedOptions)"
+    @tag-added="emit('update:value', selectedOptions)"
+    @tag-removed="emit('update:value', selectedOptions)"
   >
-  </tags-input>
+  </TagsInput>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
-import VoerroTagsInput from '@voerro/vue-tagsinput';
-import '@voerro/vue-tagsinput/dist/style.css';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
+import TagsInput from './TagsInput.vue';
 import T from '../../lang';
 import { types } from '../../api_types';
 
-@Component({
-  components: {
-    'tags-input': VoerroTagsInput,
+const props = withDefaults(
+  defineProps<{
+    existingOptions: types.ListItem[];
+    activationThreshold?: number;
+    maxResults?: number;
+    value?: types.ListItem[];
+  }>(),
+  {
+    activationThreshold: 3,
+    maxResults: 10,
+    value: () => [],
   },
-})
-export default class MultiTypeahead extends Vue {
-  @Prop() existingOptions!: types.ListItem[];
-  @Prop({ default: 3 }) activationThreshold!: number;
-  @Prop({ default: 10 }) maxResults!: number;
-  @Prop({ default: () => [] }) value!: types.ListItem[];
+);
 
-  T = T;
-  selectedOptions: types.ListItem[] = [];
+const emit = defineEmits<{
+  (e: 'update:value', value: types.ListItem[]): void;
+  (e: 'update-existing-options', query: string): void;
+}>();
 
-  updateExistingOptions(query: string): void {
-    if (query.length < this.activationThreshold) return;
-    this.$emit('update-existing-options', query);
-  }
+const selectedOptions = ref<types.ListItem[]>([]);
 
-  @Watch('value')
-  onValueChanged(newValue: types.ListItem[]): void {
-    this.selectedOptions = this.existingOptions.filter((option) =>
+function updateExistingOptions(query: string): void {
+  if (query.length < props.activationThreshold) return;
+  emit('update-existing-options', query);
+}
+
+watch(
+  () => props.value,
+  (newValue: types.ListItem[]) => {
+    selectedOptions.value = props.existingOptions.filter((option) =>
       newValue?.some((opt) => option.key === opt['key']),
     );
-  }
-}
+  },
+);
 </script>
 
 <style lang="scss">

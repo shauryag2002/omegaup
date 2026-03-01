@@ -3,23 +3,23 @@
     <div class="card-body">
       <form
         class="form"
-        @submit.prevent="$emit('add-group-teaching-assistant', group.key)"
+        @submit.prevent="emit('add-group-teaching-assistant', group.key)"
       >
         <div class="form-group mb-0">
           <label class="font-weight-bold w-100"
             >{{ T.courseEditGroupTeachingAssistant }}
-            <font-awesome-icon
+            <FontAwesomeIcon
               :title="T.courseEditAddGroupTeachingAssistantTooltip"
               icon="info-circle"
             />
-            <omegaup-common-typeahead
+            <OmegaupCommonTypeahead
               :existing-options="searchResultGroups"
-              :value.sync="group"
+              v-model:value="group"
               :max-results="10"
               @update-existing-options="
-                (query) => $emit('update-search-result-groups', query)
+                (query) => emit('update-search-result-groups', query)
               "
-            ></omegaup-common-typeahead>
+            ></OmegaupCommonTypeahead>
           </label>
         </div>
         <button class="btn btn-primary" type="submit">
@@ -59,7 +59,7 @@
               class="close float-none"
               type="button"
               @click="
-                $emit(
+                emit(
                   'remove-group-teaching-assistant',
                   groupTeachingAssistant.alias,
                 )
@@ -74,39 +74,34 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
-import common_Typeahead from '../common/Typeahead.vue';
+import OmegaupCommonTypeahead from '../common/Typeahead.vue';
 
-import {
-  FontAwesomeIcon,
-  FontAwesomeLayers,
-  FontAwesomeLayersText,
-} from '@fortawesome/vue-fontawesome';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 library.add(fas);
 
-@Component({
-  components: {
-    'omegaup-common-typeahead': common_Typeahead,
-    'font-awesome-icon': FontAwesomeIcon,
-    'font-awesome-layers': FontAwesomeLayers,
-    'font-awesome-layers-text': FontAwesomeLayersText,
+const props = defineProps<{
+  groupTeachingAssistants: types.ContestGroupAdmin[];
+  searchResultGroups: types.ListItem[];
+}>();
+
+const emit = defineEmits<{
+  (e: 'add-group-teaching-assistant', key: string): void;
+  (e: 'update-search-result-groups', query: string): void;
+  (e: 'remove-group-teaching-assistant', alias: string): void;
+}>();
+
+const group = ref<null | types.ListItem>(null);
+
+watch(
+  () => props.groupTeachingAssistants,
+  () => {
+    group.value = null;
   },
-})
-export default class GroupTeachingAssistants extends Vue {
-  @Prop() groupTeachingAssistants!: types.ContestGroupAdmin[];
-  @Prop() searchResultGroups!: types.ListItem[];
-
-  T = T;
-  group: null | types.ListItem = null;
-
-  @Watch('groupTeachingAssistants')
-  onGroupTeachingAssistantsChanged(): void {
-    this.group = null;
-  }
-}
+);
 </script>

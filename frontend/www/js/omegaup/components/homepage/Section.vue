@@ -24,20 +24,22 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
-
-@Component
-export default class Homepage extends Vue {
-  @Prop() title!: string;
-  @Prop() description!: string;
-  @Prop() buttons!: {
-    text: string;
-    href: string;
-  }[];
-  @Prop() imageSrc!: string;
-  @Prop({ default: false }) imageToRight!: boolean;
-}
+<script setup lang="ts">
+withDefaults(
+  defineProps<{
+    title: string;
+    description: string;
+    buttons: {
+      text: string;
+      href: string;
+    }[];
+    imageSrc: string;
+    imageToRight?: boolean;
+  }>(),
+  {
+    imageToRight: false,
+  },
+);
 </script>
 
 <style lang="scss" scoped>

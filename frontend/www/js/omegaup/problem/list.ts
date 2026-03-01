@@ -1,4 +1,4 @@
-import Vue from 'vue';
+import { createApp, h, reactive } from 'vue';
 import problem_List from '../components/problem/List.vue';
 import { types } from '../api_types';
 import { omegaup, OmegaUp } from '../omegaup';
@@ -61,66 +61,56 @@ OmegaUp.on('ready', () => {
       searchResultProblems.push({ key: query, value: query });
     }
   }
-  new Vue({
-    el: '#main-container',
-    components: {
-      'omegaup-problem-list': problem_List,
-    },
-    data: () => ({
-      searchResultProblems: searchResultProblems,
-    }),
-    render: function (createElement) {
-      return createElement('omegaup-problem-list', {
-        props: {
-          problems: payload.problems,
-          loggedIn: payload.loggedIn,
-          selectedTags: payload.selectedTags,
-          pagerItems: payload.pagerItems,
-          wizardTags: payload.tagData,
-          language: payload.language,
-          languages: payload.languages,
-          keyword: payload.keyword,
-          tags: payload.tags,
-          onlyQualitySeal: onlyQualitySeal,
-          sortOrder: sortOrder,
-          columnName: columnName,
-          searchResultProblems: this.searchResultProblems,
-        },
-        on: {
-          'wizard-search': (queryParameters: {
-            [key: string]: string;
-          }): void => {
-            window.location.search = ui.buildURLQuery(queryParameters);
-          },
-          'apply-filter': (
-            columnName: string,
-            sortOrder: omegaup.SortOrder,
-          ): void => {
-            const queryParameters = {
-              language,
-              query: query ?? '',
-              only_quality_seal: onlyQualitySeal,
-              order_by: columnName,
-              sort_order: sortOrder,
-              tag,
-            };
-            window.location.replace(
-              `/problem?${ui.buildURLQuery(queryParameters)}`,
-            );
-          },
-          'update-search-result-problems': (query: string) => {
-            api.Problem.listForTypeahead({
-              query,
-              search_type: 'all',
-            })
-              .then((data) => {
-                data.results.push({ key: query, value: query });
-                this.searchResultProblems = data.results;
-              })
-              .catch(ui.apiError);
-          },
-        },
-      });
-    },
+  const state = reactive({
+    searchResultProblems: searchResultProblems,
   });
+
+  createApp({
+    render: () =>
+      h(problem_List, {
+        problems: payload.problems,
+        loggedIn: payload.loggedIn,
+        selectedTags: payload.selectedTags,
+        pagerItems: payload.pagerItems,
+        wizardTags: payload.tagData,
+        language: payload.language,
+        languages: payload.languages,
+        keyword: payload.keyword,
+        tags: payload.tags,
+        onlyQualitySeal: onlyQualitySeal,
+        sortOrder: sortOrder,
+        columnName: columnName,
+        searchResultProblems: state.searchResultProblems,
+        onWizardSearch: (queryParameters: { [key: string]: string }): void => {
+          window.location.search = ui.buildURLQuery(queryParameters);
+        },
+        onApplyFilter: (
+          columnName: string,
+          sortOrder: omegaup.SortOrder,
+        ): void => {
+          const queryParameters = {
+            language,
+            query: query ?? '',
+            only_quality_seal: onlyQualitySeal,
+            order_by: columnName,
+            sort_order: sortOrder,
+            tag,
+          };
+          window.location.replace(
+            `/problem?${ui.buildURLQuery(queryParameters)}`,
+          );
+        },
+        onUpdateSearchResultProblems: (query: string) => {
+          api.Problem.listForTypeahead({
+            query,
+            search_type: 'all',
+          })
+            .then((data) => {
+              data.results.push({ key: query, value: query });
+              state.searchResultProblems = data.results;
+            })
+            .catch(ui.apiError);
+        },
+      }),
+  }).mount('#main-container');
 });

@@ -9,11 +9,11 @@
     <div class="card-body">
       <div class="container-fluid">
         <div class="row">
-          <omegaup-badge
+          <OmegaupBadge
             v-for="(badge, idx) in badges"
             :key="idx"
             :badge="badge"
-          ></omegaup-badge>
+          ></OmegaupBadge>
         </div>
       </div>
     </div>
@@ -28,48 +28,42 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
-import badge_Badge from '../badge/Badge.vue';
+import OmegaupBadge from '../badge/Badge.vue';
 
-@Component({
-  components: {
-    'omegaup-badge': badge_Badge,
-  },
-})
-export default class BadgeList extends Vue {
-  @Prop() allBadges!: Set<string>;
-  @Prop() visitorBadges!: Set<string>;
-  @Prop() showAllBadgesLink!: boolean;
+const props = defineProps<{
+  allBadges: Set<string>;
+  visitorBadges: Set<string>;
+  showAllBadgesLink: boolean;
+}>();
 
-  T = T;
-  isProfile = this.showAllBadgesLink;
+const isProfile = props.showAllBadgesLink;
 
-  get badges(): types.Badge[] {
-    return Array.from(this.allBadges)
-      .map((badge: string) => ({
-        badge_alias: badge,
-        unlocked: this.visitorBadges.has(badge),
-        assignation_time: new Date(),
-        total_users: 0,
-        owners_count: 0,
-      }))
-      .sort((a: types.Badge, b: types.Badge) => {
-        // Alphabetical order BY NAME, not alias.
-        const aName = this.getBadgeName(a.badge_alias);
-        const bName = this.getBadgeName(b.badge_alias);
-        if (aName == bName) {
-          return 0;
-        }
-        return aName < bName ? -1 : 1;
-      });
-  }
+const badges = computed((): types.Badge[] => {
+  return Array.from(props.allBadges)
+    .map((badge: string) => ({
+      badge_alias: badge,
+      unlocked: props.visitorBadges.has(badge),
+      assignation_time: new Date(),
+      total_users: 0,
+      owners_count: 0,
+    }))
+    .sort((a: types.Badge, b: types.Badge) => {
+      // Alphabetical order BY NAME, not alias.
+      const aName = getBadgeName(a.badge_alias);
+      const bName = getBadgeName(b.badge_alias);
+      if (aName == bName) {
+        return 0;
+      }
+      return aName < bName ? -1 : 1;
+    });
+});
 
-  getBadgeName(alias: string): string {
-    return T[`badge_${alias}_name`];
-  }
+function getBadgeName(alias: string): string {
+  return T[`badge_${alias}_name`];
 }
 </script>
 

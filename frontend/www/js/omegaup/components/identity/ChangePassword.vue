@@ -24,7 +24,7 @@
           <div class="form-group col-lg-4 col-md-6 col-sm-6">
             <label class="d-block">
               {{ T.userEditChangePasswordNewPassword }}
-              <omegaup-password-input
+              <OmegaupPasswordInput
                 v-model="newPassword"
                 autocomplete="new-password"
               />
@@ -33,7 +33,7 @@
           <div class="form-group col-lg-4 col-md-6 col-sm-6">
             <label class="d-block">
               {{ T.userEditChangePasswordRepeatNewPassword }}
-              <omegaup-password-input
+              <OmegaupPasswordInput
                 v-model="newPasswordRepeat"
                 autocomplete="new-password"
               />
@@ -61,23 +61,25 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import * as ui from '../../ui';
 import T from '../../lang';
-import omegaup_PasswordInput from '../common/PasswordInput.vue';
+import OmegaupPasswordInput from '../common/PasswordInput.vue';
 
-@Component({
-  components: {
-    'omegaup-password-input': omegaup_PasswordInput,
-  },
-})
-export default class IdentityChangePassword extends Vue {
-  @Prop() username!: string;
+defineProps<{
+  username: string;
+}>();
 
-  T = T;
-  ui = ui;
-  newPassword = '';
-  newPasswordRepeat = '';
-}
+defineEmits<{
+  (
+    e: 'emit-change-password',
+    newPassword: string,
+    newPasswordRepeat: string,
+  ): void;
+  (e: 'emit-cancel'): void;
+}>();
+
+const newPassword = ref('');
+const newPasswordRepeat = ref('');
 </script>

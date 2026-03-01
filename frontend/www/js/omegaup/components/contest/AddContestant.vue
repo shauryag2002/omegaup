@@ -5,14 +5,14 @@
         <form class="form" @submit.prevent="onSubmit">
           <div class="form-group">
             <label>{{ T.addUsersMultipleOrSingleUser }}</label>
-            <omegaup-common-multi-typeahead
+            <OmegaupCommonMultiTypeahead
               :existing-options="searchResultUsers"
-              :value.sync="typeaheadContestants"
+              v-model:value="typeaheadContestants"
               @update-existing-options="
-                (query) => $emit('update-search-result-users', query)
+                (query) => emit('update-search-result-users', query)
               "
             >
-            </omegaup-common-multi-typeahead>
+            </OmegaupCommonMultiTypeahead>
           </div>
           <button class="btn btn-primary user-add-typeahead" type="submit">
             {{ T.contestAdduserAddUsers }}
@@ -21,10 +21,10 @@
           <div class="form-group">
             <!-- TODO: Replace word multiple user with ("Separados por espacio, coma, o salto de linea") -->
             <label>{{ T.wordsMultipleUser }}</label>
-            <omegaup-multi-user-add-area
+            <OmegaupMultiUserAddArea
               :users="currentUsers.map((user) => user.username)"
               @update-users="updateUsersList"
-            ></omegaup-multi-user-add-area>
+            ></OmegaupMultiUserAddArea>
           </div>
           <button class="btn btn-primary user-add-bulk" type="submit">
             {{ T.contestAdduserAddUsers }}
@@ -49,10 +49,10 @@
         <tbody>
           <tr v-for="user in currentUsers" :key="user.username">
             <td class="text-center" data-uploaded-contestants>
-              <omegaup-user-username
+              <OmegaupUserUsername
                 :linkify="true"
                 :username="user.username"
-              ></omegaup-user-username>
+              ></OmegaupUserUsername>
             </td>
             <td class="text-center">
               <template v-if="user.access_time !== null">
@@ -62,18 +62,18 @@
             <td v-if="contest.window_length !== null" class="text-center">
               <div v-if="user.end_time" class="row">
                 <div class="col-xs-10">
-                  <omegaup-datetimepicker
+                  <OmegaupDatetimepicker
                     v-model="user.end_time"
                     :finish="contest.finish_time"
                     :start="contest.start_time"
-                  ></omegaup-datetimepicker>
+                  ></OmegaupDatetimepicker>
                 </div>
                 <div class="col-xs-2">
                   <button
                     class="btn btn-link"
-                    @click="$emit('save-end-time', user)"
+                    @click="emit('save-end-time', user)"
                   >
-                    <font-awesome-icon icon="save" />
+                    <FontAwesomeIcon icon="save" />
                   </button>
                 </div>
               </div>
@@ -83,7 +83,7 @@
                 class="close float-none"
                 type="button"
                 :title="T.contestAdduserRegisteredUserDelete"
-                @click="$emit('remove-user', user)"
+                @click="emit('remove-user', user)"
               >
                 ×
               </button>
@@ -95,80 +95,72 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as time from '../../time';
-import DateTimePicker from '../DateTimePicker.vue';
-import user_Username from '../user/Username.vue';
-import common_MultiTypeahead from '../common/MultiTypeahead.vue';
-import MultiUserAddArea from '../common/MultiUserAddArea.vue';
+import OmegaupDatetimepicker from '../DateTimePicker.vue';
+import OmegaupUserUsername from '../user/Username.vue';
+import OmegaupCommonMultiTypeahead from '../common/MultiTypeahead.vue';
+import OmegaupMultiUserAddArea from '../common/MultiUserAddArea.vue';
 
-import {
-  FontAwesomeIcon,
-  FontAwesomeLayers,
-  FontAwesomeLayersText,
-} from '@fortawesome/vue-fontawesome';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 library.add(fas);
 
-@Component({
-  components: {
-    'omegaup-datetimepicker': DateTimePicker,
-    'omegaup-user-username': user_Username,
-    'omegaup-common-multi-typeahead': common_MultiTypeahead,
-    'omegaup-multi-user-add-area': MultiUserAddArea,
-    'font-awesome-icon': FontAwesomeIcon,
-    'font-awesome-layers': FontAwesomeLayers,
-    'font-awesome-layers-text': FontAwesomeLayersText,
-  },
-})
-export default class AddContestant extends Vue {
-  @Prop() users!: types.ContestUser[];
-  @Prop() contest!: types.ContestAdminDetails;
-  @Prop() searchResultUsers!: types.ListItem[];
+const props = defineProps<{
+  users: types.ContestUser[];
+  contest: types.ContestAdminDetails;
+  searchResultUsers: types.ListItem[];
+}>();
 
-  T = T;
-  time = time;
-  bulkContestants = '';
-  typeaheadContestants: types.ListItem[] = [];
-  currentUsers = this.users;
+const emit = defineEmits<{
+  (e: 'add-user', users: string[]): void;
+  (e: 'update-search-result-users', query: string): void;
+  (e: 'save-end-time', user: types.ContestUser): void;
+  (e: 'remove-user', user: types.ContestUser): void;
+}>();
 
-  onSubmit(): void {
-    let users: string[] = [];
-    // Add each token as a new username chip component
-    if (this.bulkContestants !== '') {
-      users = this.bulkContestants.split(',');
-    }
+const bulkContestants = ref('');
+const typeaheadContestants = ref<types.ListItem[]>([]);
+const currentUsers = ref(props.users);
 
-    if (this.typeaheadContestants) {
-      users = [...users, ...this.typeaheadContestants.map((user) => user.key)];
-    }
-
-    // If no users were added, do nothing
-    if (users.length === 0) {
-      return;
-    }
-
-    this.$emit(
-      'add-user',
-      users.map((user) => user.trim()),
-    );
+function onSubmit(): void {
+  let users: string[] = [];
+  // Add each token as a new username chip component
+  if (bulkContestants.value !== '') {
+    users = bulkContestants.value.split(',');
   }
 
-  // receives a list of users from the MultiUserAddArea component
-  updateUsersList(users: string[]): void {
-    this.bulkContestants = users.join(',');
+  if (typeaheadContestants.value) {
+    users = [...users, ...typeaheadContestants.value.map((user) => user.key)];
   }
 
-  @Watch('users')
-  onUsersChange(newUsers: types.ContestUser[]): void {
-    this.currentUsers = newUsers;
-    this.typeaheadContestants = [];
-    this.bulkContestants = '';
+  // If no users were added, do nothing
+  if (users.length === 0) {
+    return;
   }
+
+  emit(
+    'add-user',
+    users.map((user) => user.trim()),
+  );
 }
+
+// receives a list of users from the MultiUserAddArea component
+function updateUsersList(users: string[]): void {
+  bulkContestants.value = users.join(',');
+}
+
+watch(
+  () => props.users,
+  (newUsers) => {
+    currentUsers.value = newUsers;
+    typeaheadContestants.value = [];
+    bulkContestants.value = '';
+  },
+);
 </script>

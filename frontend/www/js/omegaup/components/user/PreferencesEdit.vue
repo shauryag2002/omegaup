@@ -2,12 +2,7 @@
   <form role="form" class="card-body" @submit.prevent="onUpdateUserPreferences">
     <div class="form-group">
       <label>{{ T.userEditProfileImage }}</label>
-      <a
-        href="http://www.gravatar.com"
-        target="_blank"
-        data-email
-        class="btn btn-link"
-      >
+      <a :href="GravatarURL" target="_blank" data-email class="btn btn-link">
         {{ T.userEditGravatar }} {{ email }}
       </a>
     </div>
@@ -107,7 +102,7 @@
       </b-button>
       <!-- id-lint on -->
       <b-popover
-        :show.sync="show"
+        v-model:show="show"
         target="popover-private-profile"
         variant="danger"
         placement="right"
@@ -146,15 +141,14 @@ import { ObjectivesAnswers } from './ObjectivesQuestions.vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { getExternalUrl } from '../../urlHelper';
 
 // Import Bootstrap and BootstrapVue CSS files (order is important)
 import 'bootstrap/dist/css/bootstrap.css';
-import 'bootstrap-vue/dist/bootstrap-vue.css';
+import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
+import { BButton, BPopover } from 'bootstrap-vue-next';
 
 // Import Only Required Plugins
-import { ButtonPlugin, PopoverPlugin } from 'bootstrap-vue';
-Vue.use(ButtonPlugin);
-Vue.use(PopoverPlugin);
 
 @Component({
   components: {
@@ -189,6 +183,10 @@ export default class UserPreferencesEdit extends Vue {
       return this.T.userObjectivesModalDescriptionTeaching;
     }
     return T.userObjectivesModalDescriptionUsage;
+  }
+
+  get GravatarURL(): string {
+    return getExternalUrl('GravatarURL');
   }
 
   get learningTeachingObjective(): string {

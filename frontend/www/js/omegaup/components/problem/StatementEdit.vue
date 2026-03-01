@@ -35,13 +35,13 @@
         </div>
         <div class="col-md-6 d-flex flex-column">
           <h1 class="title text-center">{{ title }}</h1>
-          <omegaup-markdown
+          <ProblemMarkdown
             data-statement-edit-markdown
             :markdown="currentMarkdown"
             :source-mapping="statement.sources"
             :image-mapping="statement.images"
             preview="true"
-          ></omegaup-markdown>
+          ></ProblemMarkdown>
           <template v-if="markdownType === 'statements'">
             <hr />
             <div>
@@ -54,12 +54,12 @@
               <em
                 >{{ T.wordsProblemsetter }}:
                 <a class="problemsetter">
-                  <omegaup-user-username
+                  <UserUsername
                     v-if="problemsetter"
                     :classname="problemsetter.classname"
                     :linkify="true"
                     :username="problemsetter.username"
-                  ></omegaup-user-username>
+                  ></UserUsername>
                 </a>
               </em>
             </div>
@@ -101,109 +101,123 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Emit, Prop, Watch, Ref } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch, onMounted } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
 import * as Markdown from '@/third_party/js/pagedown/Markdown.Editor.js';
 import * as markdown from '../../markdown';
 
-import user_Username from '../user/Username.vue';
+import UserUsername from '../user/Username.vue';
 import ProblemMarkdown from './ProblemMarkdown.vue';
 
 const markdownConverter = new markdown.Converter({
   preview: true,
 });
 
-@Component({
-  components: {
-    'omegaup-user-username': user_Username,
-    'omegaup-markdown': ProblemMarkdown,
+const props = withDefaults(
+  defineProps<{
+    alias: string;
+    title: string;
+    source: string;
+    problemsetter?: types.ProblemsetterInfo | null;
+    statement: types.ProblemStatement;
+    markdownType: string;
+    showEditControls?: boolean;
+    languages?: string[];
+  }>(),
+  {
+    problemsetter: null,
+    showEditControls: true,
+    languages: () => ['es', 'en', 'pt'],
   },
-})
-export default class ProblemStatementEdit extends Vue {
-  @Ref() readonly markdownButtonBar!: HTMLDivElement;
-  @Ref() readonly markdownInput!: HTMLTextAreaElement;
-  @Prop() alias!: string;
-  @Prop() title!: string;
-  @Prop() source!: string;
-  @Prop({ default: null }) problemsetter!: types.ProblemsetterInfo;
-  @Prop() statement!: types.ProblemStatement;
-  @Prop() markdownType!: string;
-  @Prop({ default: true }) showEditControls!: boolean;
-  @Prop({ default: () => ['es', 'en', 'pt'] }) languages!: string[];
+);
 
-  T = T;
-  commitMessage = T.updateStatementsCommitMessage;
-  currentLanguage = this.statement.language;
-  currentMarkdown = this.statement.markdown;
-  errors: string[] = [];
-  statements: types.Statements = {};
-  markdownEditor: Markdown.Editor | null = null;
+const emit = defineEmits<{
+  (
+    e: 'update-markdown-contents',
+    statements: types.Statements,
+    language: string,
+    markdown: string,
+  ): void;
+  (e: 'update:statement', statement: types.ProblemStatement): void;
+}>();
 
-  mounted(): void {
-    this.markdownEditor = new Markdown.Editor(markdownConverter.converter, '', {
+const markdownButtonBar = ref<HTMLDivElement | null>(null);
+const markdownInput = ref<HTMLTextAreaElement | null>(null);
+
+const commitMessage = ref(T.updateStatementsCommitMessage);
+const currentLanguage = ref(props.statement.language);
+const currentMarkdown = ref(props.statement.markdown);
+const errors = ref<string[]>([]);
+const statements = ref<types.Statements>({});
+const markdownEditorInstance = ref<Markdown.Editor | null>(null);
+
+onMounted(() => {
+  markdownEditorInstance.value = new Markdown.Editor(
+    markdownConverter.converter,
+    '',
+    {
       panels: {
-        buttonBar: this.markdownButtonBar,
+        buttonBar: markdownButtonBar.value,
         preview: null,
-        input: this.markdownInput,
+        input: markdownInput.value,
       },
-    });
-    this.markdownEditor.run();
-  }
+    },
+  );
+  markdownEditorInstance.value.run();
+});
 
-  getLanguageNameText(language: string): string {
-    switch (language) {
-      case 'en':
-        return T.statementLanguageEn;
-      case 'es':
-        return T.statementLanguageEs;
-      case 'pt':
-        return T.statementLanguagePt;
-      default:
-        return '';
-    }
+function getLanguageNameText(language: string): string {
+  switch (language) {
+    case 'en':
+      return T.statementLanguageEn;
+    case 'es':
+      return T.statementLanguageEs;
+    case 'pt':
+      return T.statementLanguagePt;
+    default:
+      return '';
   }
+}
 
-  @Watch('statement')
-  onStatementChange(newStatement: types.ProblemStatement): void {
-    this.currentLanguage = newStatement.language;
-    this.currentMarkdown = newStatement.markdown;
-  }
+watch(
+  () => props.statement,
+  (newStatement: types.ProblemStatement) => {
+    currentLanguage.value = newStatement.language;
+    currentMarkdown.value = newStatement.markdown;
+  },
+);
 
-  @Watch('currentLanguage')
-  onCurrentLanguageChange(newLanguage: string, oldLanguage: string): void {
-    if (oldLanguage) this.statements[oldLanguage] = this.currentMarkdown;
-    this.$emit(
-      'update-markdown-contents',
-      this.statements,
-      newLanguage,
-      this.currentMarkdown,
-    );
-  }
+watch(currentLanguage, (newLanguage: string, oldLanguage: string) => {
+  if (oldLanguage) statements.value[oldLanguage] = currentMarkdown.value;
+  emit(
+    'update-markdown-contents',
+    statements.value,
+    newLanguage,
+    currentMarkdown.value,
+  );
+});
 
-  @Emit('update:statement')
-  @Watch('currentMarkdown')
-  onCurrentMarkdownChange(newMarkdown: string): types.ProblemStatement {
-    return {
-      images: this.statement.images,
-      language: this.statement.language,
-      sources: this.statement.sources,
-      markdown: newMarkdown,
-    };
-  }
+watch(currentMarkdown, (newMarkdown: string) => {
+  emit('update:statement', {
+    images: props.statement.images,
+    language: props.statement.language,
+    sources: props.statement.sources,
+    markdown: newMarkdown,
+  });
+});
 
-  onSubmit(e: Event) {
-    this.errors = [];
-    this.statements[this.currentLanguage] = this.currentMarkdown;
-    if (this.commitMessage) {
-      return;
-    }
-    this.errors.push('message');
-    ui.error(T.editFieldRequired);
-    e.preventDefault();
+function onSubmit(e: Event) {
+  errors.value = [];
+  statements.value[currentLanguage.value] = currentMarkdown.value;
+  if (commitMessage.value) {
+    return;
   }
+  errors.value.push('message');
+  ui.error(T.editFieldRequired);
+  e.preventDefault();
 }
 </script>
 

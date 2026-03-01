@@ -42,11 +42,11 @@
               })
             }}
           </h3>
-          <template v-for="group in getGroups(item)">
-            <table
-              :key="`${contestantData.username}_${item.alias}_${group.group}_case`"
-              class="table table-stripped table-responsive"
-            >
+          <template
+            v-for="group in getGroups(item)"
+            :key="`${contestantData.username}_${item.alias}_${group.group}_case`"
+          >
+            <table class="table table-stripped table-responsive">
               <thead>
                 <tr class="text-center">
                   <th scope="col">{{ T.wordsCase }}</th>
@@ -84,10 +84,7 @@
               </tbody>
             </table>
 
-            <table
-              :key="`${contestantData.username}_${item.alias}_${group.group}_detail`"
-              class="table table-stripped table-responsive pb-2"
-            >
+            <table class="table table-stripped table-responsive pb-2">
               <thead>
                 <tr class="text-center">
                   <th scope="col">{{ T.wordsGroup }}</th>
@@ -113,29 +110,24 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
 
-@Component
-export default class Report extends Vue {
-  @Prop() contestReport!: types.ContestReport[];
-  @Prop() contestAlias!: string;
+defineProps<{
+  contestReport: types.ContestReport[];
+  contestAlias: string;
+}>();
 
-  T = T;
-  ui = ui;
+function getTotalPoints(points: null | number): number {
+  return points ?? 0;
+}
 
-  getTotalPoints(points: null | number): number {
-    return points ?? 0;
-  }
-
-  getGroups(
-    problem: types.ScoreboardRankingProblem,
-  ): types.ScoreboardRankingProblemDetailsGroup[] {
-    return problem.run_details?.details?.groups ?? [];
-  }
+function getGroups(
+  problem: types.ScoreboardRankingProblem,
+): types.ScoreboardRankingProblemDetailsGroup[] {
+  return problem.run_details?.details?.groups ?? [];
 }
 </script>
 

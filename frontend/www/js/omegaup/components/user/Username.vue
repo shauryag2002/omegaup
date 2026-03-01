@@ -1,9 +1,6 @@
 <template>
   <span :class="classname" :title="username">
-    <omegaup-countryflag
-      v-if="country != null"
-      :country="country"
-    ></omegaup-countryflag>
+    <CountryFlag v-if="country != null" :country="country" />
 
     <template v-if="linkify">
       <a
@@ -30,31 +27,37 @@
   </span>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import CountryFlag from '../CountryFlag.vue';
 
-@Component({
-  components: {
-    'omegaup-countryflag': CountryFlag,
+const props = withDefaults(
+  defineProps<{
+    username: string;
+    name?: string | null;
+    classname: string;
+    linkify: boolean;
+    href?: string;
+    country: string;
+    emitClickEvent?: boolean;
+  }>(),
+  {
+    name: null,
+    href: '#',
+    emitClickEvent: false,
   },
-})
-export default class Username extends Vue {
-  @Prop() username!: string;
-  @Prop({ default: null }) name!: string;
-  @Prop() classname!: string;
-  @Prop() linkify!: boolean;
-  @Prop({ default: '#' }) href!: string;
-  @Prop() country!: string;
-  @Prop({ default: false }) emitClickEvent!: boolean;
+);
 
-  get nameWithUsername(): string {
-    if (this.name) {
-      return `${this.name} (${this.username})`;
-    }
-    return this.username;
+defineEmits<{
+  (e: 'click', username: string): void;
+}>();
+
+const nameWithUsername = computed((): string => {
+  if (props.name) {
+    return `${props.name} (${props.username})`;
   }
-}
+  return props.username;
+});
 </script>
 
 <style lang="scss" scope>

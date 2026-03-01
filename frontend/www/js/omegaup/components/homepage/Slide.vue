@@ -28,16 +28,14 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
 import T from '../../lang';
 
-@Component
-export default class Slide extends Vue {
-  @Prop() title!: string;
-  @Prop() description!: string;
-  @Prop() imageSrc!: string;
-  @Prop() button!: {
+defineProps<{
+  title: string;
+  description: string;
+  imageSrc: string;
+  button: {
     text: {
       en: string;
       es: string;
@@ -46,9 +44,7 @@ export default class Slide extends Vue {
     href: string;
     target: string;
   };
-
-  T = T;
-}
+}>();
 </script>
 
 <style lang="scss" scoped>

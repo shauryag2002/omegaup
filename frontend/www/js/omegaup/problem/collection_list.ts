@@ -1,4 +1,4 @@
-import Vue from 'vue';
+import { createApp, h } from 'vue';
 import problem_CollectionList from '../components/problem/CollectionList.vue';
 import { types } from '../api_types';
 import { omegaup, OmegaUp } from '../omegaup';
@@ -52,56 +52,47 @@ OmegaUp.on('ready', () => {
       }
     }
   }
-  new Vue({
-    el: '#main-container',
-    components: {
-      'omegaup-problem-collection-list': problem_CollectionList,
-    },
-    render: function (createElement) {
-      return createElement('omegaup-problem-collection-list', {
-        props: {
-          data: payload,
-          problems: payload.problems,
-          loggedIn: payload.loggedIn,
-          selectedTags: payload.selectedTags,
-          pagerItems: payload.pagerItems,
-          wizardTags: payload.tagData,
-          language: payload.language,
-          languages: payload.languages,
-          keyword: payload.keyword,
-          tagsList: payload.tagsList,
-          publicTags: payload.publicTags,
-          frequentTags: payload.frequentTags,
-          sortOrder: sortOrder,
-          columnName: columnName,
-          difficulty: difficulty,
-          quality: quality,
+  createApp({
+    render: () =>
+      h(problem_CollectionList, {
+        data: payload,
+        problems: payload.problems,
+        loggedIn: payload.loggedIn,
+        selectedTags: payload.selectedTags,
+        pagerItems: payload.pagerItems,
+        wizardTags: payload.tagData,
+        language: payload.language,
+        languages: payload.languages,
+        keyword: payload.keyword,
+        tagsList: payload.tagsList,
+        publicTags: payload.publicTags,
+        frequentTags: payload.frequentTags,
+        sortOrder: sortOrder,
+        columnName: columnName,
+        difficulty: difficulty,
+        quality: quality,
+        onApplyFilter: (
+          columnName: string,
+          sortOrder: omegaup.SortOrder,
+          difficulty: string,
+          quality: string,
+          tag: string[],
+        ): void => {
+          const queryParameters = {
+            language,
+            query,
+            order_by: columnName,
+            sort_order: sortOrder,
+            difficulty,
+            quality,
+            tag,
+          };
+          window.location.replace(
+            `/problem/collection/${payload.level}/?${ui.buildURLQuery(
+              queryParameters,
+            )}`,
+          );
         },
-        on: {
-          'apply-filter': (
-            columnName: string,
-            sortOrder: omegaup.SortOrder,
-            difficulty: string,
-            quality: string,
-            tag: string[],
-          ): void => {
-            const queryParameters = {
-              language,
-              query,
-              order_by: columnName,
-              sort_order: sortOrder,
-              difficulty,
-              quality,
-              tag,
-            };
-            window.location.replace(
-              `/problem/collection/${payload.level}/?${ui.buildURLQuery(
-                queryParameters,
-              )}`,
-            );
-          },
-        },
-      });
-    },
-  });
+      }),
+  }).mount('#main-container');
 });

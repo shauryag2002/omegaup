@@ -41,63 +41,61 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
 
-import omegaup_Markdown from '../Markdown.vue';
+import OmegaupMarkdown from '../Markdown.vue';
 
-@Component({
-  components: {
-    'omegaup-markdown': omegaup_Markdown,
+withDefaults(
+  defineProps<{
+    course: types.CourseCardPublic;
+    loggedIn?: boolean;
+  }>(),
+  {
+    loggedIn: false,
   },
-})
-export default class CourseCardPublic extends Vue {
-  @Prop() course!: types.CourseCardPublic;
-  @Prop({ default: false }) loggedIn!: boolean;
+);
 
-  T = T;
-  ui = ui;
-
-  courseLevelText(course: types.CourseCardPublic): string {
-    if (!course.level) {
+function courseLevelText(course: types.CourseCardPublic): string {
+  if (!course.level) {
+    return '';
+  }
+  switch (course.level) {
+    case 'introductory':
+      return T.courseCardPublicLevelIntroductory;
+    case 'intermediate':
+      return T.courseCardPublicLevelIntermediate;
+    case 'advanced':
+      return T.courseCardPublicLevelAdvanced;
+    default:
       return '';
-    }
-    switch (course.level) {
-      case 'introductory':
-        return T.courseCardPublicLevelIntroductory;
-      case 'intermediate':
-        return T.courseCardPublicLevelIntermediate;
-      case 'advanced':
-        return T.courseCardPublicLevelAdvanced;
-      default:
-        return '';
-    }
   }
+}
 
-  getFormattedLessonAndStudentCount(course: types.CourseCardPublic): string {
-    let response = '';
-    if (course.lessonCount === 1) {
-      response += T.publicCourseCardMetricsOneLesson;
-    } else {
-      response += ui.formatString(T.publicCourseCardMetricsLessons, {
-        lessonCount: course.lessonCount,
-      });
-    }
-    response += ' | ';
-    if (course.studentCount === 1) {
-      response += T.publicCourseCardMetricsOneStudent;
-    } else {
-      response += ui.formatString(T.publicCourseCardMetricsStudents, {
-        studentCount:
-          course.studentCount >= 1000
-            ? `${(course.studentCount / 1000).toFixed(1)}k`
-            : course.studentCount,
-      });
-    }
-    return response;
+function getFormattedLessonAndStudentCount(
+  course: types.CourseCardPublic,
+): string {
+  let response = '';
+  if (course.lessonCount === 1) {
+    response += T.publicCourseCardMetricsOneLesson;
+  } else {
+    response += ui.formatString(T.publicCourseCardMetricsLessons, {
+      lessonCount: course.lessonCount,
+    });
   }
+  response += ' | ';
+  if (course.studentCount === 1) {
+    response += T.publicCourseCardMetricsOneStudent;
+  } else {
+    response += ui.formatString(T.publicCourseCardMetricsStudents, {
+      studentCount:
+        course.studentCount >= 1000
+          ? `${(course.studentCount / 1000).toFixed(1)}k`
+          : course.studentCount,
+    });
+  }
+  return response;
 }
 </script>

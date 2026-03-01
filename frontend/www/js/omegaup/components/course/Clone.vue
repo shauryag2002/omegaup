@@ -1,6 +1,6 @@
 <template>
   <div data-course-clone>
-    <form class="form" @submit.prevent="$emit('clone', alias, name, startTime)">
+    <form class="form" @submit.prevent="emit('clone', alias, name, startTime)">
       <div class="row">
         <div class="form-group col-md-6">
           <label
@@ -23,7 +23,7 @@
             <font-awesome-icon
               :title="T.courseNewFormStartDateDesc"
               icon="info-circle" />
-            <omegaup-datepicker v-model="startTime"></omegaup-datepicker
+            <OmegaupDatepicker v-model="startTime"></OmegaupDatepicker
           ></label>
         </div>
       </div>
@@ -36,37 +36,28 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import T from '../../lang';
-import DatePicker from '../DatePicker.vue';
+import OmegaupDatepicker from '../DatePicker.vue';
 
-import {
-  FontAwesomeIcon,
-  FontAwesomeLayers,
-  FontAwesomeLayersText,
-} from '@fortawesome/vue-fontawesome';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 library.add(fas);
 
-@Component({
-  components: {
-    'omegaup-datepicker': DatePicker,
-    'font-awesome-icon': FontAwesomeIcon,
-    'font-awesome-layers': FontAwesomeLayers,
-    'font-awesome-layers-text': FontAwesomeLayersText,
-  },
-})
-export default class CourseClone extends Vue {
-  @Prop() initialAlias!: string;
-  @Prop() initialName!: string;
+const props = defineProps<{
+  initialAlias: string;
+  initialName: string;
+}>();
 
-  T = T;
-  alias = this.initialAlias;
-  startTime = new Date();
-  name = this.initialName;
-}
+const emit = defineEmits<{
+  (e: 'clone', alias: string, name: string, startTime: Date): void;
+}>();
+
+const alias = ref(props.initialAlias);
+const startTime = ref(new Date());
+const name = ref(props.initialName);
 </script>
 
 <style scoped>

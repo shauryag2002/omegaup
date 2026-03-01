@@ -24,7 +24,7 @@
             T.userEditChangePasswordNewPassword
           }}</label>
           <div class="col-md-7">
-            <omegaup-password-input
+            <OmegaupPasswordInput
               v-model="newPassword1"
               name="new-password-1"
               :size="30"
@@ -37,7 +37,7 @@
             T.userEditChangePasswordRepeatNewPassword
           }}</label>
           <div class="col-md-7">
-            <omegaup-password-input
+            <OmegaupPasswordInput
               v-model="newPassword2"
               name="new-password-2"
               :size="30"
@@ -57,30 +57,28 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import T from '../../lang';
 import * as ui from '../../ui';
-import omegaup_PasswordInput from '../common/PasswordInput.vue';
+import OmegaupPasswordInput from '../common/PasswordInput.vue';
 
-@Component({
-  components: {
-    'omegaup-password-input': omegaup_PasswordInput,
-  },
-})
-export default class UserBasicEdit extends Vue {
-  @Prop() username!: string;
+const props = defineProps<{
+  username: string;
+}>();
 
-  T = T;
-  newPassword1 = '';
-  newPassword2 = '';
+const emit = defineEmits<{
+  (e: 'update', username: string, newPassword: string): void;
+}>();
 
-  formSubmit(): void {
-    if (this.newPassword1 != this.newPassword2) {
-      ui.error(T.userPasswordMustBeSame);
-      return;
-    }
-    this.$emit('update', this.username, this.newPassword1);
+const newPassword1 = ref('');
+const newPassword2 = ref('');
+
+function formSubmit(): void {
+  if (newPassword1.value != newPassword2.value) {
+    ui.error(T.userPasswordMustBeSame);
+    return;
   }
+  emit('update', props.username, newPassword1.value);
 }
 </script>

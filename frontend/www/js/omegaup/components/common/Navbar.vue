@@ -27,15 +27,15 @@
             v-if="isLoggedIn"
             class="navbar-nav navbar-right align-items-end d-lg-none"
           >
-            <omegaup-notifications-clarifications
+            <OmegaupNotificationsClarifications
               v-if="inContest"
               :clarifications="clarifications"
-            ></omegaup-notifications-clarifications>
-            <omegaup-notification-list
+            ></OmegaupNotificationsClarifications>
+            <OmegaupNotificationList
               v-else
               :notifications="notifications"
               @read="readNotifications"
-            ></omegaup-notification-list>
+            ></OmegaupNotificationList>
           </div>
           <ul v-if="!isLoggedIn" class="navbar-nav navbar-right d-lg-flex mr-2">
             <li class="nav-item d-flex align-items-center">
@@ -71,7 +71,7 @@
         </div>
 
         <div class="collapse navbar-collapse omegaup-navbar">
-          <omegaup-navbar-items
+          <OmegaupNavbarItems
             :omega-up-lock-down="omegaUpLockDown"
             :in-contest="inContest"
             :is-logged-in="isLoggedIn"
@@ -81,7 +81,7 @@
             :is-under13-user="isUnder13User"
             :navbar-section="navbarSection"
           >
-          </omegaup-navbar-items>
+          </OmegaupNavbarItems>
           <!-- in lockdown or contest mode there is no left navbar -->
 
           <div class="d-flex px-3 justify-content-between">
@@ -90,15 +90,15 @@
               class="navbar-nav navbar-right align-items-right"
             >
               <li class="d-none d-lg-flex">
-                <omegaup-notifications-clarifications
+                <OmegaupNotificationsClarifications
                   v-if="inContest"
                   :clarifications="clarifications"
-                ></omegaup-notifications-clarifications>
-                <omegaup-notification-list
+                ></OmegaupNotificationsClarifications>
+                <OmegaupNotificationList
                   v-else
                   :notifications="notifications"
                   @read="readNotifications"
-                ></omegaup-notification-list>
+                ></OmegaupNotificationList>
               </li>
               <li
                 class="nav-item dropdown nav-user nav-item-align"
@@ -121,12 +121,12 @@
                   /><span class="username mr-2" :title="currentUsername">{{
                     currentUsername
                   }}</span>
-                  <omegaup-common-grader-badge
+                  <OmegaupCommonGraderBadge
                     v-show="isAdmin"
                     :queue-length="graderQueueLength"
                     :error="errorMessage !== null"
                     class="mr-1"
-                  ></omegaup-common-grader-badge>
+                  ></OmegaupCommonGraderBadge>
                 </a>
                 <div
                   class="dropdown-menu dropdown-menu-right allow-overflow h-auto overflow-auto"
@@ -153,7 +153,7 @@
                       data-nav-profile
                       href="/profile/"
                     >
-                      <font-awesome-icon :icon="['fas', 'user']" />
+                      <FontAwesomeIcon :icon="['fas', 'user']" />
                       {{ T.navViewProfile }}
                       <div
                         v-if="profileProgress !== 0"
@@ -180,7 +180,7 @@
                       >
                         <button
                           class="btn btn-link dropdown-item"
-                          @click="$emit('change-account', identity.username)"
+                          @click="emit('change-account', identity.username)"
                         >
                           <img
                             :src="gravatarURL51"
@@ -276,15 +276,15 @@
                     data-logout-button
                     @click.prevent="logoutModalVisible = true"
                   >
-                    <font-awesome-icon :icon="['fas', 'power-off']" />
+                    <FontAwesomeIcon :icon="['fas', 'power-off']" />
                     {{ T.omegaupTitleLogout }}
                   </a>
-                  <omegaup-common-grader-status
+                  <OmegaupCommonGraderStatus
                     v-show="isAdmin"
                     :status="errorMessage !== null ? 'down' : 'ok'"
                     :error="errorMessage"
                     :grader-info="graderInfo"
-                  ></omegaup-common-grader-status>
+                  ></OmegaupCommonGraderStatus>
                 </div>
               </li>
             </ul>
@@ -296,7 +296,7 @@
               href="#"
               @click.prevent="logoutModalVisible = true"
             >
-              <font-awesome-icon :icon="['fas', 'power-off']" />
+              <FontAwesomeIcon :icon="['fas', 'power-off']" />
               <span class="ml-2">
                 {{ T.omegaupTitleLogout }}
               </span>
@@ -312,7 +312,7 @@
           :title="T.omegaupTitleLogout"
           @click.prevent="logoutModalVisible = true"
         >
-          <font-awesome-icon :icon="['fas', 'power-off']" />
+          <FontAwesomeIcon :icon="['fas', 'power-off']" />
         </a>
       </div>
     </nav>
@@ -328,15 +328,15 @@
       </div>
     </div>
     <template v-if="fromLogin">
-      <omegaup-user-objectives-questions
+      <OmegaupUserObjectivesQuestions
         v-if="isLoggedIn && isMainUserIdentity && userTypes.length === 0"
-        @submit="(objectives) => $emit('update-user-objectives', objectives)"
-      ></omegaup-user-objectives-questions>
-      <omegaup-user-next-registered-contest
+        @submit="(objectives) => emit('update-user-objectives', objectives)"
+      ></OmegaupUserObjectivesQuestions>
+      <OmegaupUserNextRegisteredContest
         v-if="isLoggedIn && nextRegisteredContest !== null"
         :next-registered-contest="nextRegisteredContest"
-        @redirect="(alias) => $emit('redirect-next-registered-contest', alias)"
-      ></omegaup-user-next-registered-contest>
+        @redirect="(alias) => emit('redirect-next-registered-contest', alias)"
+      ></OmegaupUserNextRegisteredContest>
       <div
         v-if="mentorCanChooseCoder"
         class="alert alert-info alert-dismissible fade show mentor-can-choose-coder"
@@ -345,150 +345,157 @@
         <button type="button" class="close" data-dismiss="alert">
           &times;
         </button>
-        <omegaup-markdown
+        <OmegaupMarkdown
           :markdown="T.coderOfTheMonthCanBeChosenManually"
-        ></omegaup-markdown>
+        ></OmegaupMarkdown>
       </div>
     </template>
-    <omegaup-logout-confirmation v-model="logoutModalVisible">
-    </omegaup-logout-confirmation>
+    <OmegaupLogoutConfirmation v-model="logoutModalVisible">
+    </OmegaupLogoutConfirmation>
   </header>
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import eventBus from '../../eventBus';
+export { eventBus as EventBus };
+</script>
+
+<script setup lang="ts">
+import { ref, computed } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
-import notifications_Clarifications from '../notification/Clarifications.vue';
-import notifications_List from '../notification/List.vue';
-import omegaup_Markdown from '../Markdown.vue';
-import common_GraderStatus from '../common/GraderStatus.vue';
-import common_GraderBadge from '../common/GraderBadge.vue';
-import user_objectives_questions from '../user/ObjectivesQuestions.vue';
-import user_next_registered_contest from '../user/NextRegisteredContest.vue';
-import navbar_items from './NavbarItems.vue';
+import eventBus from '../../eventBus';
+import OmegaupNotificationsClarifications from '../notification/Clarifications.vue';
+import OmegaupNotificationList from '../notification/List.vue';
+import OmegaupMarkdown from '../Markdown.vue';
+import OmegaupCommonGraderStatus from '../common/GraderStatus.vue';
+import OmegaupCommonGraderBadge from '../common/GraderBadge.vue';
+import OmegaupUserObjectivesQuestions from '../user/ObjectivesQuestions.vue';
+import OmegaupUserNextRegisteredContest from '../user/NextRegisteredContest.vue';
+import OmegaupNavbarItems from './NavbarItems.vue';
 import { AvailableTabs } from '../login/Signin.vue';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faSignOutAlt, faUser } from '@fortawesome/free-solid-svg-icons';
-import LogoutConfirmation from './LogoutConfirmation.vue';
+import OmegaupLogoutConfirmation from './LogoutConfirmation.vue';
 library.add(faSignOutAlt, faUser);
 
-export const EventBus = new Vue();
-
-@Component({
-  components: {
-    FontAwesomeIcon,
-    'omegaup-notification-list': notifications_List,
-    'omegaup-notifications-clarifications': notifications_Clarifications,
-    'omegaup-common-grader-status': common_GraderStatus,
-    'omegaup-common-grader-badge': common_GraderBadge,
-    'omegaup-user-objectives-questions': user_objectives_questions,
-    'omegaup-user-next-registered-contest': user_next_registered_contest,
-    'omegaup-navbar-items': navbar_items,
-    'omegaup-markdown': omegaup_Markdown,
-    'omegaup-logout-confirmation': LogoutConfirmation,
+const props = withDefaults(
+  defineProps<{
+    omegaUpLockDown: boolean;
+    inContest: boolean;
+    isLoggedIn: boolean;
+    isReviewer: boolean;
+    gravatarURL51: string;
+    gravatarURL128: string;
+    associatedIdentities: types.AssociatedIdentity[];
+    currentEmail: string;
+    currentName: string;
+    currentUsername: string;
+    isAdmin: boolean;
+    isMainUserIdentity: boolean;
+    lockDownImage: string;
+    navbarSection: string;
+    notifications: types.Notification[];
+    graderInfo: types.GraderStatus | null;
+    graderQueueLength: number;
+    errorMessage: string | null;
+    profileProgress?: number;
+    clarifications: types.Clarification[];
+    fromLogin: boolean;
+    userTypes: string[];
+    nextRegisteredContest: types.ContestListItem | null;
+    isUnder13User: boolean;
+    mentorCanChooseCoder: boolean;
+    userVerificationDeadline: Date | null;
+  }>(),
+  {
+    profileProgress: 0,
   },
-})
-export default class Navbar extends Vue {
-  @Prop() omegaUpLockDown!: boolean;
-  @Prop() inContest!: boolean;
-  @Prop() isLoggedIn!: boolean;
-  @Prop() isReviewer!: boolean;
-  @Prop() gravatarURL51!: string;
-  @Prop() gravatarURL128!: string;
-  @Prop() associatedIdentities!: types.AssociatedIdentity[];
-  @Prop() currentEmail!: string;
-  @Prop() currentName!: string;
-  @Prop() currentUsername!: string;
-  @Prop() isAdmin!: boolean;
-  @Prop() isMainUserIdentity!: boolean;
-  @Prop() lockDownImage!: string;
-  @Prop() navbarSection!: string;
-  @Prop() notifications!: types.Notification[];
-  @Prop() graderInfo!: types.GraderStatus | null;
-  @Prop() graderQueueLength!: number;
-  @Prop() errorMessage!: string | null;
-  @Prop({ default: 0 }) profileProgress!: number;
-  @Prop() clarifications!: types.Clarification[];
-  @Prop() fromLogin!: boolean;
-  @Prop() userTypes!: string[];
-  @Prop() nextRegisteredContest!: types.ContestListItem | null;
-  @Prop() isUnder13User!: boolean;
-  @Prop() mentorCanChooseCoder!: boolean;
-  @Prop() userVerificationDeadline!: Date | null;
+);
 
-  T = T;
-  ui = ui;
-  AvailableTabs = AvailableTabs;
-  logoutModalVisible = false;
-  teachingUserTypes = ['teacher', 'coach', 'independent-teacher'];
-  hasTeachingObjective = this.teachingUserTypes.some((teachingType) =>
-    this.userTypes.includes(teachingType),
+const emit = defineEmits<{
+  (
+    e: 'read-notifications',
+    notifications: types.Notification[],
+    url?: string,
+  ): void;
+  (e: 'change-account', username: string): void;
+  (e: 'update-user-objectives', objectives: unknown): void;
+  (e: 'redirect-next-registered-contest', alias: string): void;
+}>();
+
+const logoutModalVisible = ref(false);
+
+const teachingUserTypes = ['teacher', 'coach', 'independent-teacher'];
+const hasTeachingObjective = teachingUserTypes.some((teachingType) =>
+  props.userTypes.includes(teachingType),
+);
+
+const formattedLoginURL = computed((): string => {
+  let path = window.location.pathname;
+  if (path === '/login' || path === '/login/') {
+    path = '/';
+  }
+  return `/login/?redirect=${encodeURIComponent(path)}#login`;
+});
+
+const formattedSignupURL = computed((): string => {
+  let path = window.location.pathname;
+  if (path === '/login' || path === '/login/') {
+    path = '/';
+  }
+  return `/login/?redirect=${encodeURIComponent(path)}#signup`;
+});
+
+const identitiesNotLoggedIn = computed((): types.AssociatedIdentity[] => {
+  return props.associatedIdentities.filter(
+    (identity) => identity.username !== props.currentUsername,
   );
+});
 
-  get formattedLoginURL(): string {
-    let path = window.location.pathname;
-    if (path === '/login' || path === '/login/') {
-      path = '/';
-    }
-    return `/login/?redirect=${encodeURIComponent(path)}#login`;
+const daysUntilVerificationDeadline = computed((): number | null => {
+  if (!props.userVerificationDeadline) {
+    return null;
   }
+  const today = new Date();
+  const deadline = new Date(props.userVerificationDeadline);
+  const timeDifference = deadline.getTime() - today.getTime();
+  const daysDifference = Math.ceil(timeDifference / (1000 * 3600 * 24));
+  return daysDifference;
+});
 
-  get formattedSignupURL(): string {
-    let path = window.location.pathname;
-    if (path === '/login' || path === '/login/') {
-      path = '/';
-    }
-    return `/login/?redirect=${encodeURIComponent(path)}#signup`;
+const bannerColor = computed(() => {
+  if (
+    daysUntilVerificationDeadline.value !== null &&
+    daysUntilVerificationDeadline.value <= 1
+  ) {
+    return 'bg-danger';
   }
+  return 'bg-warning';
+});
 
-  get identitiesNotLoggedIn(): types.AssociatedIdentity[] {
-    return this.associatedIdentities.filter(
-      (identity) => identity.username !== this.currentUsername,
-    );
-  }
+function readNotifications(
+  notifications: types.Notification[],
+  url?: string,
+): void {
+  emit('read-notifications', notifications, url);
+}
 
-  readNotifications(notifications: types.Notification[], url?: string): void {
-    this.$emit('read-notifications', notifications, url);
-  }
-
-  get daysUntilVerificationDeadline(): number | null {
-    if (!this.userVerificationDeadline) {
-      return null;
-    }
-    const today = new Date();
-    const deadline = new Date(this.userVerificationDeadline);
-    const timeDifference = deadline.getTime() - today.getTime();
-    const daysDifference = Math.ceil(timeDifference / (1000 * 3600 * 24));
-    return daysDifference;
-  }
-
-  get bannerColor() {
-    if (
-      this.daysUntilVerificationDeadline !== null &&
-      this.daysUntilVerificationDeadline <= 1
-    ) {
-      return 'bg-danger';
-    }
-    return 'bg-warning';
-  }
-
-  emitActiveTab(tab: AvailableTabs): void {
-    EventBus.$emit('update:activeTab', tab);
-    if (
-      window.location.pathname === '/login' ||
-      window.location.pathname === '/login/'
-    ) {
-      window.location.hash = `#${tab}`;
-    } else {
-      window.location.href =
-        tab === AvailableTabs.Login
-          ? this.formattedLoginURL
-          : this.formattedSignupURL;
-    }
+function emitActiveTab(tab: AvailableTabs): void {
+  eventBus.emit('update:activeTab', tab);
+  if (
+    window.location.pathname === '/login' ||
+    window.location.pathname === '/login/'
+  ) {
+    window.location.hash = `#${tab}`;
+  } else {
+    window.location.href =
+      tab === AvailableTabs.Login
+        ? formattedLoginURL.value
+        : formattedSignupURL.value;
   }
 }
 </script>

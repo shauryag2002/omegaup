@@ -4,72 +4,76 @@
   </span>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed, watch, onMounted } from 'vue';
 import { omegaup } from '../omegaup';
 import * as time from '../time';
 import * as ui from '../ui';
 import T from '../lang';
 
-@Component
-export default class Countdown extends Vue {
-  @Prop() targetTime!: Date;
-  @Prop({
-    default: omegaup.CountdownFormat.EventCountdown,
-  })
-  countdownFormat!: omegaup.CountdownFormat;
+const props = withDefaults(
+  defineProps<{
+    targetTime: Date;
+    countdownFormat?: omegaup.CountdownFormat;
+  }>(),
+  {
+    countdownFormat: omegaup.CountdownFormat.EventCountdown,
+  },
+);
 
+const emit = defineEmits<{
+  (e: 'finish'): void;
+}>();
+
+let timerInterval = 0;
+const currentTime = ref(Date.now());
+
+const timeLeft = computed((): number => {
+  return props.targetTime.getTime() - currentTime.value;
+});
+
+const formattedTimeLeft = computed((): string => {
+  switch (props.countdownFormat) {
+    case omegaup.CountdownFormat.EventCountdown:
+      if (timeLeft.value < 0) {
+        return '00:00:00';
+      }
+      return time.formatDelta(timeLeft.value);
+    case omegaup.CountdownFormat.WaitBetweenUploadsSeconds:
+      return ui.formatString(T.arenaRunSubmitWaitBetweenUploads, {
+        submissionGap: Math.ceil(timeLeft.value / 1000),
+      });
+    case omegaup.CountdownFormat.ContestHasNotStarted:
+      if (timeLeft.value < 0) {
+        return T.arenaContestHasAlreadyStarted;
+      }
+      return ui.formatString(T.contestWillBeginIn, {
+        time: time.formatDelta(timeLeft.value),
+      });
+    case omegaup.CountdownFormat.AssignmentHasNotStarted:
+      if (timeLeft.value < 0) {
+        return T.arenaCourseAssignmentHasAlreadyStarted;
+      }
+      return ui.formatString(T.arenaCourseAssignmentWillBeginIn, {
+        time: time.formatDelta(timeLeft.value),
+      });
+    default:
+      return '';
+  }
+});
+
+watch(timeLeft, (newValue) => {
+  if (newValue > 0) return;
+  if (!timerInterval) return;
+  clearInterval(timerInterval);
   timerInterval = 0;
-  currentTime = Date.now();
+  emit('finish');
+});
 
-  get timeLeft(): number {
-    return this.targetTime.getTime() - this.currentTime;
-  }
-
-  get formattedTimeLeft(): string {
-    switch (this.countdownFormat) {
-      case omegaup.CountdownFormat.EventCountdown:
-        if (this.timeLeft < 0) {
-          return '00:00:00';
-        }
-        return time.formatDelta(this.timeLeft);
-      case omegaup.CountdownFormat.WaitBetweenUploadsSeconds:
-        return ui.formatString(T.arenaRunSubmitWaitBetweenUploads, {
-          submissionGap: Math.ceil(this.timeLeft / 1000),
-        });
-      case omegaup.CountdownFormat.ContestHasNotStarted:
-        if (this.timeLeft < 0) {
-          return T.arenaContestHasAlreadyStarted;
-        }
-        return ui.formatString(T.contestWillBeginIn, {
-          time: time.formatDelta(this.timeLeft),
-        });
-      case omegaup.CountdownFormat.AssignmentHasNotStarted:
-        if (this.timeLeft < 0) {
-          return T.arenaCourseAssignmentHasAlreadyStarted;
-        }
-        return ui.formatString(T.arenaCourseAssignmentWillBeginIn, {
-          time: time.formatDelta(this.timeLeft),
-        });
-      default:
-        return '';
-    }
-  }
-
-  @Watch('timeLeft')
-  onValueChanged(newValue: number): void {
-    if (newValue > 0) return;
-    if (!this.timerInterval) return;
-    clearInterval(this.timerInterval);
-    this.timerInterval = 0;
-    this.$emit('finish');
-  }
-
-  mounted() {
-    this.timerInterval = window.setInterval(
-      () => (this.currentTime = Date.now()),
-      1000,
-    );
-  }
-}
+onMounted(() => {
+  timerInterval = window.setInterval(
+    () => (currentTime.value = Date.now()),
+    1000,
+  );
+});
 </script>

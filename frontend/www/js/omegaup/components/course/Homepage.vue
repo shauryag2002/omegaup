@@ -22,9 +22,9 @@
           />
         </div>
         <div class="col-md-6 mt-2 mt-md-0">
-          <omegaup-markdown
+          <OmegaupMarkdown
             :markdown="T.courseHomepageTeachersSectionContent"
-          ></omegaup-markdown>
+          ></OmegaupMarkdown>
         </div>
       </div>
       <div
@@ -38,28 +38,18 @@
           />
         </div>
         <div class="col-md-6 mt-2 mt-md-0">
-          <omegaup-markdown
+          <OmegaupMarkdown
             :markdown="T.courseHomepageStudentsSectionContent"
-          ></omegaup-markdown>
+          ></OmegaupMarkdown>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+<script setup lang="ts">
 import T from '../../lang';
-import omegaup_Markdown from '../Markdown.vue';
-
-@Component({
-  components: {
-    'omegaup-markdown': omegaup_Markdown,
-  },
-})
-export default class Homepage extends Vue {
-  T = T;
-}
+import OmegaupMarkdown from '../Markdown.vue';
 </script>
 
 <style lang="scss">

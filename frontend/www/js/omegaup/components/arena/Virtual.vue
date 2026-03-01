@@ -9,9 +9,9 @@
             <div class="form-group col-md-4"></div>
             <div class="form-group col-md-4">
               <label>{{ T.contestNewFormStartDate }}</label>
-              <omegaup-datetimepicker
+              <OmegaupDatetimepicker
                 v-model="virtualContestStartTime"
-              ></omegaup-datetimepicker>
+              ></OmegaupDatetimepicker>
             </div>
             <div class="form-group col-md-4"></div>
           </div>
@@ -53,35 +53,31 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import T from '../../lang';
 import * as ui from '../../ui';
 import * as time from '../../time';
-import DateTimePicker from '../DateTimePicker.vue';
+import OmegaupDatetimepicker from '../DateTimePicker.vue';
 
-@Component({
-  components: {
-    'omegaup-datetimepicker': DateTimePicker,
-  },
-})
-export default class ArenaVirtual extends Vue {
-  @Prop() title!: string;
-  @Prop() description!: string;
-  @Prop() startTime!: Date;
-  @Prop() finishTime!: Date;
-  @Prop() scoreboard!: string;
-  @Prop() submissionsGap!: number;
+const props = defineProps<{
+  title: string;
+  description: string;
+  startTime: Date;
+  finishTime: Date;
+  scoreboard: string;
+  submissionsGap: number;
+}>();
 
-  T = T;
-  ui = ui;
-  time = time;
-  virtualContestStartTime = new Date();
+const emit = defineEmits<{
+  (e: 'submit', payload: { virtualContestStartTime: Date }): void;
+}>();
 
-  onSubmit(): void {
-    this.$emit('submit', {
-      virtualContestStartTime: this.virtualContestStartTime,
-    });
-  }
+const virtualContestStartTime = ref(new Date());
+
+function onSubmit(): void {
+  emit('submit', {
+    virtualContestStartTime: virtualContestStartTime.value,
+  });
 }
 </script>

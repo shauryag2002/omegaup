@@ -3,7 +3,7 @@
     <div class="form-group">
       <label>{{ T.userEditChangePasswordOldPassword }}</label>
       <div>
-        <omegaup-password-input
+        <OmegaupPasswordInput
           v-model="oldPassword"
           data-old-password
           :size="30"
@@ -15,7 +15,7 @@
     <div class="form-group">
       <label>{{ T.userEditChangePasswordNewPassword }}</label>
       <div>
-        <omegaup-password-input
+        <OmegaupPasswordInput
           v-model="newPassword"
           data-new-password
           :size="30"
@@ -27,7 +27,7 @@
     <div class="form-group">
       <label>{{ T.userEditChangePasswordRepeatNewPassword }}</label>
       <div>
-        <omegaup-password-input
+        <OmegaupPasswordInput
           v-model="newPassword2"
           data-new-password2
           :size="30"
@@ -54,48 +54,47 @@
   </form>
 </template>
 
-<script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed } from 'vue';
 import T from '../../lang';
-import omegaup_PasswordInput from '../common/PasswordInput.vue';
+import OmegaupPasswordInput from '../common/PasswordInput.vue';
 
-@Component({
-  components: {
-    'omegaup-password-input': omegaup_PasswordInput,
-  },
-})
-export default class UserPasswordEdit extends Vue {
-  T = T;
-  oldPassword = '';
-  newPassword = '';
-  newPassword2 = '';
+const emit = defineEmits<{
+  (
+    e: 'update-password',
+    payload: { oldPassword: string; newPassword: string },
+  ): void;
+}>();
 
-  get passwordMismatch(): boolean {
-    return this.newPassword != this.newPassword2;
+const oldPassword = ref('');
+const newPassword = ref('');
+const newPassword2 = ref('');
+
+const passwordMismatch = computed((): boolean => {
+  return newPassword.value != newPassword2.value;
+});
+
+const invalidPasswordClass = computed((): string => {
+  return passwordMismatch.value ? 'invalid-input' : '';
+});
+
+const submitDisabled = computed((): boolean => {
+  return (
+    passwordMismatch.value ||
+    newPassword.value.length === 0 ||
+    newPassword2.value.length === 0 ||
+    oldPassword.value.length === 0
+  );
+});
+
+function onUpdatePassword(): void {
+  if (passwordMismatch.value) {
+    return;
   }
-
-  get invalidPasswordClass(): string {
-    return this.passwordMismatch ? 'invalid-input' : '';
-  }
-
-  get submitDisabled(): boolean {
-    return (
-      this.passwordMismatch ||
-      this.newPassword.length === 0 ||
-      this.newPassword2.length === 0 ||
-      this.oldPassword.length === 0
-    );
-  }
-
-  onUpdatePassword(): void {
-    if (this.passwordMismatch) {
-      return;
-    }
-    this.$emit('update-password', {
-      oldPassword: this.oldPassword,
-      newPassword: this.newPassword,
-    });
-  }
+  emit('update-password', {
+    oldPassword: oldPassword.value,
+    newPassword: newPassword.value,
+  });
 }
 </script>
 

@@ -13,7 +13,7 @@
       <a
         class="name"
         href="#problems"
-        @click="$emit('disable-active-problem')"
+        @click="emit('disable-active-problem')"
         >{{ T.wordsSummary }}</a
       >
     </div>
@@ -34,7 +34,7 @@
           class="col-xs-7 solved text-right w-50 pr-3"
         >
           <span class="mr-1">{{ getMaxScoreForProblem(problem) }}</span>
-          <font-awesome-icon
+          <FontAwesomeIcon
             v-if="
               problem.myBestScore == problem.maxScore ||
               problem.bestScore == problem.maxScore
@@ -42,7 +42,7 @@
             icon="check"
             :style="{ color: 'green' }"
           />
-          <font-awesome-icon
+          <FontAwesomeIcon
             v-else-if="
               problem.hasMyRuns ||
               (problem.hasRuns && problem.hasMyRuns === null)
@@ -66,57 +66,54 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import { omegaup } from '../../omegaup';
 import { types } from '../../api_types';
 import T from '../../lang';
 
-import {
-  FontAwesomeIcon,
-  FontAwesomeLayers,
-  FontAwesomeLayersText,
-} from '@fortawesome/vue-fontawesome';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 library.add(fas);
 
-@Component({
-  components: {
-    'font-awesome-icon': FontAwesomeIcon,
-    'font-awesome-layers': FontAwesomeLayers,
-    'font-awesome-layers-text': FontAwesomeLayersText,
+const props = withDefaults(
+  defineProps<{
+    problems: types.NavbarProblemsetProblem[];
+    activeProblem: string | null;
+    courseAlias: string | null;
+    courseName: string | null;
+    inAssignment: boolean;
+    digitsAfterDecimalPoint: number;
+    currentAssignment: omegaup.Assignment | null;
+  }>(),
+  {
+    inAssignment: false,
+    digitsAfterDecimalPoint: 2,
+    currentAssignment: null,
   },
-})
-export default class ArenaNavbarProblems extends Vue {
-  @Prop() problems!: types.NavbarProblemsetProblem[];
-  @Prop() activeProblem!: string | null;
-  @Prop() courseAlias!: string | null;
-  @Prop() courseName!: string | null;
-  @Prop({ default: false }) inAssignment!: boolean;
-  @Prop({ default: 2 }) digitsAfterDecimalPoint!: number;
-  @Prop({ default: null }) currentAssignment!: omegaup.Assignment | null;
+);
 
-  T = T;
+const emit = defineEmits<{
+  (e: 'disable-active-problem'): void;
+  (e: 'navigate-to-problem', problem: types.NavbarProblemsetProblem): void;
+}>();
 
-  getProblemTypeTitle(acceptsSubmissions: boolean): string {
-    return acceptsSubmissions ? T.wordsProblem : T.wordsLecture;
-  }
+const urlAssignment = computed(() => `/course/${props.courseAlias}/`);
 
-  getMaxScoreForProblem(problem: types.NavbarProblemsetProblem): string {
-    const bestScore = problem.myBestScore ?? problem.bestScore;
-    return `(${bestScore.toFixed(
-      this.digitsAfterDecimalPoint,
-    )} / ${problem.maxScore.toFixed(this.digitsAfterDecimalPoint)})`;
-  }
+function getProblemTypeTitle(acceptsSubmissions: boolean): string {
+  return acceptsSubmissions ? T.wordsProblem : T.wordsLecture;
+}
 
-  get urlAssignment(): string {
-    return `/course/${this.courseAlias}/`;
-  }
+function getMaxScoreForProblem(problem: types.NavbarProblemsetProblem): string {
+  const bestScore = problem.myBestScore ?? problem.bestScore;
+  return `(${bestScore.toFixed(
+    props.digitsAfterDecimalPoint,
+  )} / ${problem.maxScore.toFixed(props.digitsAfterDecimalPoint)})`;
+}
 
-  onNavigateToProblem(problem: types.NavbarProblemsetProblem) {
-    this.$emit('navigate-to-problem', problem);
-  }
+function onNavigateToProblem(problem: types.NavbarProblemsetProblem) {
+  emit('navigate-to-problem', problem);
 }
 </script>
 

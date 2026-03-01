@@ -1,11 +1,11 @@
 <template>
-  <omegaup-teams-group-form
-    :alias.sync="alias"
-    :description.sync="description"
-    :name.sync="name"
-    :number-of-contestants.sync="numberOfContestants"
+  <OmegaupTeamsGroupForm
+    v-model:alias="alias"
+    v-model:description="description"
+    v-model:name="name"
+    v-model:number-of-contestants="numberOfContestants"
     :max-number-of-contestants="maxNumberOfContestants"
-    @submit="(request) => $emit('create-teams-group', { ...request, alias })"
+    @submit="(request) => emit('create-teams-group', { ...request, alias })"
   >
     <template #teams-group-title>
       <div class="card-header">
@@ -14,50 +14,55 @@
         </h3>
       </div>
     </template>
-  </omegaup-teams-group-form>
+  </OmegaupTeamsGroupForm>
 </template>
 
-<script lang="ts">
-import teamsgroup_FormBase from './FormBase.vue';
-import { Vue, Component, Watch, Emit, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
+import OmegaupTeamsGroupForm from './FormBase.vue';
 import T from '../../lang';
 import latinize from 'latinize';
 
-@Component({
-  components: {
-    'omegaup-teams-group-form': teamsgroup_FormBase,
+const props = withDefaults(
+  defineProps<{
+    maxNumberOfContestants?: number;
+  }>(),
+  {
+    maxNumberOfContestants: 10,
   },
-})
-export default class TeamsGroupFormCreate extends Vue {
-  @Prop({ default: 10 }) maxNumberOfContestants!: number;
+);
 
-  T = T;
-  alias: null | string = null;
-  description: null | string = null;
-  name: null | string = null;
-  numberOfContestants: number = 3;
+const emit = defineEmits<{
+  (e: 'create-teams-group', request: unknown): void;
+  (e: 'validate-unused-alias', alias: string): void;
+}>();
 
-  generateAlias(name: string): string {
-    // Remove accents
-    return (
-      latinize(name)
-        // Replace whitespace
-        .replace(/\s+/g, '-')
-        // Remove invalid characters
-        .replace(/[^a-zA-Z0-9_-]/g, '')
-        .substring(0, 32)
-    );
-  }
+const alias = ref<null | string>(null);
+const description = ref<null | string>(null);
+const name = ref<null | string>(null);
+const numberOfContestants = ref(3);
 
-  @Watch('alias')
-  @Emit('validate-unused-alias')
-  onAliasChanged(newValue: string): string {
-    return newValue;
-  }
-
-  @Watch('name')
-  onNameChanged(newValue: string): void {
-    this.alias = this.generateAlias(newValue);
-  }
+function generateAlias(nameVal: string): string {
+  // Remove accents
+  return (
+    latinize(nameVal)
+      // Replace whitespace
+      .replace(/\s+/g, '-')
+      // Remove invalid characters
+      .replace(/[^a-zA-Z0-9_-]/g, '')
+      .substring(0, 32)
+  );
 }
+
+watch(alias, (newValue) => {
+  if (newValue) {
+    emit('validate-unused-alias', newValue);
+  }
+});
+
+watch(name, (newValue) => {
+  if (newValue) {
+    alias.value = generateAlias(newValue);
+  }
+});
 </script>

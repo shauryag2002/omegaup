@@ -5,16 +5,16 @@
         <div class="form-group mb-0">
           <label class="font-weight-bold w-100"
             >{{ T.courseEditTeachingAssistants }}
-            <font-awesome-icon
+            <FontAwesomeIcon
               :title="T.courseEditAddTeachingAssistantsTooltip"
               icon="info-circle"
             />
-            <omegaup-common-typeahead
+            <OmegaupCommonTypeahead
               :existing-options="searchResultUsers"
-              :value.sync="username"
+              v-model:value="username"
               :max-results="10"
               @update-existing-options="
-                (query) => $emit('update-search-result-users', query)
+                (query) => emit('update-search-result-users', query)
               "
             />
           </label>
@@ -44,10 +44,10 @@
             :key="teachingAssistant.username"
           >
             <td>
-              <omegaup-user-username
+              <OmegaupUserUsername
                 :linkify="true"
                 :username="teachingAssistant.username"
-              ></omegaup-user-username>
+              ></OmegaupUserUsername>
             </td>
             <td>{{ teachingAssistant.role }}</td>
             <td>
@@ -67,53 +67,46 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import { omegaup } from '../../omegaup';
 import T from '../../lang';
-import common_Typeahead from '../common/Typeahead.vue';
-import user_Username from '../user/Username.vue';
+import OmegaupCommonTypeahead from '../common/Typeahead.vue';
+import OmegaupUserUsername from '../user/Username.vue';
 
-import {
-  FontAwesomeIcon,
-  FontAwesomeLayers,
-  FontAwesomeLayersText,
-} from '@fortawesome/vue-fontawesome';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { types } from '../../api_types';
 library.add(fas);
 
-@Component({
-  components: {
-    'omegaup-common-typeahead': common_Typeahead,
-    'omegaup-user-username': user_Username,
-    'font-awesome-icon': FontAwesomeIcon,
-    'font-awesome-layers': FontAwesomeLayers,
-    'font-awesome-layers-text': FontAwesomeLayersText,
+const props = defineProps<{
+  teachingAssistants: omegaup.UserRole[];
+  searchResultUsers: types.ListItem[];
+}>();
+
+const emit = defineEmits<{
+  (e: 'add-teaching-assistant', username: string | undefined): void;
+  (e: 'remove-teaching-assistant', username: string): void;
+  (e: 'update-search-result-users', query: string): void;
+}>();
+
+const username = ref<null | types.ListItem>(null);
+const currentTeachingAssistants = ref(props.teachingAssistants);
+
+watch(
+  () => props.teachingAssistants,
+  (newValue: omegaup.UserRole[]) => {
+    currentTeachingAssistants.value = newValue;
   },
-})
-export default class TeachingAssistants extends Vue {
-  @Prop() teachingAssistants!: omegaup.UserRole[];
-  @Prop() searchResultUsers!: types.ListItem[];
+);
 
-  T = T;
-  username: null | types.ListItem = null;
-  selected = {};
-  currentTeachingAssistants = this.teachingAssistants;
+function onSubmit(): void {
+  emit('add-teaching-assistant', username.value?.key);
+  username.value = null;
+}
 
-  @Watch('teachingAssistants')
-  onTeachingAssistantsChanged(newValue: omegaup.UserRole[]): void {
-    this.currentTeachingAssistants = newValue;
-  }
-
-  onSubmit(): void {
-    this.$emit('add-teaching-assistant', this.username?.key);
-    this.username = null;
-  }
-
-  onRemove(teachingAssistant: omegaup.UserRole): void {
-    this.$emit('remove-teaching-assistant', teachingAssistant.username);
-  }
+function onRemove(teachingAssistant: omegaup.UserRole): void {
+  emit('remove-teaching-assistant', teachingAssistant.username);
 }
 </script>

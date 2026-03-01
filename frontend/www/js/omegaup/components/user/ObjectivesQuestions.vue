@@ -118,9 +118,8 @@ import { Vue, Component } from 'vue-property-decorator';
 import T from '../../lang';
 import * as ui from '../../ui';
 
-import 'bootstrap-vue/dist/bootstrap-vue.css';
-import { ModalPlugin } from 'bootstrap-vue';
-Vue.use(ModalPlugin);
+import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
+import { BModal } from 'bootstrap-vue-next';
 
 import {
   FontAwesomeIcon,
@@ -253,11 +252,11 @@ export default class UserObjectivesQuestions extends Vue {
 <style lang="scss" scoped>
 @import '../../../../sass/main.scss';
 
->>> .modal-dialog {
+:deep(.modal-dialog) {
   max-width: 330px;
 }
 
->>> .modal-header {
+:deep(.modal-header) {
   border-bottom: 0;
 }
 

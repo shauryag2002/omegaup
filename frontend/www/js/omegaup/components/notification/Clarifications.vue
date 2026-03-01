@@ -1,6 +1,6 @@
 <template>
   <li class="nav-item dropdown d-none d-lg-flex align-items-center">
-    <audio v-if="isAdmin" ref="notification-audio" data-notification-audio>
+    <audio v-if="isAdmin" ref="notificationAudio" data-notification-audio>
       <source src="/media/notification.mp3" type="audio/mpeg" />
     </audio>
     <a
@@ -64,8 +64,8 @@
   </li>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import type { types } from '../../api_types';
 import T from '../../lang';
 import { SafeStorage } from '../../safe_storage';
@@ -74,72 +74,75 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faBell, faAlignRight } from '@fortawesome/free-solid-svg-icons';
 library.add(faBell, faAlignRight);
 
-@Component({
-  components: {
-    FontAwesomeIcon,
+const props = withDefaults(
+  defineProps<{
+    clarifications?: types.Clarification[];
+    isAdmin: boolean;
+  }>(),
+  {
+    clarifications: () => [],
   },
-})
-export default class Clarifications extends Vue {
-  @Prop({ default: () => [] }) clarifications!: types.Clarification[];
+);
 
-  @Prop() isAdmin!: boolean;
-  T = T;
+const notificationAudio = ref<HTMLMediaElement | null>(null);
+let flashInterval = 0;
+const unreadClarifications = ref<types.Clarification[]>(props.clarifications);
 
-  flashInterval: number = 0;
-  unreadClarifications = this.clarifications;
-
-  @Watch('clarifications')
-  onPropertyChanged(newValue: types.Clarification[]): void {
-    this.unreadClarifications = newValue;
-    const audio = this.$refs['notification-audio'] as HTMLMediaElement;
+watch(
+  () => props.clarifications,
+  (newValue: types.Clarification[]) => {
+    unreadClarifications.value = newValue;
+    const audio = notificationAudio.value;
     if (!audio) return;
     audio.play();
-  }
+  },
+);
 
-  @Watch('unreadClarifications')
-  onPropertyChange(newValue: types.Clarification[]): void {
+watch(
+  () => unreadClarifications.value,
+  (newValue: types.Clarification[]) => {
     if (newValue.length > 0) {
-      if (this.flashInterval) return;
-      this.flashInterval = setInterval(this.flashTitle, 1000);
+      if (flashInterval) return;
+      flashInterval = setInterval(flashTitle, 1000);
     } else {
-      if (!this.flashInterval) return;
-      clearInterval(this.flashInterval);
-      this.flashInterval = 0;
+      if (!flashInterval) return;
+      clearInterval(flashInterval);
+      flashInterval = 0;
       if (document.title.indexOf('!') === 0) {
         document.title = document.title.substring(2);
       }
     }
-  }
+  },
+);
 
-  anchor(clarification: types.Clarification): string {
-    return `#clarifications/clarification-${clarification.clarification_id}`;
-  }
+function anchor(clarification: types.Clarification): string {
+  return `#clarifications/clarification-${clarification.clarification_id}`;
+}
 
-  flashTitle(reset: boolean): void {
-    if (document.title.indexOf('!') === 0) {
-      document.title = document.title.substring(2);
-    } else if (!reset) {
-      document.title = `! ${document.title}`;
-    }
+function flashTitle(reset?: boolean): void {
+  if (document.title.indexOf('!') === 0) {
+    document.title = document.title.substring(2);
+  } else if (!reset) {
+    document.title = `! ${document.title}`;
   }
+}
 
-  onCloseClicked(clarification: types.Clarification): void {
+function onCloseClicked(clarification: types.Clarification): void {
+  const id = `clarification-${clarification.clarification_id}`;
+  unreadClarifications.value = unreadClarifications.value.filter(
+    (element) => element.clarification_id !== clarification.clarification_id,
+  );
+  if (!SafeStorage.setItem(id, Date.now().toString())) {
+    console.warn('Could not persist clarification state');
+  }
+}
+
+function onMarkAllAsRead(): void {
+  for (const clarification of unreadClarifications.value) {
     const id = `clarification-${clarification.clarification_id}`;
-    this.unreadClarifications = this.unreadClarifications.filter(
-      (element) => element.clarification_id !== clarification.clarification_id,
-    );
-    if (!SafeStorage.setItem(id, Date.now().toString())) {
-      console.warn('Could not persist clarification state');
-    }
+    SafeStorage.setItem(id, Date.now().toString());
   }
-
-  onMarkAllAsRead(): void {
-    for (const clarification of this.unreadClarifications) {
-      const id = `clarification-${clarification.clarification_id}`;
-      SafeStorage.setItem(id, Date.now().toString());
-    }
-    this.unreadClarifications = [];
-  }
+  unreadClarifications.value = [];
 }
 </script>
 

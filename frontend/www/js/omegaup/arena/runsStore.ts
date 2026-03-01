@@ -1,8 +1,5 @@
-import Vue from 'vue';
-import Vuex from 'vuex';
+import { createStore } from 'vuex';
 import { types } from '../api_types';
-
-Vue.use(Vuex);
 
 export interface RunFilters {
   offset?: number;
@@ -38,18 +35,18 @@ export const runsStoreConfig = {
   mutations: {
     addRun(state: RunsState, run: types.Run) {
       if (Object.prototype.hasOwnProperty.call(state.index, run.guid)) {
-        Vue.set(
-          state.runs,
-          state.index[run.guid],
-          Object.assign({}, state.runs[state.index[run.guid]], run),
+        state.runs[state.index[run.guid]] = Object.assign(
+          {},
+          state.runs[state.index[run.guid]],
+          run,
         );
         return;
       }
-      Vue.set(state.index, run.guid, state.runs.length);
+      state.index[run.guid] = state.runs.length;
       state.runs.push(run);
     },
     setTotalRuns(state: RunsState, totalRuns: number) {
-      Vue.set(state, 'totalRuns', totalRuns);
+      state.totalRuns = totalRuns;
     },
     clear(state: RunsState) {
       state.runs.splice(0);
@@ -78,7 +75,7 @@ export const runsStoreConfig = {
   },
 };
 
-export const myRunsStore = new Vuex.Store<RunsState>({
+export const myRunsStore = createStore<RunsState>({
   state: {
     runs: [],
     index: {},
@@ -87,14 +84,14 @@ export const myRunsStore = new Vuex.Store<RunsState>({
   mutations: {
     addRun(state, run: types.Run) {
       if (Object.prototype.hasOwnProperty.call(state.index, run.guid)) {
-        Vue.set(
-          state.runs,
-          state.index[run.guid],
-          Object.assign({}, state.runs[state.index[run.guid]], run),
+        state.runs[state.index[run.guid]] = Object.assign(
+          {},
+          state.runs[state.index[run.guid]],
+          run,
         );
         return;
       }
-      Vue.set(state.index, run.guid, state.runs.length);
+      state.index[run.guid] = state.runs.length;
       state.runs.push(run);
     },
     clear(state) {
@@ -104,4 +101,4 @@ export const myRunsStore = new Vuex.Store<RunsState>({
   },
 });
 
-export const runsStore = new Vuex.Store<RunsState>(runsStoreConfig);
+export const runsStore = createStore<RunsState>(runsStoreConfig);

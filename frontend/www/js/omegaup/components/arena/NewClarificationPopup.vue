@@ -1,5 +1,5 @@
 <template>
-  <omegaup-overlay-popup @dismiss="$emit('dismiss')">
+  <OmegaupOverlayPopup @dismiss="emit('dismiss')">
     <form
       data-new-clarification
       class="d-flex flex-column h-100"
@@ -69,73 +69,83 @@
         </div>
       </div>
     </form>
-  </omegaup-overlay-popup>
+  </OmegaupOverlayPopup>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
-import omegaup_OverlayPopup from '../OverlayPopup.vue';
+import OmegaupOverlayPopup from '../OverlayPopup.vue';
 
-@Component({
-  components: {
-    'omegaup-overlay-popup': omegaup_OverlayPopup,
+const props = withDefaults(
+  defineProps<{
+    problems?: types.NavbarProblemsetProblem[];
+    users?: types.ContestUser[];
+    problemAlias?: null | string;
+    username?: null | string;
+  }>(),
+  {
+    problems: () => [],
+    users: () => [],
+    problemAlias: null,
+    username: null,
   },
-})
-export default class ArenaNewClarificationPopup extends Vue {
-  @Prop({ default: () => [] }) problems!: types.NavbarProblemsetProblem[];
-  @Prop({ default: () => [] }) users!: types.ContestUser[];
-  @Prop({ default: null }) problemAlias!: null | string;
-  @Prop({ default: null }) username!: null | string;
+);
 
-  T = T;
-  message: null | string = null;
-  currentProblemAlias = this.problemAlias;
-  currentUsername = this.username;
+const emit = defineEmits<{
+  (
+    e: 'new-clarification',
+    payload: { clarification: types.Clarification; clearForm: () => void },
+  ): void;
+  (e: 'dismiss'): void;
+}>();
 
-  get filteredUsers(): { username: string; name: string }[] {
-    return this.users.map((user) => {
-      return {
-        username: user.username,
-        name: !user.is_owner ? user.username : T.wordsPublic,
-      };
-    });
-  }
+const message = ref<null | string>(null);
+const currentProblemAlias = ref(props.problemAlias);
+const currentUsername = ref(props.username);
 
-  get ownerUsername(): null | string {
-    return this.users.find((user) => user.is_owner)?.username ?? null;
-  }
-
-  get canSubmitClarification(): boolean {
-    return (
-      this.message != null &&
-      (this.currentUsername != null || this.users.length == 0) &&
-      this.currentProblemAlias != null
-    );
-  }
-
-  onSubmit(): void {
-    if (this.currentProblemAlias == null || this.message == null) return;
-    const clarificationRequest: types.Clarification = {
-      clarification_id: 0,
-      author: this.currentUsername ?? '',
-      problem_alias: this.currentProblemAlias,
-      message: this.message,
-      public:
-        this.ownerUsername != null &&
-        this.currentUsername != null &&
-        this.ownerUsername == this.currentUsername,
-      time: new Date(),
+const filteredUsers = computed<{ username: string; name: string }[]>(() => {
+  return props.users.map((user) => {
+    return {
+      username: user.username,
+      name: !user.is_owner ? user.username : T.wordsPublic,
     };
-    this.$emit('new-clarification', {
-      clarification: clarificationRequest,
-      clearForm: () => this.clearForm(),
-    });
-  }
+  });
+});
 
-  clearForm(): void {
-    this.$emit('dismiss');
-  }
+const ownerUsername = computed<null | string>(() => {
+  return props.users.find((user) => user.is_owner)?.username ?? null;
+});
+
+const canSubmitClarification = computed<boolean>(() => {
+  return (
+    message.value != null &&
+    (currentUsername.value != null || props.users.length == 0) &&
+    currentProblemAlias.value != null
+  );
+});
+
+function onSubmit(): void {
+  if (currentProblemAlias.value == null || message.value == null) return;
+  const clarificationRequest: types.Clarification = {
+    clarification_id: 0,
+    author: currentUsername.value ?? '',
+    problem_alias: currentProblemAlias.value,
+    message: message.value,
+    public:
+      ownerUsername.value != null &&
+      currentUsername.value != null &&
+      ownerUsername.value == currentUsername.value,
+    time: new Date(),
+  };
+  emit('new-clarification', {
+    clarification: clarificationRequest,
+    clearForm: () => clearForm(),
+  });
+}
+
+function clearForm(): void {
+  emit('dismiss');
 }
 </script>

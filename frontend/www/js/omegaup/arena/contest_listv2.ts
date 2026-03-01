@@ -1,4 +1,4 @@
-import Vue from 'vue';
+import { createApp, h, reactive } from 'vue';
 import { types } from '../api_types';
 import arena_ContestList, {
   ContestFilter,
@@ -113,80 +113,75 @@ OmegaUp.on('ready', () => {
 
   const initialState = parseUrlState();
 
+  const state = reactive({
+    query: payload.query,
+    tab: initialState.tab,
+    page: initialState.page,
+    sortOrder: initialState.sortOrder,
+    filter: initialState.filter,
+  });
+
   // Handle browser back/forward button navigation
   const onPopState = () => {
-    const state = parseUrlState();
-    vueInstance.tab = state.tab;
-    vueInstance.page = state.page;
-    vueInstance.sortOrder = state.sortOrder;
-    vueInstance.filter = state.filter;
+    const popState = parseUrlState();
+    state.tab = popState.tab;
+    state.page = popState.page;
+    state.sortOrder = popState.sortOrder;
+    state.filter = popState.filter;
   };
 
   // Handle hash changes (popstate doesn't always fire for hash-only changes)
   const onHashChange = () => {
-    const state = parseUrlState();
-    vueInstance.tab = state.tab;
+    const hashState = parseUrlState();
+    state.tab = hashState.tab;
   };
 
-  const vueInstance = new Vue({
-    el: '#main-container',
-    components: { 'omegaup-arena-contestlist': arena_ContestList },
-    data: () => ({
-      query: payload.query,
-      tab: initialState.tab,
-      page: initialState.page,
-      sortOrder: initialState.sortOrder,
-      filter: initialState.filter,
-    }),
+  const app = createApp({
     // eslint-disable-next-line vue/no-deprecated-destroyed-lifecycle
     beforeDestroy() {
       window.removeEventListener('popstate', onPopState);
       window.removeEventListener('hashchange', onHashChange);
     },
-    render: function (createElement) {
-      return createElement('omegaup-arena-contestlist', {
-        props: {
-          contests: contestStore.state.contests,
-          countContests: contestStore.state.countContests,
-          query: this.query,
-          tab: this.tab,
-          page: this.page,
-          sortOrder: this.sortOrder,
-          filter: this.filter,
-          pageSize: payload.pageSize,
-          loading: contestStore.state.loading,
-        },
-        on: {
-          'fetch-page': async ({
-            params,
-            urlObj,
-          }: {
-            params: UrlParams;
-            urlObj: URL;
-          }) => {
-            for (const [key, value] of Object.entries(params)) {
-              if (key === 'replaceState') continue; // Don't add flag to URL
-              if (value) {
-                urlObj.searchParams.set(key, value.toString());
-              } else {
-                urlObj.searchParams.delete(key);
-              }
-            }
-            // Use replaceState for browser navigation to avoid corrupting history
-            if (params.replaceState) {
-              window.history.replaceState({}, '', urlObj);
+    render: () =>
+      h(arena_ContestList, {
+        contests: contestStore.state.contests,
+        countContests: contestStore.state.countContests,
+        query: state.query,
+        tab: state.tab,
+        page: state.page,
+        sortOrder: state.sortOrder,
+        filter: state.filter,
+        pageSize: payload.pageSize,
+        loading: contestStore.state.loading,
+        onFetchPage: async ({
+          params,
+          urlObj,
+        }: {
+          params: UrlParams;
+          urlObj: URL;
+        }) => {
+          for (const [key, value] of Object.entries(params)) {
+            if (key === 'replaceState') continue; // Don't add flag to URL
+            if (value) {
+              urlObj.searchParams.set(key, value.toString());
             } else {
-              window.history.pushState({}, '', urlObj);
+              urlObj.searchParams.delete(key);
             }
-            await contestStore.dispatch('fetchContestList', {
-              requestParams: params,
-              name: params.tab_name,
-            });
-          },
+          }
+          // Use replaceState for browser navigation to avoid corrupting history
+          if (params.replaceState) {
+            window.history.replaceState({}, '', urlObj);
+          } else {
+            window.history.pushState({}, '', urlObj);
+          }
+          await contestStore.dispatch('fetchContestList', {
+            requestParams: params,
+            name: params.tab_name,
+          });
         },
-      });
-    },
+      }),
   });
+  app.mount('#main-container');
 
   window.addEventListener('popstate', onPopState);
   window.addEventListener('hashchange', onHashChange);

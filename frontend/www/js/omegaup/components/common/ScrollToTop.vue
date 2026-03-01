@@ -4,42 +4,34 @@
   </button>
 </template>
 
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faChevronUp } from '@fortawesome/free-solid-svg-icons';
 library.add(faChevronUp);
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-  },
-})
-export default class ScrollToTop extends Vue {
-  isVisible = false;
+const isVisible = ref(false);
 
-  mounted(): void {
-    window.addEventListener('scroll', this.toggleVisibility);
-  }
-
-  onUnmounted(): void {
-    window.removeEventListener('scroll', this.toggleVisibility);
-  }
-
-  // Display the button when the page is scrolled more than 400px downward
-  toggleVisibility(): void {
-    this.isVisible = window.scrollY > 400;
-  }
-
-  scrollToTop(): void {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
-  }
+function toggleVisibility(): void {
+  isVisible.value = window.scrollY > 400;
 }
+
+function scrollToTop(): void {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  });
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', toggleVisibility);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', toggleVisibility);
+});
 </script>
 
 <style lang="scss" scoped>

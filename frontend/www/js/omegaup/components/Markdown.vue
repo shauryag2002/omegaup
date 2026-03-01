@@ -7,8 +7,8 @@
   ></div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Ref, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed, watch, onMounted } from 'vue';
 import * as markdown from '../markdown';
 import * as ui from '../ui';
 import T from '../lang';
@@ -30,77 +30,87 @@ declare global {
   }
 }
 
-@Component
-export default class Markdown extends Vue {
-  @Prop() markdown!: string;
-  @Ref() root!: HTMLElement;
-  @Prop({ default: false }) fullWidth!: boolean;
+const props = withDefaults(
+  defineProps<{
+    markdown: string;
+    fullWidth?: boolean;
+  }>(),
+  {
+    fullWidth: false,
+  },
+);
 
-  markdownConverter = new markdown.Converter();
+const root = ref<HTMLElement | null>(null);
+const markdownConverter = new markdown.Converter();
 
-  get html(): string {
-    return this.markdownConverter.makeHtml(this.markdown);
+const html = computed((): string => {
+  return markdownConverter.makeHtml(props.markdown);
+});
+
+function injectCopyButtons(): void {
+  if (!root.value) {
+    return;
   }
 
-  mounted(): void {
-    this.root.innerHTML = this.html;
-    this.injectCopyButtons();
+  const codeElements = root.value.querySelectorAll('span > code');
+  if (!codeElements.length) {
+    return;
   }
 
-  @Watch('markdown')
-  onMarkdownChanged(): void {
-    this.root.innerHTML = this.html;
-    this.injectCopyButtons();
-  }
-
-  private injectCopyButtons(): void {
-    if (!this.root) {
+  codeElements.forEach((element) => {
+    const codeElement = element as HTMLElement;
+    const parentSpan = codeElement.parentElement;
+    if (!parentSpan) {
       return;
     }
 
-    const codeElements = this.root.querySelectorAll('span > code');
-    if (!codeElements.length) {
+    if (parentSpan.querySelector('.copy-btn')) {
       return;
     }
 
-    codeElements.forEach((element) => {
-      const codeElement = element as HTMLElement;
-      const parentSpan = codeElement.parentElement;
-      if (!parentSpan) {
-        return;
-      }
+    const copyButton = document.createElement('button');
+    copyButton.type = 'button';
+    copyButton.className = 'btn btn-link btn-sm ml-2 copy-btn';
+    copyButton.textContent = T.wordsCopyToClipboard;
 
-      if (parentSpan.querySelector('.copy-btn')) {
-        return;
-      }
+    const copyHint = document.createElement('span');
+    copyHint.className = 'copy-hint';
+    copyHint.textContent = T.wordsCopiedToClipboard;
 
-      const copyButton = document.createElement('button');
-      copyButton.type = 'button';
-      copyButton.className = 'btn btn-link btn-sm ml-2 copy-btn';
-      copyButton.textContent = T.wordsCopyToClipboard;
+    copyButton.addEventListener('click', () => {
+      const codeText = (codeElement.textContent || '').trim();
+      ui.copyToClipboard(codeText);
 
-      const copyHint = document.createElement('span');
-      copyHint.className = 'copy-hint';
-      copyHint.textContent = T.wordsCopiedToClipboard;
+      copyHint.classList.remove('fade-out');
+      copyHint.classList.add('fade-in');
 
-      copyButton.addEventListener('click', () => {
-        const codeText = (codeElement.textContent || '').trim();
-        ui.copyToClipboard(codeText);
-
-        copyHint.classList.remove('fade-out');
-        copyHint.classList.add('fade-in');
-
-        window.setTimeout(() => {
-          copyHint.classList.remove('fade-in');
-          copyHint.classList.add('fade-out');
-        }, 1500);
-      });
-
-      parentSpan.appendChild(copyButton);
-      parentSpan.appendChild(copyHint);
+      window.setTimeout(() => {
+        copyHint.classList.remove('fade-in');
+        copyHint.classList.add('fade-out');
+      }, 1500);
     });
-  }
+
+    parentSpan.appendChild(copyButton);
+    parentSpan.appendChild(copyHint);
+  });
 }
+
+onMounted(() => {
+  if (root.value) {
+    root.value.innerHTML = html.value;
+    injectCopyButtons();
+  }
+});
+
+watch(
+  () => props.markdown,
+  () => {
+    if (root.value) {
+      root.value.innerHTML = html.value;
+      injectCopyButtons();
+    }
+  },
+);
 </script>
 
 <style lang="scss">

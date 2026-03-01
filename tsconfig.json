@@ -25,6 +25,9 @@
     "allowSyntheticDefaultImports": true,
     "importHelpers": true,
     "paths": {
+      "vue": [
+        "./frontend/www/js/omegaup/vue-compat.ts"
+      ],
       "@/*": [
         "frontend/www/*"
       ]

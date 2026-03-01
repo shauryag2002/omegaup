@@ -4,7 +4,7 @@
       <form
         class="form"
         @submit.prevent="
-          $emit('clone', { title, alias, description, startTime })
+          emit('clone', { title, alias, description, startTime })
         "
       >
         <div class="row">
@@ -43,7 +43,7 @@
                 icon="info-circle"
               />
             </label>
-            <omegaup-datetime v-model="startTime"></omegaup-datetime>
+            <OmegaupDatetime v-model="startTime"></OmegaupDatetime>
           </div>
         </div>
         <div class="form-group">
@@ -56,33 +56,30 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import T from '../../lang';
-import DateTime from '../DateTimePicker.vue';
+import OmegaupDatetime from '../DateTimePicker.vue';
 
-import {
-  FontAwesomeIcon,
-  FontAwesomeLayers,
-  FontAwesomeLayersText,
-} from '@fortawesome/vue-fontawesome';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 library.add(fas);
 
-@Component({
-  components: {
-    'omegaup-datetime': DateTime,
-    'font-awesome-icon': FontAwesomeIcon,
-    'font-awesome-layers': FontAwesomeLayers,
-    'font-awesome-layers-text': FontAwesomeLayersText,
-  },
-})
-export default class Clone extends Vue {
-  T = T;
-  title = '';
-  alias = '';
-  description = '';
-  startTime = new Date();
-}
+const emit = defineEmits<{
+  (
+    e: 'clone',
+    payload: {
+      title: string;
+      alias: string;
+      description: string;
+      startTime: Date;
+    },
+  ): void;
+}>();
+
+const title = ref('');
+const alias = ref('');
+const description = ref('');
+const startTime = ref(new Date());
 </script>

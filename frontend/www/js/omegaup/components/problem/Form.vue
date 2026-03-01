@@ -462,8 +462,7 @@ import latinize from 'latinize';
 import { types } from '../../api_types';
 import 'intro.js/introjs.css';
 import introJs from 'intro.js';
-import VueCookies from 'vue-cookies';
-Vue.use(VueCookies, { expire: -1 });
+import { getCookie, setCookie } from '../../cookies';
 
 @Component({
   components: {
@@ -566,7 +565,7 @@ export default class ProblemForm extends Vue {
           ],
         })
         .start();
-      this.$cookies.set('has-visited-create-problem', true, -1);
+      setCookie('has-visited-create-problem', true);
     }
   }
 

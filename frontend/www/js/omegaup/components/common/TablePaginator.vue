@@ -91,8 +91,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue';
 import T from '../../lang';
 import { LinkableResource } from '../../linkable_resource';
 
@@ -101,59 +101,63 @@ interface SortOption {
   title: string;
 }
 
-/**
- * Creates a two-dimensional paginated table, with the number of rows being
- * calculated taking into account the number of items per page, total items.
- */
-@Component
-export default class TablePaginator extends Vue {
-  @Prop() items!: LinkableResource[];
-  @Prop() itemsPerPage!: number;
-  @Prop() columnNames!: Array<{ name: string; style: string }>;
-  @Prop() title!: string;
-  @Prop({ default: false }) showPageOffset!: boolean;
-  @Prop({ default: () => [] }) sortOptions!: SortOption[];
+const props = withDefaults(
+  defineProps<{
+    items: LinkableResource[];
+    itemsPerPage: number;
+    columnNames: Array<{ name: string; style: string }>;
+    title: string;
+    showPageOffset?: boolean;
+    sortOptions?: SortOption[];
+  }>(),
+  {
+    showPageOffset: false,
+    sortOptions: () => [],
+  },
+);
 
-  private T = T;
-  private currentPageNumber = 0;
-  private currentSortOption =
-    this.sortOptions.length > 0 ? this.sortOptions[0].value : '';
+const emit = defineEmits<{
+  (e: 'sort-option-change', value: string): void;
+}>();
 
-  private nextPage(): void {
-    this.currentPageNumber++;
-  }
+const currentPageNumber = ref(0);
+const currentSortOption = ref(
+  props.sortOptions.length > 0 ? props.sortOptions[0].value : '',
+);
 
-  private previousPage(): void {
-    this.currentPageNumber--;
-  }
-
-  private get totalPagesCount(): number {
-    return Math.ceil(this.items.length / this.rowsPerPage);
-  }
-
-  private get rowsPerPage(): number {
-    return Math.floor(this.itemsPerPage);
-  }
-
-  private get itemsRows(): LinkableResource[][] {
-    const groups = [];
-    for (let i = 0; i < this.items.length; i++) {
-      groups.push(this.items.slice(i, i + 1));
-    }
-    return groups;
-  }
-
-  private get paginatedItems(): LinkableResource[][] {
-    const start = this.currentPageNumber * this.rowsPerPage;
-    const end = start + this.rowsPerPage;
-    return this.itemsRows.slice(start, end);
-  }
-
-  @Watch('currentSortOption')
-  onCurrentSortOptionChange(newSelector: string) {
-    this.$emit('sort-option-change', newSelector);
-  }
+function nextPage(): void {
+  currentPageNumber.value++;
 }
+
+function previousPage(): void {
+  currentPageNumber.value--;
+}
+
+const rowsPerPage = computed((): number => {
+  return Math.floor(props.itemsPerPage);
+});
+
+const totalPagesCount = computed((): number => {
+  return Math.ceil(props.items.length / rowsPerPage.value);
+});
+
+const itemsRows = computed((): LinkableResource[][] => {
+  const groups = [];
+  for (let i = 0; i < props.items.length; i++) {
+    groups.push(props.items.slice(i, i + 1));
+  }
+  return groups;
+});
+
+const paginatedItems = computed((): LinkableResource[][] => {
+  const start = currentPageNumber.value * rowsPerPage.value;
+  const end = start + rowsPerPage.value;
+  return itemsRows.value.slice(start, end);
+});
+
+watch(currentSortOption, (newSelector) => {
+  emit('sort-option-change', newSelector);
+});
 </script>
 
 <style>

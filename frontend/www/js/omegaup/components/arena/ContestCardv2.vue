@@ -139,12 +139,9 @@ import T from '../../lang';
 
 // Import Bootstrap an BootstrapVue CSS files (order is important)
 import 'bootstrap/dist/css/bootstrap.css';
-import 'bootstrap-vue/dist/bootstrap-vue.css';
+import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
+import { BButton, BCard } from 'bootstrap-vue-next';
 
-import { ButtonPlugin, DropdownPlugin, LayoutPlugin } from 'bootstrap-vue';
-Vue.use(ButtonPlugin);
-Vue.use(DropdownPlugin);
-Vue.use(LayoutPlugin);
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';

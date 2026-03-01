@@ -2,10 +2,10 @@
   <div>
     <div class="card-header pb-4 px-5 pt-5">
       <h2 class="text-center mb-4">{{ course.name }}</h2>
-      <omegaup-markdown
+      <OmegaupMarkdown
         :full-width="true"
         :markdown="course.description"
-      ></omegaup-markdown>
+      ></OmegaupMarkdown>
       <!-- TODO: Here goes the estimated time for course -->
       <p v-if="course.level" class="text-center course-level">
         {{
@@ -13,39 +13,39 @@
         }}
       </p>
       <template v-if="displayCoursePrivacyBullets">
-        <omegaup-markdown
+        <OmegaupMarkdown
           :markdown="T.coursePrivacyConsent"
           :full-width="true"
           class="font-weight-bold h5"
-        ></omegaup-markdown>
-        <omegaup-markdown
+        ></OmegaupMarkdown>
+        <OmegaupMarkdown
           v-if="needsBasicInformation"
           :markdown="T.courseBasicInformationNeeded"
           :full-width="true"
-        ></omegaup-markdown>
+        ></OmegaupMarkdown>
         <template v-if="course.requests_user_information != 'no'">
-          <omegaup-markdown
+          <OmegaupMarkdown
             :markdown="statements.privacy.markdown || ''"
             :full-width="true"
-          ></omegaup-markdown>
-          <omegaup-radio-switch
-            :value.sync="shareUserInformation"
+          ></OmegaupMarkdown>
+          <OmegaupRadioSwitch
+            v-model:value="shareUserInformation"
             :selected-value="shareUserInformation"
             class="align-to-markdown ml-5 mb-3"
-          ></omegaup-radio-switch>
+          ></OmegaupRadioSwitch>
         </template>
 
         <template v-if="shouldShowAcceptTeacher">
-          <omegaup-markdown
+          <OmegaupMarkdown
             :markdown="statements.acceptTeacher.markdown || ''"
             :full-width="true"
-          ></omegaup-markdown>
-          <omegaup-radio-switch
-            :value.sync="acceptTeacher"
+          ></OmegaupMarkdown>
+          <OmegaupRadioSwitch
+            v-model:value="acceptTeacher"
             :selected-value="acceptTeacher"
             name="accept-teacher"
             class="align-to-markdown ml-5"
-          ></omegaup-radio-switch>
+          ></OmegaupRadioSwitch>
         </template>
       </template>
       <div class="text-center mt-3">
@@ -70,31 +70,31 @@
             class="text-center"
             @submit.prevent="onRequestAccess"
           >
-            <omegaup-markdown
+            <OmegaupMarkdown
               :markdown="T.mustRegisterToJoinCourse"
               :full-width="true"
-            ></omegaup-markdown>
+            ></OmegaupMarkdown>
             <button type="submit" class="btn btn-primary btn-lg">
               {{ T.registerForCourse }}
             </button>
           </form>
-          <omegaup-markdown
+          <OmegaupMarkdown
             v-else-if="!userRegistrationAnswered"
             :markdown="T.registrationPendingCourse"
             :full-width="true"
-          ></omegaup-markdown>
-          <omegaup-markdown
+          ></OmegaupMarkdown>
+          <OmegaupMarkdown
             v-else
             :markdown="T.registrationDenied"
             :full-width="true"
-          ></omegaup-markdown>
+          ></OmegaupMarkdown>
         </template>
         <a
           v-else
           class="btn btn-primary"
           role="button"
           :href="`/login/?redirect=${encodeURIComponent(
-            window.location.pathname,
+            windowRef.location.pathname,
           )}`"
           >{{ T.loginLogIn }}</a
         >
@@ -103,10 +103,10 @@
     <div class="mt-4">
       <div v-if="course.objective" class="mb-4">
         <h5 class="intro-subtitle pb-1">{{ T.courseIntroWhatYouWillLearn }}</h5>
-        <omegaup-markdown
+        <OmegaupMarkdown
           :markdown="course.objective"
           :full-width="true"
-        ></omegaup-markdown>
+        ></OmegaupMarkdown>
       </div>
       <div v-if="course.school_id && course.school_name">
         <h5 class="intro-subtitle pb-1 mb-2">{{ T.courseIntroImpartedBy }}</h5>
@@ -116,16 +116,15 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed } from 'vue';
 import T from '../../lang';
 import * as ui from '../../ui';
 import { types } from '../../api_types';
 
-import omegaup_Markdown from '../Markdown.vue';
-import omegaup_RadioSwitch from '../RadioSwitch.vue';
+import OmegaupMarkdown from '../Markdown.vue';
+import OmegaupRadioSwitch from '../RadioSwitch.vue';
 import { library } from '@fortawesome/fontawesome-svg-core';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import {
   faChalkboardTeacher,
   faFileAlt,
@@ -133,7 +132,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 library.add(faChalkboardTeacher, faFileAlt, faListAlt);
 
-const levels = {
+const levels: Record<string, string> = {
   introductory: T.courseLevelIntroductory,
   intermediate: T.courseLevelIntermediate,
   advanced: T.courseLevelAdvanced,
@@ -147,62 +146,75 @@ interface Statement {
   };
 }
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-    'omegaup-markdown': omegaup_Markdown,
-    'omegaup-radio-switch': omegaup_RadioSwitch,
+const props = withDefaults(
+  defineProps<{
+    course: types.CourseDetails;
+    needsBasicInformation: boolean;
+    shouldShowAcceptTeacher: boolean;
+    statements: Statement;
+    userRegistrationRequested: boolean | null;
+    userRegistrationAnswered: boolean | null;
+    userRegistrationAccepted: boolean | null;
+    loggedIn: boolean;
+  }>(),
+  {
+    userRegistrationRequested: null,
+    userRegistrationAnswered: null,
+    userRegistrationAccepted: null,
   },
-})
-export default class CourseIntro extends Vue {
-  @Prop() course!: types.CourseDetails;
-  @Prop() needsBasicInformation!: boolean;
-  @Prop() shouldShowAcceptTeacher!: boolean;
-  @Prop() statements!: Statement;
-  @Prop({ default: null }) userRegistrationRequested!: boolean;
-  @Prop({ default: null }) userRegistrationAnswered!: boolean;
-  @Prop({ default: null }) userRegistrationAccepted!: boolean;
-  @Prop() loggedIn!: boolean;
+);
 
-  T = T;
-  ui = ui;
-  levels = levels;
+const emit = defineEmits<{
+  (
+    e: 'submit',
+    payload: {
+      shareUserInformation: boolean;
+      acceptTeacher: boolean;
+    },
+  ): void;
+  (
+    e: 'request-access-course',
+    payload: {
+      shareUserInformation: boolean;
+      acceptTeacher: boolean;
+    },
+  ): void;
+}>();
 
-  shareUserInformation = false;
-  acceptTeacher = false;
-  window = window;
+const shareUserInformation = ref(false);
+const acceptTeacher = ref(false);
+const windowRef = window;
 
-  get isButtonDisabled(): boolean {
-    return (
-      this.needsBasicInformation ||
-      (this.course.requests_user_information === 'required' &&
-        !this.shareUserInformation)
-    );
-  }
+const isButtonDisabled = computed((): boolean => {
+  return (
+    props.needsBasicInformation ||
+    (props.course.requests_user_information === 'required' &&
+      !shareUserInformation.value)
+  );
+});
 
-  get displayCoursePrivacyBullets(): boolean {
-    return (
-      (this.userRegistrationAccepted ||
-        this.userRegistrationRequested === false) &&
-      (this.needsBasicInformation ||
-        this.course.requests_user_information != 'no' ||
-        this.shouldShowAcceptTeacher)
-    );
-  }
+const displayCoursePrivacyBullets = computed((): boolean => {
+  return (
+    (props.userRegistrationAccepted ||
+      props.userRegistrationRequested === false) &&
+    (props.needsBasicInformation ||
+      props.course.requests_user_information != 'no' ||
+      props.shouldShowAcceptTeacher)
+  );
+});
 
-  onSubmit(): void {
-    this.$emit('submit', {
-      shareUserInformation: this.shareUserInformation,
-      acceptTeacher: this.acceptTeacher,
-    });
-  }
+function onSubmit(): void {
+  emit('submit', {
+    shareUserInformation: shareUserInformation.value,
+    acceptTeacher: acceptTeacher.value,
+  });
+}
 
-  onRequestAccess(): void {
-    this.$emit('request-access-course', {
-      shareUserInformation: this.shareUserInformation,
-      acceptTeacher: this.acceptTeacher,
-    });
-  }
+function onRequestAccess(): void {
+  emit('request-access-course', {
+    shareUserInformation: shareUserInformation.value,
+    acceptTeacher: acceptTeacher.value,
+  });
 }
 </script>
 

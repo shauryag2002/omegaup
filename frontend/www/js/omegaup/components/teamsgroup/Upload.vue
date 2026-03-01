@@ -135,22 +135,10 @@ import { getBlogUrl } from '../../urlHelper';
 
 // Import Bootstrap an BootstrapVue CSS files (order is important)
 import 'bootstrap/dist/css/bootstrap.css';
-import 'bootstrap-vue/dist/bootstrap-vue.css';
+import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
+import { BBadge, BButton, BCard, BCol, BForm, BRow, BTable } from 'bootstrap-vue-next';
 
 // Import Only Required Plugins
-import {
-  TablePlugin,
-  ButtonPlugin,
-  BadgePlugin,
-  CardPlugin,
-  BForm,
-  BRow,
-  BCol,
-} from 'bootstrap-vue';
-Vue.use(TablePlugin);
-Vue.use(ButtonPlugin);
-Vue.use(BadgePlugin);
-Vue.use(CardPlugin);
 
 type TeamIdentity = types.Identity & {
   usernames: { username: string; password?: string }[];

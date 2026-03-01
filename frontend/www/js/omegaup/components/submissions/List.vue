@@ -1,9 +1,8 @@
 <template>
   <div
-    v-infinite-scroll="() => $emit('fetch-more-data')"
+    ref="scrollContainer"
     submissions-problem
-    infinite-scroll-disabled="isScrollDisabled"
-    infinite-scroll-distance="10"
+    @scroll="onScroll"
   >
     <div class="text-center mb-5 submissions-title">
       <h2>
@@ -22,7 +21,7 @@
       <div v-if="includeUser" class="card-body d-flex align-items-center">
         <omegaup-common-typeahead
           :existing-options="searchResultUsers"
-          :value.sync="searchedUsername"
+          v-model:value="searchedUsername"
           :max-results="10"
           class="mr-2"
           @update-existing-options="
@@ -137,16 +136,12 @@ import * as time from '../../time';
 import UserName from '../user/Username.vue';
 import common_Typeahead from '../common/Typeahead.vue';
 import common_Paginator from '../common/Paginator.vue';
-import infiniteScroll from 'vue-infinite-scroll';
 
 @Component({
   components: {
     'omegaup-username': UserName,
     'omegaup-common-typeahead': common_Typeahead,
     'omegaup-common-paginator': common_Paginator,
-  },
-  directives: {
-    infiniteScroll,
   },
 })
 export default class SubmissionsList extends Vue {
@@ -161,6 +156,30 @@ export default class SubmissionsList extends Vue {
   ui = ui;
   time = time;
   searchedUsername: types.ListItem | null = null;
+
+  private _scrollHandler: (() => void) | null = null;
+
+  mounted(): void {
+    this._scrollHandler = () => this.onScroll();
+    window.addEventListener('scroll', this._scrollHandler);
+  }
+
+  beforeUnmount(): void {
+    if (this._scrollHandler) {
+      window.removeEventListener('scroll', this._scrollHandler);
+    }
+  }
+
+  onScroll(): void {
+    if (this.isScrollDisabled) return;
+    const scrollBottom =
+      document.documentElement.scrollHeight -
+      window.innerHeight -
+      window.scrollY;
+    if (scrollBottom < 10) {
+      this.$emit('fetch-more-data');
+    }
+  }
 
   get hrefSearchUser(): string {
     if (!this.searchedUsername?.key) {

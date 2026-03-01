@@ -9,8 +9,8 @@
           size="sm"
           @click="toggleDetails(row)"
         >
-          <b-icon-chevron-right v-if="!row.detailsShowing" />
-          <b-icon-chevron-down v-else />
+          <FontAwesomeIcon v-if="!row.detailsShowing" :icon="['fas', 'chevron-right']" />
+          <FontAwesomeIcon v-else :icon="['fas', 'chevron-down']" />
         </b-button>
       </template>
 
@@ -30,7 +30,7 @@
           v-if="data.item.status === 'ready' && data.item.verdict !== 'AC'"
           v-b-tooltip.right="statusHelp(data.item)"
           size="sm"
-          ><b-icon-question-circle-fill></b-icon-question-circle-fill>
+          ><FontAwesomeIcon :icon="['fas', 'circle-question']" />
         </b-button>
       </template>
 
@@ -45,15 +45,14 @@ import T from '../../lang';
 import { types } from '../../api_types';
 import * as time from '../../time';
 
-import {
-  BootstrapVue,
-  BIconChevronRight,
-  BIconChevronDown,
-  BIconQuestionCircleFill,
-} from 'bootstrap-vue';
 import 'bootstrap/dist/css/bootstrap.css';
-import 'bootstrap-vue/dist/bootstrap-vue.css';
-Vue.use(BootstrapVue);
+import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
+import { BButton, BTable, vBTooltip } from 'bootstrap-vue-next';
+
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faChevronRight, faChevronDown, faCircleQuestion } from '@fortawesome/free-solid-svg-icons';
+library.add(faChevronRight, faChevronDown, faCircleQuestion);
 
 export enum PopupDisplayed {
   None,
@@ -89,9 +88,10 @@ interface TableRunItem {
 
 @Component({
   components: {
-    BIconChevronRight,
-    BIconChevronDown,
-    BIconQuestionCircleFill,
+    FontAwesomeIcon,
+  },
+  directives: {
+    'b-tooltip': vBTooltip,
   },
 })
 export default class Runs extends Vue {

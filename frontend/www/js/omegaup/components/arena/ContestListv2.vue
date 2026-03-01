@@ -201,12 +201,11 @@
               <template #text-contest-date>
                 <b-card-text>
                   <font-awesome-icon icon="calendar-alt" />
-                  <a :href="getTimeLink(contestItem.finish_time)">
-                    {{
-                      ui.formatString(T.contestEndTime, {
-                        endDate: finishContestDate(contestItem),
-                      })
-                    }}
+                  <a
+                    :href="getTimeLink(contestItem.finish_time)"
+                    :title="contestItem.finish_time.toLocaleString()"
+                  >
+                    {{ currentContestDate(contestItem) }}
                   </a>
                 </b-card-text>
               </template>
@@ -275,12 +274,11 @@
               <template #text-contest-date>
                 <b-card-text>
                   <font-awesome-icon icon="calendar-alt" />
-                  <a :href="getTimeLink(contestItem.start_time)">
-                    {{
-                      ui.formatString(T.contestStartTime, {
-                        startDate: startContestDate(contestItem),
-                      })
-                    }}
+                  <a
+                    :href="getTimeLink(contestItem.start_time)"
+                    :title="contestItem.start_time.toLocaleString()"
+                  >
+                    {{ futureContestDate(contestItem) }}
                   </a>
                 </b-card-text>
               </template>
@@ -352,12 +350,11 @@
               <template #text-contest-date>
                 <b-card-text>
                   <font-awesome-icon icon="calendar-alt" />
-                  <a :href="getTimeLink(contestItem.start_time)">
-                    {{
-                      ui.formatString(T.contestStartedTime, {
-                        startedDate: startContestDate(contestItem),
-                      })
-                    }}
+                  <a
+                    :href="getTimeLink(contestItem.finish_time)"
+                    :title="contestItem.finish_time.toLocaleString()"
+                  >
+                    {{ pastContestDate(contestItem) }}
                   </a>
                 </b-card-text>
               </template>
@@ -405,30 +402,21 @@
 <script lang="ts">
 import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
 import { types } from '../../api_types';
+import * as time from '../../time';
 import T from '../../lang';
-import * as ui from '../../ui';
+import { getExternalUrl } from '../../urlHelper';
 
 // Import Bootstrap an BootstrapVue CSS files (order is important)
-import 'bootstrap-vue/dist/bootstrap-vue.css';
+import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
+import { BCard, BCol, BContainer, BDropdown, BRow, BTabs } from 'bootstrap-vue-next';
 import 'bootstrap/dist/css/bootstrap.css';
 
 // Import Only Required Plugins
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import {
-  CardPlugin,
-  DropdownPlugin,
-  LayoutPlugin,
-  TabsPlugin,
-} from 'bootstrap-vue';
-import infiniteScroll from 'vue-infinite-scroll';
 import ContestCard from './ContestCard.vue';
 import ContestSkeleton from './ContestSkeleton.vue';
-Vue.use(TabsPlugin);
-Vue.use(CardPlugin);
-Vue.use(DropdownPlugin);
-Vue.use(LayoutPlugin);
 library.add(fas);
 
 export enum ContestTab {
@@ -468,9 +456,6 @@ export interface UrlParams {
     'omegaup-contest-skeleton': ContestSkeleton,
     FontAwesomeIcon,
   },
-  directives: {
-    infiniteScroll,
-  },
 })
 class ArenaContestList extends Vue {
   @Prop({ default: null }) countContests!: { [key: string]: number } | null;
@@ -484,7 +469,6 @@ class ArenaContestList extends Vue {
   @Prop({ default: false }) loading!: boolean;
 
   T = T;
-  ui = ui;
   ContestTab = ContestTab;
   ContestOrder = ContestOrder;
   ContestFilter = ContestFilter;
@@ -596,16 +580,20 @@ class ArenaContestList extends Vue {
     }, 1000);
   }
 
-  finishContestDate(contest: types.ContestListItem): string {
-    return contest.finish_time.toLocaleDateString();
+  currentContestDate(contest: types.ContestListItem): string {
+    return time.getDisplayForCurrentContest(contest.finish_time);
   }
 
-  startContestDate(contest: types.ContestListItem): string {
-    return contest.start_time.toLocaleDateString();
+  futureContestDate(contest: types.ContestListItem): string {
+    return time.getDisplayForFutureContest(contest.start_time);
+  }
+
+  pastContestDate(contest: types.ContestListItem): string {
+    return time.getDisplayForPastContest(contest.finish_time);
   }
 
   getTimeLink(time: Date): string {
-    return `http://timeanddate.com/worldclock/fixedtime.html?iso=${time.toISOString()}`;
+    return `${getExternalUrl('TimeAndDateBaseURL')}?iso=${time.toISOString()}`;
   }
 
   orderByTitle() {
@@ -789,7 +777,7 @@ export default ArenaContestList;
 }
 
 .sidebar {
-  >>> .contest-list-nav {
+  :deep(.contest-list-nav) {
     background-color: var(
       --arena-contest-list-sidebar-tab-list-background-color
     );

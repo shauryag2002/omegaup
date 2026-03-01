@@ -1,8 +1,5 @@
-import Vue from 'vue';
-import Vuex from 'vuex';
+import { createStore } from 'vuex';
 import { types } from '../api_types';
-
-Vue.use(Vuex);
 
 export interface ProblemState {
   // The mapping of problem alias to indexes on the problems array
@@ -18,9 +15,9 @@ export const storeConfig = {
       if (Object.prototype.hasOwnProperty.call(state.problems, problem.alias)) {
         return;
       }
-      Vue.set(state.problems, problem.alias, problem);
+      state.problems[problem.alias] = problem;
     },
   },
 };
 
-export default new Vuex.Store<ProblemState>(storeConfig);
+export default createStore<ProblemState>(storeConfig);

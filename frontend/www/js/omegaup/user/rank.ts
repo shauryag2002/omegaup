@@ -1,5 +1,5 @@
 import users_Rank from '../components/user/Rank.vue';
-import Vue from 'vue';
+import { createApp, h, reactive } from 'vue';
 import { OmegaUp } from '../omegaup';
 import { types } from '../api_types';
 import * as ui from '../ui';
@@ -27,46 +27,38 @@ OmegaUp.on('ready', () => {
     score: user.score,
     problems_solved: user.problems_solved,
   }));
-  new Vue({
-    el: '#main-container',
-    components: {
-      'omegaup-user-rank': users_Rank,
-    },
-    data: () => ({
-      searchResultUsers: [] as types.ListItem[],
-    }),
-    render: function (createElement) {
-      return createElement('omegaup-user-rank', {
-        props: {
-          page: payload.page,
-          length: payload.length,
-          isLogged: payload.isLogged,
-          availableFilters,
-          filter,
-          ranking,
-          resultTotal: payload.ranking.total,
-          pagerItems: payload.pagerItems,
-          searchResultUsers: this.searchResultUsers,
-          lastUpdated: payload.lastUpdated,
-          currentUsername: commonPayload.currentUsername,
-        },
-        on: {
-          'update-search-result-users': (query: string) => {
-            api.User.list({ query })
-              .then(({ results }) => {
-                this.searchResultUsers = results.map(
-                  ({ key, value }: types.ListItem) => ({
-                    key,
-                    value: `${ui.escape(key)} (<strong>${ui.escape(
-                      value,
-                    )}</strong>)`,
-                  }),
-                );
-              })
-              .catch(ui.apiError);
-          },
-        },
-      });
-    },
+  const state = reactive({
+    searchResultUsers: [] as types.ListItem[],
   });
+
+  createApp({
+    render: () =>
+      h(users_Rank, {
+        page: payload.page,
+        length: payload.length,
+        isLogged: payload.isLogged,
+        availableFilters,
+        filter,
+        ranking,
+        resultTotal: payload.ranking.total,
+        pagerItems: payload.pagerItems,
+        searchResultUsers: state.searchResultUsers,
+        lastUpdated: payload.lastUpdated,
+        currentUsername: commonPayload.currentUsername,
+        onUpdateSearchResultUsers: (query: string) => {
+          api.User.list({ query })
+            .then(({ results }) => {
+              state.searchResultUsers = results.map(
+                ({ key, value }: types.ListItem) => ({
+                  key,
+                  value: `${ui.escape(key)} (<strong>${ui.escape(
+                    value,
+                  )}</strong>)`,
+                }),
+              );
+            })
+            .catch(ui.apiError);
+        },
+      }),
+  }).mount('#main-container');
 });

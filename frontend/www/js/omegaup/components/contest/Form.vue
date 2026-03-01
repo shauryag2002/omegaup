@@ -416,7 +416,7 @@
                     }"
                     :existing-options="searchResultTeamsGroups"
                     :options="searchResultTeamsGroups"
-                    :value.sync="currentTeamsGroupAlias"
+                    v-model:value="currentTeamsGroupAlias"
                     :disabled="isSubmitting"
                     @update-existing-options="updateTeamsGroups"
                   ></omegaup-common-typeahead>
@@ -870,9 +870,9 @@ import { types } from '../../api_types';
 import * as ui from '../../ui';
 import 'intro.js/introjs.css';
 import introJs from 'intro.js';
-import VueCookies from 'vue-cookies';
-import 'v-tooltip/dist/v-tooltip.css';
-import { VTooltip } from 'v-tooltip';
+import { getCookie, setCookie } from '../../cookies';
+import 'floating-vue/dist/style.css';
+import { vTooltip as VTooltip } from 'floating-vue';
 
 import {
   FontAwesomeIcon,
@@ -884,7 +884,6 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { isValidAlias } from '../../validators';
 library.add(fas);
 
-Vue.use(VueCookies, { expire: -1 });
 
 export enum ScoreMode {
   AllOrNothing = 'all_or_nothing',
@@ -1165,7 +1164,7 @@ export default class Form extends Vue {
           ],
         })
         .start();
-      this.$cookies.set('has-visited-create-contest', true, -1);
+      setCookie('has-visited-create-contest', true);
     }
   }
 
@@ -1515,7 +1514,7 @@ export default class Form extends Vue {
 }
 
 /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
-.is-invalid-wrapper ::v-deep .multiselect__tags {
+.is-invalid-wrapper :deep(.multiselect__tags) {
   border-color: var(--form-input-error-color);
 }
 

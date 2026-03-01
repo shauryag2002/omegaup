@@ -7,32 +7,23 @@
       </div>
     </div>
     <template v-if="courses.admin.activeTab !== ''">
-      <omegaup-course-filtered-list
+      <OmegaupCourseFilteredList
         :courses="courses.admin"
         :active-tab="courses.admin.activeTab"
         :show-percentage="false"
-      ></omegaup-course-filtered-list>
+      ></OmegaupCourseFilteredList>
     </template>
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
 import T from '../../lang';
 import { types } from '../../api_types';
 import * as ui from '../../ui';
-import course_FilteredList from './FilteredList.vue';
+import OmegaupCourseFilteredList from './FilteredList.vue';
 
-@Component({
-  components: {
-    'omegaup-course-filtered-list': course_FilteredList,
-  },
-})
-export default class Mine extends Vue {
-  @Prop() courses!: types.AdminCourses;
-  @Prop() isMainUserIdentity!: boolean;
-
-  T = T;
-  ui = ui;
-}
+defineProps<{
+  courses: types.AdminCourses;
+  isMainUserIdentity: boolean;
+}>();
 </script>

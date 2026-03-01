@@ -14,7 +14,7 @@
             type="radio"
             name="difficulty"
             :value="difficulty.id"
-            @click="$emit('change-difficulty', difficulty.id)"
+            @click="emit('change-difficulty', difficulty.id)"
           />{{ difficulty.name }}
         </label>
       </div>
@@ -22,42 +22,43 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Emit, Watch, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import T from '../../lang';
 
-@Component
-export default class FilterDifficulty extends Vue {
-  @Prop() selectedDifficulty!: string;
+const props = defineProps<{
+  selectedDifficulty: string;
+}>();
 
-  T = T;
-  currentDifficulty = this.selectedDifficulty;
+const emit = defineEmits<{
+  (e: 'change-difficulty', id: string): void;
+  (e: 'change', val: string | null): void;
+}>();
 
-  difficulties: { [key: string]: { name: string; id: string } } = {
-    anyDifficulty: {
-      name: T.qualityFormDifficultyAny,
-      id: 'all',
-    },
-    difficultyEasy: {
-      name: T.qualityFormDifficultyEasy,
-      id: 'easy',
-    },
-    difficultyMedium: {
-      name: T.qualityFormDifficultyMedium,
-      id: 'medium',
-    },
-    difficultyHard: {
-      name: T.qualityFormDifficultyHard,
-      id: 'hard',
-    },
-  };
+const currentDifficulty = ref(props.selectedDifficulty);
 
-  @Emit('change')
-  @Watch('currentDifficulty')
-  onCurrentDifficultyChanged(val: string | null) {
-    return val;
-  }
-}
+const difficulties: { [key: string]: { name: string; id: string } } = {
+  anyDifficulty: {
+    name: T.qualityFormDifficultyAny,
+    id: 'all',
+  },
+  difficultyEasy: {
+    name: T.qualityFormDifficultyEasy,
+    id: 'easy',
+  },
+  difficultyMedium: {
+    name: T.qualityFormDifficultyMedium,
+    id: 'medium',
+  },
+  difficultyHard: {
+    name: T.qualityFormDifficultyHard,
+    id: 'hard',
+  },
+};
+
+watch(currentDifficulty, (val) => {
+  emit('change', val);
+});
 </script>
 
 <style scoped>

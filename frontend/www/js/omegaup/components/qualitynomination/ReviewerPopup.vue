@@ -1,5 +1,5 @@
 <template>
-  <omegaup-overlay-popup @dismiss="onHide">
+  <OmegaupOverlayPopup @dismiss="onHide">
     <transition name="fade">
       <form data-reviewewr-popup class="h-auto w-auto" @submit.prevent="">
         <div class="container-fluid d-flex align-items-start flex-column">
@@ -12,19 +12,19 @@
                 {{ T.reviewerNominationQuality }}
               </label>
               <br />
-              <omegaup-radio-switch
-                :value.sync="qualitySeal"
+              <OmegaupRadioSwitch
+                v-model:value="qualitySeal"
                 :selected-value="qualitySeal"
-              ></omegaup-radio-switch>
+              ></OmegaupRadioSwitch>
             </div>
             <div class="form-group w-100" data-other-tag-input>
-              <vue-typeahead-bootstrap
+              <VueTypeaheadBootstrap
                 :data="publicTags"
                 :serializer="publicTagsSerializer"
                 :placeholder="T.collecionOtherTags"
                 @hit="addOtherTag"
               >
-              </vue-typeahead-bootstrap>
+              </VueTypeaheadBootstrap>
               <br />
               <div class="card-body table-responsive w-100">
                 <table class="table table-striped w-100">
@@ -46,7 +46,7 @@
                           :disabled="publicTagsList.length < 2"
                           @click="removeTag(tag)"
                         >
-                          <font-awesome-icon :icon="['fas', 'trash']" />
+                          <FontAwesomeIcon :icon="['fas', 'trash']" />
                         </button>
                       </td>
                     </tr>
@@ -77,16 +77,16 @@
         </div>
       </form>
     </transition>
-  </omegaup-overlay-popup>
+  </OmegaupOverlayPopup>
 </template>
 
-<script lang="ts">
-import { Vue, Prop, Component } from 'vue-property-decorator';
-import omegaup_OverlayPopup from '../OverlayPopup.vue';
+<script setup lang="ts">
+import { ref, computed } from 'vue';
+import OmegaupOverlayPopup from '../OverlayPopup.vue';
 import { AvailableViews } from './DemotionPopup.vue';
-import omegaup_RadioSwitch from '../RadioSwitch.vue';
+import OmegaupRadioSwitch from '../RadioSwitch.vue';
 import T from '../../lang';
-import VueTypeaheadBootstrap from 'vue-typeahead-bootstrap';
+import VueTypeaheadBootstrap from '../common/TypeaheadBootstrap.vue';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
@@ -98,20 +98,20 @@ interface ProblemTag {
   value: string;
 }
 
-@Component({
-  components: {
-    'omegaup-overlay-popup': omegaup_OverlayPopup,
-    'omegaup-radio-switch': omegaup_RadioSwitch,
-    'vue-typeahead-bootstrap': VueTypeaheadBootstrap,
-    FontAwesomeIcon,
-  },
-})
-export default class ReviewerPopup extends Vue {
-  @Prop() allowUserAddTags!: boolean;
-  @Prop() levelTags!: string[];
-  @Prop() problemLevel!: string;
-  @Prop({
-    default: () => [
+const props = withDefaults(
+  defineProps<{
+    allowUserAddTags: boolean;
+    levelTags: string[];
+    problemLevel: string;
+    possibleTags?: string[];
+    publicTags?: string[];
+    selectedPublicTags: string[];
+    selectedPrivateTags: string[];
+    problemAlias: string;
+    problemTitle: string;
+  }>(),
+  {
+    possibleTags: () => [
       'problemLevelAdvancedCompetitiveProgramming',
       'problemLevelAdvancedSpecializedTopics',
       'problemLevelBasicIntroductionToProgramming',
@@ -120,69 +120,73 @@ export default class ReviewerPopup extends Vue {
       'problemLevelIntermediateDataStructuresAndAlgorithms',
       'problemLevelIntermediateMathsInProgramming',
     ],
-  })
-  possibleTags!: string[];
-  @Prop({ default: () => [] }) publicTags!: string[];
-  @Prop() selectedPublicTags!: string[];
-  @Prop() selectedPrivateTags!: string[];
-  @Prop() problemAlias!: string;
-  @Prop() problemTitle!: string;
+    publicTags: () => [],
+  },
+);
 
-  AvailableViews = AvailableViews;
-  T = T;
-  currentView: AvailableViews = AvailableViews.Content;
-  qualitySeal = true;
-  publicTagsList = this.selectedPublicTags ?? [];
+const emit = defineEmits<{
+  (e: 'dismiss'): void;
+  (
+    e: 'rate-problem-as-reviewer',
+    data: {
+      tags: string[];
+      qualitySeal: boolean;
+    },
+  ): void;
+}>();
 
-  get sortedProblemTags(): ProblemTag[] {
-    return this.possibleTags
-      .map(
-        (x: string): ProblemTag => {
-          return {
-            value: x,
-            text: T[x],
-          };
-        },
-      )
-      .sort((a: ProblemTag, b: ProblemTag): number => {
-        return a.text.localeCompare(b.text, T.lang);
-      });
-  }
+const currentView = ref<AvailableViews>(AvailableViews.Content);
+const qualitySeal = ref(true);
+const publicTagsList = ref(props.selectedPublicTags ?? []);
 
-  addOtherTag(tag: string): void {
-    if (!this.publicTagsList.includes(tag)) {
-      this.publicTagsList.push(tag);
-    }
-  }
-
-  publicTagsSerializer(tagname: string): string {
-    if (Object.prototype.hasOwnProperty.call(T, tagname)) {
-      return T[tagname];
-    }
-    return tagname;
-  }
-
-  getName(alias: string): string {
-    return T[alias];
-  }
-
-  removeTag(name: string) {
-    let pos = this.publicTagsList.indexOf(name);
-    this.publicTagsList.splice(pos, 1);
-  }
-
-  onHide(): void {
-    this.$emit('dismiss');
-  }
-
-  onSubmit(): void {
-    this.$emit('rate-problem-as-reviewer', {
-      tags: this.publicTagsList,
-      qualitySeal: this.qualitySeal,
+const sortedProblemTags = computed((): ProblemTag[] => {
+  return props.possibleTags
+    .map(
+      (x: string): ProblemTag => {
+        return {
+          value: x,
+          text: T[x],
+        };
+      },
+    )
+    .sort((a: ProblemTag, b: ProblemTag): number => {
+      return a.text.localeCompare(b.text, T.lang);
     });
-    this.currentView = AvailableViews.Thanks;
-    setTimeout(() => this.onHide(), 2000);
+});
+
+function addOtherTag(tag: string): void {
+  if (!publicTagsList.value.includes(tag)) {
+    publicTagsList.value.push(tag);
   }
+}
+
+function publicTagsSerializer(tagname: string): string {
+  if (Object.prototype.hasOwnProperty.call(T, tagname)) {
+    return T[tagname];
+  }
+  return tagname;
+}
+
+function getName(alias: string): string {
+  return T[alias];
+}
+
+function removeTag(name: string) {
+  let pos = publicTagsList.value.indexOf(name);
+  publicTagsList.value.splice(pos, 1);
+}
+
+function onHide(): void {
+  emit('dismiss');
+}
+
+function onSubmit(): void {
+  emit('rate-problem-as-reviewer', {
+    tags: publicTagsList.value,
+    qualitySeal: qualitySeal.value,
+  });
+  currentView.value = AvailableViews.Thanks;
+  setTimeout(() => onHide(), 2000);
 }
 </script>
 

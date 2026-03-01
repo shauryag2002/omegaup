@@ -22,7 +22,7 @@
         <omegaup-common-typeahead
           class="col col-md-4 pl-0 pr-2"
           :existing-options="searchResultUsers"
-          :value.sync="searchedUsername"
+          v-model:value="searchedUsername"
           :max-results="10"
           @update-existing-options="
             (query) => $emit('update-search-result-users', query)
@@ -135,7 +135,7 @@
               </b-button>
               <!-- id-lint on -->
               <b-popover
-                :show.sync="showPopover"
+                v-model:show="showPopover"
                 target="popover-solved-problems"
                 placement="right"
               >
@@ -222,12 +222,9 @@ library.add(faCheckSquare, faExchangeAlt, faQuestionCircle, faTimes, faUser);
 import { getBlogUrl } from '../../urlHelper';
 
 // Import Bootstrap and BootstrapVue CSS files (order is important: base before overrides)
-import 'bootstrap-vue/dist/bootstrap-vue.css';
+import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
 import 'bootstrap/dist/css/bootstrap.css';
-// Import Only Required Plugins
-import { ButtonPlugin, PopoverPlugin } from 'bootstrap-vue';
-Vue.use(ButtonPlugin);
-Vue.use(PopoverPlugin);
+import { BButton, BPopover } from 'bootstrap-vue-next';
 interface Rank {
   country: string;
   classname?: string;

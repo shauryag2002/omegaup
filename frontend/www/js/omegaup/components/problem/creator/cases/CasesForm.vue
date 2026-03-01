@@ -47,72 +47,89 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Vue, Prop, Inject, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed, watch, nextTick, inject } from 'vue';
+import { useStore } from 'vuex';
 import T from '../../../../lang';
-import { namespace } from 'vuex-class';
 import { Case, Group, CaseLine } from '@/js/omegaup/problem/creator/types';
 import * as ui from '@/js/omegaup/ui';
 
-const casesStore = namespace('casesStore');
+const store = useStore();
 
-@Component
-export default class CasesForm extends Vue {
-  @Inject('problemAlias') readonly alias!: string;
-  @Prop({ default: false }) readonly isTruncatedInput!: boolean;
-  @Prop({ default: false }) readonly isTruncatedOutput!: boolean;
-  @Prop({ default: false }) readonly isCaseEdit!: boolean;
-  @Prop({ default: false }) readonly isEmbedded!: boolean;
-  @Prop({ default: false }) readonly triggerSubmit!: boolean;
-  @Prop({ default: null }) readonly editGroup!: Group;
+const alias = inject<string>('problemAlias')!;
 
-  T = T;
-  commitMessage = this.isCaseEdit
-    ? T.problemEditUpdatingCase
-    : T.problemEditUpdatingGroup;
+const props = withDefaults(
+  defineProps<{
+    isTruncatedInput?: boolean;
+    isTruncatedOutput?: boolean;
+    isCaseEdit?: boolean;
+    isEmbedded?: boolean;
+    triggerSubmit?: boolean;
+    editGroup?: Group | null;
+  }>(),
+  {
+    isTruncatedInput: false,
+    isTruncatedOutput: false,
+    isCaseEdit: false,
+    isEmbedded: false,
+    triggerSubmit: false,
+    editGroup: null,
+  },
+);
 
-  @casesStore.Getter('getSelectedCase') getSelectedCase!: Case;
-  @casesStore.Getter('getSelectedGroup') getSelectedGroup!: Group;
-  @casesStore.Getter('getLinesFromSelectedCase')
-  getLinesFromSelectedCase!: CaseLine[];
+const commitMessage = ref(
+  props.isCaseEdit ? T.problemEditUpdatingCase : T.problemEditUpdatingGroup,
+);
 
-  get inputText(): string {
-    return (this.getLinesFromSelectedCase || [])
-      .map((l) => l.data.value || '')
-      .join('\n');
-  }
+const submitButton = ref<HTMLButtonElement>();
 
-  get contentsPayload(): string {
-    if (this.isCaseEdit) {
-      return JSON.stringify({
-        group: this.getSelectedGroup,
-        case: this.getSelectedCase,
-      });
-    }
+const getSelectedCase = computed(
+  () => store.getters['casesStore/getSelectedCase'] as Case,
+);
+const getSelectedGroup = computed(
+  () => store.getters['casesStore/getSelectedGroup'] as Group,
+);
+const getLinesFromSelectedCase = computed(
+  () => store.getters['casesStore/getLinesFromSelectedCase'] as CaseLine[],
+);
 
-    const groupToSend =
-      this.editGroup !== null ? this.editGroup : this.getSelectedGroup;
+const inputText = computed((): string => {
+  return (getLinesFromSelectedCase.value || [])
+    .map((l) => l.data.value || '')
+    .join('\n');
+});
 
+const contentsPayload = computed((): string => {
+  if (props.isCaseEdit) {
     return JSON.stringify({
-      group: groupToSend,
+      group: getSelectedGroup.value,
+      case: getSelectedCase.value,
     });
   }
 
-  @Watch('triggerSubmit')
-  onTriggerSubmitChange(newVal: boolean) {
-    if (newVal && this.isEmbedded) {
-      this.$nextTick(() => {
-        const btn = this.$refs.submitButton as HTMLButtonElement | undefined;
-        btn?.click();
+  const groupToSend =
+    props.editGroup !== null ? props.editGroup : getSelectedGroup.value;
+
+  return JSON.stringify({
+    group: groupToSend,
+  });
+});
+
+watch(
+  () => props.triggerSubmit,
+  (newVal: boolean) => {
+    if (newVal && props.isEmbedded) {
+      nextTick(() => {
+        submitButton.value?.click();
       });
     }
-  }
+  },
+);
 
-  onSubmit(e: Event) {
-    if (!this.commitMessage.trim()) {
-      ui.error(T.editFieldRequired);
-      e.preventDefault();
-    }
+function onSubmit(e: Event) {
+  if (!commitMessage.value.trim()) {
+    ui.error(T.editFieldRequired);
+    e.preventDefault();
   }
 }
 </script>

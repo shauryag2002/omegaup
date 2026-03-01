@@ -40,38 +40,36 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Emit } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import { omegaup } from '../../omegaup';
 import { types } from '../../api_types';
 import T from '../../lang';
 
-@Component
-export default class AdminRoles extends Vue {
-  @Prop() roles!: types.UserRole[];
-  @Prop() groups!: types.Group[];
+const props = defineProps<{
+  roles: types.UserRole[];
+  groups: types.Group[];
+}>();
 
-  T = T;
-  currentRoles: types.UserRole[] = this.roles;
-  currentGroups: types.Group[] = this.groups;
+const emit = defineEmits<{
+  (e: 'change-role', payload: omegaup.Selectable<types.UserRole>): void;
+  (e: 'change-group', payload: omegaup.Selectable<types.Group>): void;
+}>();
 
-  @Emit()
-  changeRole(
-    ev: Event,
-    role: types.UserRole,
-  ): omegaup.Selectable<types.UserRole> {
-    return {
-      value: role,
-      selected: (ev.target as HTMLInputElement).checked,
-    };
-  }
+const currentRoles = ref<types.UserRole[]>(props.roles);
+const currentGroups = ref<types.Group[]>(props.groups);
 
-  @Emit()
-  changeGroup(ev: Event, group: types.Group): omegaup.Selectable<types.Group> {
-    return {
-      value: group,
-      selected: (ev.target as HTMLInputElement).checked,
-    };
-  }
+function changeRole(ev: Event, role: types.UserRole): void {
+  emit('change-role', {
+    value: role,
+    selected: (ev.target as HTMLInputElement).checked,
+  });
+}
+
+function changeGroup(ev: Event, group: types.Group): void {
+  emit('change-group', {
+    value: group,
+    selected: (ev.target as HTMLInputElement).checked,
+  });
 }
 </script>

@@ -26,6 +26,7 @@ module.exports = {
   moduleFileExtensions: ['js', 'ts', 'vue'],
   moduleDirectories: ['node_modules'],
   moduleNameMapper: {
+    '^vue$': '@vue/compat',
     'vue-async-computed-decorator':
       '<rootDir>/node_modules/vue-async-computed-decorator/dist/index.js',
     '^@/(.*)$': '<rootDir>/frontend/www/$1',
@@ -34,7 +35,6 @@ module.exports = {
     'monaco-editor':
       '<rootDir>/frontend/www/third_party/js/__mocks__/monacoEditor.js',
     sugar: '<rootDir>/frontend/www/js/omegaup/__mocks__/sugar.js',
-    '^vue$': '@vue/compat',
     'vue-codemirror-lite':
       '<rootDir>/frontend/www/js/omegaup/__mocks__/vue-codemirror-lite.js',
   },
@@ -54,7 +54,7 @@ module.exports = {
     '.*\\.[jt]sx?$': ['babel-jest', babelConfig],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(vue-.*|@voerro/vue-tagsinput|monaco-editor|monaco-editor-core)/)',
+    'node_modules/(?!(vue-.*|@vue/.*|monaco-editor|monaco-editor-core)/)',
   ],
   testEnvironmentOptions: {
     url: 'http://localhost:8001/',

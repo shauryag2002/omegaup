@@ -1,25 +1,25 @@
 <template>
-  <omegaup-arena
+  <OmegaupArena
     :active-tab="activeTab"
     :title="contest.title"
     :should-show-runs="contestAdmin"
     :background-class="'practice'"
-    @update:activeTab="(selectedTab) => $emit('update:activeTab', selectedTab)"
+    @update:activeTab="(selectedTab) => emit('update:activeTab', selectedTab)"
   >
     <template #arena-problems>
       <div data-contest-practice>
         <div class="tab navleft">
           <div class="navbar">
-            <omegaup-arena-navbar-problems
+            <OmegaupArenaNavbarProblems
               :problems="problems"
               :active-problem="activeProblemAlias"
               :in-assignment="false"
               :digits-after-decimal-point="digitsAfterDecimalPoint"
               @disable-active-problem="activeProblem = null"
               @navigate-to-problem="onNavigateToProblem"
-            ></omegaup-arena-navbar-problems>
+            ></OmegaupArenaNavbarProblems>
           </div>
-          <omegaup-arena-summary
+          <OmegaupArenaSummary
             v-if="activeProblem === null"
             :title="ui.contestTitle(contest)"
             :description="contest.description"
@@ -29,9 +29,9 @@
             :window-length="contest.window_length"
             :admin="contest.director"
             :show-ranking="false"
-          ></omegaup-arena-summary>
+          ></OmegaupArenaSummary>
           <div v-else class="problem main">
-            <omegaup-problem-details
+            <OmegaupProblemDetails
               :user="{ loggedIn: true, admin: false, reviewer: false }"
               :next-submission-timestamp="currentNextSubmissionTimestamp"
               :next-execution-timestamp="currentNextExecutionTimestamp"
@@ -46,7 +46,7 @@
               :run-details-data="currentRunDetailsData"
               @update:activeTab="
                 (selectedTab) =>
-                  $emit('reset-hash', {
+                  emit('reset-hash', {
                     selectedTab,
                     alias: activeProblemAlias,
                   })
@@ -55,12 +55,12 @@
               @execute-run="onRunExecuted"
               @show-run="onRunDetails"
               @new-submission-popup-displayed="
-                $emit('new-submission-popup-displayed')
+                emit('new-submission-popup-displayed')
               "
             >
               <template #quality-nomination-buttons><div></div></template>
               <template #best-solvers-list><div></div></template>
-            </omegaup-problem-details>
+            </OmegaupProblemDetails>
           </div>
         </div>
       </div>
@@ -68,31 +68,31 @@
     <template #arena-scoreboard>
       <div class="card">
         <div class="card-body">
-          <omegaup-markdown
+          <OmegaupMarkdown
             :markdown="
               ui.formatString(T.arenaContestPracticeOriginalScoreboardText, {
                 contestAlias: contest.alias,
               })
             "
-          ></omegaup-markdown>
+          ></OmegaupMarkdown>
         </div>
       </div>
     </template>
     <template #arena-runs>
       <div class="card">
         <div class="card-body">
-          <omegaup-markdown
+          <OmegaupMarkdown
             :markdown="
               ui.formatString(T.arenaContestPracticeOriginalRunsText, {
                 contestAlias: contest.alias,
               })
             "
-          ></omegaup-markdown>
+          ></OmegaupMarkdown>
         </div>
       </div>
     </template>
     <template #arena-clarifications>
-      <omegaup-arena-clarification-list
+      <OmegaupArenaClarificationList
         :problems="problems"
         :users="users"
         :problem-alias="problems.length != 0 ? problems[0].alias : null"
@@ -102,7 +102,7 @@
         :show-new-clarification-popup="showNewClarificationPopup"
         @new-clarification="
           (contestClarification) =>
-            $emit('new-clarification', {
+            emit('new-clarification', {
               ...contestClarification,
               contestClarificationRequest: {
                 type: ContestClarificationType.AllProblems,
@@ -112,140 +112,174 @@
         "
         @clarification-response="onClarificationResponse"
         @update:activeTab="
-          (selectedTab) => $emit('update:activeTab', selectedTab)
+          (selectedTab) => emit('update:activeTab', selectedTab)
         "
-      ></omegaup-arena-clarification-list>
+      ></OmegaupArenaClarificationList>
     </template>
-  </omegaup-arena>
+  </OmegaupArena>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue';
 import { types } from '../../api_types';
 import * as ui from '../../ui';
 import T from '../../lang';
-import arena_Arena from './Arena.vue';
-import arena_ClarificationList from './ClarificationList.vue';
-import arena_NavbarProblems from './NavbarProblems.vue';
-import arena_Summary from './Summary.vue';
-import omegaup_Markdown from '../Markdown.vue';
-import problem_Details, { PopupDisplayed } from '../problem/Details.vue';
+import OmegaupArena from './Arena.vue';
+import OmegaupArenaClarificationList from './ClarificationList.vue';
+import OmegaupArenaNavbarProblems from './NavbarProblems.vue';
+import OmegaupArenaSummary from './Summary.vue';
+import OmegaupMarkdown from '../Markdown.vue';
+import OmegaupProblemDetails, { PopupDisplayed } from '../problem/Details.vue';
 import { ContestClarificationType } from '../../arena/clarifications';
 import { SubmissionRequest } from '../../arena/submissions';
 
-@Component({
-  components: {
-    'omegaup-arena-clarification-list': arena_ClarificationList,
-    'omegaup-arena': arena_Arena,
-    'omegaup-arena-summary': arena_Summary,
-    'omegaup-arena-navbar-problems': arena_NavbarProblems,
-    'omegaup-markdown': omegaup_Markdown,
-    'omegaup-problem-details': problem_Details,
+const props = withDefaults(
+  defineProps<{
+    contest: types.ContestPublicDetails;
+    contestAdmin: boolean;
+    problems: types.NavbarProblemsetProblem[];
+    users?: types.ContestUser[];
+    problem?: types.NavbarProblemsetProblem | null;
+    problemInfo: types.ProblemInfo;
+    clarifications?: types.Clarification[];
+    isEphemeralExperimentEnabled?: boolean;
+    showNewClarificationPopup?: boolean;
+    popupDisplayed?: PopupDisplayed;
+    activeTab: string;
+    guid?: null | string;
+    problemAlias?: null | string;
+    runs?: types.Run[];
+    runDetailsData?: null | types.RunDetails;
+    nextSubmissionTimestamp?: Date | null;
+    nextExecutionTimestamp?: Date | null;
+    shouldShowFirstAssociatedIdentityRunWarning?: boolean;
+  }>(),
+  {
+    users: () => [],
+    problem: null,
+    clarifications: () => [],
+    isEphemeralExperimentEnabled: false,
+    showNewClarificationPopup: false,
+    popupDisplayed: PopupDisplayed.None,
+    guid: null,
+    problemAlias: null,
+    runs: () => [],
+    runDetailsData: null,
+    nextSubmissionTimestamp: null,
+    nextExecutionTimestamp: null,
+    shouldShowFirstAssociatedIdentityRunWarning: false,
   },
-})
-export default class ArenaContestPractice extends Vue {
-  @Prop() contest!: types.ContestPublicDetails;
-  @Prop() contestAdmin!: boolean;
-  @Prop() problems!: types.NavbarProblemsetProblem[];
-  @Prop({ default: () => [] }) users!: types.ContestUser[];
-  @Prop({ default: null }) problem!: types.NavbarProblemsetProblem | null;
-  @Prop() problemInfo!: types.ProblemInfo;
-  @Prop({ default: () => [] }) clarifications!: types.Clarification[];
-  @Prop({ default: false }) isEphemeralExperimentEnabled!: boolean;
-  @Prop({ default: false }) showNewClarificationPopup!: boolean;
-  @Prop({ default: PopupDisplayed.None }) popupDisplayed!: PopupDisplayed;
-  @Prop() activeTab!: string;
-  @Prop({ default: null }) guid!: null | string;
-  @Prop({ default: null }) problemAlias!: null | string;
-  @Prop({ default: () => [] }) runs!: types.Run[];
-  @Prop({ default: null }) runDetailsData!: null | types.RunDetails;
-  @Prop({ default: null }) nextSubmissionTimestamp!: Date | null;
-  @Prop({ default: null }) nextExecutionTimestamp!: Date | null;
-  @Prop({ default: false })
-  shouldShowFirstAssociatedIdentityRunWarning!: boolean;
+);
 
-  T = T;
-  ui = ui;
-  currentClarifications = this.clarifications;
-  ContestClarificationType = ContestClarificationType;
-  activeProblem: types.NavbarProblemsetProblem | null = this.problem;
-  currentNextSubmissionTimestamp = this.nextSubmissionTimestamp;
-  currentNextExecutionTimestamp = this.nextExecutionTimestamp;
-  currentRunDetailsData = this.runDetailsData;
+const emit = defineEmits<{
+  (e: 'update:activeTab', selectedTab: string): void;
+  (
+    e: 'navigate-to-problem',
+    value: { problem: types.NavbarProblemsetProblem },
+  ): void;
+  (
+    e: 'submit-run',
+    value: {
+      code: string;
+      language: string;
+      problem: types.NavbarProblemsetProblem | null;
+      target: Record<string, never>;
+    },
+  ): void;
+  (e: 'execute-run', value: { target: Record<string, never> }): void;
+  (e: 'show-run', value: SubmissionRequest & { hash: string }): void;
+  (e: 'new-submission-popup-displayed'): void;
+  (e: 'reset-hash', value: { selectedTab: string; alias: string | null }): void;
+  (e: 'new-clarification', value: unknown): void;
+  (e: 'clarification-response', value: unknown): void;
+}>();
 
-  get activeProblemAlias(): null | string {
-    return this.activeProblem?.alias ?? null;
-  }
+const currentClarifications = ref(props.clarifications);
+const activeProblem = ref<types.NavbarProblemsetProblem | null>(props.problem);
+const currentNextSubmissionTimestamp = ref(props.nextSubmissionTimestamp);
+const currentNextExecutionTimestamp = ref(props.nextExecutionTimestamp);
+const currentRunDetailsData = ref(props.runDetailsData);
 
-  get digitsAfterDecimalPoint(): number {
-    return this.contest.score_mode !== 'all_or_nothing' ? 2 : 0;
-  }
+const activeProblemAlias = computed((): null | string => {
+  return activeProblem.value?.alias ?? null;
+});
 
-  onNavigateToProblem(problem: types.NavbarProblemsetProblem) {
-    this.activeProblem = problem;
-    this.$emit('navigate-to-problem', { problem });
-  }
+const digitsAfterDecimalPoint = computed((): number => {
+  return props.contest.score_mode !== 'all_or_nothing' ? 2 : 0;
+});
 
-  onRunSubmitted(run: { code: string; language: string }): void {
-    this.$emit('submit-run', {
-      ...run,
-      problem: this.activeProblem,
-      target: this,
-    });
-  }
-
-  onRunDetails(request: SubmissionRequest): void {
-    this.$emit('show-run', {
-      ...request,
-      hash: `#problems/${this.activeProblemAlias}/show-run:${request.guid}`,
-    });
-  }
-
-  onClarificationResponse(response: types.Clarification): void {
-    this.$emit('clarification-response', {
-      contestAlias: this.contest.alias,
-      clarification: response,
-      contestClarificationRequest: {
-        type: ContestClarificationType.AllProblems,
-        contestAlias: this.contest.alias,
-      },
-    });
-  }
-
-  onRunExecuted(): void {
-    this.$emit('execute-run', { target: this });
-  }
-
-  @Watch('problem')
-  onActiveProblemChanged(newValue: types.NavbarProblemsetProblem | null): void {
-    if (!newValue) {
-      this.activeProblem = null;
-      return;
-    }
-    this.onNavigateToProblem(newValue);
-  }
-
-  @Watch('problemInfo')
-  onProblemInfoChanged(newValue: types.ProblemInfo | null): void {
-    if (!newValue) {
-      return;
-    }
-    this.currentNextSubmissionTimestamp =
-      newValue.nextSubmissionTimestamp ?? null;
-    this.currentNextExecutionTimestamp =
-      newValue.nextExecutionTimestamp ?? null;
-  }
-
-  @Watch('clarifications')
-  onClarificationsChanged(newValue: types.Clarification[]): void {
-    this.currentClarifications = newValue;
-  }
-
-  @Watch('runDetailsData')
-  onRunDetailsChanged(newValue: types.RunDetails): void {
-    this.currentRunDetailsData = newValue;
-  }
+function onNavigateToProblem(problem: types.NavbarProblemsetProblem): void {
+  activeProblem.value = problem;
+  emit('navigate-to-problem', { problem });
 }
+
+function onRunSubmitted(run: { code: string; language: string }): void {
+  emit('submit-run', {
+    ...run,
+    problem: activeProblem.value,
+    target: {},
+  });
+}
+
+function onRunDetails(request: SubmissionRequest): void {
+  emit('show-run', {
+    ...request,
+    hash: `#problems/${activeProblemAlias.value}/show-run:${request.guid}`,
+  });
+}
+
+function onClarificationResponse(response: types.Clarification): void {
+  emit('clarification-response', {
+    contestAlias: props.contest.alias,
+    clarification: response,
+    contestClarificationRequest: {
+      type: ContestClarificationType.AllProblems,
+      contestAlias: props.contest.alias,
+    },
+  });
+}
+
+function onRunExecuted(): void {
+  emit('execute-run', { target: {} });
+}
+
+watch(
+  () => props.problem,
+  (newValue: types.NavbarProblemsetProblem | null) => {
+    if (!newValue) {
+      activeProblem.value = null;
+      return;
+    }
+    onNavigateToProblem(newValue);
+  },
+);
+
+watch(
+  () => props.problemInfo,
+  (newValue: types.ProblemInfo | null) => {
+    if (!newValue) {
+      return;
+    }
+    currentNextSubmissionTimestamp.value =
+      newValue.nextSubmissionTimestamp ?? null;
+    currentNextExecutionTimestamp.value =
+      newValue.nextExecutionTimestamp ?? null;
+  },
+);
+
+watch(
+  () => props.clarifications,
+  (newValue: types.Clarification[]) => {
+    currentClarifications.value = newValue;
+  },
+);
+
+watch(
+  () => props.runDetailsData,
+  (newValue: types.RunDetails | null) => {
+    currentRunDetailsData.value = newValue ?? null;
+  },
+);
 </script>
 
 <style lang="scss" scoped>

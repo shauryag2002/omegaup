@@ -82,7 +82,7 @@
                 >
                   <td class="align-middle">
                     <a :href="`/course/${course.alias}/edit/`">
-                      <font-awesome-icon
+                      <FontAwesomeIcon
                         icon="edit"
                         :title="T.omegaupTitleCourseEdit"
                       />
@@ -90,7 +90,7 @@
                   </td>
                   <td class="align-middle">
                     <a :href="`/course/${course.alias}/list/`">
-                      <font-awesome-icon
+                      <FontAwesomeIcon
                         icon="list-alt"
                         :title="T.courseListSubmissionsByGroup"
                       />
@@ -98,10 +98,7 @@
                   </td>
                   <td class="align-middle">
                     <a :href="`/course/${course.alias}/activity/`">
-                      <font-awesome-icon
-                        icon="clock"
-                        :title="T.activityReport"
-                      />
+                      <FontAwesomeIcon icon="clock" :title="T.activityReport" />
                     </a>
                   </td>
                 </template>
@@ -113,7 +110,7 @@
                       :href="`/course/${course.alias}/edit/`"
                       :title="T.contestButtonSeeDetails"
                     >
-                      <font-awesome-icon :icon="['fas', 'search']" />
+                      <FontAwesomeIcon :icon="['fas', 'search']" />
                     </a>
                   </td>
                 </template>
@@ -126,50 +123,40 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as time from '../../time';
 
-import {
-  FontAwesomeIcon,
-  FontAwesomeLayers,
-  FontAwesomeLayersText,
-} from '@fortawesome/vue-fontawesome';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 library.add(fas);
 
-@Component({
-  components: {
-    'font-awesome-icon': FontAwesomeIcon,
-    'font-awesome-layers': FontAwesomeLayers,
-    'font-awesome-layers-text': FontAwesomeLayersText,
-  },
-})
-export default class CourseFilteredList extends Vue {
-  @Prop() courses!: types.CoursesByAccessMode;
-  @Prop() activeTab!: string;
-  @Prop({ default: true }) showPercentage!: boolean;
+const props = withDefaults(
+  defineProps<{
+    courses: types.CoursesByAccessMode;
+    activeTab: string;
+    showPercentage?: boolean;
+  }>(),
+  { showPercentage: true },
+);
 
-  T = T;
-  time = time;
-  showTab = this.activeTab;
+const showTab = ref(props.activeTab);
 
-  getTabName(timeType: string): string {
-    switch (timeType) {
-      case 'current':
-        return T.courseListCurrentCourses;
-      case 'past':
-        return T.courseListPastCourses;
-      case 'archived':
-        return T.courseListArchivedCourses;
-      case 'teachingAssistant':
-        return T.courseListTeachingAssistantCourses;
-      default:
-        return '';
-    }
+function getTabName(timeType: string): string {
+  switch (timeType) {
+    case 'current':
+      return T.courseListCurrentCourses;
+    case 'past':
+      return T.courseListPastCourses;
+    case 'archived':
+      return T.courseListArchivedCourses;
+    case 'teachingAssistant':
+      return T.courseListTeachingAssistantCourses;
+    default:
+      return '';
   }
 }
 </script>

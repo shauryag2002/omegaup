@@ -16,42 +16,35 @@
         &times;
       </button>
       <span v-if="message" class="message">
-        <omegaup-markdown :markdown="message"></omegaup-markdown>
+        <OmegaupMarkdown :markdown="message" />
       </span>
     </div>
   </transition>
 </template>
 
-<script lang="ts">
-import { Component, Vue } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import notificationsStore from '../../notificationsStore';
-import omegaup_Markdown from '../Markdown.vue';
+import OmegaupMarkdown from '../Markdown.vue';
 
-@Component({
-  components: {
-    'omegaup-markdown': omegaup_Markdown,
-  },
-})
-export default class GlobalNotifications extends Vue {
-  get visible(): boolean {
-    return notificationsStore.getters.isVisible;
-  }
+const visible = computed((): boolean => {
+  return notificationsStore.getters.isVisible;
+});
 
-  get message(): string | null {
-    return notificationsStore.getters.message;
-  }
+const message = computed((): string | null => {
+  return notificationsStore.getters.message;
+});
 
-  get alertClass(): string {
-    return notificationsStore.getters.alertClass;
-  }
+const alertClass = computed((): string => {
+  return notificationsStore.getters.alertClass;
+});
 
-  get positionClass(): string {
-    return notificationsStore.getters.positionClass;
-  }
+const positionClass = computed((): string => {
+  return notificationsStore.getters.positionClass;
+});
 
-  dismiss(): void {
-    notificationsStore.dispatch('dismissNotifications');
-  }
+function dismiss(): void {
+  notificationsStore.dispatch('dismissNotifications');
 }
 </script>
 
@@ -94,7 +87,7 @@ export default class GlobalNotifications extends Vue {
 
     // Override Markdown component styling for notifications
     /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
-    ::v-deep [data-markdown-statement] {
+    :deep([data-markdown-statement]) {
       display: inline;
       max-width: none;
       margin: 0;

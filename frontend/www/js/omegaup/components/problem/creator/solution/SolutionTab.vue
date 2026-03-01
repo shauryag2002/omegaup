@@ -52,9 +52,8 @@ import T from '../../../../lang';
 import { TabIndex } from '../Tabs.vue';
 import introJs from 'intro.js';
 import 'intro.js/introjs.css';
-import VueCookies from 'vue-cookies';
+import { getCookie, setCookie } from '../../../../cookies';
 import ProblemMarkdown from '../../ProblemMarkdown.vue';
-Vue.use(VueCookies, { expire: -1 });
 
 const markdownConverter = new markdown.Converter({
   preview: true,
@@ -117,7 +116,7 @@ export default class SolutionTab extends Vue {
   }
 
   startIntroGuide() {
-    if (!this.$cookies.get('has-visited-solution-tab')) {
+    if (!getCookie('has-visited-solution-tab')) {
       introJs()
         .setOptions({
           nextLabel: T.interactiveGuideNextButton,
@@ -155,7 +154,7 @@ export default class SolutionTab extends Vue {
           ],
         })
         .start();
-      this.$cookies.set('has-visited-solution-tab', true, -1);
+      setCookie('has-visited-solution-tab', true);
     }
   }
 }

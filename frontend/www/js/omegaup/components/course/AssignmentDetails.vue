@@ -25,7 +25,7 @@
           <div class="form-group col-md-4">
             <label
               >{{ T.courseNewFormShortTitleAlias }}
-              <font-awesome-icon
+              <FontAwesomeIcon
                 :title="T.courseAssignmentNewFormShortTitleAliasDesc"
                 icon="info-circle" />
               <input
@@ -43,7 +43,7 @@
           <div class="form-group col-md-4">
             <label
               >{{ T.wordsContentType }}
-              <font-awesome-icon
+              <FontAwesomeIcon
                 :title="T.courseContentNewFormTypeDesc"
                 icon="info-circle"
               />
@@ -73,23 +73,23 @@
           <div class="form-group col-md-4">
             <label
               >{{ T.courseNewFormStartDate }}
-              <font-awesome-icon
+              <FontAwesomeIcon
                 :title="T.courseAssignmentNewFormStartDateDesc"
                 icon="info-circle" />
-              <omegaup-datetimepicker
+              <OmegaupDatetimepicker
                 v-model="startTime"
                 data-course-start-date
                 :enabled="!assignment.has_runs"
                 :finish="finishTimeCourse"
                 :start="startTimeCourse"
                 :is-invalid="invalidParameterName === 'start_time'"
-              ></omegaup-datetimepicker
+              ></OmegaupDatetimepicker
             ></label>
           </div>
           <div class="form-group col-md-4">
             <span class="faux-label"
               >{{ T.courseNewFormUnlimitedDuration }}
-              <font-awesome-icon
+              <FontAwesomeIcon
                 :title="T.courseNewFormUnlimitedDurationDesc"
                 icon="info-circle"
               />
@@ -127,10 +127,10 @@
           <div class="form-group col-md-4">
             <label
               >{{ T.courseNewFormEndDate }}
-              <font-awesome-icon
+              <FontAwesomeIcon
                 :title="T.courseAssignmentNewFormEndDateDesc"
                 icon="info-circle" />
-              <omegaup-datetimepicker
+              <OmegaupDatetimepicker
                 v-model="finishTime"
                 data-course-end-date
                 :enabled="!unlimitedDuration"
@@ -138,7 +138,7 @@
                 :finish="finishTimeCourse"
                 :start="startTimeCourse"
                 :is-invalid="invalidParameterName === 'finish_time'"
-              ></omegaup-datetimepicker
+              ></OmegaupDatetimepicker
             ></label>
           </div>
         </div>
@@ -161,46 +161,45 @@
           </div>
         </div>
         <template v-if="shouldAddProblems">
-          <omegaup-course-scheduled-problem-list
+          <OmegaupCourseScheduledProblemList
             v-if="assignmentFormMode === AssignmentFormMode.New"
-            ref="scheduled-problem-list"
+            ref="scheduledProblemListRef"
             :assignment-problems="assignmentProblems"
             :tagged-problems="taggedProblems"
             :selected-assignment="assignment"
             :search-result-problems="searchResultProblems"
-            @emit-tags="(tags) => $emit('tags-problems', tags)"
+            @emit-tags="(tags) => emit('tags-problems', tags)"
             @update-search-result-problems="
-              (query) => $emit('update-search-result-problems', query)
+              (query) => emit('update-search-result-problems', query)
             "
-          ></omegaup-course-scheduled-problem-list>
-          <omegaup-course-problem-list
+          ></OmegaupCourseScheduledProblemList>
+          <OmegaupCourseProblemList
             v-else
             :assignment-problems="assignmentProblems"
             :tagged-problems="taggedProblems"
             :selected-assignment="assignment"
-            :assignment-form-mode.sync="assignmentFormMode"
             :search-result-problems="searchResultProblems"
             @update-search-result-problems="
-              (query) => $emit('update-search-result-problems', query)
+              (query) => emit('update-search-result-problems', query)
             "
             @save-problem="
-              (assignment, problem) => $emit('add-problem', assignment, problem)
+              (assignment, problem) => emit('add-problem', assignment, problem)
             "
             @emit-remove-problem="
               (assignment, problem) =>
-                $emit('remove-problem', assignment, problem)
+                emit('remove-problem', assignment, problem)
             "
             @emit-select-assignment="
-              (assignment) => $emit('select-assignment', assignment)
+              (assignment) => emit('select-assignment', assignment)
             "
             @emit-sort="
               (assignmentAlias, problemsAlias) =>
-                $emit('sort-problems', assignmentAlias, problemsAlias)
+                emit('sort-problems', assignmentAlias, problemsAlias)
             "
-            @emit-tags="(tags) => $emit('tags-problems', tags)"
+            @emit-tags="(tags) => emit('tags-problems', tags)"
             @change-alias="
               ({ request, target }) =>
-                $emit('get-versions', {
+                emit('get-versions', {
                   target,
                   request: {
                     ...request,
@@ -208,7 +207,7 @@
                   },
                 })
             "
-          ></omegaup-course-problem-list>
+          ></OmegaupCourseProblemList>
         </template>
         <div class="form-group text-right mt-3">
           <button
@@ -238,23 +237,21 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch, Emit, Ref } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue';
 import { omegaup } from '../../omegaup';
 import { types } from '../../api_types';
 import T from '../../lang';
-import course_ProblemList from './ProblemList.vue';
-import course_ScheduledProblemList from './ScheduledProblemList.vue';
-import DateTimePicker from '../DateTimePicker.vue';
+import OmegaupCourseProblemList from './ProblemList.vue';
+import OmegaupCourseScheduledProblemList from './ScheduledProblemList.vue';
+import OmegaupDatetimepicker from '../DateTimePicker.vue';
 
-import {
-  FontAwesomeIcon,
-  FontAwesomeLayers,
-  FontAwesomeLayersText,
-} from '@fortawesome/vue-fontawesome';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 library.add(fas);
+
+const AssignmentFormMode = omegaup.AssignmentFormMode;
 
 interface UpdateParams {
   name: string;
@@ -279,149 +276,172 @@ interface AddParams {
   problems: string;
 }
 
-@Component({
-  components: {
-    'font-awesome-icon': FontAwesomeIcon,
-    'font-awesome-layers': FontAwesomeLayers,
-    'font-awesome-layers-text': FontAwesomeLayersText,
-    'omegaup-datetimepicker': DateTimePicker,
-    'omegaup-course-problem-list': course_ProblemList,
-    'omegaup-course-scheduled-problem-list': course_ScheduledProblemList,
+const props = withDefaults(
+  defineProps<{
+    assignmentFormMode?: omegaup.AssignmentFormMode;
+    assignment: types.CourseAssignment;
+    finishTimeCourse: Date;
+    startTimeCourse: Date;
+    courseAlias: string;
+    scheduledAssignmentProblems?: types.ProblemsetProblem[];
+    assignmentProblems: types.ProblemsetProblem[];
+    taggedProblems: omegaup.Problem[];
+    shouldAddProblems?: boolean;
+    unlimitedDurationCourse?: boolean;
+    invalidParameterName?: string;
+    searchResultProblems: types.ListItem[];
+  }>(),
+  {
+    assignmentFormMode: omegaup.AssignmentFormMode.Default,
+    scheduledAssignmentProblems: () => [],
+    shouldAddProblems: true,
+    unlimitedDurationCourse: false,
+    invalidParameterName: '',
   },
-})
-export default class CourseAssignmentDetails extends Vue {
-  @Ref('scheduled-problem-list')
-  readonly scheduledProblemList!: course_ScheduledProblemList;
-  @Prop({
-    default: omegaup.AssignmentFormMode.Default,
-  })
-  assignmentFormMode!: omegaup.AssignmentFormMode;
-  @Prop() assignment!: types.CourseAssignment;
-  @Prop() finishTimeCourse!: Date;
-  @Prop() startTimeCourse!: Date;
-  @Prop() courseAlias!: string;
-  @Prop() scheduledAssignmentProblems!: types.ProblemsetProblem[];
-  @Prop() assignmentProblems!: types.ProblemsetProblem[];
-  @Prop() taggedProblems!: omegaup.Problem[];
-  @Prop({ default: true }) shouldAddProblems!: boolean;
-  @Prop({ default: false }) unlimitedDurationCourse!: boolean;
-  @Prop({ default: '' }) invalidParameterName!: string;
-  @Prop() searchResultProblems!: types.ListItem[];
+);
 
-  T = T;
-  AssignmentFormMode = omegaup.AssignmentFormMode;
-  alias = this.assignment.alias || '';
-  assignmentType = this.assignment.assignment_type || 'homework';
-  description = this.assignment.description || '';
-  name = this.assignment.name || '';
-  startTime = this.assignment.start_time || new Date();
-  finishTime = this.assignment.finish_time || new Date();
-  unlimitedDuration = !this.assignment.finish_time;
+const emit = defineEmits<{
+  (e: 'cancel'): void;
+  (e: 'add-assignment', params: AddParams): void;
+  (e: 'update-assignment', params: UpdateParams): void;
+  (e: 'tags-problems', tags: string[]): void;
+  (e: 'update-search-result-problems', query: string): void;
+  (e: 'update:assignmentFormMode', mode: omegaup.AssignmentFormMode): void;
+  (
+    e: 'add-problem',
+    assignment: types.CourseAssignment,
+    problem: types.ProblemsetProblem,
+  ): void;
+  (
+    e: 'remove-problem',
+    assignment: types.CourseAssignment,
+    problem: types.ProblemsetProblem,
+  ): void;
+  (e: 'select-assignment', assignment: types.CourseAssignment): void;
+  (e: 'sort-problems', assignmentAlias: string, problemsAlias: string): void;
+  (e: 'get-versions', payload: { target: any; request: any }): void;
+}>();
 
-  @Watch('assignment')
-  onAssignmentChange() {
-    this.reset();
+const scheduledProblemListRef = ref<InstanceType<
+  typeof OmegaupCourseScheduledProblemList
+> | null>(null);
+
+const alias = ref(props.assignment.alias || '');
+const assignmentType = ref(props.assignment.assignment_type || 'homework');
+const description = ref(props.assignment.description || '');
+const name = ref(props.assignment.name || '');
+const startTime = ref(props.assignment.start_time || new Date());
+const finishTime = ref(props.assignment.finish_time || new Date());
+const unlimitedDuration = ref(!props.assignment.finish_time);
+
+const show = computed((): boolean => {
+  switch (props.assignmentFormMode) {
+    case omegaup.AssignmentFormMode.New:
+      return true;
+    case omegaup.AssignmentFormMode.Edit:
+      return true;
+    case omegaup.AssignmentFormMode.Default:
+      return false;
+    default:
+      return false;
   }
+});
 
-  get show(): boolean {
-    switch (this.assignmentFormMode) {
-      case omegaup.AssignmentFormMode.New:
-        return true;
-      case omegaup.AssignmentFormMode.Edit:
-        return true;
-      case omegaup.AssignmentFormMode.Default:
-        return false;
-      default:
-        return false;
-    }
+const update = computed((): boolean => {
+  switch (props.assignmentFormMode) {
+    case omegaup.AssignmentFormMode.New:
+      return false;
+    case omegaup.AssignmentFormMode.Edit:
+      return true;
+    case omegaup.AssignmentFormMode.Default:
+      return true;
+    default:
+      return true;
   }
+});
 
-  get update(): boolean {
-    switch (this.assignmentFormMode) {
-      case omegaup.AssignmentFormMode.New:
-        return false;
-      case omegaup.AssignmentFormMode.Edit:
-        return true;
-      case omegaup.AssignmentFormMode.Default:
-        return true;
-      default:
-        return true;
-    }
-  }
-
-  get updateParams(): UpdateParams {
-    let params: UpdateParams = {
-      name: this.name,
-      description: this.description,
-      assignment_type: this.assignmentType,
-      assignment: this.alias,
-      course: this.courseAlias,
+const updateParams = computed(
+  (): UpdateParams => {
+    const params: UpdateParams = {
+      name: name.value,
+      description: description.value,
+      assignment_type: assignmentType.value,
+      assignment: alias.value,
+      course: props.courseAlias,
     };
-    if (this.unlimitedDuration) {
+    if (unlimitedDuration.value) {
       params.unlimited_duration = true;
     } else {
-      params.finish_time = this.finishTime.getTime() / 1000;
+      params.finish_time = finishTime.value.getTime() / 1000;
     }
-    if (!this.assignment.has_runs) {
-      params.start_time = this.startTime.getTime() / 1000;
+    if (!props.assignment.has_runs) {
+      params.start_time = startTime.value.getTime() / 1000;
     }
     return params;
-  }
+  },
+);
 
-  get addParams(): AddParams {
-    let params: AddParams = {
-      name: this.name,
-      description: this.description,
-      assignment_type: this.assignmentType,
-      alias: this.alias,
-      course_alias: this.courseAlias,
-      start_time: this.startTime.getTime() / 1000,
-      problems: JSON.stringify(this.scheduledProblemList?.problems ?? []),
+const addParams = computed(
+  (): AddParams => {
+    const params: AddParams = {
+      name: name.value,
+      description: description.value,
+      assignment_type: assignmentType.value,
+      alias: alias.value,
+      course_alias: props.courseAlias,
+      start_time: startTime.value.getTime() / 1000,
+      problems: JSON.stringify(scheduledProblemListRef.value?.problems ?? []),
     };
-    if (this.unlimitedDuration) {
+    if (unlimitedDuration.value) {
       params.unlimited_duration = true;
     } else {
-      params.finish_time = this.finishTime.getTime() / 1000;
+      params.finish_time = finishTime.value.getTime() / 1000;
     }
     return params;
-  }
+  },
+);
 
-  onAddSubmit(): void {
-    this.$emit('add-assignment', this.addParams);
-  }
-
-  onUpdateSubmit(): void {
-    this.$emit('update-assignment', this.updateParams);
-  }
-
-  reset(): void {
-    this.alias = this.assignment.alias;
-    this.assignmentType = this.assignment.assignment_type || 'homework';
-    this.description = this.assignment.description;
-    this.finishTime = this.assignment.finish_time || new Date();
-    this.name = this.assignment.name;
-    this.startTime = this.assignment.start_time || new Date();
-    this.unlimitedDuration = !this.assignment.finish_time;
-  }
-
-  @Watch('show')
-  onShowChanged(): void {
-    this.reset();
-  }
-
-  @Emit('cancel')
-  onCancel(): void {
-    this.reset();
-  }
-
-  onSubmit(): void {
-    this.update ? this.onUpdateSubmit() : this.onAddSubmit();
-  }
-
-  onChangeSelect(event: Event): void {
-    this.assignment.assignment_type = (event.target as HTMLSelectElement).value;
-  }
+function reset(): void {
+  alias.value = props.assignment.alias;
+  assignmentType.value = props.assignment.assignment_type || 'homework';
+  description.value = props.assignment.description;
+  finishTime.value = props.assignment.finish_time || new Date();
+  name.value = props.assignment.name;
+  startTime.value = props.assignment.start_time || new Date();
+  unlimitedDuration.value = !props.assignment.finish_time;
 }
+
+function onAddSubmit(): void {
+  emit('add-assignment', addParams.value);
+}
+
+function onUpdateSubmit(): void {
+  emit('update-assignment', updateParams.value);
+}
+
+function onCancel(): void {
+  emit('cancel');
+  reset();
+}
+
+function onSubmit(): void {
+  update.value ? onUpdateSubmit() : onAddSubmit();
+}
+
+function onChangeSelect(event: Event): void {
+  props.assignment.assignment_type = (event.target as HTMLSelectElement).value;
+}
+
+watch(
+  () => props.assignment,
+  () => {
+    reset();
+  },
+);
+
+watch(show, () => {
+  reset();
+});
 </script>
 
 <style lang="scss" scoped>

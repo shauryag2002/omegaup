@@ -66,60 +66,63 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import T from '../../lang';
 import latinize from 'latinize';
 
-@Component
-export default class GroupForm extends Vue {
-  @Prop({ default: '' }) groupAlias!: string;
-  @Prop({ default: '' }) groupDescription!: string;
-  @Prop({ default: '' }) groupName!: string;
-  @Prop({ default: false }) isUpdate!: boolean;
+const props = withDefaults(
+  defineProps<{
+    groupAlias?: string;
+    groupDescription?: string;
+    groupName?: string;
+    isUpdate?: boolean;
+  }>(),
+  {
+    groupAlias: '',
+    groupDescription: '',
+    groupName: '',
+    isUpdate: false,
+  },
+);
 
-  T = T;
-  alias: string = this.groupAlias;
-  description: string = this.groupDescription;
-  name: string = this.groupName;
+const emit = defineEmits<{
+  (e: 'update-group', name: string, description: string): void;
+  (e: 'create-group', name: string, alias: string, description: string): void;
+  (e: 'validate-unused-alias', alias: string): void;
+}>();
 
-  onSubmit(): void {
-    if (this.isUpdate) {
-      this.$emit('update-group', this.name, this.description);
-      return;
-    }
-    this.$emit('create-group', this.name, this.alias, this.description);
+const alias = ref(props.groupAlias);
+const description = ref(props.groupDescription);
+const name = ref(props.groupName);
+
+function onSubmit(): void {
+  if (props.isUpdate) {
+    emit('update-group', name.value, description.value);
+    return;
   }
-
-  generateAlias(name: string): string {
-    // Remove accents
-    let generatedAlias = latinize(name);
-
-    // Replace whitespace
-    generatedAlias = generatedAlias.replace(/\s+/g, '-');
-
-    // Remove invalid characters
-    generatedAlias = generatedAlias.replace(/[^a-zA-Z0-9_-]/g, '');
-
-    generatedAlias = generatedAlias.substring(0, 32);
-
-    return generatedAlias;
-  }
-
-  @Watch('alias')
-  onAliasChanged(newValue: string): void {
-    if (this.isUpdate) {
-      return;
-    }
-    this.$emit('validate-unused-alias', newValue);
-  }
-
-  @Watch('name')
-  onNameChanged(newValue: string): void {
-    if (this.isUpdate) {
-      return;
-    }
-    this.alias = this.generateAlias(newValue);
-  }
+  emit('create-group', name.value, alias.value, description.value);
 }
+
+function generateAlias(nameValue: string): string {
+  let generatedAlias = latinize(nameValue);
+  generatedAlias = generatedAlias.replace(/\s+/g, '-');
+  generatedAlias = generatedAlias.replace(/[^a-zA-Z0-9_-]/g, '');
+  generatedAlias = generatedAlias.substring(0, 32);
+  return generatedAlias;
+}
+
+watch(alias, (newValue) => {
+  if (props.isUpdate) {
+    return;
+  }
+  emit('validate-unused-alias', newValue);
+});
+
+watch(name, (newValue) => {
+  if (props.isUpdate) {
+    return;
+  }
+  alias.value = generateAlias(newValue);
+});
 </script>

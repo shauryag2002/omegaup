@@ -158,8 +158,7 @@ import school_Rank from '../schools/Rank.vue';
 import user_Rank from '../user/Rank.vue';
 import homepage_Sponsors from './Sponsors.vue';
 import homepage_Cookie from './CookieConsent.vue';
-import VueCookies from 'vue-cookies';
-Vue.use(VueCookies, { expire: -1 });
+import { getCookie, setCookie } from '../../cookies';
 
 @Component({
   components: {
@@ -186,12 +185,12 @@ export default class Homepage extends Vue {
   T = T;
   cookieClickedAccept() {
     // TODO: make an API to send the response to the server
-    this.$cookies.set('accept-cookies', true, -1);
+    setCookie('accept-cookies', true);
   }
 
   cookieClickedDecline() {
     // TODO: make an API to send the response to the server
-    this.$cookies.set('accept-cookies', false, -1);
+    setCookie('accept-cookies', false);
   }
 
   cookieClickedPostpone() {

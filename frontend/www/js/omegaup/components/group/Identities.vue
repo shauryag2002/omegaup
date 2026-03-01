@@ -104,8 +104,7 @@ import T from '../../lang';
 import omegaup_Markdown from '../Markdown.vue';
 import 'intro.js/introjs.css';
 import introJs from 'intro.js';
-import VueCookies from 'vue-cookies';
-Vue.use(VueCookies, { expire: -1 });
+import { getCookie, setCookie } from '../../cookies';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
@@ -195,7 +194,7 @@ export default class Identities extends Vue {
           ],
         })
         .start();
-      this.$cookies.set('has-visited-create-identities', true, -1);
+      setCookie('has-visited-create-identities', true);
     }
   }
 

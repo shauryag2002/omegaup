@@ -72,14 +72,14 @@
           <div class="form-group col-lg-4 col-md-6 col-sm-6">
             <label class="d-block">
               {{ T.profileSchool }}
-              <omegaup-common-typeahead
+              <OmegaupCommonTypeahead
                 :existing-options="searchResultSchools"
                 :options="searchResultSchools"
-                :value.sync="school"
+                v-model:value="school"
                 @update-existing-options="
                   (query) => $emit('update-search-result-schools', query)
                 "
-              ></omegaup-common-typeahead>
+              ></OmegaupCommonTypeahead>
             </label>
           </div>
         </div>
@@ -100,25 +100,38 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { reactive, ref, computed, watch } from 'vue';
 import type { types } from '../../api_types';
 import T from '../../lang';
 import * as iso3166 from '@/third_party/js/iso-3166-2.js/iso3166.min.js';
-import common_Typeahead from '../common/Typeahead.vue';
+import OmegaupCommonTypeahead from '../common/Typeahead.vue';
 
-@Component({
-  components: {
-    'omegaup-common-typeahead': common_Typeahead,
+const props = withDefaults(
+  defineProps<{
+    identity?: types.Identity | null;
+    countries: iso3166.Country[];
+    searchResultSchools: types.SchoolListItem[];
+  }>(),
+  {
+    identity: null,
   },
-})
-export default class IdentityEdit extends Vue {
-  @Prop({ default: null }) identity!: types.Identity | null;
-  @Prop() countries!: iso3166.Country[];
-  @Prop() searchResultSchools!: types.SchoolListItem[];
+);
 
-  T = T;
-  selectedIdentity = Object.assign(
+const emit = defineEmits<{
+  (
+    e: 'edit-identity-member',
+    payload: {
+      originalUsername: string | undefined;
+      identity: types.Identity & { school?: string };
+    },
+  ): void;
+  (e: 'cancel'): void;
+  (e: 'update-search-result-schools', query: string): void;
+}>();
+
+const selectedIdentity = reactive<types.Identity>(
+  Object.assign(
     {
       username: '',
       classname: '',
@@ -128,48 +141,58 @@ export default class IdentityEdit extends Vue {
       country_id: 'MX',
       state_id: '',
     } as types.Identity,
-    this.identity,
-  );
-  school: null | types.SchoolListItem = this.searchResultSchools[0] ?? null;
+    props.identity,
+  ),
+);
+const school = ref<null | types.SchoolListItem>(
+  props.searchResultSchools[0] ?? null,
+);
 
-  get groupName(): string {
-    const teamUsername = this.selectedIdentity.username.split(':');
-    if (teamUsername.length === 2) {
-      return teamUsername[0];
-    }
-    return `${teamUsername[0]}:${teamUsername[1]}`;
+const groupName = computed((): string => {
+  const teamUsername = selectedIdentity.username.split(':');
+  if (teamUsername.length === 2) {
+    return teamUsername[0];
   }
+  return `${teamUsername[0]}:${teamUsername[1]}`;
+});
 
-  get identityName(): string {
-    const teamUsername = this.selectedIdentity.username.split(':');
+const identityName = computed({
+  get(): string {
+    const teamUsername = selectedIdentity.username.split(':');
     if (teamUsername.length === 2) {
       return teamUsername[1];
     }
     return teamUsername[2];
-  }
-  set identityName(username: string) {
-    this.selectedIdentity.username = `${this.groupName}:${username}`;
-  }
+  },
+  set(username: string) {
+    selectedIdentity.username = `${groupName.value}:${username}`;
+  },
+});
 
-  get countryStates(): iso3166.Subdivisions {
-    const countryId = this.selectedIdentity.country_id || 'MX';
+const countryStates = computed(
+  (): iso3166.Subdivisions => {
+    const countryId = selectedIdentity.country_id || 'MX';
     const countrySelected = iso3166.country(countryId);
     return countrySelected.sub;
-  }
+  },
+);
 
-  onEditMember(): void {
-    this.$emit('edit-identity-member', {
-      originalUsername: this.identity?.username,
-      identity: {
-        ...this.selectedIdentity,
-        school: this.school?.value,
-      },
-    });
-  }
-
-  @Watch('identity')
-  onIdentityChanged(newValue: types.Identity): void {
-    this.selectedIdentity = newValue;
-  }
+function onEditMember(): void {
+  emit('edit-identity-member', {
+    originalUsername: props.identity?.username,
+    identity: {
+      ...selectedIdentity,
+      school: school.value?.value,
+    },
+  });
 }
+
+watch(
+  () => props.identity,
+  (newValue: types.Identity | null) => {
+    if (newValue) {
+      Object.assign(selectedIdentity, newValue);
+    }
+  },
+);
 </script>

@@ -208,31 +208,25 @@
         <div class="dropdown-menu fullwidth-mobile-fit-lg help-dropdown">
           <a
             class="dropdown-item"
-            href="https://www.youtube.com/playlist?list=PLdSCJwXErQ8FhVwmlySvab3XtEVdE8QH4"
+            :href="YouTubeTutorialsURL"
             target="_blank"
             >{{ T.navTutorials }}</a
           >
-          <a
-            class="dropdown-item"
-            href="https://discord.com/invite/K3JFd9d3wk"
-            target="_blank"
-            >{{ T.navDiscord }}</a
-          >
-          <a
-            class="dropdown-item"
-            href="http://blog.omegaup.com/"
-            target="_blank"
-            >{{ T.navBlog }}</a
-          >
+          <a class="dropdown-item" :href="DiscordInviteURL" target="_blank">{{
+            T.navDiscord
+          }}</a>
+          <a class="dropdown-item" :href="OmegaUpBlogURL" target="_blank">{{
+            T.navBlog
+          }}</a>
           <a
             class="dropdown-item text-wrap"
-            href="https://drive.google.com/file/d/1PLOO3wLCnOVC_cODwiofahsRGeyoJeCU/view"
+            :href="AlgorithmsBookURL"
             target="_blank"
             >{{ T.navAlgorithmsBook }}</a
           >
           <a
             class="dropdown-item text-wrap"
-            href="https://hdl.handle.net/11059/16567"
+            :href="CompetitiveProgrammingBookURL"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -245,23 +239,41 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import T from '../../lang';
+import { getExternalUrl } from '../../urlHelper';
 
-@Component
-export default class NavbarItems extends Vue {
-  @Prop() omegaUpLockDown!: boolean;
-  @Prop() inContest!: boolean;
-  @Prop() isLoggedIn!: boolean;
-  @Prop() isReviewer!: boolean;
-  @Prop() isAdmin!: boolean;
-  @Prop() isMainUserIdentity!: boolean;
-  @Prop() navbarSection!: string;
-  @Prop() isUnder13User!: boolean;
+defineProps<{
+  omegaUpLockDown: boolean;
+  inContest: boolean;
+  isLoggedIn: boolean;
+  isReviewer: boolean;
+  isAdmin: boolean;
+  isMainUserIdentity: boolean;
+  navbarSection: string;
+  isUnder13User: boolean;
+}>();
 
-  T = T;
-}
+const OmegaUpBlogURL = computed((): string => {
+  return getExternalUrl('OmegaUpBlogURL');
+});
+
+const YouTubeTutorialsURL = computed((): string => {
+  return getExternalUrl('YouTubeTutorialsURL');
+});
+
+const DiscordInviteURL = computed((): string => {
+  return getExternalUrl('DiscordInviteURL');
+});
+
+const AlgorithmsBookURL = computed((): string => {
+  return getExternalUrl('AlgorithmsBookURL');
+});
+
+const CompetitiveProgrammingBookURL = computed((): string => {
+  return getExternalUrl('CompetitiveProgrammingBookURL');
+});
 </script>
 
 <style lang="scss" scoped>

@@ -5,40 +5,39 @@
       <div class="total-runs">
         {{ totalRuns }}
       </div>
-      <highcharts :options="verdictChartOptions"></highcharts>
-      <highcharts :options="distributionChartOptions"></highcharts>
-      <highcharts :options="pendingChartOptions"></highcharts>
+      <Highcharts :options="verdictChartOptions"></Highcharts>
+      <Highcharts :options="distributionChartOptions"></Highcharts>
+      <Highcharts :options="pendingChartOptions"></Highcharts>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed, watch } from 'vue';
 import { omegaup } from '../../omegaup';
 import T from '../../lang';
 import * as ui from '../../ui';
-import { Chart } from 'highcharts-vue';
+import { Chart as Highcharts } from 'highcharts-vue';
 
-@Component({
-  components: {
-    highcharts: Chart,
+const props = defineProps<{
+  stats: omegaup.Stats;
+  verdictChartOptions: Chart;
+  distributionChartOptions: Chart;
+  pendingChartOptions: Chart;
+}>();
+
+const emit = defineEmits<{
+  (e: 'update-series', value: omegaup.Stats): void;
+}>();
+
+const totalRuns = computed((): string => {
+  return ui.formatString(T.totalRuns, { numRuns: props.stats.total_runs });
+});
+
+watch(
+  () => props.stats,
+  (newValue: omegaup.Stats) => {
+    emit('update-series', newValue);
   },
-})
-export default class Stats extends Vue {
-  @Prop() stats!: omegaup.Stats;
-  @Prop() verdictChartOptions!: Chart;
-  @Prop() distributionChartOptions!: Chart;
-  @Prop() pendingChartOptions!: Chart;
-
-  T = T;
-
-  get totalRuns(): string {
-    return ui.formatString(T.totalRuns, { numRuns: this.stats.total_runs });
-  }
-
-  @Watch('stats')
-  onPropertyChanged(newValue: omegaup.Stats): void {
-    this.$emit('update-series', newValue);
-  }
-}
+);
 </script>

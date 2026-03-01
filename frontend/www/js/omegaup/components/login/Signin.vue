@@ -32,15 +32,15 @@
         :class="{ active: activeTab === AvailableTabs.Login }"
         role="tabpanel"
       >
-        <omegaup-login
+        <OmegaupLogin
           :active-tab="activeTab"
           :facebook-url="facebookUrl"
           :github-client-id="githubClientId"
           :github-state="githubState"
           :google-client-id="googleClientId"
-          @login="(username, password) => $emit('login', username, password)"
+          @login="(username, password) => emit('login', username, password)"
         >
-        </omegaup-login>
+        </OmegaupLogin>
       </div>
 
       <div
@@ -49,63 +49,68 @@
         :class="{ active: activeTab === AvailableTabs.Signup }"
         role="tabpanel"
       >
-        <omegaup-signup
+        <OmegaupSignup
           :has-visited-section="hasVisitedSection"
           :active-tab="activeTab"
           :validate-recaptcha="validateRecaptcha"
           :use-signup-form-with-birth-date="useSignupFormWithBirthDate"
-          @register-and-login="
-            (request) => $emit('register-and-login', request)
-          "
+          @register-and-login="(request) => emit('register-and-login', request)"
         >
-        </omegaup-signup>
+        </OmegaupSignup>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
-import T from '../../lang';
-import VueRecaptcha from 'vue-recaptcha';
-import omegaup_Login from './Login.vue';
-import omegaup_Signup from './Signup.vue';
-
 export enum AvailableTabs {
   Login = 'login',
   Signup = 'signup',
 }
+</script>
 
-@Component({
-  components: {
-    'omegaup-login': omegaup_Login,
-    'omegaup-signup': omegaup_Signup,
-    'vue-recaptcha': VueRecaptcha,
+<script setup lang="ts">
+import { ref, watch } from 'vue';
+import T from '../../lang';
+import OmegaupLogin from './Login.vue';
+import OmegaupSignup from './Signup.vue';
+
+const props = withDefaults(
+  defineProps<{
+    validateRecaptcha: boolean;
+    facebookUrl: string;
+    githubClientId?: string;
+    githubState?: string | null;
+    googleClientId: string;
+    hasVisitedSection: boolean;
+    useSignupFormWithBirthDate?: boolean;
+    initialActiveTab?: AvailableTabs;
+  }>(),
+  {
+    githubClientId: '',
+    githubState: null,
+    useSignupFormWithBirthDate: false,
+    initialActiveTab: AvailableTabs.Login,
   },
-})
-export default class Signin extends Vue {
-  @Prop() validateRecaptcha!: boolean;
-  @Prop() facebookUrl!: string;
-  @Prop({ default: '' }) githubClientId!: string;
-  @Prop({ default: null }) githubState!: string | null;
-  @Prop() googleClientId!: string;
-  @Prop() hasVisitedSection!: boolean;
-  @Prop({ default: false }) useSignupFormWithBirthDate!: boolean;
-  @Prop({ default: AvailableTabs.Login }) initialActiveTab!: AvailableTabs;
+);
 
-  T = T;
-  AvailableTabs = AvailableTabs;
-  activeTab: AvailableTabs = this.initialActiveTab;
+const emit = defineEmits<{
+  (e: 'login', username: string, password: string): void;
+  (e: 'register-and-login', request: unknown): void;
+}>();
 
-  @Watch('initialActiveTab')
-  onInitialActiveTabChanged(newValue: AvailableTabs): void {
-    this.activeTab = newValue;
-  }
+const activeTab = ref<AvailableTabs>(props.initialActiveTab);
 
-  setActiveTab(tab: AvailableTabs): void {
-    this.activeTab = tab;
-    window.location.hash = `#${tab}`;
-  }
+watch(
+  () => props.initialActiveTab,
+  (newValue: AvailableTabs) => {
+    activeTab.value = newValue;
+  },
+);
+
+function setActiveTab(tab: AvailableTabs): void {
+  activeTab.value = tab;
+  window.location.hash = `#${tab}`;
 }
 </script>
 

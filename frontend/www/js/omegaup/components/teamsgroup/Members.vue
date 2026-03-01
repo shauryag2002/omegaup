@@ -11,14 +11,14 @@
       <form class="form" @submit.prevent="onSubmit">
         <div class="form-group">
           <label>{{ T.addUsersMultipleOrSingleUser }}</label>
-          <omegaup-common-multi-typeahead
+          <OmegaupCommonMultiTypeahead
             :existing-options="searchResultUsers"
-            :value.sync="typeaheadContestants"
+            v-model:value="typeaheadContestants"
             @update-existing-options="
-              (query) => $emit('update-search-result-users', query)
+              (query) => emit('update-search-result-users', query)
             "
           >
-          </omegaup-common-multi-typeahead>
+          </OmegaupCommonMultiTypeahead>
         </div>
         <button class="btn btn-primary" type="submit">
           {{ T.wordsAddMember }}
@@ -26,7 +26,7 @@
         <button
           class="btn btn-secondary ml-2"
           type="reset"
-          @click="$emit('cancel')"
+          @click="emit('cancel')"
         >
           {{ T.wordsCancel }}
         </button>
@@ -43,11 +43,11 @@
       <tbody>
         <tr v-for="identity in teamsMembers" :key="identity.username">
           <td>
-            <omegaup-user-username
+            <OmegaupUserUsername
               :classname="identity.classname"
               :linkify="true"
               :username="identity.username"
-            ></omegaup-user-username>
+            ></OmegaupUserUsername>
           </td>
           <td v-if="!identity.isMainUserIdentity">
             <template
@@ -91,7 +91,7 @@
               :data-table-remove-member="identity.username"
               :title="T.groupEditMembersRemove"
               @click="
-                $emit('remove-member', {
+                emit('remove-member', {
                   username: identity.username,
                   teamUsername,
                 })
@@ -106,60 +106,73 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import * as ui from '../../ui';
 import { types } from '../../api_types';
 import T from '../../lang';
-import user_Username from '../user/Username.vue';
-import common_MultiTypeahead from '../common/MultiTypeahead.vue';
+import OmegaupUserUsername from '../user/Username.vue';
+import OmegaupCommonMultiTypeahead from '../common/MultiTypeahead.vue';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faLock, faTrashAlt, faSave } from '@fortawesome/free-solid-svg-icons';
 library.add(faLock, faTrashAlt, faSave);
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-    'omegaup-common-multi-typeahead': common_MultiTypeahead,
-    'omegaup-user-username': user_Username,
+const props = withDefaults(
+  defineProps<{
+    searchResultUsers: types.ListItem[];
+    teamUsername: string;
+    teamsMembers?: types.TeamMember[];
+  }>(),
+  {
+    teamsMembers: () => [],
   },
-})
-export default class Members extends Vue {
-  @Prop() searchResultUsers!: types.ListItem[];
-  @Prop() teamUsername!: string;
-  @Prop({ default: () => [] }) teamsMembers!: types.TeamMember[];
+);
 
-  T = T;
-  ui = ui;
-  typeaheadContestants: null | types.ListItem[] = null;
-  username: null | string = null;
-  changePasswordInputEnabled = false;
-  password: null | string = null;
+const emit = defineEmits<{
+  (e: 'update-search-result-users', query: string): void;
+  (
+    e: 'add-members',
+    request: { usersToAdd: string[]; teamUsername: string },
+  ): void;
+  (e: 'cancel'): void;
+  (
+    e: 'change-password-identity',
+    request: { username: string | null; newPassword: string | null },
+  ): void;
+  (
+    e: 'remove-member',
+    request: { username: string; teamUsername: string },
+  ): void;
+}>();
 
-  onSubmit(): void {
-    if (!this.typeaheadContestants) return;
-    this.$emit('add-members', {
-      usersToAdd: this.typeaheadContestants.map((user) => user.key),
-      teamUsername: this.teamUsername,
-    });
-    this.typeaheadContestants = null;
-  }
+const typeaheadContestants = ref<types.ListItem[] | null>(null);
+const username = ref<string | null>(null);
+const changePasswordInputEnabled = ref(false);
+const password = ref<string | null>(null);
 
-  onChangePass(username: string): void {
-    this.changePasswordInputEnabled = true;
-    this.username = username;
-  }
+function onSubmit(): void {
+  if (!typeaheadContestants.value) return;
+  emit('add-members', {
+    usersToAdd: typeaheadContestants.value.map((user) => user.key),
+    teamUsername: props.teamUsername,
+  });
+  typeaheadContestants.value = null;
+}
 
-  onChangePasswordMember(): void {
-    this.$emit('change-password-identity', {
-      username: this.username,
-      newPassword: this.password,
-    });
-    this.changePasswordInputEnabled = false;
-    this.username = null;
-    this.password = null;
-  }
+function onChangePass(user: string): void {
+  changePasswordInputEnabled.value = true;
+  username.value = user;
+}
+
+function onChangePasswordMember(): void {
+  emit('change-password-identity', {
+    username: username.value,
+    newPassword: password.value,
+  });
+  changePasswordInputEnabled.value = false;
+  username.value = null;
+  password.value = null;
 }
 </script>

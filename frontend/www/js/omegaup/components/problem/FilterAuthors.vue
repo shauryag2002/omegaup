@@ -14,43 +14,43 @@
             class="form-check-input"
             type="checkbox"
           />
-          <omegaup-user-username
+          <OmegaupUserUsername
             :linkify="true"
             :username="author.username"
             :name="author.name"
             :classname="author.classname"
-          ></omegaup-user-username>
+          />
         </label>
       </div>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import T from '../../lang';
 import { types } from '../../api_types';
-import VueTypeaheadBootstrap from 'vue-typeahead-bootstrap';
-import user_Username from '../user/Username.vue';
+import OmegaupUserUsername from '../user/Username.vue';
 
-@Component({
-  components: {
-    'vue-typeahead-bootstrap': VueTypeaheadBootstrap,
-    'omegaup-user-username': user_Username,
+const props = withDefaults(
+  defineProps<{
+    authors: types.AuthorsRank;
+    selectedAuthors?: string[];
+  }>(),
+  {
+    selectedAuthors: () => [],
   },
-})
-export default class FilterAuthors extends Vue {
-  @Prop() authors!: types.AuthorsRank;
-  @Prop({ default: () => [] }) selectedAuthors!: string[];
+);
 
-  T = T;
-  currentSelectedAuthors = this.selectedAuthors;
+const emit = defineEmits<{
+  (e: 'new-selected-author', authors: string[]): void;
+}>();
 
-  @Watch('currentSelectedAuthors')
-  onNewAuthorSelected(): void {
-    this.$emit('new-selected-author', this.currentSelectedAuthors);
-  }
-}
+const currentSelectedAuthors = ref(props.selectedAuthors);
+
+watch(currentSelectedAuthors, () => {
+  emit('new-selected-author', currentSelectedAuthors.value);
+});
 </script>
 
 <style scoped>

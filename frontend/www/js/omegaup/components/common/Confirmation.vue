@@ -38,15 +38,18 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+defineProps<{
+  question: string;
+  answerYes: string;
+  answerNo: string;
+}>();
 
-@Component
-export default class Paginator extends Vue {
-  @Prop() question!: string;
-  @Prop() answerYes!: string;
-  @Prop() answerNo!: string;
-}
+defineEmits<{
+  (e: 'close'): void;
+  (e: 'yes'): void;
+  (e: 'no'): void;
+}>();
 </script>
 
 <style lang="scss" scoped>

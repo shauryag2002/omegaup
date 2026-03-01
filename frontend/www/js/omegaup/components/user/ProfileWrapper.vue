@@ -6,7 +6,7 @@
         <omegaup-user-maininfo
           :profile="profile"
           :data="data"
-          :selected-tab.sync="currentSelectedTab"
+          v-model:selected-tab="currentSelectedTab"
           :has-password="hasPassword"
         >
         </omegaup-user-maininfo>

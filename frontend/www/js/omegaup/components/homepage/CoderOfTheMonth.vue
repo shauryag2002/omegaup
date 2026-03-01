@@ -27,12 +27,12 @@
         />
       </a>
       <h5 class="card-title">
-        <omegaup-user-username
+        <OmegaupUserUsername
           :classname="coderOfTheMonth.classname"
           :linkify="true"
           :username="coderOfTheMonth.username"
           :country="coderOfTheMonth.country_id"
-        ></omegaup-user-username>
+        ></OmegaupUserUsername>
       </h5>
       <template v-if="!coderOfTheMonth.is_private">
         <div class="card-text">
@@ -64,10 +64,10 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import T from '../../lang';
-import user_Username from '../user/Username.vue';
+import OmegaupUserUsername from '../user/Username.vue';
 import { types } from '../../api_types';
 import { getBlogUrl } from '../../urlHelper';
 
@@ -76,21 +76,19 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 library.add(faInfoCircle);
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-    'omegaup-user-username': user_Username,
+withDefaults(
+  defineProps<{
+    category?: string;
+    coderOfTheMonth: types.UserProfile;
+  }>(),
+  {
+    category: 'all',
   },
-})
-export default class CoderOfTheMonth extends Vue {
-  @Prop({ default: 'all' }) category!: string;
-  @Prop() coderOfTheMonth!: types.UserProfile;
+);
 
-  T = T;
-  get CoderOfTheMonthPolicyURL(): string {
-    return getBlogUrl('CoderOfTheMonthPolicyURL');
-  }
-}
+const CoderOfTheMonthPolicyURL = computed<string>(() => {
+  return getBlogUrl('CoderOfTheMonthPolicyURL');
+});
 </script>
 
 <style lang="scss" scoped>

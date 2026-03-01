@@ -22,47 +22,43 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, onBeforeUnmount } from 'vue';
 
-@Component
-export default class Badge3D extends Vue {
-  private bounds: DOMRect | null = null;
-  private tiltStrength = 30;
+const badge3d = ref<HTMLElement | null>(null);
+let bounds: DOMRect | null = null;
+const tiltStrength = 30;
 
-  onMouseEnter(event: MouseEvent): void {
-    const target = event.currentTarget as HTMLElement;
-    this.bounds = target.getBoundingClientRect();
-  }
+function onMouseEnter(event: MouseEvent): void {
+  const target = event.currentTarget as HTMLElement;
+  bounds = target.getBoundingClientRect();
+}
 
-  onMouseMove(event: MouseEvent): void {
-    if (!this.bounds) return;
-    const x = event.clientX - this.bounds.left;
-    const y = event.clientY - this.bounds.top;
-    const cx = x - this.bounds.width / 2;
-    const cy = y - this.bounds.height / 2;
-    const badgeEl = this.$refs.badge3d as HTMLElement;
-    if (badgeEl) {
-      badgeEl.style.transform = `rotateX(${
-        (-cy / this.bounds.height) * this.tiltStrength
-      }deg) rotateY(${
-        (cx / this.bounds.width) * this.tiltStrength
-      }deg) scale3d(1.06, 1.06, 1.06)`;
-    }
-  }
-
-  onMouseLeave(): void {
-    const badgeEl = this.$refs.badge3d as HTMLElement;
-    if (badgeEl) {
-      badgeEl.style.transform = '';
-    }
-    this.bounds = null;
-  }
-
-  beforeDestroy(): void {
-    this.onMouseLeave();
+function onMouseMove(event: MouseEvent): void {
+  if (!bounds) return;
+  const x = event.clientX - bounds.left;
+  const y = event.clientY - bounds.top;
+  const cx = x - bounds.width / 2;
+  const cy = y - bounds.height / 2;
+  if (badge3d.value) {
+    badge3d.value.style.transform = `rotateX(${
+      (-cy / bounds.height) * tiltStrength
+    }deg) rotateY(${
+      (cx / bounds.width) * tiltStrength
+    }deg) scale3d(1.06, 1.06, 1.06)`;
   }
 }
+
+function onMouseLeave(): void {
+  if (badge3d.value) {
+    badge3d.value.style.transform = '';
+  }
+  bounds = null;
+}
+
+onBeforeUnmount(() => {
+  onMouseLeave();
+});
 </script>
 
 <style lang="scss" scoped>
@@ -90,7 +86,7 @@ export default class Badge3D extends Vue {
   transform-style: preserve-3d;
   pointer-events: none;
 
-  >>> * {
+  :deep(*) {
     width: 100%;
     height: 100%;
     object-fit: contain;

@@ -3,10 +3,9 @@ import { types } from '../api_types';
 import * as api from '../api';
 import * as ui from '../ui';
 import T from '../lang';
-import Vue from 'vue';
+import { createApp, h, reactive } from 'vue';
 import login_Signin, { AvailableTabs } from '../components/login/Signin.vue';
-import { EventBus } from '../components/common/Navbar.vue';
-import VueRecaptcha from 'vue-recaptcha';
+import eventBus from '../eventBus';
 
 OmegaUp.on('ready', () => {
   function loginAndRedirect(
@@ -68,98 +67,61 @@ OmegaUp.on('ready', () => {
     initialActiveTab = AvailableTabs.Signup;
   }
 
-  const userSignin = new Vue({
-    el: '#main-container',
-    components: {
-      'omegaup-login-signin': login_Signin,
-      'vue-recaptcha': VueRecaptcha,
-    },
-    data: () => ({
-      initialActiveTab,
-    }),
-    render: function (createElement) {
-      return createElement('omegaup-login-signin', {
-        props: {
-          validateRecaptcha: payload.validateRecaptcha,
-          facebookUrl: payload.facebookUrl,
-          githubClientId,
-          githubState,
-          googleClientId,
-          hasVisitedSection: payload.hasVisitedSection,
-          useSignupFormWithBirthDate,
-          initialActiveTab: this.initialActiveTab,
-        },
-        on: {
-          'register-and-login': ({
-            over13Checked,
-            username,
-            email,
-            dateOfBirth,
-            parentEmail,
-            password,
-            passwordConfirmation,
-            recaptchaResponse,
-            termsAndPolicies,
-          }: {
-            over13Checked: boolean;
-            username: string;
-            email: string;
-            dateOfBirth: Date;
-            parentEmail: string;
-            password: string;
-            passwordConfirmation: string;
-            recaptchaResponse: string;
-            termsAndPolicies: boolean;
-          }) => {
-            if (!termsAndPolicies) {
-              ui.error(T.privacyPolicyNotAccepted);
-              return;
-            }
-            if (password != passwordConfirmation) {
-              ui.error(T.passwordMismatch);
-              return;
-            }
-            if (password.length < 8) {
-              ui.error(T.loginPasswordTooShort);
-              return;
-            }
-            if (!useSignupFormWithBirthDate) {
-              api.User.create({
-                username: username,
-                email: email,
-                password: password,
-                recaptcha: recaptchaResponse,
-              })
-                .then(() => {
-                  loginAndRedirect(
-                    username,
-                    password,
-                    /*isAccountCreation=*/ true,
-                  );
-                })
-                .catch(ui.apiError);
-              return;
-            }
-            const request: {
-              username: string;
-              email?: string;
-              birth_date: Date;
-              parent_email?: string;
-              password: string;
-              recaptcha: string;
-            } = {
-              username,
-              birth_date: new Date(dateOfBirth),
-              password,
-              recaptcha: recaptchaResponse,
-            };
-            if (over13Checked) {
-              request.email = email;
-            } else {
-              request.parent_email = parentEmail;
-            }
+  const state = reactive({
+    initialActiveTab,
+  });
 
-            api.User.create(request)
+  createApp({
+    render: () =>
+      h(login_Signin, {
+        validateRecaptcha: payload.validateRecaptcha,
+        facebookUrl: payload.facebookUrl,
+        githubClientId,
+        githubState,
+        googleClientId,
+        hasVisitedSection: payload.hasVisitedSection,
+        useSignupFormWithBirthDate,
+        initialActiveTab: state.initialActiveTab,
+        onRegisterAndLogin: ({
+          over13Checked,
+          username,
+          email,
+          dateOfBirth,
+          parentEmail,
+          password,
+          passwordConfirmation,
+          recaptchaResponse,
+          termsAndPolicies,
+        }: {
+          over13Checked: boolean;
+          username: string;
+          email: string;
+          dateOfBirth: Date;
+          parentEmail: string;
+          password: string;
+          passwordConfirmation: string;
+          recaptchaResponse: string;
+          termsAndPolicies: boolean;
+        }) => {
+          if (!termsAndPolicies) {
+            ui.error(T.privacyPolicyNotAccepted);
+            return;
+          }
+          if (password != passwordConfirmation) {
+            ui.error(T.passwordMismatch);
+            return;
+          }
+          if (password.length < 8) {
+            ui.error(T.loginPasswordTooShort);
+            return;
+          }
+          if (!useSignupFormWithBirthDate) {
+            api.User.create({
+              username: username,
+              email: email,
+              password: password,
+              recaptcha: recaptchaResponse,
+            })
               .then(() => {
                 loginAndRedirect(
                   username,
@@ -168,22 +130,46 @@ OmegaUp.on('ready', () => {
                 );
               })
               .catch(ui.apiError);
-          },
-          login: (usernameOrEmail: string, password: string) => {
-            loginAndRedirect(
-              usernameOrEmail,
-              password,
-              /*isAccountCreation=*/ false,
-            );
-          },
+            return;
+          }
+          const request: {
+            username: string;
+            email?: string;
+            birth_date: Date;
+            parent_email?: string;
+            password: string;
+            recaptcha: string;
+          } = {
+            username,
+            birth_date: new Date(dateOfBirth),
+            password,
+            recaptcha: recaptchaResponse,
+          };
+          if (over13Checked) {
+            request.email = email;
+          } else {
+            request.parent_email = parentEmail;
+          }
+
+          api.User.create(request)
+            .then(() => {
+              loginAndRedirect(username, password, /*isAccountCreation=*/ true);
+            })
+            .catch(ui.apiError);
         },
-      });
-    },
-  });
+        login: (usernameOrEmail: string, password: string) => {
+          loginAndRedirect(
+            usernameOrEmail,
+            password,
+            /*isAccountCreation=*/ false,
+          );
+        },
+      }),
+  }).mount('#main-container');
 
   const onActiveTab = (tab: AvailableTabs): void => {
-    userSignin.initialActiveTab = tab;
+    state.initialActiveTab = tab;
     window.location.hash = `#${tab}`;
   };
-  EventBus.$on('update:activeTab', onActiveTab);
+  eventBus.on('update:activeTab', onActiveTab);
 });

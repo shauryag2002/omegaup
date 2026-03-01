@@ -26,10 +26,10 @@
           <div class="form-group col-md-3">
             <label class="w-100"
               >{{ T.groupNewFormOnlyAC }}
-              <omegaup-radio-switch
-                :value.sync="onlyAc"
+              <OmegaupRadioSwitch
+                v-model:value="onlyAc"
                 :selected-value="onlyAc"
-              ></omegaup-radio-switch>
+              ></OmegaupRadioSwitch>
             </label>
           </div>
 
@@ -93,49 +93,54 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import T from '../../lang';
 import * as ui from '../../ui';
 import { types } from '../../api_types';
-import omegaup_RadioSwitch from '../RadioSwitch.vue';
+import OmegaupRadioSwitch from '../RadioSwitch.vue';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 library.add(faTrash);
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-    'omegaup-radio-switch': omegaup_RadioSwitch,
-  },
-})
-export default class GroupScoreboardContests extends Vue {
-  @Prop() scoreboard!: string;
-  @Prop() availableContests!: types.ContestListItem[];
-  @Prop() contests!: types.ScoreboardContest[];
+defineProps<{
+  scoreboard: string;
+  availableContests: types.ContestListItem[];
+  contests: types.ScoreboardContest[];
+}>();
 
-  T = T;
-  ui = ui;
-  selectedContest: null | string = null;
-  onlyAc = false;
-  weight = 1.0;
+const emit = defineEmits<{
+  (
+    e: 'add-contest',
+    component: any,
+    contest: string | null,
+    onlyAc: boolean,
+    weight: number,
+  ): void;
+  (e: 'remove-contest', alias: string): void;
+}>();
 
-  onAddContest(): void {
-    this.$emit(
-      'add-contest',
-      this,
-      this.selectedContest,
-      this.onlyAc,
-      this.weight,
-    );
-  }
+const selectedContest = ref<string | null>(null);
+const onlyAc = ref(false);
+const weight = ref(1.0);
 
-  reset(): void {
-    this.selectedContest = null;
-    this.onlyAc = false;
-    this.weight = 1.0;
-  }
+function onAddContest(): void {
+  emit(
+    'add-contest',
+    { reset },
+    selectedContest.value,
+    onlyAc.value,
+    weight.value,
+  );
 }
+
+function reset(): void {
+  selectedContest.value = null;
+  onlyAc.value = false;
+  weight.value = 1.0;
+}
+
+defineExpose({ reset });
 </script>

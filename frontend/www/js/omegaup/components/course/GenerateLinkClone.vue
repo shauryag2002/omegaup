@@ -17,13 +17,12 @@
             />
             <div class="input-group-append">
               <button
-                v-clipboard="() => cloneCourseURL"
                 class="btn btn-outline-secondary"
                 type="button"
                 :disabled="!cloneCourseURL"
                 :title="T.wordsCopyToClipboard"
                 data-copy-to-clipboard
-                @click="copiedToClipboard = true"
+                @click="copyAndNotify(cloneCourseURL)"
               >
                 <font-awesome-icon icon="clipboard" />
               </button>
@@ -37,7 +36,6 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
-import Clipboard from 'v-clipboard';
 import T from '../../lang';
 import * as ui from '../../ui';
 
@@ -49,7 +47,6 @@ import {
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 library.add(fas);
-Vue.use(Clipboard);
 
 @Component({
   components: {
@@ -70,6 +67,11 @@ export default class CourseGenerateLinkClone extends Vue {
       return '';
     }
     return `${window.location.origin}/course/${this.alias}/clone/${this.token}/`;
+  }
+
+  copyAndNotify(text: string): void {
+    navigator.clipboard.writeText(text);
+    this.copiedToClipboard = true;
   }
 
   @Watch('copiedToClipboard')

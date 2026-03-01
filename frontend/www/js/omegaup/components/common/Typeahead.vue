@@ -1,5 +1,5 @@
 <template>
-  <tags-input
+  <TagsInput
     v-model="selectedOptions"
     :existing-tags="existingOptions"
     :typeahead="true"
@@ -12,83 +12,100 @@
     :hide-input-on-limit="true"
     :only-existing-tags="onlyExistingTags"
     :typeahead-hide-discard="typeaheadHideDiscard"
+    :class="{ 'is-invalid': isInvalid }"
     @change="updateExistingOptions"
     @tag-added="onTagAdded"
     @tag-removed="onTagRemoved"
   >
-  </tags-input>
+  </TagsInput>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
-import VoerroTagsInput from '@voerro/vue-tagsinput';
-import '@voerro/vue-tagsinput/dist/style.css';
+<script setup lang="ts">
+import { ref, watch, onBeforeUnmount } from 'vue';
+import TagsInput from './TagsInput.vue';
 import T from '../../lang';
 import { types } from '../../api_types';
 
-@Component({
-  components: {
-    'tags-input': VoerroTagsInput,
+const props = withDefaults(
+  defineProps<{
+    existingOptions?: types.ListItem[];
+    options?: types.ListItem[];
+    activationThreshold?: number;
+    maxResults?: number;
+    value?: null | types.ListItem;
+    onlyExistingTags?: boolean;
+    readonly?: boolean;
+    typeaheadHideDiscard?: boolean;
+    placeholder?: string;
+    debounceDelay?: number;
+    isInvalid?: boolean;
+  }>(),
+  {
+    existingOptions: () => [],
+    options: () => [],
+    activationThreshold: 3,
+    maxResults: 5,
+    value: null,
+    onlyExistingTags: true,
+    readonly: false,
+    typeaheadHideDiscard: true,
+    placeholder: () => T.typeaheadSearchPlaceholder,
+    debounceDelay: 300,
+    isInvalid: false,
   },
-})
-export default class Typeahead extends Vue {
-  @Prop({ default: () => [] }) existingOptions!: types.ListItem[];
-  @Prop({ default: () => [] }) options!: types.ListItem[];
-  @Prop({ default: 3 }) activationThreshold!: number;
-  @Prop({ default: 5 }) maxResults!: number;
-  @Prop({ default: null }) value!: null | types.ListItem;
-  @Prop({ default: true }) onlyExistingTags!: boolean;
-  @Prop({ default: false }) readonly!: boolean;
-  @Prop({ default: true }) typeaheadHideDiscard!: boolean;
-  @Prop({ default: T.typeaheadSearchPlaceholder }) placeholder!: string;
-  @Prop({ default: 300 }) debounceDelay!: number;
+);
 
-  T = T;
-  selectedOptions = this.options;
-  private debounceTimer: ReturnType<typeof setTimeout> | null = null;
+const emit = defineEmits<{
+  (e: 'update-existing-options', query: string): void;
+  (e: 'update:value', value: null | types.ListItem): void;
+}>();
 
-  updateExistingOptions(query: string): void {
-    if (query.length < this.activationThreshold) return;
+const selectedOptions = ref(props.options);
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-    // Clear any existing debounce timer
-    if (this.debounceTimer) {
-      clearTimeout(this.debounceTimer);
-    }
+function updateExistingOptions(query: string): void {
+  if (query.length < props.activationThreshold) return;
 
-    // Set new debounce timer
-    this.debounceTimer = setTimeout(() => {
-      this.$emit('update-existing-options', query);
-    }, this.debounceDelay);
+  // Clear any existing debounce timer
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
   }
 
-  beforeDestroy(): void {
-    // Clean up timer on component destruction
-    if (this.debounceTimer) {
-      clearTimeout(this.debounceTimer);
-    }
-  }
+  // Set new debounce timer
+  debounceTimer = setTimeout(() => {
+    emit('update-existing-options', query);
+  }, props.debounceDelay);
+}
 
-  onTagAdded(): void {
-    if (this.selectedOptions.length < 1) return;
-    this.$emit('update:value', this.selectedOptions[0]);
+onBeforeUnmount(() => {
+  // Clean up timer on component destruction
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
   }
+});
 
-  onTagRemoved(): void {
-    this.$emit('update:value', null);
-  }
+function onTagAdded(): void {
+  if (selectedOptions.value.length < 1) return;
+  emit('update:value', selectedOptions.value[0]);
+}
 
-  @Watch('value')
-  onValueChanged(newValue: null | types.ListItem): void {
+function onTagRemoved(): void {
+  emit('update:value', null);
+}
+
+watch(
+  () => props.value,
+  (newValue: null | types.ListItem) => {
     if (!newValue) {
-      this.selectedOptions = [];
+      selectedOptions.value = [];
       return;
     }
-    this.existingOptions.push(newValue);
-    this.selectedOptions = this.existingOptions.filter(
+    props.existingOptions.push(newValue);
+    selectedOptions.value = props.existingOptions.filter(
       (option) => option.key === newValue.key,
     );
-  }
-}
+  },
+);
 </script>
 
 <style lang="scss">
@@ -108,5 +125,9 @@ export default class Typeahead extends Vue {
 .tags-input.disabled {
   background-color: var(--typeahead-disabled);
   opacity: 1;
+}
+
+.tags-input.is-invalid .tags-input-wrapper-default {
+  border-color: var(--form-input-error-color);
 }
 </style>

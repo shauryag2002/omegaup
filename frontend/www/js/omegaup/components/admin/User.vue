@@ -73,71 +73,62 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Emit } from 'vue-property-decorator';
+<script setup lang="ts">
 import { omegaup } from '../../omegaup';
 import T from '../../lang';
 
-import {
-  FontAwesomeIcon,
-  FontAwesomeLayers,
-  FontAwesomeLayersText,
-} from '@fortawesome/vue-fontawesome';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { types } from '../../api_types';
 library.add(fas);
 
-@Component({
-  components: {
-    'font-awesome-icon': FontAwesomeIcon,
-    'font-awesome-layers': FontAwesomeLayers,
-    'font-awesome-layers-text': FontAwesomeLayersText,
-  },
-})
-export default class User extends Vue {
-  @Prop() emails!: string[];
-  @Prop() username!: string;
-  @Prop() verified!: boolean;
-  @Prop() experiments!: string[];
-  @Prop() systemExperiments!: omegaup.Experiment[];
-  @Prop() roles!: string[];
-  @Prop() roleNames!: types.UserRole[];
+const props = defineProps<{
+  emails: string[];
+  username: string;
+  verified: boolean;
+  experiments: string[];
+  systemExperiments: omegaup.Experiment[];
+  roles: string[];
+  roleNames: types.UserRole[];
+}>();
 
-  T = T;
+const emit = defineEmits<{
+  (
+    e: 'change-experiment',
+    payload: omegaup.Selectable<omegaup.Experiment>,
+  ): void;
+  (e: 'change-role', payload: omegaup.Selectable<types.UserRole>): void;
+  (e: 'verify-user'): void;
+}>();
 
-  hasExperiment(experiment: string): boolean {
-    return this.experiments.indexOf(experiment) !== -1;
-  }
+function hasExperiment(experiment: string): boolean {
+  return props.experiments.indexOf(experiment) !== -1;
+}
 
-  hasRole(role: string): boolean {
-    return this.roles.indexOf(role) !== -1;
-  }
+function hasRole(role: string): boolean {
+  return props.roles.indexOf(role) !== -1;
+}
 
-  @Emit('change-experiment')
-  onChangeExperiment(
-    ev: Event,
-    experiment: omegaup.Experiment,
-  ): omegaup.Selectable<omegaup.Experiment> {
-    return {
-      value: experiment,
-      selected: (ev.target as HTMLInputElement).checked,
-    };
-  }
+function onChangeExperiment(ev: Event, experiment: omegaup.Experiment): void {
+  emit('change-experiment', {
+    value: experiment,
+    selected: (ev.target as HTMLInputElement).checked,
+  });
+}
 
-  @Emit('change-role')
-  onChangeRole(
-    ev: Event,
-    role: types.UserRole,
-  ): omegaup.Selectable<types.UserRole> {
-    return {
-      value: role,
-      selected: (ev.target as HTMLInputElement).checked,
-    };
-  }
+function onChangeRole(ev: Event, role: types.UserRole): void {
+  emit('change-role', {
+    value: role,
+    selected: (ev.target as HTMLInputElement).checked,
+  });
+}
 
-  onVerifyUser() {
-    this.$emit('verify-user');
-  }
+function onVerifyUser(): void {
+  emit('verify-user');
+}
+
+function onChangePassword(): void {
+  // form submit handler - currently no-op (form has prevent default)
 }
 </script>

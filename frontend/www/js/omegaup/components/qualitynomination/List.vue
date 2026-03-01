@@ -25,32 +25,32 @@
               </select>
             </div>
             <div class="col-md-4 mb-1">
-              <omegaup-common-typeahead
+              <OmegaupCommonTypeahead
                 v-show="selectColumn == 'problem_alias'"
                 :existing-options="searchResultProblems"
-                :value.sync="queryProblem"
+                v-model:value="queryProblem"
                 :placeholder="T.wordsKeyword"
                 @update-existing-options="
-                  (query) => $emit('update-search-result-problems', query)
+                  (query) => emit('update-search-result-problems', query)
                 "
-              ></omegaup-common-typeahead>
-              <omegaup-common-typeahead
+              ></OmegaupCommonTypeahead>
+              <OmegaupCommonTypeahead
                 v-show="
                   selectColumn == 'nominator_username' ||
                   selectColumn == 'author_username'
                 "
                 :existing-options="searchResultUsers"
-                :value.sync="queryUsername"
+                v-model:value="queryUsername"
                 :max-results="10"
                 @update-existing-options="
-                  (query) => $emit('update-search-result-users', query)
+                  (query) => emit('update-search-result-users', query)
                 "
-              ></omegaup-common-typeahead>
+              ></OmegaupCommonTypeahead>
             </div>
             <button
               class="btn btn-primary mb-1"
               @click.prevent="
-                $emit('go-to-page', 1, getStatus(), getQuery(), selectColumn)
+                emit('go-to-page', 1, getStatus(), getQuery(), selectColumn)
               "
             >
               {{ T.wordsSearch }}
@@ -68,7 +68,7 @@
               v-model="showAll"
               type="checkbox"
               @change="
-                $emit('go-to-page', 1, getStatus(), getQuery(), selectColumn)
+                emit('go-to-page', 1, getStatus(), getQuery(), selectColumn)
               "
             />
             {{ T.qualityNominationShowAll }}
@@ -81,25 +81,25 @@
             <tr class="text-nowrap">
               <th>
                 {{ T.wordsAlias }}
-                <omegaup-common-sort-controls
+                <OmegaupCommonSortControls
                   ref="sortControlByTitle"
                   column="title"
                   :sort-order="sortOrder"
                   :column-name="columnName"
                   @apply-filter="onApplyFilter"
-                ></omegaup-common-sort-controls>
+                ></OmegaupCommonSortControls>
               </th>
               <th v-if="!myView">{{ T.qualityNominationNominatedBy }}</th>
               <th>{{ T.qualityNominationCreatedBy }}</th>
               <th>
                 {{ T.wordsSubmissionDate }}
-                <omegaup-common-sort-controls
+                <OmegaupCommonSortControls
                   ref="sortControlByTime"
                   column="time"
                   :sort-order="sortOrder"
                   :column-name="columnName"
                   @apply-filter="onApplyFilter"
-                ></omegaup-common-sort-controls>
+                ></OmegaupCommonSortControls>
               </th>
               <th v-if="!myView" data-name="reason">{{ T.wordsReason }}</th>
               <th class="text-center">{{ T.wordsStatus }}</th>
@@ -144,121 +144,123 @@
           </tbody>
         </table>
       </div>
-      <omegaup-common-paginator
+      <OmegaupCommonPaginator
         :pager-items="pagerItems"
         class="mb-3"
         @page-changed="
           (page) =>
-            $emit('go-to-page', page, getStatus(), getQuery(), selectColumn)
+            emit('go-to-page', page, getStatus(), getQuery(), selectColumn)
         "
-      ></omegaup-common-paginator>
+      ></OmegaupCommonPaginator>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed, watch } from 'vue';
 import { omegaup } from '../../omegaup';
 import T from '../../lang';
 import * as ui from '../../ui';
-import common_Paginator from '../common/Paginator.vue';
+import OmegaupCommonPaginator from '../common/Paginator.vue';
 import { types } from '../../api_types';
-import common_Typeahead from '../common/Typeahead.vue';
-import common_SortControls from '../common/SortControls.vue';
+import OmegaupCommonTypeahead from '../common/Typeahead.vue';
+import OmegaupCommonSortControls from '../common/SortControls.vue';
 
-@Component({
-  components: {
-    'omegaup-common-paginator': common_Paginator,
-    'omegaup-common-typeahead': common_Typeahead,
-    'omegaup-common-sort-controls': common_SortControls,
-  },
-})
-export default class QualityNominationList extends Vue {
-  @Prop() pages!: number;
-  @Prop() length!: number;
-  @Prop() myView!: boolean;
-  @Prop() nominations!: types.NominationListItem[];
-  @Prop() pagerItems!: types.PageItem[];
-  @Prop() isAdmin!: boolean;
-  @Prop() searchResultUsers!: types.ListItem[];
-  @Prop() searchResultProblems!: types.ListItem[];
+const props = defineProps<{
+  pages: number;
+  length: number;
+  myView: boolean;
+  nominations: types.NominationListItem[];
+  pagerItems: types.PageItem[];
+  isAdmin: boolean;
+  searchResultUsers: types.ListItem[];
+  searchResultProblems: types.ListItem[];
+}>();
 
-  showAll = true;
-  T = T;
-  ui = ui;
+const emit = defineEmits<{
+  (
+    e: 'go-to-page',
+    page: number,
+    status: string,
+    query: null | string,
+    column: string,
+  ): void;
+  (e: 'update-search-result-problems', query: string): void;
+  (e: 'update-search-result-users', query: string): void;
+}>();
 
-  sortOrder: omegaup.SortOrder = omegaup.SortOrder.Ascending;
-  columnName = 'title';
+const showAll = ref(true);
 
-  queryProblem: null | types.ListItem = null;
-  queryUsername: null | types.ListItem = null;
-  selectColumn = '';
-  columns = {
-    problem_alias: T.wordsProblem,
-    nominator_username: T.qualityNominationNominatedBy,
-    author_username: T.qualityNominationCreatedBy,
-  };
+const sortOrder = ref<omegaup.SortOrder>(omegaup.SortOrder.Ascending);
+const columnName = ref('title');
 
-  get orderedNominations(): types.NominationListItem[] {
-    const order = this.sortOrder === omegaup.SortOrder.Ascending ? 1 : -1;
+const queryProblem = ref<null | types.ListItem>(null);
+const queryUsername = ref<null | types.ListItem>(null);
+const selectColumn = ref('');
+const columns = {
+  problem_alias: T.wordsProblem,
+  nominator_username: T.qualityNominationNominatedBy,
+  author_username: T.qualityNominationCreatedBy,
+};
 
-    switch (this.columnName) {
-      case 'time':
-        return this.nominations.sort(
-          (a, b) => order * (a.time.getTime() - b.time.getTime()),
-        );
-      case 'title':
-      default:
-        return this.nominations.sort(
-          (a, b) => order * a.problem.title.localeCompare(b.problem.title),
-        );
-    }
+const orderedNominations = computed((): types.NominationListItem[] => {
+  const order = sortOrder.value === omegaup.SortOrder.Ascending ? 1 : -1;
+
+  switch (columnName.value) {
+    case 'time':
+      return props.nominations.sort(
+        (a, b) => order * (a.time.getTime() - b.time.getTime()),
+      );
+    case 'title':
+    default:
+      return props.nominations.sort(
+        (a, b) => order * a.problem.title.localeCompare(b.problem.title),
+      );
   }
+});
 
-  @Watch('selectColumn')
-  onPropertyChanged() {
-    this.queryProblem = null;
-    this.queryUsername = null;
+watch(selectColumn, () => {
+  queryProblem.value = null;
+  queryUsername.value = null;
+});
+
+function getQuery(): null | string {
+  if (
+    selectColumn.value == 'nominator_username' ||
+    selectColumn.value == 'author_username'
+  ) {
+    return queryUsername.value?.key ?? null;
+  } else {
+    return queryProblem.value?.key ?? null;
   }
+}
 
-  getQuery(): null | string {
-    if (
-      this.selectColumn == 'nominator_username' ||
-      this.selectColumn == 'author_username'
-    ) {
-      return this.queryUsername?.key ?? null;
-    } else {
-      return this.queryProblem?.key ?? null;
-    }
+function getStatus(): string {
+  if (showAll.value) {
+    return 'all';
+  } else {
+    return 'open';
   }
+}
 
-  getStatus(): string {
-    if (this.showAll) {
-      return 'all';
-    } else {
-      return 'open';
-    }
-  }
+function problemUrl(problemAlias: string): string {
+  return `/arena/problem/${problemAlias}/`;
+}
 
-  problemUrl(problemAlias: string): string {
-    return `/arena/problem/${problemAlias}/`;
-  }
+function userUrl(username: string): string {
+  return `/profile/${username}/`;
+}
 
-  userUrl(username: string): string {
-    return `/profile/${username}/`;
-  }
+function nominationDetailsUrl(nominationId: number): string {
+  return `/nomination/${nominationId}/`;
+}
 
-  nominationDetailsUrl(nominationId: number): string {
-    return `/nomination/${nominationId}/`;
-  }
+function onApplyFilter(newColumnName: string, newSortOrder: string): void {
+  columnName.value = newColumnName;
 
-  onApplyFilter(columnName: string, sortOrder: string): void {
-    this.columnName = columnName;
-
-    this.sortOrder =
-      sortOrder === omegaup.SortOrder.Ascending
-        ? omegaup.SortOrder.Ascending
-        : omegaup.SortOrder.Descending;
-  }
+  sortOrder.value =
+    newSortOrder === omegaup.SortOrder.Ascending
+      ? omegaup.SortOrder.Ascending
+      : omegaup.SortOrder.Descending;
 }
 </script>

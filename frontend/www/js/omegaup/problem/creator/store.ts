@@ -1,4 +1,5 @@
-import { createStore } from 'vuex';import { StoreState } from './types';
+import { createStore } from 'vuex';
+import { StoreState } from './types';
 import { casesStore } from './modules/cases';
 import T from '../../lang';
 

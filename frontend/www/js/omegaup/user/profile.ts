@@ -1,5 +1,5 @@
 import * as Highcharts from 'highcharts/highstock';
-import Vue from 'vue';
+import { createApp, h, reactive } from 'vue';
 import * as api from '../api';
 import { types } from '../api_types';
 import T from '../lang';
@@ -228,306 +228,295 @@ OmegaUp.on('ready', () => {
       }
     }
   }
-  const userProfile = new Vue({
-    el: '#main-container',
-    components: {
-      'omegaup-user-profile': user_Profile,
-    },
-    data: () => {
-      return {
-        profile: payload.profile,
-        data: payload.extraProfileDetails,
-        identities: payload.identities,
-        apiTokens: commonPayload.apiTokens,
-        hasPassword: payload.extraProfileDetails?.hasPassword,
-        selectedTab,
-        searchResultSchools: searchResultSchools,
-        availableYears: [currentYear] as number[],
-        isLoading: true,
-        profileStatistics: null as ProfileStatistics | null,
-      };
-    },
-    mounted: function () {
-      if (this.profile.username) {
-        this.loadInitialData(this.profile.username);
-      }
-    },
-    methods: {
-      /**
-       * Loads all profile data including stats for both charts
-       */
-      loadInitialData: function (username: string): void {
-        this.isLoading = true;
-
-        api.User.stats({ username })
-          .then((response) => {
-            // Store runs data directly
-            if (this.data) {
-              if (!this.data.stats) {
-                this.data.stats = [];
-              }
-              this.data.stats = response.runs || [];
-            }
-
-            // Find all available years from runs data
-            const years = new Set<number>();
-            const currentYear = new Date().getFullYear();
-            years.add(currentYear);
-
-            for (const run of response.runs || []) {
-              if (run.date) {
-                const year = parseInt(run.date.split('-')[0], 10);
-                if (!isNaN(year)) {
-                  years.add(year);
-                }
-              }
-            }
-
-            this.availableYears = [...years].sort((a, b) => b - a);
-            this.isLoading = false;
-          })
-          .catch((error) => {
-            ui.apiError(error);
-            this.isLoading = false;
-          });
-
-        // Also fetch profile statistics for the charts
-        api.User.profileStatistics({ username })
-          .then((response) => {
-            this.profileStatistics = response;
-          })
-          .catch((error) => {
-            // Non-blocking error - just log it
-            console.error('Failed to load profile statistics:', error);
-          });
-      },
-
-      /**
-       * Loads data for a specific year for both charts
-       */
-      loadHeatmapDataForYear: function (username: string, year: number): void {
-        this.isLoading = true;
-
-        api.User.stats({ username, year: year.toString() })
-          .then((response) => {
-            // Store runs data directly
-            if (this.data) {
-              if (!this.data.stats) {
-                this.data.stats = [];
-              }
-              this.data.stats = response.runs || [];
-            }
-
-            this.isLoading = false;
-          })
-          .catch((error) => {
-            ui.apiError(error);
-            this.isLoading = false;
-          });
-      },
-    },
-    render: function (createElement) {
-      return createElement('omegaup-user-profile', {
-        props: {
-          data: payload.extraProfileDetails,
-          profile: this.profile,
-          profileBadges: new Set(
-            payload.extraProfileDetails?.ownedBadges?.map(
-              (badge) => badge.badge_alias,
-            ),
-          ),
-          visitorBadges: new Set(payload.extraProfileDetails?.badges),
-          selectedTab: this.selectedTab,
-          identities: this.identities,
-          apiTokens: this.apiTokens,
-          countries: payload.countries,
-          programmingLanguages: payload.programmingLanguages,
-          hasPassword: this.hasPassword,
-          viewProfileSelectedTab,
-          searchResultSchools: this.searchResultSchools,
-          availableYears: this.availableYears,
-          isLoading: this.isLoading,
-          profileStatistics: this.profileStatistics,
-        },
-        on: {
-          'update-user-basic-information': (
-            userBasicInformation: Partial<types.UserProfileInfo>,
-          ) => {
-            api.User.update(userBasicInformation)
-              .then(() => {
-                mainStore.commit(
-                  'updateUsername',
-                  userBasicInformation.username,
-                );
-                userProfile.profile.username = userBasicInformation.username;
-                userProfile.profile.country_id =
-                  userBasicInformation.country_id;
-                ui.success(T.userEditSuccess);
-              })
-              .catch(ui.apiError);
-          },
-          'update-user-basic-information-error': ({
-            description,
-          }: {
-            description: string;
-          }) => {
-            ui.error(description);
-          },
-          'update-user-preferences': ({
-            userPreferences,
-            localeChanged,
-          }: {
-            userPreferences: Partial<types.UserProfileInfo>;
-            localeChanged: boolean;
-          }) => {
-            const profile = {
-              ...userPreferences,
-              ...{ username: this.profile.username },
-            };
-            api.User.update(profile)
-              .then(() => {
-                if (localeChanged) {
-                  window.location.hash = 'locale-changed';
-                  window.location.reload();
-                  return;
-                }
-                ui.success(T.userEditPreferencesSuccess);
-              })
-              .catch(ui.apiError);
-          },
-          'update-user-schools': (
-            schoolInformation: Partial<types.UserProfileInfo>,
-          ) => {
-            api.User.update(schoolInformation)
-              .then(() => {
-                ui.success(T.userEditSchoolSuccess);
-              })
-              .catch(ui.apiError);
-          },
-          'add-identity': ({
-            username,
-            password,
-          }: {
-            username: string;
-            password: string;
-          }) => {
-            api.User.associateIdentity({
-              username: username,
-              password: password,
-            })
-              .then(() => {
-                refreshIdentityList();
-                ui.success(T.profileIdentityAdded);
-              })
-              .catch(ui.apiError);
-          },
-          'update-password': ({
-            oldPassword,
-            newPassword,
-          }: {
-            oldPassword: string;
-            newPassword: string;
-          }) => {
-            api.User.changePassword({
-              old_password: oldPassword,
-              password: newPassword,
-            })
-              .then(() => {
-                ui.success(T.passwordResetResetSuccess);
-              })
-              .catch(ui.apiError);
-          },
-          'add-password': ({
-            username,
-            password,
-          }: {
-            username: string;
-            password: string;
-          }) => {
-            api.User.updateBasicInfo({
-              username,
-              password,
-            })
-              .then(() => {
-                ui.success(T.passwordAddRequestSuccess);
-                userProfile.hasPassword = true;
-                userProfile.selectedTab = 'change-password';
-              })
-              .catch(ui.apiError);
-          },
-          'update-search-result-schools': (query: string) => {
-            api.School.list({ query })
-              .then(({ results }) => {
-                if (!results.length) {
-                  this.searchResultSchools = [
-                    {
-                      key: 0,
-                      value: query,
-                    },
-                  ];
-                  return;
-                }
-                this.searchResultSchools = results.map(
-                  ({ key, value }: types.SchoolListItem) => ({
-                    key,
-                    value,
-                  }),
-                );
-              })
-              .catch(ui.apiError);
-          },
-          'request-delete-account': () => {
-            api.User.deleteRequest()
-              .then(({ token }) => {
-                api.User.deleteConfirm({ token })
-                  .then(() => {
-                    // Log out the user
-                    window.location.href = '/logout/';
-                  })
-                  .catch(ui.apiError);
-              })
-              .catch(ui.apiError);
-          },
-          'create-api-token': (tokenName: string) => {
-            api.User.createAPIToken({ name: tokenName })
-              .then(({ token }) => {
-                refreshApiTokensList();
-                ui.success(
-                  ui.formatString(T.apiTokenSuccessfullyCreated, {
-                    token: token,
-                  }),
-                  false,
-                );
-              })
-              .catch(ui.apiError);
-          },
-          'revoke-api-token': (tokenName: string) => {
-            api.User.revokeAPIToken({ name: tokenName })
-              .then(() => {
-                refreshApiTokensList();
-                ui.success(T.apiTokenSuccessfullyRevoked);
-              })
-              .catch(ui.apiError);
-          },
-          'heatmap-year-changed': (year: number) => {
-            if (!this.profile.username) return;
-            this.loadHeatmapDataForYear(this.profile.username, year);
-          },
-        },
-      });
-    },
+  const state = reactive({
+    profile: payload.profile,
+    data: payload.extraProfileDetails,
+    identities: payload.identities,
+    apiTokens: commonPayload.apiTokens,
+    hasPassword: payload.extraProfileDetails?.hasPassword,
+    selectedTab,
+    searchResultSchools: searchResultSchools,
+    availableYears: [currentYear] as number[],
+    isLoading: true,
+    profileStatistics: null as ProfileStatistics | null,
   });
+
+  const methods = {
+    /**
+     * Loads all profile data including stats for both charts
+     */
+    loadInitialData: function (username: string): void {
+      state.isLoading = true;
+
+      api.User.stats({ username })
+        .then((response) => {
+          // Store runs data directly
+          if (state.data) {
+            if (!state.data.stats) {
+              state.data.stats = [];
+            }
+            state.data.stats = response.runs || [];
+          }
+
+          // Find all available years from runs data
+          const years = new Set<number>();
+          const currentYear = new Date().getFullYear();
+          years.add(currentYear);
+
+          for (const run of response.runs || []) {
+            if (run.date) {
+              const year = parseInt(run.date.split('-')[0], 10);
+              if (!isNaN(year)) {
+                years.add(year);
+              }
+            }
+          }
+
+          state.availableYears = [...years].sort((a, b) => b - a);
+          state.isLoading = false;
+        })
+        .catch((error) => {
+          ui.apiError(error);
+          state.isLoading = false;
+        });
+
+      // Also fetch profile statistics for the charts
+      api.User.profileStatistics({ username })
+        .then((response) => {
+          state.profileStatistics = response;
+        })
+        .catch((error) => {
+          // Non-blocking error - just log it
+          console.error('Failed to load profile statistics:', error);
+        });
+    },
+
+    /**
+     * Loads data for a specific year for both charts
+     */
+    loadHeatmapDataForYear: function (username: string, year: number): void {
+      state.isLoading = true;
+
+      api.User.stats({ username, year: year.toString() })
+        .then((response) => {
+          // Store runs data directly
+          if (state.data) {
+            if (!state.data.stats) {
+              state.data.stats = [];
+            }
+            state.data.stats = response.runs || [];
+          }
+
+          state.isLoading = false;
+        })
+        .catch((error) => {
+          ui.apiError(error);
+          state.isLoading = false;
+        });
+    },
+  };
+
+  const app = createApp({
+    methods,
+    render: () =>
+      h(user_Profile, {
+        data: payload.extraProfileDetails,
+        profile: state.profile,
+        profileBadges: new Set(
+          payload.extraProfileDetails?.ownedBadges?.map(
+            (badge) => badge.badge_alias,
+          ),
+        ),
+        visitorBadges: new Set(payload.extraProfileDetails?.badges),
+        selectedTab: state.selectedTab,
+        identities: state.identities,
+        apiTokens: state.apiTokens,
+        countries: payload.countries,
+        programmingLanguages: payload.programmingLanguages,
+        hasPassword: state.hasPassword,
+        viewProfileSelectedTab,
+        searchResultSchools: state.searchResultSchools,
+        availableYears: state.availableYears,
+        isLoading: state.isLoading,
+        profileStatistics: state.profileStatistics,
+        onUpdateUserBasicInformation: (
+          userBasicInformation: Partial<types.UserProfileInfo>,
+        ) => {
+          api.User.update(userBasicInformation)
+            .then(() => {
+              mainStore.commit('updateUsername', userBasicInformation.username);
+              state.profile.username = userBasicInformation.username;
+              state.profile.name = userBasicInformation.name;
+              state.profile.gender = userBasicInformation.gender;
+              state.profile.country_id = userBasicInformation.country_id;
+              state.profile.state_id = userBasicInformation.state_id;
+              state.profile.birth_date =
+                userBasicInformation.birth_date ?? undefined;
+              ui.success(T.userEditSuccess);
+            })
+            .catch(ui.apiError);
+        },
+        onUpdateUserBasicInformationError: ({
+          description,
+        }: {
+          description: string;
+        }) => {
+          ui.error(description);
+        },
+        onUpdateUserPreferences: ({
+          userPreferences,
+          localeChanged,
+        }: {
+          userPreferences: Partial<types.UserProfileInfo>;
+          localeChanged: boolean;
+        }) => {
+          const profile = {
+            ...userPreferences,
+            ...{ username: state.profile.username },
+          };
+          api.User.update(profile)
+            .then(() => {
+              if (localeChanged) {
+                window.location.hash = 'locale-changed';
+                window.location.reload();
+                return;
+              }
+              ui.success(T.userEditPreferencesSuccess);
+            })
+            .catch(ui.apiError);
+        },
+        onUpdateUserSchools: (
+          schoolInformation: Partial<types.UserProfileInfo>,
+        ) => {
+          api.User.update(schoolInformation)
+            .then(() => {
+              ui.success(T.userEditSchoolSuccess);
+            })
+            .catch(ui.apiError);
+        },
+        onAddIdentity: ({
+          username,
+          password,
+        }: {
+          username: string;
+          password: string;
+        }) => {
+          api.User.associateIdentity({
+            username: username,
+            password: password,
+          })
+            .then(() => {
+              refreshIdentityList();
+              ui.success(T.profileIdentityAdded);
+            })
+            .catch(ui.apiError);
+        },
+        onUpdatePassword: ({
+          oldPassword,
+          newPassword,
+        }: {
+          oldPassword: string;
+          newPassword: string;
+        }) => {
+          api.User.changePassword({
+            old_password: oldPassword,
+            password: newPassword,
+          })
+            .then(() => {
+              ui.success(T.passwordResetResetSuccess);
+            })
+            .catch(ui.apiError);
+        },
+        onAddPassword: ({
+          username,
+          password,
+        }: {
+          username: string;
+          password: string;
+        }) => {
+          api.User.updateBasicInfo({
+            username,
+            password,
+          })
+            .then(() => {
+              ui.success(T.passwordAddRequestSuccess);
+              state.hasPassword = true;
+              state.selectedTab = 'change-password';
+            })
+            .catch(ui.apiError);
+        },
+        onUpdateSearchResultSchools: (query: string) => {
+          api.School.list({ query })
+            .then(({ results }) => {
+              if (!results.length) {
+                state.searchResultSchools = [
+                  {
+                    key: 0,
+                    value: query,
+                  },
+                ];
+                return;
+              }
+              state.searchResultSchools = results.map(
+                ({ key, value }: types.SchoolListItem) => ({
+                  key,
+                  value,
+                }),
+              );
+            })
+            .catch(ui.apiError);
+        },
+        onRequestDeleteAccount: () => {
+          api.User.deleteRequest()
+            .then(({ token }) => {
+              api.User.deleteConfirm({ token })
+                .then(() => {
+                  // Log out the user
+                  window.location.href = '/logout/';
+                })
+                .catch(ui.apiError);
+            })
+            .catch(ui.apiError);
+        },
+        onCreateApiToken: (tokenName: string) => {
+          api.User.createAPIToken({ name: tokenName })
+            .then(({ token }) => {
+              refreshApiTokensList();
+              ui.success(
+                ui.formatString(T.apiTokenSuccessfullyCreated, {
+                  token: token,
+                }),
+                false,
+              );
+            })
+            .catch(ui.apiError);
+        },
+        onRevokeApiToken: (tokenName: string) => {
+          api.User.revokeAPIToken({ name: tokenName })
+            .then(() => {
+              refreshApiTokensList();
+              ui.success(T.apiTokenSuccessfullyRevoked);
+            })
+            .catch(ui.apiError);
+        },
+        onHeatmapYearChanged: (year: number) => {
+          if (!state.profile.username) return;
+          methods.loadHeatmapDataForYear(state.profile.username, year);
+        },
+      }),
+  });
+  app.mount('#main-container');
   function refreshIdentityList() {
     api.User.listAssociatedIdentities({})
       .then((data) => {
-        userProfile.identities = data.identities;
+        state.identities = data.identities;
       })
       .catch(ui.apiError);
   }
   function refreshApiTokensList() {
     api.User.listAPITokens({})
       .then((data) => {
-        userProfile.apiTokens = data.tokens;
+        state.apiTokens = data.tokens;
       })
       .catch(ui.apiError);
   }

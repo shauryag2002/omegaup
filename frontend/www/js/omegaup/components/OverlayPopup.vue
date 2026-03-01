@@ -5,11 +5,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
-
-@Component
-export default class OverlayPopup extends Vue {}
+<script setup lang="ts">
+defineEmits<{ (e: 'dismiss'): void }>();
 </script>
 
 <style lang="scss" scoped>

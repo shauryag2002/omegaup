@@ -10,7 +10,7 @@
               class="card-text course-data mt-3 h-100 d-flex flex-column justify-content-around"
             >
               <div>
-                <omegaup-markdown
+                <OmegaupMarkdown
                   v-if="course.school_name"
                   :full-width="true"
                   :markdown="
@@ -19,7 +19,7 @@
                     })
                   "
                 >
-                </omegaup-markdown>
+                </OmegaupMarkdown>
                 <div class="d-flex justify-content-between align-items-center">
                   {{ T.courseCardProgress }}
                   <div class="progress w-75">
@@ -50,23 +50,14 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
 
-import omegaup_Markdown from '../Markdown.vue';
+import OmegaupMarkdown from '../Markdown.vue';
 
-@Component({
-  components: {
-    'omegaup-markdown': omegaup_Markdown,
-  },
-})
-export default class CourseCardEnrolled extends Vue {
-  @Prop() course!: types.CourseCardEnrolled;
-
-  T = T;
-  ui = ui;
-}
+defineProps<{
+  course: types.CourseCardEnrolled;
+}>();
 </script>

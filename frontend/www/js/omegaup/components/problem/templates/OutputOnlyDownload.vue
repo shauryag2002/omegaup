@@ -7,17 +7,11 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
-import T from '../../../lang';
+<script setup lang="ts">
+import { computed } from 'vue';
 
-@Component
-export default class OutputOnlyDownload extends Vue {
-  get zipUrl(): string {
-    // This should eventually be dynamic
-    return '/problem/output-only/files.zip';
-  }
-
-  T = T;
-}
+const zipUrl = computed((): string => {
+  // This should eventually be dynamic
+  return '/problem/output-only/files.zip';
+});
 </script>

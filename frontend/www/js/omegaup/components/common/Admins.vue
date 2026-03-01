@@ -9,14 +9,14 @@
               :title="T.courseEditAddAdminsTooltip"
               icon="info-circle"
             />
-            <omegaup-common-typeahead
+            <OmegaupCommonTypeahead
               :existing-options="searchResultUsers"
-              :value.sync="username"
+              v-model:value="username"
               :max-results="10"
               @update-existing-options="
                 (query) => $emit('update-search-result-users', query)
               "
-            ></omegaup-common-typeahead>
+            ></OmegaupCommonTypeahead>
           </label>
         </div>
         <div class="form-group mb-0">
@@ -57,10 +57,10 @@
             class="text-center"
           >
             <td>
-              <omegaup-user-username
+              <OmegaupUserUsername
                 :linkify="true"
                 :username="admin.username"
-              ></omegaup-user-username>
+              ></OmegaupUserUsername>
             </td>
             <td>{{ admin.role }}</td>
             <td>
@@ -80,11 +80,11 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import T from '../../lang';
-import common_Typeahead from '../common/Typeahead.vue';
-import user_Username from '../user/Username.vue';
+import OmegaupCommonTypeahead from '../common/Typeahead.vue';
+import OmegaupUserUsername from '../user/Username.vue';
 
 import {
   FontAwesomeIcon,
@@ -96,26 +96,24 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { types } from '../../api_types';
 library.add(fas);
 
-@Component({
-  components: {
-    'omegaup-common-typeahead': common_Typeahead,
-    'omegaup-user-username': user_Username,
-    'font-awesome-icon': FontAwesomeIcon,
-    'font-awesome-layers': FontAwesomeLayers,
-    'font-awesome-layers-text': FontAwesomeLayersText,
+const props = defineProps<{
+  admins: types.ContestAdmin[];
+  searchResultUsers: types.ListItem[];
+}>();
+
+defineEmits<{
+  (e: 'add-admin', key: string): void;
+  (e: 'remove-admin', username: string): void;
+  (e: 'update-search-result-users', query: string): void;
+}>();
+
+const username = ref<null | types.ListItem>(null);
+const showSiteAdmins = ref(false);
+
+watch(
+  () => props.admins,
+  () => {
+    username.value = null;
   },
-})
-export default class Admins extends Vue {
-  @Prop() admins!: types.ContestAdmin[];
-  @Prop() searchResultUsers!: types.ListItem[];
-
-  T = T;
-  username: null | types.ListItem = null;
-  showSiteAdmins = false;
-
-  @Watch('admins')
-  onAdminsChange(): void {
-    this.username = null;
-  }
-}
+);
 </script>

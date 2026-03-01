@@ -1,4 +1,4 @@
-import Vue from 'vue';
+import { createApp, h } from 'vue';
 import common_GlobalNotifications from '../components/common/GlobalNotifications.vue';
 import { OmegaUp } from '../omegaup';
 import { types } from '../api_types';
@@ -9,16 +9,9 @@ OmegaUp.on('ready', () => {
   if (!mountPoint) {
     return;
   }
-
-  new Vue({
-    el: '#global-notifications',
-    components: {
-      'omegaup-global-notifications': common_GlobalNotifications,
-    },
-    render: function (createElement) {
-      return createElement('omegaup-global-notifications');
-    },
-  });
+  createApp({
+    render: () => h(common_GlobalNotifications),
+  }).mount('#global-notifications');
 
   // Display maintenance message if present
   const payload = types.payloadParsers.CommonPayload('header-payload');

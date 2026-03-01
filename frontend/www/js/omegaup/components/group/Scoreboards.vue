@@ -73,8 +73,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import T from '../../lang';
 import latinize from 'latinize';
 import { types } from '../../api_types';
@@ -84,46 +84,50 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faEdit } from '@fortawesome/free-solid-svg-icons';
 library.add(faEdit);
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-  },
-})
-export default class GroupScoreboards extends Vue {
-  @Prop() scoreboards!: types.GroupScoreboard[];
-  @Prop() groupAlias!: string;
+const props = defineProps<{
+  scoreboards: types.GroupScoreboard[];
+  groupAlias: string;
+}>();
 
-  T = T;
-  title: null | string = null;
-  alias: null | string = null;
-  description: null | string = null;
+const emit = defineEmits<{
+  (
+    e: 'create-scoreboard',
+    component: any,
+    title: string | null,
+    alias: string | null,
+    description: string | null,
+  ): void;
+}>();
 
-  @Watch('title')
-  onTitleChanged(newValue: string, oldValue: string): void {
-    if (newValue === null || newValue === oldValue) {
-      return;
-    }
+const title = ref<string | null>(null);
+const alias = ref<string | null>(null);
+const description = ref<string | null>(null);
 
-    this.alias = latinize(newValue) // Remove accents
-      .replace(/\s+/g, '-') // Replace whitespace
-      .replace(/[^a-zA-Z0-9_-]/g, '') // Remove invalid characters
-      .substring(0, 32);
+watch(title, (newValue, oldValue) => {
+  if (newValue === null || newValue === oldValue) {
+    return;
   }
+  alias.value = latinize(newValue)
+    .replace(/\s+/g, '-')
+    .replace(/[^a-zA-Z0-9_-]/g, '')
+    .substring(0, 32);
+});
 
-  onSubmit(): void {
-    this.$emit(
-      'create-scoreboard',
-      this,
-      this.title,
-      this.alias,
-      this.description,
-    );
-  }
-
-  reset(): void {
-    this.title = null;
-    this.alias = null;
-    this.description = null;
-  }
+function onSubmit(): void {
+  emit(
+    'create-scoreboard',
+    { reset },
+    title.value,
+    alias.value,
+    description.value,
+  );
 }
+
+function reset(): void {
+  title.value = null;
+  alias.value = null;
+  description.value = null;
+}
+
+defineExpose({ reset });
 </script>

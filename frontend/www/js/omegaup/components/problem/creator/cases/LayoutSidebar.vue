@@ -48,11 +48,7 @@
               "
             >
               <div class="d-flex">
-                <BIconPencil
-                  variant="success"
-                  class="pt-1 mr-3"
-                  font-scale="1.2"
-                />
+                <FontAwesomeIcon :icon="['fas', 'pencil']" class="pt-1 mr-3" />
                 {{ T.problemCreatorRenameLayout }}
               </div>
             </b-dropdown-item>
@@ -61,11 +57,7 @@
               @click="enforceLayoutToTheSelectedCase(layout.layoutID)"
             >
               <div class="d-flex">
-                <BIconArrowLeftRight
-                  variant="success"
-                  class="pt-1 mr-3"
-                  font-scale="1.2"
-                />
+                <FontAwesomeIcon :icon="['fas', 'arrows-left-right']" class="pt-1 mr-3" />
                 {{ T.problemCreatorLayoutLoadToSelected }}
               </div>
             </b-dropdown-item>
@@ -74,11 +66,7 @@
               @click="enforceLayoutToAllCases(layout.layoutID)"
             >
               <div class="d-flex">
-                <BIconArrowRepeat
-                  variant="success"
-                  class="pt-1 mr-3"
-                  font-scale="1.2"
-                />
+                <FontAwesomeIcon :icon="['fas', 'arrows-rotate']" class="pt-1 mr-3" />
                 {{ T.problemCreatorLayoutLoadToAll }}
               </div>
             </b-dropdown-item>
@@ -87,11 +75,7 @@
               @click="copyLayout(layout.layoutID)"
             >
               <div class="d-flex">
-                <BIconBoxArrowInDown
-                  variant="success"
-                  class="pt-1 mr-3"
-                  font-scale="1.2"
-                />
+                <FontAwesomeIcon :icon="['fas', 'download']" class="pt-1 mr-3" />
                 {{ T.problemCreatorLayoutCopy }}
               </div>
             </b-dropdown-item>
@@ -100,11 +84,7 @@
               @click="removeLayout(layout.layoutID)"
             >
               <div class="d-flex">
-                <BIconTrash
-                  variant="danger"
-                  class="pt-1 mr-3"
-                  font-scale="1.2"
-                />
+                <FontAwesomeIcon :icon="['fas', 'trash']" class="pt-1 mr-3" />
                 {{ T.problemCreatorLayoutDelete }}
               </div>
             </b-dropdown-item>
@@ -161,10 +141,7 @@
                             :title="T.problemCreatorLineEdit"
                             variant="light"
                           >
-                            <BIconPencilSquare
-                              variant="info"
-                              font-scale="1.20"
-                            />
+                            <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
                           </b-button>
                         </b-col>
                         <b-col cols="2">
@@ -180,10 +157,7 @@
                               ])
                             "
                           >
-                            <BIconTrashFill
-                              variant="danger"
-                              font-scale="1.20"
-                            />
+                            <FontAwesomeIcon :icon="['fas', 'trash-can']" />
                           </b-button>
                         </b-col>
                       </b-row>
@@ -202,11 +176,7 @@
             >
               <div class="container">
                 <div class="row">
-                  <BIconPlusSquare
-                    variant="info"
-                    font-scale="1.25"
-                    class="mr-2 pt-1"
-                  />
+                  <FontAwesomeIcon :icon="['fas', 'square-plus']" class="mr-2 pt-1" />
                   {{ T.problemCreatorLayoutAddLineInfo }}
                 </div>
               </div>
@@ -219,9 +189,14 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch } from 'vue-property-decorator';
-import { namespace } from 'vuex-class';
+import { defineComponent, reactive, computed, watch } from 'vue';
+import { useStore } from 'vuex';
 import T from '../../../../lang';
+import { BButton, BCard, BCardHeader, BCol, BCollapse, BContainer, BDropdown, BDropdownItem, BFormInput, BModal, BRow } from 'bootstrap-vue-next';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faArrowsLeftRight, faArrowsRotate, faDownload, faPenToSquare, faPencil, faSquarePlus, faTrash, faTrashCan } from '@fortawesome/free-solid-svg-icons';
+library.add(faArrowsLeftRight, faArrowsRotate, faDownload, faPenToSquare, faPencil, faSquarePlus, faTrash, faTrashCan);
 import {
   Layout,
   LayoutID,
@@ -231,83 +206,89 @@ import {
   CaseLineInfo,
 } from '@/js/omegaup/problem/creator/types';
 
-const casesStore = namespace('casesStore');
+export default defineComponent({
+  name: 'LayoutSidebar',
+  setup() {
+    const store = useStore();
 
-@Component
-export default class Sidebar extends Vue {
-  T = T;
+    const groups = computed<Group[]>(() => store.state.casesStore.groups);
+    const getAllLayouts = computed<Layout[]>(
+      () => store.getters['casesStore/getAllLayouts'],
+    );
 
-  @casesStore.State('groups') groups!: Group[];
-  @casesStore.Getter('getAllLayouts') getAllLayouts!: Layout[];
-  @casesStore.Mutation('enforceLayoutToTheSelectedCase')
-  enforceLayoutToTheSelectedCase!: (layoutID: LayoutID) => void;
-  @casesStore.Mutation('addNewLineInfoToLayout')
-  addNewLineInfoToLayout!: (layoutID: LayoutID) => void;
-  @casesStore.Mutation('editLineInfoKind') editLineInfoKind!: ([
-    layoutID,
-    lineInfoID,
-    kind,
-  ]: [LayoutID, LineInfoID, CaseLineKind]) => void;
-  @casesStore.Mutation('enforceLayoutToAllCases')
-  enforceLayoutToAllCases!: (layoutID: LayoutID) => void;
-  @casesStore.Mutation('copyLayout')
-  copyLayout!: (layoutID: LayoutID) => void;
-  @casesStore.Mutation('removeLayout')
-  removeLayout!: (layoutID: LayoutID) => void;
-  @casesStore.Mutation('removeLineInfoFromLayout')
-  removeLineInfoFromLayout!: ([layoutID, lineInfoID]: [
-    LayoutID,
-    LineInfoID,
-  ]) => void;
-  @casesStore.Mutation('editLayoutName')
-  editLayoutName!: ([layoutID, newValue]: [LayoutID, string]) => void;
+    const showLayout = reactive<{ [key: LayoutID]: boolean }>({});
+    const showRenameModal = reactive<{ [key: LayoutID]: boolean }>({});
+    const editLayoutModalName = reactive<{ [key: LayoutID]: string }>({});
 
-  showLayout: { [key: LayoutID]: boolean } = {};
-  showRenameModal: { [key: LayoutID]: boolean } = {};
-  editLayoutModalName: { [key: LayoutID]: string } = {};
+    watch(getAllLayouts, (layouts) => {
+      for (const layout of layouts) {
+        showLayout[layout.layoutID] = false;
+        showRenameModal[layout.layoutID] = false;
+        editLayoutModalName[layout.layoutID] = layout.name;
+      }
+    });
 
-  @Watch('getAllLayouts')
-  onGroupsChanged() {
-    this.showLayout = this.getAllLayouts.reduce((acc, layout) => {
-      acc[layout.layoutID] = false;
-      return acc;
-    }, {} as { [key: string]: boolean });
-    this.showRenameModal = this.getAllLayouts.reduce((acc, layout) => {
-      acc[layout.layoutID] = false;
-      return acc;
-    }, {} as { [key: string]: boolean });
-    this.editLayoutModalName = this.getAllLayouts.reduce((acc, layout) => {
-      acc[layout.layoutID] = layout.name;
-      return acc;
-    }, {} as { [key: string]: string });
-  }
+    const enforceLayoutToTheSelectedCase = (layoutID: LayoutID) =>
+      store.commit('casesStore/enforceLayoutToTheSelectedCase', layoutID);
+    const addNewLineInfoToLayout = (layoutID: LayoutID) =>
+      store.commit('casesStore/addNewLineInfoToLayout', layoutID);
+    const editLineInfoKind = (
+      payload: [LayoutID, LineInfoID, CaseLineKind],
+    ) => store.commit('casesStore/editLineInfoKind', payload);
+    const enforceLayoutToAllCases = (layoutID: LayoutID) =>
+      store.commit('casesStore/enforceLayoutToAllCases', layoutID);
+    const copyLayout = (layoutID: LayoutID) =>
+      store.commit('casesStore/copyLayout', layoutID);
+    const removeLayout = (layoutID: LayoutID) =>
+      store.commit('casesStore/removeLayout', layoutID);
+    const removeLineInfoFromLayout = (
+      payload: [LayoutID, LineInfoID],
+    ) => store.commit('casesStore/removeLineInfoFromLayout', payload);
+    const editLayoutName = (payload: [LayoutID, string]) =>
+      store.commit('casesStore/editLayoutName', payload);
 
-  EditIconDisplayOption = Object.freeze({
-    EDIT_ICON: 'edit_icon',
-  });
+    const EditIconDisplayOption = Object.freeze({
+      EDIT_ICON: 'edit_icon',
+    });
 
-  get getEditIconDisplay() {
-    return (lineInfo: CaseLineInfo) => {
+    const getEditIconDisplay = (lineInfo: CaseLineInfo) => {
       if (lineInfo.data.kind === 'array' || lineInfo.data.kind === 'matrix') {
-        return this.EditIconDisplayOption.EDIT_ICON;
+        return EditIconDisplayOption.EDIT_ICON;
       }
     };
-  }
 
-  lineKindOptions: {
-    type: string;
-    kind: CaseLineKind;
-  }[] = [
-    { type: T.problemCreatorLineLine, kind: 'line' },
-    { type: T.problemCreatorLineMultiline, kind: 'multiline' },
-    { type: T.problemCreatorLineArray, kind: 'array' },
-    { type: T.problemCreatorLineMatrix, kind: 'matrix' },
-  ];
+    const lineKindOptions: { type: string; kind: CaseLineKind }[] = [
+      { type: T.problemCreatorLineLine, kind: 'line' },
+      { type: T.problemCreatorLineMultiline, kind: 'multiline' },
+      { type: T.problemCreatorLineArray, kind: 'array' },
+      { type: T.problemCreatorLineMatrix, kind: 'matrix' },
+    ];
 
-  getLineNameFromKind(kind: CaseLineKind) {
-    return this.lineKindOptions.find((line) => line.kind === kind)?.type;
-  }
-}
+    const getLineNameFromKind = (kind: CaseLineKind) =>
+      lineKindOptions.find((line) => line.kind === kind)?.type;
+
+    return {
+      T,
+      groups,
+      getAllLayouts,
+      showLayout,
+      showRenameModal,
+      editLayoutModalName,
+      enforceLayoutToTheSelectedCase,
+      addNewLineInfoToLayout,
+      editLineInfoKind,
+      enforceLayoutToAllCases,
+      copyLayout,
+      removeLayout,
+      removeLineInfoFromLayout,
+      editLayoutName,
+      EditIconDisplayOption,
+      getEditIconDisplay,
+      lineKindOptions,
+      getLineNameFromKind,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>

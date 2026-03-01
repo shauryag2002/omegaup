@@ -7,95 +7,95 @@
             <th scope="col" class="align-middle text-nowrap">
               <span
                 >{{ T.wordsID }}
-                <omegaup-common-sort-controls
+                <OmegaupCommonSortControls
                   column="problem_id"
                   :sort-order="sortOrder"
                   :column-name="columnName"
                   @apply-filter="
                     (columnName, sortOrder) =>
-                      $emit('apply-filter', columnName, sortOrder)
+                      emit('apply-filter', columnName, sortOrder)
                   "
-                ></omegaup-common-sort-controls
-              ></span>
+              /></span>
             </th>
             <th scope="col" class="align-middle text-nowrap">
               <span>{{ T.wordsTitle }}</span>
               <span
+                v-if="showProblemTags"
                 class="badge custom-badge custom-badge-quality mr-1 ml-1 p-2"
                 >{{ T.tagSourceLevel }}</span
               >
-              <span class="badge custom-badge custom-badge-owner mr-1 p-2">{{
-                T.tagSourceOwner
-              }}</span>
-              <span class="badge custom-badge custom-badge-voted p-2">{{
-                T.tagSourceVoted
-              }}</span>
-              <omegaup-common-sort-controls
+              <span
+                v-if="showProblemTags"
+                class="badge custom-badge custom-badge-owner mr-1 p-2"
+                >{{ T.tagSourceOwner }}</span
+              >
+              <span
+                v-if="showProblemTags"
+                class="badge custom-badge custom-badge-voted p-2"
+                >{{ T.tagSourceVoted }}</span
+              >
+              <OmegaupCommonSortControls
                 column="title"
                 :column-type="omegaup.ColumnType.String"
                 :sort-order="sortOrder"
                 :column-name="columnName"
                 @apply-filter="
                   (columnName, sortOrder) =>
-                    $emit('apply-filter', columnName, sortOrder)
+                    emit('apply-filter', columnName, sortOrder)
                 "
-              ></omegaup-common-sort-controls>
+              />
             </th>
             <th scope="col" class="align-middle text-nowrap">
               <span
                 >{{ T.wordsQuality }}
-                <omegaup-common-sort-controls
+                <OmegaupCommonSortControls
                   column="quality"
                   :sort-order="sortOrder"
                   :column-name="columnName"
                   @apply-filter="
                     (columnName, sortOrder) =>
-                      $emit('apply-filter', columnName, sortOrder)
+                      emit('apply-filter', columnName, sortOrder)
                   "
-                ></omegaup-common-sort-controls
-              ></span>
+              /></span>
             </th>
             <th scope="col" class="align-middle text-nowrap">
               <span
                 >{{ T.wordsDifficulty }}
-                <omegaup-common-sort-controls
+                <OmegaupCommonSortControls
                   column="difficulty"
                   :sort-order="sortOrder"
                   :column-name="columnName"
                   @apply-filter="
                     (columnName, sortOrder) =>
-                      $emit('apply-filter', columnName, sortOrder)
+                      emit('apply-filter', columnName, sortOrder)
                   "
-                ></omegaup-common-sort-controls
-              ></span>
+              /></span>
             </th>
             <th scope="col" class="align-middle text-nowrap">
               <span
                 >{{ T.wordsRatio }}
-                <omegaup-common-sort-controls
+                <OmegaupCommonSortControls
                   column="ratio"
                   :sort-order="sortOrder"
                   :column-name="columnName"
                   @apply-filter="
                     (columnName, sortOrder) =>
-                      $emit('apply-filter', columnName, sortOrder)
+                      emit('apply-filter', columnName, sortOrder)
                   "
-                ></omegaup-common-sort-controls
-              ></span>
+              /></span>
             </th>
             <th v-if="loggedIn" scope="col" class="align-middle text-nowrap">
               <span
                 >{{ T.wordsMyScore }}
-                <omegaup-common-sort-controls
+                <OmegaupCommonSortControls
                   column="score"
                   :sort-order="sortOrder"
                   :column-name="columnName"
                   @apply-filter="
                     (columnName, sortOrder) =>
-                      $emit('apply-filter', columnName, sortOrder)
+                      emit('apply-filter', columnName, sortOrder)
                   "
-                ></omegaup-common-sort-controls
-              ></span>
+              /></span>
             </th>
             <th scope="col" class="align-middle text-nowrap">
               <span>
@@ -107,15 +107,15 @@
                   :data-original-title="T.wordsPointsForRankTooltip"
                   ><img src="/media/question.png" :alt="T.wordsPointsForRank"
                 /></a>
-                <omegaup-common-sort-controls
+                <OmegaupCommonSortControls
                   column="points"
                   :sort-order="sortOrder"
                   :column-name="columnName"
                   @apply-filter="
                     (columnName, sortOrder) =>
-                      $emit('apply-filter', columnName, sortOrder)
+                      emit('apply-filter', columnName, sortOrder)
                   "
-                ></omegaup-common-sort-controls>
+                />
               </span>
             </th>
           </tr>
@@ -130,23 +130,23 @@
                 data-problem-title-list
                 >{{ problem.title }}</a
               >
-              <font-awesome-icon
+              <FontAwesomeIcon
                 v-if="problem.qualitySeal || problem.visibility === 3"
                 :title="T.wordsHighQualityProblem"
                 :icon="['fas', 'medal']"
                 color="gold"
               />
-              <font-awesome-icon
+              <FontAwesomeIcon
                 v-else-if="problem.visibility === -1"
                 :title="T.wordsWarningProblem"
                 :icon="['fas', 'exclamation-triangle']"
               />
-              <font-awesome-icon
+              <FontAwesomeIcon
                 v-else-if="problem.visibility <= -3"
                 :title="T.wordsBannedProblem"
                 :icon="['fas', 'ban']"
               />
-              <font-awesome-icon
+              <FontAwesomeIcon
                 v-else-if="problem.visibility === 0"
                 :title="T.wordsPrivate"
                 :icon="['fas', 'eye-slash']"
@@ -161,7 +161,7 @@
                     ? 'custom-badge-quality'
                     : ''
                 } m-1 p-2`"
-                :href="hrefForProblemTag(selectedTags, tag.name)"
+                :href="hrefForProblemTag(props.selectedTags, tag.name)"
                 >{{
                   Object.prototype.hasOwnProperty.call(T, tag.name)
                     ? T[tag.name]
@@ -215,25 +215,23 @@
       </table>
     </div>
     <div class="card-footer">
-      <omegaup-common-paginator
-        :pager-items="pagerItems"
-      ></omegaup-common-paginator>
+      <OmegaupCommonPaginator :pager-items="pagerItems" />
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import { omegaup } from '../../omegaup';
 import T from '../../lang';
 import { types } from '../../api_types';
 import * as ui from '../../ui';
 
-import common_Paginator from '../common/Paginator.vue';
-import common_SortControls from '../common/SortControls.vue';
+import OmegaupCommonPaginator from '../common/Paginator.vue';
+import OmegaupCommonSortControls from '../common/SortControls.vue';
 
-import 'v-tooltip/dist/v-tooltip.css';
-import { VTooltip } from 'v-tooltip';
+import 'floating-vue/dist/style.css';
+import { vTooltip as VTooltip } from 'floating-vue';
 import { getBlogUrl } from '../../urlHelper';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
@@ -246,64 +244,62 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 library.add(faEyeSlash, faMedal, faExclamationTriangle, faBan);
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-    'omegaup-common-paginator': common_Paginator,
-    'omegaup-common-sort-controls': common_SortControls,
+const vTooltip = VTooltip;
+
+const props = withDefaults(
+  defineProps<{
+    problems: omegaup.Problem[];
+    loggedIn: boolean;
+    selectedTags: string[];
+    pagerItems: types.PageItem[];
+    wizardTags: omegaup.Tag[];
+    language: string;
+    languages: string[];
+    keyword: string;
+    modes: string[];
+    columns: string[];
+    mode: string;
+    column: string;
+    tags: string[];
+    sortOrder: string;
+    columnName: string;
+    path: string;
+    showProblemTags?: boolean;
+  }>(),
+  {
+    showProblemTags: true,
   },
-  directives: {
-    tooltip: VTooltip,
-  },
-})
-export default class BaseList extends Vue {
-  @Prop() problems!: omegaup.Problem[];
-  @Prop() loggedIn!: boolean;
-  @Prop() selectedTags!: string[];
-  @Prop() pagerItems!: types.PageItem[];
-  @Prop() wizardTags!: omegaup.Tag[];
-  @Prop() language!: string;
-  @Prop() languages!: string[];
-  @Prop() keyword!: string;
-  @Prop() modes!: string[];
-  @Prop() columns!: string[];
-  @Prop() mode!: string;
-  @Prop() column!: string;
-  @Prop() tags!: string[];
-  @Prop() sortOrder!: string;
-  @Prop() columnName!: string;
-  @Prop() path!: string;
+);
 
-  T = T;
-  ui = ui;
-  omegaup = omegaup;
-  showFinderWizard = false;
-  QUALITY_TAGS = [
-    T.qualityFormQualityVeryBad,
-    T.qualityFormQualityBad,
-    T.qualityFormQualityFair,
-    T.qualityFormQualityGood,
-    T.qualityFormQualityVeryGood,
-  ];
-  DIFFICULTY_TAGS = [
-    T.qualityFormDifficultyVeryEasy,
-    T.qualityFormDifficultyEasy,
-    T.qualityFormDifficultyMedium,
-    T.qualityFormDifficultyHard,
-    T.qualityFormDifficultyVeryHard,
-  ];
+defineEmits<{
+  (e: 'apply-filter', columnName: string, sortOrder: string): void;
+}>();
 
-  hrefForProblemTag(selectedTags: string[], problemTag: string): string {
-    if (!selectedTags) return `${this.path}?tag[]=${problemTag}`;
-    let tags = selectedTags.slice();
-    if (!tags.includes(problemTag)) tags.push(problemTag);
-    return `${this.path}?tag[]=${tags.join('&tag[]=')}`;
-  }
+const QUALITY_TAGS = [
+  T.qualityFormQualityVeryBad,
+  T.qualityFormQualityBad,
+  T.qualityFormQualityFair,
+  T.qualityFormQualityGood,
+  T.qualityFormQualityVeryGood,
+];
+const DIFFICULTY_TAGS = [
+  T.qualityFormDifficultyVeryEasy,
+  T.qualityFormDifficultyEasy,
+  T.qualityFormDifficultyMedium,
+  T.qualityFormDifficultyHard,
+  T.qualityFormDifficultyVeryHard,
+];
 
-  get UserRankingFeatureGuideURL(): string {
-    return getBlogUrl('UserRankingFeatureGuideURL');
-  }
+function hrefForProblemTag(selectedTags: string[], problemTag: string): string {
+  if (!selectedTags) return `${props.path}?tag[]=${problemTag}`;
+  let tags = selectedTags.slice();
+  if (!tags.includes(problemTag)) tags.push(problemTag);
+  return `${props.path}?tag[]=${tags.join('&tag[]=')}`;
 }
+
+const UserRankingFeatureGuideURL = computed((): string => {
+  return getBlogUrl('UserRankingFeatureGuideURL');
+});
 </script>
 
 <style lang="scss" scoped>

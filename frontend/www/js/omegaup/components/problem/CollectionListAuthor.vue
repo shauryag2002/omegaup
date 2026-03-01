@@ -13,12 +13,12 @@
     <div class="row">
       <div class="col-12 col-lg-4 mb-3 mb-lg-0">
         <div class="row">
-          <omegaup-problem-filter-authors
+          <OmegaupProblemFilterAuthors
             :authors="authors"
             :selected-authors="selectedAuthors"
             @new-selected-author="
               (selectedAuthors) =>
-                $emit(
+                emit(
                   'apply-filter',
                   columnName,
                   sortOrder,
@@ -27,12 +27,12 @@
                   selectedAuthors,
                 )
             "
-          ></omegaup-problem-filter-authors>
-          <omegaup-problem-filter-difficulty
+          />
+          <OmegaupProblemFilterDifficulty
             :selected-difficulty="difficulty"
             @change-difficulty="
               (difficulty) =>
-                $emit(
+                emit(
                   'apply-filter',
                   columnName,
                   sortOrder,
@@ -41,12 +41,12 @@
                   selectedAuthors,
                 )
             "
-          ></omegaup-problem-filter-difficulty>
-          <omegaup-problem-filter-quality
+          />
+          <OmegaupProblemFilterQuality
             :quality="quality"
             @change-quality="
               (quality) =>
-                $emit(
+                emit(
                   'apply-filter',
                   columnName,
                   sortOrder,
@@ -55,7 +55,7 @@
                   selectedAuthors,
                 )
             "
-          ></omegaup-problem-filter-quality>
+          />
         </div>
       </div>
       <div class="col">
@@ -64,7 +64,7 @@
             {{ T.courseAssignmentProblemsEmpty }}
           </div>
         </div>
-        <omegaup-problem-base-list
+        <OmegaupProblemBaseList
           v-else
           :problems="problems"
           :logged-in="loggedIn"
@@ -84,7 +84,7 @@
           :path="'/problem/collection/author/'"
           @apply-filter="
             (columnName, sortOrder) =>
-              $emit(
+              emit(
                 'apply-filter',
                 columnName,
                 sortOrder,
@@ -93,55 +93,61 @@
                 selectedAuthors,
               )
           "
-        >
-        </omegaup-problem-base-list>
+        />
       </div>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
 import { omegaup } from '../../omegaup';
-import problem_FilterAuthors from './FilterAuthors.vue';
-import problem_BaseList from './BaseList.vue';
-import problem_FilterDifficulty from './FilterDifficulty.vue';
-import problem_FilterQuality from './FilterQuality.vue';
+import OmegaupProblemFilterAuthors from './FilterAuthors.vue';
+import OmegaupProblemBaseList from './BaseList.vue';
+import OmegaupProblemFilterDifficulty from './FilterDifficulty.vue';
+import OmegaupProblemFilterQuality from './FilterQuality.vue';
 import T from '../../lang';
 import { types } from '../../api_types';
 
-@Component({
-  components: {
-    'omegaup-problem-filter-authors': problem_FilterAuthors,
-    'omegaup-problem-base-list': problem_BaseList,
-    'omegaup-problem-filter-difficulty': problem_FilterDifficulty,
-    'omegaup-problem-filter-quality': problem_FilterQuality,
+const props = withDefaults(
+  defineProps<{
+    data: types.CollectionDetailsByAuthorPayload;
+    problems: omegaup.Problem;
+    loggedIn: boolean;
+    selectedTags: string[];
+    pagerItems: types.PageItem[];
+    wizardTags: omegaup.Tag[];
+    language: string;
+    languages: string[];
+    keyword: string;
+    modes: string[];
+    columns: string[];
+    mode: string;
+    column: string;
+    tagsList?: string[];
+    sortOrder: string;
+    columnName: string;
+    difficulty: string;
+    quality: string;
+    selectedAuthors?: string;
+  }>(),
+  {
+    tagsList: () => [],
+    selectedAuthors: () => [],
   },
-})
-export default class CollectionList extends Vue {
-  @Prop() data!: types.CollectionDetailsByAuthorPayload;
-  @Prop() problems!: omegaup.Problem;
-  @Prop() loggedIn!: boolean;
-  @Prop() selectedTags!: string[];
-  @Prop() pagerItems!: types.PageItem[];
-  @Prop() wizardTags!: omegaup.Tag[];
-  @Prop() language!: string;
-  @Prop() languages!: string[];
-  @Prop() keyword!: string;
-  @Prop() modes!: string[];
-  @Prop() columns!: string[];
-  @Prop() mode!: string;
-  @Prop() column!: string;
-  @Prop({ default: () => [] }) tagsList!: string[];
-  @Prop() sortOrder!: string;
-  @Prop() columnName!: string;
-  @Prop() difficulty!: string;
-  @Prop() quality!: string;
-  @Prop({ default: () => [] }) selectedAuthors!: string;
+);
 
-  T = T;
-  authors = this.data.authorsRanking;
-}
+const emit = defineEmits<{
+  (
+    e: 'apply-filter',
+    columnName: string,
+    sortOrder: string,
+    difficulty: string,
+    quality: string,
+    selectedAuthors: string,
+  ): void;
+}>();
+
+const authors = props.data.authorsRanking;
 </script>
 
 <style scoped>

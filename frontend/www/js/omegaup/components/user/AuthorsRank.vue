@@ -11,15 +11,15 @@
       }}
     </h5>
     <div class="card-body form-row">
-      <omegaup-common-typeahead
+      <OmegaupCommonTypeahead
         class="col col-md-4 pl-0 pr-2"
         :existing-options="searchResultUsers"
-        :value.sync="searchedUsername"
+        v-model:value="searchedUsername"
         :max-results="10"
         @update-existing-options="
-          (query) => $emit('update-search-result-users', query)
+          (query) => emit('update-search-result-users', query)
         "
-      ></omegaup-common-typeahead>
+      ></OmegaupCommonTypeahead>
       <button
         class="btn btn-primary form-control col-4 col-md-2"
         type="button"
@@ -43,14 +43,14 @@
             {{ author.author_ranking || index }}
           </th>
           <td class="text-center">
-            <omegaup-countryflag
+            <OmegaupCountryflag
               :country="author.country_id"
-            ></omegaup-countryflag>
-            <omegaup-user-username
+            ></OmegaupCountryflag>
+            <OmegaupUserUsername
               :classname="author.classname"
               :linkify="true"
               :username="author.username"
-            ></omegaup-user-username>
+            ></OmegaupUserUsername>
             <span v-if="author.name">
               <br />
               {{ author.name }}
@@ -63,48 +63,42 @@
       </tbody>
     </table>
     <div class="card-footer">
-      <omegaup-common-paginator
+      <OmegaupCommonPaginator
         :pager-items="pagerItems"
-      ></omegaup-common-paginator>
+      ></OmegaupCommonPaginator>
     </div>
   </div>
 </template>
 
-<script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
-import CountryFlag from '../CountryFlag.vue';
-import common_Paginator from '../common/Paginator.vue';
-import common_Typeahead from '../common/Typeahead.vue';
-import user_Username from '../user/Username.vue';
+import OmegaupCountryflag from '../CountryFlag.vue';
+import OmegaupCommonPaginator from '../common/Paginator.vue';
+import OmegaupCommonTypeahead from '../common/Typeahead.vue';
+import OmegaupUserUsername from '../user/Username.vue';
 
-@Component({
-  components: {
-    'omegaup-user-username': user_Username,
-    'omegaup-countryflag': CountryFlag,
-    'omegaup-common-paginator': common_Paginator,
-    'omegaup-common-typeahead': common_Typeahead,
-  },
-})
-export default class AuthorsRank extends Vue {
-  @Prop() page!: number;
-  @Prop() length!: number;
-  @Prop() rankingData!: types.AuthorsRank;
-  @Prop() pagerItems!: types.PageItem[];
-  @Prop() searchResultUsers!: types.ListItem[];
+defineProps<{
+  page: number;
+  length: number;
+  rankingData: types.AuthorsRank;
+  pagerItems: types.PageItem[];
+  searchResultUsers: types.ListItem[];
+}>();
 
-  T = T;
-  ui = ui;
-  searchedUsername: null | types.ListItem = null;
+const emit = defineEmits<{
+  (e: 'update-search-result-users', query: string): void;
+}>();
 
-  onSubmit(): void {
-    if (!this.searchedUsername) return;
-    window.location.href = `/profile/${encodeURIComponent(
-      this.searchedUsername.key,
-    )}`;
-  }
+const searchedUsername = ref<null | types.ListItem>(null);
+
+function onSubmit(): void {
+  if (!searchedUsername.value) return;
+  window.location.href = `/profile/${encodeURIComponent(
+    searchedUsername.value.key,
+  )}`;
 }
 </script>
 

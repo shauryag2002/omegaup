@@ -138,7 +138,7 @@
     <div v-if="showFooter" class="card-footer">
       <form
         @submit.prevent="
-          $emit('emit-select-version', selectedRevision, updatePublished)
+          emit('emit-select-version', selectedRevision, updatePublished)
         "
       >
         <button class="btn btn-primary" type="submit">
@@ -160,112 +160,137 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed, watch, getCurrentInstance } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as time from '../../time';
 
-@Component
-export default class ProblemVersions extends Vue {
-  @Prop() log!: types.ProblemVersion[];
-  @Prop({ default: null }) publishedRevision!: null | types.ProblemVersion;
-  @Prop() showFooter!: boolean;
-  @Prop({ default: null }) value!: null | types.ProblemVersion;
+const props = withDefaults(
+  defineProps<{
+    log: types.ProblemVersion[];
+    publishedRevision?: types.ProblemVersion | null;
+    showFooter: boolean;
+    value?: types.ProblemVersion | null;
+  }>(),
+  {
+    publishedRevision: null,
+    value: null,
+  },
+);
 
-  T = T;
-  time = time;
-  diffMode = 'files';
-  selectedRevision: null | types.ProblemVersion = this.value;
-  runsDiff: types.CommitRunsDiff = {};
-  showOnlyChanges = false;
-  updatePublished = 'owned-problemsets';
+const emit = defineEmits<{
+  (e: 'input', value: types.ProblemVersion | null): void;
+  (e: 'runs-diff', instance: any, revision: types.ProblemVersion | null): void;
+  (
+    e: 'emit-runs-diff',
+    instance: any,
+    revision: types.ProblemVersion | null,
+  ): void;
+  (
+    e: 'emit-select-version',
+    revision: types.ProblemVersion | null,
+    updatePublished: string,
+  ): void;
+}>();
 
-  get diffFiles(): string[][] {
-    if (!this.selectedRevision || !this.publishedRevision) {
-      return [];
-    }
-    const tree = this.selectedRevision.tree;
-    const parentTree = this.publishedRevision.tree;
-    if (!tree || !parentTree) {
-      return [];
-    }
+const instance = getCurrentInstance();
 
-    const diff = [];
-    for (const path of Object.keys(tree)) {
-      if (!Object.prototype.hasOwnProperty.call(parentTree, path)) {
-        diff.push([path, 'list-group-item-success']);
-        continue;
-      }
-      if (parentTree[path] != tree[path]) {
-        diff.push([path, 'list-group-item-warning']);
-        continue;
-      }
-      if (!this.showOnlyChanges) {
-        diff.push([path, '']);
-      }
-    }
-    for (const path of Object.keys(parentTree)) {
-      if (Object.prototype.hasOwnProperty.call(tree, path)) {
-        continue;
-      }
-      diff.push([path, 'list-group-item-danger']);
-    }
-    diff.sort();
+const diffMode = ref('files');
+const selectedRevision = ref<types.ProblemVersion | null>(props.value);
+const runsDiff = ref<types.CommitRunsDiff>({});
+const showOnlyChanges = ref(false);
+const updatePublished = ref('owned-problemsets');
 
-    return diff;
+const diffFiles = computed((): string[][] => {
+  if (!selectedRevision.value || !props.publishedRevision) {
+    return [];
+  }
+  const tree = selectedRevision.value.tree;
+  const parentTree = props.publishedRevision.tree;
+  if (!tree || !parentTree) {
+    return [];
   }
 
-  get diffSubmissions(): [types.RunsDiff, string][] {
-    if (!this.selectedRevision) {
-      return [];
+  const diff = [];
+  for (const path of Object.keys(tree)) {
+    if (!Object.prototype.hasOwnProperty.call(parentTree, path)) {
+      diff.push([path, 'list-group-item-success']);
+      continue;
     }
-    const version = this.selectedRevision.version;
-    if (!Object.prototype.hasOwnProperty.call(this.runsDiff, version)) {
-      return [];
+    if (parentTree[path] != tree[path]) {
+      diff.push([path, 'list-group-item-warning']);
+      continue;
     }
-    const result: [types.RunsDiff, string][] = [];
-    for (const row of this.runsDiff[version]) {
-      let className = '';
-      if (row.new_score && row.old_score && row.new_score > row.old_score) {
-        className = 'success';
-      } else if (
-        row.new_score &&
-        row.old_score &&
-        row.new_score < row.old_score
-      ) {
-        className = 'danger';
-      } else if (row.old_verdict != row.new_verdict) {
-        className = 'warning';
-      } else if (this.showOnlyChanges) {
-        continue;
-      }
-      result.push([row, className]);
+    if (!showOnlyChanges.value) {
+      diff.push([path, '']);
     }
-    return result;
   }
-
-  @Watch('value')
-  onValueChange(newValue: types.ProblemVersion) {
-    this.selectedRevision = newValue;
+  for (const path of Object.keys(parentTree)) {
+    if (Object.prototype.hasOwnProperty.call(tree, path)) {
+      continue;
+    }
+    diff.push([path, 'list-group-item-danger']);
   }
+  diff.sort();
 
-  @Watch('selectedRevision')
-  onSelectedRevisionChange(newValue: types.ProblemVersion) {
-    this.$emit('input', this.selectedRevision);
-    if (
-      !newValue ||
-      Object.prototype.hasOwnProperty.call(this.runsDiff, newValue.version)
+  return diff;
+});
+
+const diffSubmissions = computed((): [types.RunsDiff, string][] => {
+  if (!selectedRevision.value) {
+    return [];
+  }
+  const version = selectedRevision.value.version;
+  if (!Object.prototype.hasOwnProperty.call(runsDiff.value, version)) {
+    return [];
+  }
+  const result: [types.RunsDiff, string][] = [];
+  for (const row of runsDiff.value[version]) {
+    let className = '';
+    if (row.new_score && row.old_score && row.new_score > row.old_score) {
+      className = 'success';
+    } else if (
+      row.new_score &&
+      row.old_score &&
+      row.new_score < row.old_score
     ) {
-      return;
+      className = 'danger';
+    } else if (row.old_verdict != row.new_verdict) {
+      className = 'warning';
+    } else if (showOnlyChanges.value) {
+      continue;
     }
-    if (!this.showFooter) {
-      this.$emit('runs-diff', this, this.selectedRevision);
-    } else {
-      this.$emit('emit-runs-diff', this, this.selectedRevision);
-    }
+    result.push([row, className]);
   }
-}
+  return result;
+});
+
+watch(
+  () => props.value,
+  (newValue) => {
+    selectedRevision.value = newValue ?? null;
+  },
+);
+
+watch(selectedRevision, (newValue) => {
+  emit('input', selectedRevision.value);
+  if (
+    !newValue ||
+    Object.prototype.hasOwnProperty.call(runsDiff.value, newValue.version)
+  ) {
+    return;
+  }
+  if (!props.showFooter) {
+    emit('runs-diff', instance?.proxy, selectedRevision.value);
+  } else {
+    emit('emit-runs-diff', instance?.proxy, selectedRevision.value);
+  }
+});
+
+defineExpose({
+  runsDiff,
+});
 </script>
 
 <style lang="scss" scoped>

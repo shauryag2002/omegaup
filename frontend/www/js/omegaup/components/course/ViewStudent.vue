@@ -43,9 +43,9 @@
         </div>
       </form>
       <div v-if="selectedAssignment">
-        <omegaup-markdown
+        <OmegaupMarkdown
           :markdown="getAssignmentDescription(selectedAssignment)"
-        ></omegaup-markdown>
+        ></OmegaupMarkdown>
         <hr />
         <div class="card">
           <div class="card-header">
@@ -122,11 +122,11 @@
                       date: time.formatDate(selectedRun.feedback.date),
                     })
                   }}
-                  <omegaup-user-username
+                  <OmegaupUserUsername
                     :username="selectedRun.feedback.author"
                     :classname="selectedRun.feedback.author_classname"
                     :linkify="true"
-                  ></omegaup-user-username>
+                  ></OmegaupUserUsername>
                 </div>
                 <div class="mt-3">
                   <a
@@ -183,161 +183,181 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed, watch, onMounted } from 'vue';
 import { omegaup } from '../../omegaup';
 import { types } from '../../api_types';
 
-import omegaup_problemMarkdown from '../problem/ProblemMarkdown.vue';
-import user_Username from '../user/Username.vue';
+import OmegaupMarkdown from '../problem/ProblemMarkdown.vue';
+import OmegaupUserUsername from '../user/Username.vue';
 
 import T from '../../lang';
 import * as ui from '../../ui';
 import * as time from '../../time';
 
-@Component({
-  components: {
-    'omegaup-markdown': omegaup_problemMarkdown,
-    'omegaup-user-username': user_Username,
+const props = withDefaults(
+  defineProps<{
+    assignments: omegaup.Assignment[];
+    course: types.CourseDetails;
+    student: types.StudentProgress;
+    assignment: types.CourseAssignment;
+    problem: null | types.CourseProblem;
+    problems: types.CourseProblem[];
+    students: types.StudentProgress[];
+    feedback: string | null;
+  }>(),
+  {
+    problem: null,
+    feedback: null,
   },
-})
-export default class CourseViewStudent extends Vue {
-  @Prop() assignments!: omegaup.Assignment[];
-  @Prop() course!: types.CourseDetails;
-  @Prop() student!: types.StudentProgress;
-  @Prop() assignment!: types.CourseAssignment;
-  @Prop({ default: null }) problem!: null | types.CourseProblem;
-  @Prop() problems!: types.CourseProblem[];
-  @Prop() students!: types.StudentProgress[];
-  @Prop({ default: null }) feedback!: string;
+);
 
-  T = T;
-  time = time;
-  ui = ui;
-  selectedAssignment: string | null = this.assignment?.alias ?? null;
-  selectedProblem: Partial<types.CourseProblem> | null = this.problem;
-  selectedStudent: string | null = this.student?.username ?? null;
-  selectedRun: Partial<types.CourseRun> | null = null;
-  showFeedbackForm = false;
-  updatedFeedback: null | string = this.feedback;
+const emit = defineEmits<{
+  (
+    e: 'set-feedback',
+    value: {
+      guid: string | undefined;
+      feedback: string | null;
+      isUpdate: boolean;
+      assignmentAlias: string | null;
+      studentUsername: string | null;
+    },
+  ): void;
+  (
+    e: 'update',
+    value: {
+      student: string | null;
+      assignmentAlias: string | null;
+    },
+  ): void;
+  (
+    e: 'push-state',
+    state: Record<string, unknown>,
+    title: string,
+    url: string,
+  ): void;
+}>();
 
-  get problemsWithPoints(): types.CourseProblem[] {
-    return this.problems.filter(
-      (problem: types.CourseProblem) => problem.points !== 0,
-    );
-  }
+const selectedAssignment = ref<string | null>(props.assignment?.alias ?? null);
+const selectedProblem = ref<Partial<types.CourseProblem> | null>(props.problem);
+const selectedStudent = ref<string | null>(props.student?.username ?? null);
+const selectedRun = ref<Partial<types.CourseRun> | null>(null);
+const showFeedbackForm = ref(false);
+const updatedFeedback = ref<string | null>(props.feedback);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  points(assignmentAlias: string): number {
-    return this.problems.reduce(
-      (accumulator: number, problem: types.CourseProblem) =>
-        accumulator + problem.points,
-      0,
-    );
-  }
+const problemsWithPoints = computed((): types.CourseProblem[] => {
+  return props.problems.filter(
+    (problem: types.CourseProblem) => problem.points !== 0,
+  );
+});
 
-  getAssignmentDescription(assignmentAlias: string): string {
-    const assignment = this.assignments.find(
-      (assignment) => assignment.alias === assignmentAlias,
-    );
-    return assignment?.description ?? '';
-  }
+const selectedRunSource = computed((): string => {
+  return selectedRun.value?.source ?? '';
+});
 
-  mounted(): void {
-    window.addEventListener('popstate', (ev: PopStateEvent) => {
-      if (this.selectedStudent !== null) {
-        return;
-      }
-      this.selectedStudent = ev.state?.student ?? this.student.username;
-    });
-  }
+const courseUrl = computed((): string => {
+  return `/course/${props.course.alias}/`;
+});
 
-  bestRun(problem: omegaup.CourseProblem): omegaup.CourseProblemRun | null {
-    let best = null;
-    for (let run of problem.runs) {
-      if (
-        !best ||
-        best.score < run.score ||
-        (best.score == run.score && best.penalty > run.penalty)
-      ) {
-        best = run;
-      }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function points(assignmentAlias: string): number {
+  return props.problems.reduce(
+    (accumulator: number, problem: types.CourseProblem) =>
+      accumulator + problem.points,
+    0,
+  );
+}
+
+function getAssignmentDescription(assignmentAlias: string): string {
+  const assignment = props.assignments.find(
+    (assignment) => assignment.alias === assignmentAlias,
+  );
+  return assignment?.description ?? '';
+}
+
+function bestRun(
+  problem: omegaup.CourseProblem,
+): omegaup.CourseProblemRun | null {
+  let best = null;
+  for (let run of problem.runs) {
+    if (
+      !best ||
+      best.score < run.score ||
+      (best.score == run.score && best.penalty > run.penalty)
+    ) {
+      best = run;
     }
-    return best;
   }
+  return best;
+}
 
-  get selectedRunSource(): string {
-    return this.selectedRun?.source ?? '';
+function bestScore(problem: omegaup.CourseProblem): number {
+  const best = bestRun(problem);
+  return (best && best.score) || 0.0;
+}
+
+function sendFeedback(): void {
+  if (updatedFeedback.value != null && updatedFeedback.value.length < 2) {
+    return;
   }
+  emit('set-feedback', {
+    guid: selectedRun.value?.guid,
+    feedback: updatedFeedback.value,
+    isUpdate: selectedRun.value?.feedback != null,
+    assignmentAlias: selectedAssignment.value,
+    studentUsername: selectedStudent.value,
+  });
+  updatedFeedback.value = '';
+  showFeedbackForm.value = false;
+}
 
-  bestScore(problem: omegaup.CourseProblem): number {
-    const best = this.bestRun(problem);
-    return (best && best.score) || 0.0;
-  }
-
-  get courseUrl(): string {
-    return `/course/${this.course.alias}/`;
-  }
-
-  sendFeedback(): void {
-    if (this.updatedFeedback != null && this.updatedFeedback.length < 2) {
+onMounted(() => {
+  window.addEventListener('popstate', (ev: PopStateEvent) => {
+    if (selectedStudent.value !== null) {
       return;
     }
-    this.$emit('set-feedback', {
-      guid: this.selectedRun?.guid,
-      feedback: this.updatedFeedback,
-      isUpdate: this.selectedRun?.feedback != null,
-      assignmentAlias: this.selectedAssignment,
-      studentUsername: this.selectedStudent,
-    });
-    this.updatedFeedback = '';
-    this.showFeedbackForm = false;
-  }
+    selectedStudent.value = ev.state?.student ?? props.student.username;
+  });
+});
 
-  @Watch('selectedStudent')
-  onSelectedStudentChange(newVal?: string, oldVal?: string) {
-    this.$emit('update', {
-      student: this.selectedStudent,
-      assignmentAlias: this.selectedAssignment,
-    });
-    if (!newVal || newVal === oldVal) {
-      return;
-    }
-    let url: string = '';
-    if (this.selectedAssignment !== null) {
-      url = `/course/${this.course.alias}/student/${newVal}/assignment/${this.selectedAssignment}/#${this.selectedProblem?.alias}`;
-    } else {
-      url = `/course/${this.course.alias}/student/${newVal}/`;
-    }
-    this.$emit('push-state', { student: newVal }, document.title, url);
+watch(selectedStudent, (newVal?: string, oldVal?: string) => {
+  emit('update', {
+    student: selectedStudent.value,
+    assignmentAlias: selectedAssignment.value,
+  });
+  if (!newVal || newVal === oldVal) {
+    return;
   }
-
-  @Watch('selectedAssignment')
-  onSelectedAssignmentChange(newVal?: string, oldVal?: string) {
-    this.$emit('update', {
-      student: this.selectedStudent,
-      assignmentAlias: this.selectedAssignment,
-    });
-    if (!newVal || newVal === oldVal) {
-      return;
-    }
-    let url: string = '';
-    if (this.selectedProblem !== null) {
-      url = `/course/${this.course.alias}/student/${this.selectedStudent}/assignment/${newVal}/#${this.selectedProblem?.alias}`;
-    } else {
-      url = `/course/${this.course.alias}/student/${this.selectedStudent}/assignment/${newVal}/`;
-    }
-    this.$emit(
-      'push-state',
-      { student: this.selectedStudent },
-      document.title,
-      url,
-    );
+  let url: string = '';
+  if (selectedAssignment.value !== null) {
+    url = `/course/${props.course.alias}/student/${newVal}/assignment/${selectedAssignment.value}/#${selectedProblem.value?.alias}`;
+  } else {
+    url = `/course/${props.course.alias}/student/${newVal}/`;
   }
+  emit('push-state', { student: newVal }, document.title, url);
+});
 
-  @Watch('problems')
-  onProblemsChange(newVal: types.CourseProblem[]) {
-    this.selectedProblem = null;
+watch(selectedAssignment, (newVal?: string, oldVal?: string) => {
+  emit('update', {
+    student: selectedStudent.value,
+    assignmentAlias: selectedAssignment.value,
+  });
+  if (!newVal || newVal === oldVal) {
+    return;
+  }
+  let url: string = '';
+  if (selectedProblem.value !== null) {
+    url = `/course/${props.course.alias}/student/${selectedStudent.value}/assignment/${newVal}/#${selectedProblem.value?.alias}`;
+  } else {
+    url = `/course/${props.course.alias}/student/${selectedStudent.value}/assignment/${newVal}/`;
+  }
+  emit('push-state', { student: selectedStudent.value }, document.title, url);
+});
+
+watch(
+  () => props.problems,
+  (newVal: types.CourseProblem[]) => {
+    selectedProblem.value = null;
     if (newVal.length === 0) {
       return;
     }
@@ -345,25 +365,24 @@ export default class CourseViewStudent extends Vue {
     if (!found) {
       return;
     }
-    this.selectedProblem = found;
-    this.selectedRun = found.runs?.[0] ?? null;
-  }
+    selectedProblem.value = found;
+    selectedRun.value = found.runs?.[0] ?? null;
+  },
+);
 
-  @Watch('selectedProblem')
-  onSelectedProblemChange(newVal: types.CourseProblem) {
-    this.selectedRun = newVal.runs?.[0] ?? null;
-    window.location.hash = `#${this.selectedProblem?.alias}`;
-  }
+watch(selectedProblem, (newVal) => {
+  const val = newVal as types.CourseProblem;
+  selectedRun.value = val?.runs?.[0] ?? null;
+  window.location.hash = `#${selectedProblem.value?.alias}`;
+});
 
-  @Watch('selectedRun')
-  onSelectedRunChanged(newVal: Partial<types.CourseRun> | null = null) {
-    if (newVal == null || newVal.feedback == null) {
-      this.updatedFeedback = null;
-      return;
-    }
-    this.updatedFeedback = newVal.feedback.feedback;
+watch(selectedRun, (newVal: Partial<types.CourseRun> | null = null) => {
+  if (newVal == null || newVal.feedback == null) {
+    updatedFeedback.value = null;
+    return;
   }
-}
+  updatedFeedback.value = newVal.feedback.feedback;
+});
 </script>
 
 <style lang="scss" scoped>

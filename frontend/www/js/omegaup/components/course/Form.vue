@@ -67,7 +67,7 @@
               />
             </span>
             <omegaup-radio-switch
-              :value.sync="showScoreboard"
+              v-model:value="showScoreboard"
               :selected-value="showScoreboard"
               name="show-scoreboard"
               :readonly="readOnly"
@@ -98,7 +98,7 @@
               />
             </span>
             <omegaup-radio-switch
-              :value.sync="unlimitedDuration"
+              v-model:value="unlimitedDuration"
               :readonly="readOnly"
               :selected-value="unlimitedDuration"
               name="unlimited-duration"
@@ -128,15 +128,21 @@
                 :class="{ 'is-complete': isSchoolComplete }"
                 >{{ T.profileSchool }}</span
               >
-              <omegaup-common-typeahead
-                :existing-options="searchResultSchools"
-                :options="searchResultSchools"
-                :readonly="readOnly"
-                :value.sync="school"
-                @update-existing-options="
-                  (query) => $emit('update-search-result-schools', query)
-                "
-              ></omegaup-common-typeahead>
+              <div
+                :class="{
+                  'is-invalid-school': invalidParameterName === 'school',
+                }"
+              >
+                <omegaup-common-typeahead
+                  :existing-options="searchResultSchools"
+                  :options="searchResultSchools"
+                  :readonly="readOnly"
+                  v-model:value="school"
+                  @update-existing-options="
+                    (query) => $emit('update-search-result-schools', query)
+                  "
+                ></omegaup-common-typeahead>
+              </div>
             </label>
           </div>
           <div class="form-group col-md-4 introjs-basic-information">
@@ -150,7 +156,7 @@
             <omegaup-radio-switch
               name="basic-information"
               :readonly="readOnly"
-              :value.sync="needsBasicInformation"
+              v-model:value="needsBasicInformation"
               :selected-value="needsBasicInformation"
             ></omegaup-radio-switch>
           </div>
@@ -319,8 +325,7 @@ import Multiselect from 'vue-multiselect';
 import 'vue-multiselect/dist/vue-multiselect.min.css';
 import 'intro.js/introjs.css';
 import introJs from 'intro.js';
-import VueCookies from 'vue-cookies';
-Vue.use(VueCookies, { expire: -1 });
+import { getCookie, setCookie } from '../../cookies';
 
 import {
   FontAwesomeIcon,
@@ -532,7 +537,7 @@ export default class CourseDetails extends Vue {
           ],
         })
         .start();
-      this.$cookies.set('has-visited-create-course', true, -1);
+      setCookie('has-visited-create-course', true);
     }
   }
 
@@ -598,7 +603,12 @@ export default class CourseDetails extends Vue {
 }
 
 /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
-.is-invalid-wrapper ::v-deep .multiselect__tags {
+.is-invalid-wrapper :deep(.multiselect__tags) {
+  border-color: var(--form-input-error-color);
+}
+
+/* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+.is-invalid-school :deep(.tags-input-wrapper-default) {
   border-color: var(--form-input-error-color);
 }
 

@@ -446,28 +446,19 @@ import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
 import { types } from '../../api_types';
 import * as ui from '../../ui';
 import T from '../../lang';
+import { getExternalUrl } from '../../urlHelper';
 
 // Import Bootstrap an BootstrapVue CSS files (order is important)
 import 'bootstrap/dist/css/bootstrap.css';
-import 'bootstrap-vue/dist/bootstrap-vue.css';
+import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
+import { BCard, BCol, BContainer, BDropdown, BRow } from 'bootstrap-vue-next';
 
 // Import Only Required Plugins
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
-import {
-  TabsPlugin,
-  CardPlugin,
-  DropdownPlugin,
-  LayoutPlugin,
-} from 'bootstrap-vue';
 import ContestCard from './ContestCard.vue';
 import ContestSkeleton from './ContestSkeleton.vue';
-import infiniteScroll from 'vue-infinite-scroll';
-Vue.use(TabsPlugin);
-Vue.use(CardPlugin);
-Vue.use(DropdownPlugin);
-Vue.use(LayoutPlugin);
 library.add(fas);
 
 export enum ContestTab {
@@ -505,9 +496,6 @@ export interface UrlParams {
     'omegaup-contest-card': ContestCard,
     'omegaup-contest-skeleton': ContestSkeleton,
     FontAwesomeIcon,
-  },
-  directives: {
-    infiniteScroll,
   },
 })
 class ArenaContestList extends Vue {
@@ -759,7 +747,7 @@ class ArenaContestList extends Vue {
   }
 
   getTimeLink(time: Date): string {
-    return `http://timeanddate.com/worldclock/fixedtime.html?iso=${time.toISOString()}`;
+    return `${getExternalUrl('TimeAndDateBaseURL')}?iso=${time.toISOString()}`;
   }
 
   orderByTitle() {

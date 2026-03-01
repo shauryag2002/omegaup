@@ -70,62 +70,61 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
-import T from '../../lang';
-
 export enum HistogramType {
   Quality = 'quality',
   Difficulty = 'difficulty',
 }
+</script>
 
-@Component
-export default class ProblemHistogram extends Vue {
-  @Prop() type!: string;
-  @Prop() histogram!: number[];
-  @Prop() score!: number;
+<script setup lang="ts">
+import { computed } from 'vue';
+import T from '../../lang';
 
-  T = T;
+const props = defineProps<{
+  type: string;
+  histogram: number[];
+  score: number;
+}>();
 
-  get tags(): string[] {
-    return this.type === HistogramType.Quality
-      ? [
-          T.qualityFormQualityVeryGood,
-          T.qualityFormQualityGood,
-          T.qualityFormQualityFair,
-          T.qualityFormQualityBad,
-          T.qualityFormQualityVeryBad,
-        ]
-      : [
-          T.qualityFormDifficultyVeryEasy,
-          T.qualityFormDifficultyEasy,
-          T.qualityFormDifficultyMedium,
-          T.qualityFormDifficultyHard,
-          T.qualityFormDifficultyVeryHard,
-        ];
-  }
+const tags = computed((): string[] => {
+  return props.type === HistogramType.Quality
+    ? [
+        T.qualityFormQualityVeryGood,
+        T.qualityFormQualityGood,
+        T.qualityFormQualityFair,
+        T.qualityFormQualityBad,
+        T.qualityFormQualityVeryBad,
+      ]
+    : [
+        T.qualityFormDifficultyVeryEasy,
+        T.qualityFormDifficultyEasy,
+        T.qualityFormDifficultyMedium,
+        T.qualityFormDifficultyHard,
+        T.qualityFormDifficultyVeryHard,
+      ];
+});
 
-  get title(): string {
-    return this.type === HistogramType.Quality
-      ? T.wordsQuality
-      : T.wordsDifficulty;
-  }
+const title = computed((): string => {
+  return props.type === HistogramType.Quality
+    ? T.wordsQuality
+    : T.wordsDifficulty;
+});
 
-  get customHistogram(): number[] {
-    return this.type === HistogramType.Quality
-      ? this.histogram.reverse()
-      : this.histogram;
-  }
+const customHistogram = computed((): number[] => {
+  return props.type === HistogramType.Quality
+    ? [...props.histogram].reverse()
+    : props.histogram;
+});
 
-  get totalVotes(): number {
-    return this.histogram.reduce((a: number, b: number) => a + b);
-  }
+const totalVotes = computed((): number => {
+  return props.histogram.reduce((a: number, b: number) => a + b);
+});
 
-  get barsWidth(): number[] {
-    const maxValue = Math.max(...this.customHistogram);
-    if (maxValue === 0) return [0, 0, 0, 0, 0];
-    return this.customHistogram.map((value) => (value / maxValue) * 100);
-  }
-}
+const barsWidth = computed((): number[] => {
+  const maxValue = Math.max(...customHistogram.value);
+  if (maxValue === 0) return [0, 0, 0, 0, 0];
+  return customHistogram.value.map((value) => (value / maxValue) * 100);
+});
 </script>
 
 <style lang="scss" scoped>

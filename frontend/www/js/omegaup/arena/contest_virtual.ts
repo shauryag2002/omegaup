@@ -3,7 +3,7 @@ import * as time from '../time';
 import { dao, types } from '../api_types';
 import * as api from '../api';
 import * as ui from '../ui';
-import Vue from 'vue';
+import { createApp, h, reactive } from 'vue';
 import arena_Contest from '../components/arena/Contest.vue';
 import { getOptionsFromLocation, getProblemAndRunDetails } from './location';
 import problemsStore from './problemStore';
@@ -171,203 +171,196 @@ OmegaUp.on('ready', async () => {
     );
   }
 
-  const contestContestant = new Vue({
-    el: '#main-container',
-    components: { 'omegaup-arena-contest': arena_Contest },
-    data: () => ({
-      problemInfo: problemDetails,
-      problem,
-      problems: payload.problems,
-      popupDisplayed,
-      showNewClarificationPopup,
-      guid,
-      problemAlias,
-      digitsAfterDecimalPoint: 2,
-      showPenalty: true,
-      nextSubmissionTimestamp,
-      nextExecutionTimestamp,
-      runDetailsData: runDetails,
-      isBlocked,
-      blockedMessage,
-    }),
-    render: function (createElement) {
-      return createElement('omegaup-arena-contest', {
-        props: {
-          contest: payload.contest,
-          contestAdmin: Boolean(payload.adminPayload),
-          problems: this.problems,
-          users: payload.adminPayload?.users,
-          problemInfo: this.problemInfo,
-          problem: this.problem,
-          clarifications: clarificationStore.state.clarifications,
-          popupDisplayed: this.popupDisplayed,
-          showNewClarificationPopup: this.showNewClarificationPopup,
-          activeTab,
-          guid: this.guid,
-          problemAlias: this.problemAlias,
-          miniRankingUsers: rankingStore.state.miniRankingUsers,
-          ranking: rankingStore.state.ranking,
-          rankingChartOptions: rankingStore.state.rankingChartOptions,
-          lastUpdated: rankingStore.state.lastTimeUpdated,
-          digitsAfterDecimalPoint: this.digitsAfterDecimalPoint,
-          showPenalty: this.showPenalty,
-          socketStatus: socketStore.state.socketStatus,
-          runs: myRunsStore.state.runs,
-          nextSubmissionTimestamp: this.nextSubmissionTimestamp,
-          nextExecutionTimestamp: this.nextExecutionTimestamp,
-          runDetailsData: this.runDetailsData,
-          isBlocked: this.isBlocked,
-          blockedMessage: this.blockedMessage,
-        },
-        on: {
-          'navigate-to-problem': ({
-            problem,
-          }: {
-            problem: types.NavbarProblemsetProblem;
-          }) => {
-            navigateToProblem({
-              type: NavigationType.ForContest,
-              problem,
-              target: contestContestant,
-              problems: this.problems,
-              contestAlias: payload.contest.alias,
-              contestMode: getScoreModeEnum(payload.contest.score_mode),
-            });
-          },
-          'show-run': (request: SubmissionRequest) => {
-            api.Run.details({ run_alias: request.guid })
-              .then((runDetails) => {
-                this.runDetailsData = showSubmission({ request, runDetails });
-                if (request.hash) {
-                  window.location.hash = request.hash;
-                }
-              })
-              .catch((run) => {
-                submitRunFailed({
-                  error: run.error,
-                  errorname: run.errorname,
-                  run,
-                });
-              });
-          },
-          'execute-run': ({
-            target,
-          }: {
-            target: Vue & { currentNextExecutionTimestamp: Date };
-          }) => {
-            api.Run.execute()
-              .then(time.remoteTimeAdapter)
-              .then((response) => {
-                target.currentNextExecutionTimestamp =
-                  response.nextExecutionTimestamp;
-              })
-              .catch(ui.apiError);
-          },
-          'submit-run': ({
-            problem,
-            code,
-            language,
-            target,
-          }: {
-            problem: types.NavbarProblemsetProblem;
-            code: string;
-            language: string;
-            target: Vue & { currentNextSubmissionTimestamp: Date };
-          }) => {
-            api.Run.create({
-              contest_alias: payload.contest.alias,
-              problem_alias: problem.alias,
-              language: language,
-              source: code,
-            })
-              .then(time.remoteTimeAdapter)
-              .then((response) => {
-                submitRun({
-                  guid: response.guid,
-                  submitDelay: response.submit_delay,
-                  language,
-                  username: commonPayload.currentUsername,
-                  classname: commonPayload.userClassname,
-                  problemAlias: problem.alias,
-                });
-                target.currentNextSubmissionTimestamp =
-                  response.nextSubmissionTimestamp;
-
-                if (
-                  Object.prototype.hasOwnProperty.call(
-                    problemsStore.state.problems,
-                    problem.alias,
-                  )
-                ) {
-                  const problemInfo =
-                    problemsStore.state.problems[problem.alias];
-                  problemInfo.nextSubmissionTimestamp =
-                    response.nextSubmissionTimestamp;
-                  problemsStore.commit('addProblem', problemInfo);
-                }
-              })
-              .catch((run) => {
-                submitRunFailed({
-                  error: run.error,
-                  errorname: run.errorname,
-                  run,
-                });
-              });
-          },
-          'new-clarification': ({
-            clarification,
-            clearForm,
-            contestClarificationRequest,
-          }: {
-            clarification: types.Clarification;
-            clearForm: () => void;
-            contestClarificationRequest: ContestClarificationRequest;
-          }) => {
-            if (!clarification) {
-              return;
-            }
-            api.Clarification.create({
-              contest_alias: payload.contest.alias,
-              problem_alias: clarification.problem_alias,
-              username: clarification.author,
-              message: clarification.message,
-            })
-              .then(() => {
-                clearForm();
-                refreshContestClarifications(contestClarificationRequest);
-              })
-              .catch(ui.apiError);
-          },
-          'clarification-response': ({
-            clarification,
-            contestClarificationRequest,
-          }: ContestClarification) => {
-            api.Clarification.update(clarification)
-              .then(() => {
-                refreshContestClarifications(contestClarificationRequest);
-              })
-              .catch(ui.apiError);
-          },
-          'update:activeTab': (tabName: string) => {
-            history.replaceState({ tabName }, 'updateTab', `#${tabName}`);
-          },
-          'reset-hash': ({
-            selectedTab,
-            alias,
-          }: {
-            selectedTab: string;
-            alias: string;
-          }) => {
-            history.replaceState(
-              { selectedTab, alias },
-              'resetHash',
-              `#${selectedTab}/${alias}`,
-            );
-          },
-        },
-      });
-    },
+  const state = reactive({
+    problemInfo: problemDetails,
+    problem,
+    problems: payload.problems,
+    popupDisplayed,
+    showNewClarificationPopup,
+    guid,
+    problemAlias,
+    digitsAfterDecimalPoint: 2,
+    showPenalty: true,
+    nextSubmissionTimestamp,
+    nextExecutionTimestamp,
+    runDetailsData: runDetails,
+    isBlocked,
+    blockedMessage,
   });
+
+  createApp({
+    render: () =>
+      h(arena_Contest, {
+        contest: payload.contest,
+        contestAdmin: Boolean(payload.adminPayload),
+        problems: state.problems,
+        users: payload.adminPayload?.users,
+        problemInfo: state.problemInfo,
+        problem: state.problem,
+        clarifications: clarificationStore.state.clarifications,
+        popupDisplayed: state.popupDisplayed,
+        showNewClarificationPopup: state.showNewClarificationPopup,
+        activeTab,
+        guid: state.guid,
+        problemAlias: state.problemAlias,
+        miniRankingUsers: rankingStore.state.miniRankingUsers,
+        ranking: rankingStore.state.ranking,
+        rankingChartOptions: rankingStore.state.rankingChartOptions,
+        lastUpdated: rankingStore.state.lastTimeUpdated,
+        digitsAfterDecimalPoint: state.digitsAfterDecimalPoint,
+        showPenalty: state.showPenalty,
+        socketStatus: socketStore.state.socketStatus,
+        runs: myRunsStore.state.runs,
+        nextSubmissionTimestamp: state.nextSubmissionTimestamp,
+        nextExecutionTimestamp: state.nextExecutionTimestamp,
+        runDetailsData: state.runDetailsData,
+        isBlocked: state.isBlocked,
+        blockedMessage: state.blockedMessage,
+        onNavigateToProblem: ({
+          problem,
+        }: {
+          problem: types.NavbarProblemsetProblem;
+        }) => {
+          navigateToProblem({
+            type: NavigationType.ForContest,
+            problem,
+            target: contestContestant,
+            problems: state.problems,
+            contestAlias: payload.contest.alias,
+            contestMode: getScoreModeEnum(payload.contest.score_mode),
+          });
+        },
+        onShowRun: (request: SubmissionRequest) => {
+          api.Run.details({ run_alias: request.guid })
+            .then((runDetails) => {
+              state.runDetailsData = showSubmission({ request, runDetails });
+              if (request.hash) {
+                window.location.hash = request.hash;
+              }
+            })
+            .catch((run) => {
+              submitRunFailed({
+                error: run.error,
+                errorname: run.errorname,
+                run,
+              });
+            });
+        },
+        onExecuteRun: ({
+          target,
+        }: {
+          target: Vue & { currentNextExecutionTimestamp: Date };
+        }) => {
+          api.Run.execute()
+            .then(time.remoteTimeAdapter)
+            .then((response) => {
+              target.currentNextExecutionTimestamp =
+                response.nextExecutionTimestamp;
+            })
+            .catch(ui.apiError);
+        },
+        onSubmitRun: ({
+          problem,
+          code,
+          language,
+          target,
+        }: {
+          problem: types.NavbarProblemsetProblem;
+          code: string;
+          language: string;
+          target: Vue & { currentNextSubmissionTimestamp: Date };
+        }) => {
+          api.Run.create({
+            contest_alias: payload.contest.alias,
+            problem_alias: problem.alias,
+            language: language,
+            source: code,
+          })
+            .then(time.remoteTimeAdapter)
+            .then((response) => {
+              submitRun({
+                guid: response.guid,
+                submitDelay: response.submit_delay,
+                language,
+                username: commonPayload.currentUsername,
+                classname: commonPayload.userClassname,
+                problemAlias: problem.alias,
+              });
+              target.currentNextSubmissionTimestamp =
+                response.nextSubmissionTimestamp;
+
+              if (
+                Object.prototype.hasOwnProperty.call(
+                  problemsStore.state.problems,
+                  problem.alias,
+                )
+              ) {
+                const problemInfo = problemsStore.state.problems[problem.alias];
+                problemInfo.nextSubmissionTimestamp =
+                  response.nextSubmissionTimestamp;
+                problemsStore.commit('addProblem', problemInfo);
+              }
+            })
+            .catch((run) => {
+              submitRunFailed({
+                error: run.error,
+                errorname: run.errorname,
+                run,
+              });
+            });
+        },
+        onNewClarification: ({
+          clarification,
+          clearForm,
+          contestClarificationRequest,
+        }: {
+          clarification: types.Clarification;
+          clearForm: () => void;
+          contestClarificationRequest: ContestClarificationRequest;
+        }) => {
+          if (!clarification) {
+            return;
+          }
+          api.Clarification.create({
+            contest_alias: payload.contest.alias,
+            problem_alias: clarification.problem_alias,
+            username: clarification.author,
+            message: clarification.message,
+          })
+            .then(() => {
+              clearForm();
+              refreshContestClarifications(contestClarificationRequest);
+            })
+            .catch(ui.apiError);
+        },
+        onClarificationResponse: ({
+          clarification,
+          contestClarificationRequest,
+        }: ContestClarification) => {
+          api.Clarification.update(clarification)
+            .then(() => {
+              refreshContestClarifications(contestClarificationRequest);
+            })
+            .catch(ui.apiError);
+        },
+        'onUpdate:activeTab': (tabName: string) => {
+          history.replaceState({ tabName }, 'updateTab', `#${tabName}`);
+        },
+        onResetHash: ({
+          selectedTab,
+          alias,
+        }: {
+          selectedTab: string;
+          alias: string;
+        }) => {
+          history.replaceState(
+            { selectedTab, alias },
+            'resetHash',
+            `#${selectedTab}/${alias}`,
+          );
+        },
+      }),
+  }).mount('#main-container');
 
   const socket = new EventsSocket({
     disableSockets: false,

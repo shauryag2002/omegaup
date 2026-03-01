@@ -1,7 +1,7 @@
 <template>
   <div>
     <a href="/course/">
-      <font-awesome-icon :icon="['fas', 'chevron-left']" />
+      <FontAwesomeIcon :icon="['fas', 'chevron-left']" />
       {{ T.navAllCourses }}
     </a>
     <h3 class="text-center">
@@ -9,15 +9,12 @@
         {{ course.name }}
       </span>
       <a v-if="course.is_admin" :href="`/course/${course.alias}/edit/`">
-        <font-awesome-icon :icon="['fas', 'edit']" />
+        <FontAwesomeIcon :icon="['fas', 'edit']" />
       </a>
     </h3>
     <div v-if="isAdminOrTeachingAssistant" class="my-5">
       <div class="my-4 markdown">
-        <omegaup-markdown
-          :markdown="course.description"
-          :full-width="true"
-        ></omegaup-markdown>
+        <OmegaupMarkdown :markdown="course.description" :full-width="true" />
       </div>
       <span>{{
         ui.formatString(T.courseStudentCountLabel, {
@@ -146,15 +143,15 @@
               >
                 <td class="align-middle">
                   <template v-if="assignment.assignment_type === 'homework'">
-                    <font-awesome-icon icon="file-alt" />
+                    <FontAwesomeIcon icon="file-alt" />
                     <span class="ml-2">{{ T.wordsHomework }}</span>
                   </template>
                   <template v-else-if="assignment.assignment_type === 'lesson'">
-                    <font-awesome-icon icon="chalkboard-teacher" />
+                    <FontAwesomeIcon icon="chalkboard-teacher" />
                     <span class="ml-2">{{ T.wordsLesson }}</span>
                   </template>
                   <template v-else>
-                    <font-awesome-icon icon="list-alt" />
+                    <FontAwesomeIcon icon="list-alt" />
                     <span class="ml-2">{{ T.wordsExam }}</span>
                   </template>
                 </td>
@@ -179,7 +176,7 @@
                     class="mr-2"
                     :href="`/course/${course.alias}/assignment/${assignment.alias}/scoreboard/${assignment.scoreboard_url}/`"
                   >
-                    <font-awesome-icon :icon="['fas', 'link']" />{{
+                    <FontAwesomeIcon :icon="['fas', 'link']" />{{
                       T.courseActionScoreboard
                     }}</a
                   >
@@ -188,7 +185,7 @@
                     class="mr-2"
                     :href="`/course/${course.alias}/assignment/${assignment.alias}/#runs`"
                   >
-                    <font-awesome-icon :icon="['fas', 'tachometer-alt']" />
+                    <FontAwesomeIcon :icon="['fas', 'tachometer-alt']" />
                     {{ T.wordsRuns }}
                   </a>
                 </td>
@@ -278,19 +275,16 @@
           }"
           role="tabpanel"
         >
-          <omegaup-markdown
-            :markdown="course.description"
-            :full-width="true"
-          ></omegaup-markdown>
+          <OmegaupMarkdown :markdown="course.description" :full-width="true" />
           <div class="row m-0 mt-4">
             <div v-if="course.objective" class="col-md-8 mb-4 p-0 pr-md-5">
               <h5 class="intro-subtitle pb-1">
                 {{ T.courseNewFormObjective }}
               </h5>
-              <omegaup-markdown
+              <OmegaupMarkdown
                 :markdown="course.objective"
                 :full-width="true"
-              ></omegaup-markdown>
+              />
             </div>
             <div
               v-if="course.school_id && course.school_name"
@@ -311,7 +305,7 @@
           }"
           role="tabpanel"
         >
-          <omegaup-assignment-card
+          <OmegaupAssignmentCard
             v-for="assignment in course.assignments"
             :key="assignment.alias"
             :assignment="assignment"
@@ -319,7 +313,7 @@
             :student-progress="
               getAssignmentProgress(progress[assignment.alias])
             "
-          ></omegaup-assignment-card>
+          />
         </div>
       </div>
     </template>
@@ -327,14 +321,21 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+export enum Tab {
+  Information = 'information',
+  Content = 'content',
+}
+</script>
+
+<script setup lang="ts">
+import { ref, computed } from 'vue';
 import T from '../../lang';
 import * as ui from '../../ui';
 import * as time from '../../time';
 import { types } from '../../api_types';
 
-import omegaup_Markdown from '../Markdown.vue';
-import course_AssignmentCard from './AssignmentCard.vue';
+import OmegaupMarkdown from '../Markdown.vue';
+import OmegaupAssignmentCard from './AssignmentCard.vue';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
@@ -346,81 +347,66 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 library.add(faEdit, faLink, faTachometerAlt, faChevronLeft);
 
-export enum Tab {
-  Information = 'information',
-  Content = 'content',
+const props = defineProps<{
+  course: types.CourseDetails;
+  progress: types.AssignmentProgress;
+  currentUsername: string;
+}>();
+
+const tabNames: Record<Tab, string> = {
+  [Tab.Information]: T.courseDetailsTabInformation,
+  [Tab.Content]: T.courseDetailsTabContent,
+};
+const selectedTab = ref(Tab.Content);
+
+const overallCompletedPercentage = computed((): number => {
+  let score = 0;
+  let maxScore = 0;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  for (const [assignment, progress] of Object.entries(props.progress)) {
+    score += progress.score;
+    maxScore += progress.max_score;
+  }
+  if (maxScore === 0) {
+    return 0;
+  }
+  return (score / maxScore) * 100;
+});
+
+const overallCompletedPoints = computed((): string => {
+  let score = 0;
+  let maxScore = 0;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  for (const [assignment, progress] of Object.entries(props.progress)) {
+    score += progress.score;
+    maxScore += progress.max_score;
+  }
+  return ui.formatString(T.courseDetailsOverallCompletedPoints, {
+    completed_points: score,
+    total_points: maxScore,
+  });
+});
+
+const isAdminOrTeachingAssistant = computed(
+  (): boolean => props.course.is_admin || props.course.is_teaching_assistant,
+);
+
+function getAssignmentProgress(progress: types.Progress): number {
+  return progress.max_score === 0
+    ? 100
+    : (progress.score / progress.max_score) * 100;
 }
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-    'omegaup-markdown': omegaup_Markdown,
-    'omegaup-assignment-card': course_AssignmentCard,
-  },
-})
-export default class CourseDetails extends Vue {
-  @Prop() course!: types.CourseDetails;
-  @Prop() progress!: types.AssignmentProgress;
-  @Prop() currentUsername!: string;
-
-  T = T;
-  ui = ui;
-  Tab = Tab;
-  tabNames: Record<Tab, string> = {
-    [Tab.Information]: T.courseDetailsTabInformation,
-    [Tab.Content]: T.courseDetailsTabContent,
-  };
-  selectedTab = Tab.Content;
-
-  get overallCompletedPercentage(): number {
-    let score = 0;
-    let maxScore = 0;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    for (const [assignment, progress] of Object.entries(this.progress)) {
-      score += progress.score;
-      maxScore += progress.max_score;
-    }
-    if (maxScore === 0) {
-      return 0;
-    }
-    return (score / maxScore) * 100;
+function getFormattedTime(date: Date | null | undefined): string {
+  if (!date) {
+    return '—';
   }
-
-  get overallCompletedPoints(): string {
-    let score = 0;
-    let maxScore = 0;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    for (const [assignment, progress] of Object.entries(this.progress)) {
-      score += progress.score;
-      maxScore += progress.max_score;
-    }
-    return ui.formatString(T.courseDetailsOverallCompletedPoints, {
-      completed_points: score,
-      total_points: maxScore,
-    });
-  }
-
-  get isAdminOrTeachingAssistant(): boolean {
-    return this.course.is_admin || this.course.is_teaching_assistant;
-  }
-
-  getAssignmentProgress(progress: types.Progress): number {
-    return progress.max_score === 0
-      ? 100
-      : (progress.score / progress.max_score) * 100;
-  }
-
-  getFormattedTime(date: Date | null | undefined): string {
-    if (!date) {
-      return '—';
-    }
-    return time.formatDateTime(date);
-  }
-
-  get aliasWithUsername(): string {
-    return `${this.course.alias}_${this.currentUsername}`;
-  }
+  return time.formatDateTime(date);
 }
+
+const aliasWithUsername = computed(
+  (): string => `${props.course.alias}_${props.currentUsername}`,
+);
 </script>
 
 <style lang="scss" scoped>

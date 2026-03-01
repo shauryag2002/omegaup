@@ -1,7 +1,7 @@
 <template>
   <div class="summary main">
     <h1>{{ title }}</h1>
-    <omegaup-markdown :markdown="eventDescription"></omegaup-markdown>
+    <OmegaupMarkdown :markdown="eventDescription" />
     <table
       v-if="finishTime !== null"
       class="table table-bordered mx-auto w-50 mb-0"
@@ -58,56 +58,52 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import T from '../../lang';
-import * as ui from '../../ui';
 import * as time from '../../time';
 
-import omegaup_Markdown from '../Markdown.vue';
+import OmegaupMarkdown from '../Markdown.vue';
 
-@Component({
-  components: {
-    'omegaup-markdown': omegaup_Markdown,
+const props = withDefaults(
+  defineProps<{
+    title: string;
+    description: string;
+    startTime: Date;
+    finishTime: Date;
+    scoreboard: number;
+    windowLength: null | number;
+    admin: string;
+    showDeadlines?: boolean;
+    showRanking?: boolean;
+  }>(),
+  {
+    showDeadlines: true,
+    showRanking: true,
   },
-})
-export default class Summary extends Vue {
-  @Prop() title!: string;
-  @Prop() description!: string;
-  @Prop() startTime!: Date;
-  @Prop() finishTime!: Date;
-  @Prop() scoreboard!: number;
-  @Prop() windowLength!: null | number;
-  @Prop() admin!: string;
-  @Prop({ default: true }) showDeadlines!: boolean;
-  @Prop({ default: true }) showRanking!: boolean;
+);
 
-  T = T;
-  ui = ui;
-  time = time;
-
-  get duration(): number {
-    if (!this.startTime || !this.finishTime) {
-      return Infinity;
-    }
-    return this.finishTime.getTime() - this.startTime.getTime();
+const duration = computed((): number => {
+  if (!props.startTime || !props.finishTime) {
+    return Infinity;
   }
+  return props.finishTime.getTime() - props.startTime.getTime();
+});
 
-  get eventWindowLength(): string {
-    if (this.duration === Infinity) {
-      return T.wordsUnlimitedDuration;
-    }
-    if (this.windowLength) {
-      // Convert minutes to milliseconds
-      return time.formatDelta(this.windowLength * (60 * 1000));
-    }
-    return time.formatDelta(this.duration);
+const eventWindowLength = computed((): string => {
+  if (duration.value === Infinity) {
+    return T.wordsUnlimitedDuration;
   }
+  if (props.windowLength) {
+    // Convert minutes to milliseconds
+    return time.formatDelta(props.windowLength * (60 * 1000));
+  }
+  return time.formatDelta(duration.value);
+});
 
-  get eventDescription(): string {
-    return this.description || '';
-  }
-}
+const eventDescription = computed((): string => {
+  return props.description || '';
+});
 </script>
 
 <style lang="scss" scoped>

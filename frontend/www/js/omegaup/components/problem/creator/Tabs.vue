@@ -2,7 +2,7 @@
   <b-tabs v-model="activeTabIndex" small>
     <b-tab>
       <template #title>
-        <BIconPencil class="mr-1" />
+        <FontAwesomeIcon :icon="['fas', 'pencil']" class="mr-1" />
         <span name="writing" data-problem-creator-tab="statement">
           {{ T.problemCreatorStatement }}</span
         >
@@ -18,7 +18,7 @@
 
     <b-tab>
       <template #title>
-        <BIconFileCode class="mr-1" />
+        <FontAwesomeIcon :icon="['fas', 'file-code']" class="mr-1" />
         <span name="code" data-problem-creator-tab="code">
           {{ T.problemCreatorCode }}</span
         >
@@ -35,7 +35,7 @@
 
     <b-tab>
       <template #title>
-        <BIconCheckCircle class="mr-1" />
+        <FontAwesomeIcon :icon="['fas', 'circle-check']" class="mr-1" />
         <span name="testcases" data-problem-creator-tab="cases">
           {{ T.problemCreatorTestCases }}</span
         >
@@ -53,7 +53,7 @@
 
     <b-tab>
       <template #title>
-        <BIconFileEarmarkCheck class="mr-1" />
+        <FontAwesomeIcon :icon="['fas', 'file-circle-check']" class="mr-1" />
         <span name="solution" data-problem-creator-tab="solution">
           {{ T.problemCreatorSolution }}</span
         >
@@ -76,6 +76,11 @@ import problemCreator_StatementTab from './statement/StatementTab.vue';
 import problemCreator_CodeTab from './code/CodeTab.vue';
 import problemCreator_SolutionTab from './solution/SolutionTab.vue';
 import T from '../../../lang';
+import { BTab, BTabs } from 'bootstrap-vue-next';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { faCircleCheck, faFileCircleCheck, faFileCode, faPencil } from '@fortawesome/free-solid-svg-icons';
+library.add(faCircleCheck, faFileCircleCheck, faFileCode, faPencil);
 
 export enum TabIndex {
   Statement = 0,
@@ -86,6 +91,7 @@ export enum TabIndex {
 
 @Component({
   components: {
+    FontAwesomeIcon,
     'omegaup-problem-creator-statement-tab': problemCreator_StatementTab,
     'omegaup-problem-creator-code-tab': problemCreator_CodeTab,
     'omegaup-problem-creator-cases-tab': problemCreator_CasesTab,

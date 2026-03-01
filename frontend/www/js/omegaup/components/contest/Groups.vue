@@ -3,18 +3,17 @@
     <div class="card-body">
       <form
         class="form"
-        @submit.prevent="$emit('emit-add-group', typeaheadGroup.key)"
+        @submit.prevent="emit('emit-add-group', typeaheadGroup!.key)"
       >
         <div class="form-group">
           <label>{{ T.wordsGroup }}</label>
-          <omegaup-common-typeahead
+          <CommonTypeahead
             :existing-options="searchResultGroups"
-            :value.sync="typeaheadGroup"
+            v-model:value="typeaheadGroup"
             @update-existing-options="
-              (query) => $emit('update-search-result-groups', query)
+              (query: string) => emit('update-search-result-groups', query)
             "
-          >
-          </omegaup-common-typeahead>
+          />
         </div>
         <button class="btn btn-primary" type="submit">
           {{ T.contestAddgroupAddGroup }}
@@ -39,7 +38,7 @@
             <button
               class="close float-none"
               type="button"
-              @click="$emit('emit-remove-group', group.alias)"
+              @click="emit('emit-remove-group', group.alias)"
             >
               ×
             </button>
@@ -50,29 +49,31 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
-import common_Typeahead from '../common/Typeahead.vue';
+import CommonTypeahead from '../common/Typeahead.vue';
 
-@Component({
-  components: {
-    'omegaup-common-typeahead': common_Typeahead,
+const props = defineProps<{
+  groups: types.ContestGroup[];
+  searchResultGroups: types.ListItem[];
+}>();
+
+const emit = defineEmits<{
+  (e: 'emit-add-group', key: string): void;
+  (e: 'emit-remove-group', alias: string): void;
+  (e: 'update-search-result-groups', query: string): void;
+}>();
+
+const typeaheadGroup = ref<types.ListItem | null>(null);
+const selected = ref<types.ContestGroup | null>(null);
+
+watch(
+  () => props.groups,
+  () => {
+    typeaheadGroup.value = null;
+    selected.value = null;
   },
-})
-export default class Groups extends Vue {
-  @Prop() groups!: types.ContestGroup[];
-  @Prop() searchResultGroups!: types.ListItem[];
-
-  T = T;
-  typeaheadGroup: null | types.ListItem = null;
-  selected: types.ContestGroup | null = null;
-
-  @Watch('groups')
-  onGroupsChange(): void {
-    this.typeaheadGroup = null;
-    this.selected = null;
-  }
-}
+);
 </script>

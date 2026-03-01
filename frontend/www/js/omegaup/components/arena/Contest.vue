@@ -9,15 +9,13 @@
     </div>
 
     <!-- Normal arena content when not blocked -->
-    <omegaup-arena
+    <OmegaupArena
       v-else
       :active-tab="activeTab"
       :title="ui.contestTitle(contest)"
       :clarifications="currentClarifications"
       :should-show-runs="contestAdmin"
-      @update:activeTab="
-        (selectedTab) => $emit('update:activeTab', selectedTab)
-      "
+      @update:activeTab="(selectedTab) => emit('update:activeTab', selectedTab)"
     >
       <template #socket-status>
         <sup :class="socketClass" :title="socketStatusTitle">{{
@@ -29,31 +27,31 @@
           class="edit-contest-button ml-2"
           :href="`/contest/${contest.alias}/edit/`"
         >
-          <font-awesome-icon icon="edit" />
+          <FontAwesomeIcon icon="edit" />
         </a>
       </template>
       <template #clock>
         <div v-if="isContestFinished" class="alert alert-warning" role="alert">
           <a :href="urlPractice">{{ T.arenaContestEndedUsePractice }}</a>
         </div>
-        <omegaup-countdown
+        <OmegaupCountdown
           v-show="!isContestStarted"
           :countdown-format="omegaup.CountdownFormat.ContestHasNotStarted"
           :target-time="contest.start_time"
           @finish="now = new Date()"
-        ></omegaup-countdown>
-        <omegaup-countdown
+        ></OmegaupCountdown>
+        <OmegaupCountdown
           v-show="isContestStarted"
           class="clock"
           :target-time="deadline"
           @finish="now = new Date()"
-        ></omegaup-countdown>
+        ></OmegaupCountdown>
       </template>
       <template #arena-problems>
         <div data-contest>
           <div class="tab navleft">
             <div class="navbar mb-2">
-              <omegaup-arena-navbar-problems
+              <OmegaupArenaNavbarProblems
                 :problems="problems"
                 :active-problem="activeProblemAlias"
                 :in-assignment="false"
@@ -64,13 +62,13 @@
                 "
                 @disable-active-problem="activeProblem = null"
                 @navigate-to-problem="onNavigateToProblem"
-              ></omegaup-arena-navbar-problems>
-              <omegaup-arena-navbar-miniranking
+              ></OmegaupArenaNavbarProblems>
+              <OmegaupArenaNavbarMiniranking
                 :users="miniRankingUsers"
                 :show-ranking="true"
-              ></omegaup-arena-navbar-miniranking>
+              ></OmegaupArenaNavbarMiniranking>
             </div>
-            <omegaup-arena-summary
+            <OmegaupArenaSummary
               v-if="activeProblem === null"
               :title="ui.contestTitle(contest)"
               :description="contest.description"
@@ -80,9 +78,9 @@
               :window-length="contest.window_length"
               :admin="contest.director"
               :show-ranking="false"
-            ></omegaup-arena-summary>
+            ></OmegaupArenaSummary>
             <div v-else class="problem main">
-              <omegaup-problem-details
+              <OmegaupProblemDetails
                 :user="{ loggedIn: true, admin: false, reviewer: false }"
                 :next-submission-timestamp="currentNextSubmissionTimestamp"
                 :next-execution-timestamp="currentNextExecutionTimestamp"
@@ -99,7 +97,7 @@
                 :use-new-verdict-table="false"
                 @update:activeTab="
                   (selectedTab) =>
-                    $emit('reset-hash', {
+                    emit('reset-hash', {
                       selectedTab,
                       alias: activeProblemAlias,
                     })
@@ -108,18 +106,18 @@
                 @execute-run="onRunExecuted"
                 @show-run="onRunDetails"
                 @new-submission-popup-displayed="
-                  $emit('new-submission-popup-displayed')
+                  emit('new-submission-popup-displayed')
                 "
               >
                 <template #quality-nomination-buttons><div></div></template>
                 <template #best-solvers-list><div></div></template>
-              </omegaup-problem-details>
+              </OmegaupProblemDetails>
             </div>
           </div>
         </div>
       </template>
       <template #arena-scoreboard>
-        <omegaup-arena-scoreboard
+        <OmegaupArenaScoreboard
           :problems="problems"
           :ranking="ranking"
           :ranking-chart-options="rankingChartOptions"
@@ -134,10 +132,10 @@
           "
         >
           <template #scoreboard-header><div></div></template>
-        </omegaup-arena-scoreboard>
+        </OmegaupArenaScoreboard>
       </template>
       <template #arena-runs>
-        <omegaup-arena-runs
+        <OmegaupArenaRuns
           v-if="contestAdmin"
           :contest-alias="contest.alias"
           :runs="allRuns"
@@ -156,36 +154,36 @@
           :search-result-users="searchResultUsers"
           :search-result-problems="searchResultProblems"
           @details="(run) => onRunAdminDetails(run.guid)"
-          @rejudge="(run) => $emit('rejudge', run)"
-          @disqualify="(request) => $emit('disqualify', request)"
-          @requalify="(run) => $emit('requalify', run)"
+          @rejudge="(run) => emit('rejudge', run)"
+          @disqualify="(request) => emit('disqualify', request)"
+          @requalify="(run) => emit('requalify', run)"
           @update-search-result-users-contest="
-            (request) => $emit('update-search-result-users-contest', request)
+            (request) => emit('update-search-result-users-contest', request)
           "
           @update-search-result-users="
-            (request) => $emit('update-search-result-users', request)
+            (request) => emit('update-search-result-users', request)
           "
-          @filter-changed="(request) => $emit('apply-filter', request)"
+          @filter-changed="(request) => emit('apply-filter', request)"
         >
           <template #title><div></div></template>
           <template #runs><div></div></template>
-        </omegaup-arena-runs>
-        <omegaup-overlay
+        </OmegaupArenaRuns>
+        <OmegaupOverlay
           v-if="contestAdmin"
           :show-overlay="currentPopupDisplayed !== PopupDisplayed.None"
           @hide-overlay="onPopupDismissed"
         >
           <template #popup>
-            <omegaup-arena-rundetails-popup
+            <OmegaupArenaRundetailsPopup
               v-show="currentPopupDisplayed === PopupDisplayed.RunDetails"
               :data="currentRunDetailsData"
               @dismiss="onPopupDismissed"
-            ></omegaup-arena-rundetails-popup>
+            ></OmegaupArenaRundetailsPopup>
           </template>
-        </omegaup-overlay>
+        </OmegaupOverlay>
       </template>
       <template #arena-clarifications>
-        <omegaup-arena-clarification-list
+        <OmegaupArenaClarificationList
           :problems="problems"
           :users="users"
           :problem-alias="problems.length != 0 ? problems[0].alias : null"
@@ -197,7 +195,7 @@
           :show-new-clarification-popup="showNewClarificationPopup"
           @new-clarification="
             (contestClarification) =>
-              $emit('new-clarification', {
+              emit('new-clarification', {
                 ...contestClarification,
                 contestClarificationRequest: {
                   type: ContestClarificationType.AllProblems,
@@ -207,7 +205,7 @@
           "
           @clarification-response="
             (response) =>
-              $emit('clarification-response', {
+              emit('clarification-response', {
                 contestAlias: contest.alias,
                 clarification: response,
                 contestClarificationRequest: {
@@ -217,20 +215,20 @@
               })
           "
           @update:activeTab="
-            (selectedTab) => $emit('update:activeTab', selectedTab)
+            (selectedTab) => emit('update:activeTab', selectedTab)
           "
-        ></omegaup-arena-clarification-list>
+        ></OmegaupArenaClarificationList>
       </template>
-    </omegaup-arena>
+    </OmegaupArena>
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import * as Highcharts from 'highcharts/highstock';
-import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { types } from '../../api_types';
 import { ContestClarificationType } from '../../arena/clarifications';
 import { SocketStatus } from '../../arena/events_socket';
@@ -238,235 +236,281 @@ import { SubmissionRequest } from '../../arena/submissions';
 import T from '../../lang';
 import { omegaup } from '../../omegaup';
 import * as ui from '../../ui';
-import arena_RunDetailsPopup from '../arena/RunDetailsPopup.vue';
+import OmegaupArenaRundetailsPopup from '../arena/RunDetailsPopup.vue';
 import { AdmissionMode } from '../common/Publish.vue';
-import omegaup_Countdown from '../Countdown.vue';
-import omegaup_Markdown from '../Markdown.vue';
-import omegaup_Overlay from '../Overlay.vue';
-import problem_Details, { PopupDisplayed } from '../problem/Details.vue';
-import arena_Arena from './Arena.vue';
-import arena_ClarificationList from './ClarificationList.vue';
-import arena_NavbarMiniranking from './NavbarMiniranking.vue';
-import arena_NavbarProblems from './NavbarProblems.vue';
-import arena_Runs from './Runs.vue';
-import arena_Scoreboard from './Scoreboard.vue';
-import arena_Summary from './Summary.vue';
+import OmegaupCountdown from '../Countdown.vue';
+import OmegaupOverlay from '../Overlay.vue';
+import OmegaupProblemDetails, { PopupDisplayed } from '../problem/Details.vue';
+import OmegaupArena from './Arena.vue';
+import OmegaupArenaClarificationList from './ClarificationList.vue';
+import OmegaupArenaNavbarMiniranking from './NavbarMiniranking.vue';
+import OmegaupArenaNavbarProblems from './NavbarProblems.vue';
+import OmegaupArenaRuns from './Runs.vue';
+import OmegaupArenaScoreboard from './Scoreboard.vue';
+import OmegaupArenaSummary from './Summary.vue';
+
 library.add(fas);
 
-@Component({
-  components: {
-    'omegaup-arena-clarification-list': arena_ClarificationList,
-    'omegaup-arena': arena_Arena,
-    'omegaup-arena-runs': arena_Runs,
-    'omegaup-arena-summary': arena_Summary,
-    'omegaup-arena-navbar-miniranking': arena_NavbarMiniranking,
-    'omegaup-arena-navbar-problems': arena_NavbarProblems,
-    'omegaup-arena-rundetails-popup': arena_RunDetailsPopup,
-    'omegaup-arena-scoreboard': arena_Scoreboard,
-    'omegaup-countdown': omegaup_Countdown,
-    'omegaup-markdown': omegaup_Markdown,
-    'omegaup-overlay': omegaup_Overlay,
-    'omegaup-problem-details': problem_Details,
-    'font-awesome-icon': FontAwesomeIcon,
+const props = withDefaults(
+  defineProps<{
+    contest: types.ContestPublicDetails;
+    contestAdmin?: boolean;
+    problems: types.NavbarProblemsetProblem[];
+    users?: types.ContestUser[];
+    problem?: types.NavbarProblemsetProblem | null;
+    problemInfo: types.ProblemInfo;
+    clarifications?: types.Clarification[];
+    isEphemeralExperimentEnabled?: boolean;
+    showNavigation?: boolean;
+    showRanking?: boolean;
+    showClarifications?: boolean;
+    showDeadlines?: boolean;
+    showNewClarificationPopup?: boolean;
+    popupDisplayed?: PopupDisplayed;
+    activeTab: string;
+    totalRuns: number;
+    guid?: null | string;
+    miniRankingUsers: omegaup.UserRank[];
+    ranking: types.ScoreboardRankingEntry[];
+    rankingChartOptions: Highcharts.Options;
+    lastUpdated: Date;
+    submissionDeadline: Date;
+    digitsAfterDecimalPoint?: number;
+    showPenalty?: boolean;
+    socketStatus?: SocketStatus;
+    runs?: types.Run[];
+    allRuns?: null | types.Run[];
+    searchResultUsers: types.ListItem[];
+    runDetailsData?: null | types.RunDetails;
+    nextSubmissionTimestamp?: Date | null;
+    nextExecutionTimestamp?: Date | null;
+    lockdown?: boolean;
+    shouldShowFirstAssociatedIdentityRunWarning?: boolean;
+    isBlocked?: boolean;
+    blockedMessage?: string | null;
+  }>(),
+  {
+    contestAdmin: false,
+    users: () => [],
+    problem: null,
+    clarifications: () => [],
+    isEphemeralExperimentEnabled: false,
+    showNavigation: true,
+    showRanking: false,
+    showClarifications: true,
+    showDeadlines: true,
+    showNewClarificationPopup: false,
+    popupDisplayed: PopupDisplayed.None,
+    guid: null,
+    digitsAfterDecimalPoint: 2,
+    showPenalty: true,
+    socketStatus: SocketStatus.Waiting,
+    runs: () => [],
+    allRuns: null,
+    runDetailsData: null,
+    nextSubmissionTimestamp: null,
+    nextExecutionTimestamp: null,
+    lockdown: false,
+    shouldShowFirstAssociatedIdentityRunWarning: false,
+    isBlocked: false,
+    blockedMessage: null,
   },
-})
-export default class ArenaContest extends Vue {
-  @Prop() contest!: types.ContestPublicDetails;
-  @Prop({ default: false }) contestAdmin!: boolean;
-  @Prop() problems!: types.NavbarProblemsetProblem[];
-  @Prop({ default: () => [] }) users!: types.ContestUser[];
-  @Prop({ default: null }) problem!: types.NavbarProblemsetProblem | null;
-  @Prop() problemInfo!: types.ProblemInfo;
-  @Prop({ default: () => [] }) clarifications!: types.Clarification[];
-  @Prop({ default: false }) isEphemeralExperimentEnabled!: boolean;
-  @Prop({ default: true }) showNavigation!: boolean;
-  @Prop({ default: false }) showRanking!: boolean;
-  @Prop({ default: true }) showClarifications!: boolean;
-  @Prop({ default: true }) showDeadlines!: boolean;
-  @Prop({ default: false }) showNewClarificationPopup!: boolean;
-  @Prop({ default: PopupDisplayed.None }) popupDisplayed!: PopupDisplayed;
-  @Prop() activeTab!: string;
-  @Prop() totalRuns!: number;
-  @Prop({ default: null }) guid!: null | string;
-  @Prop() miniRankingUsers!: omegaup.UserRank[];
-  @Prop() ranking!: types.ScoreboardRankingEntry[];
-  @Prop() rankingChartOptions!: Highcharts.Options;
-  @Prop() lastUpdated!: Date;
-  @Prop() submissionDeadline!: Date;
-  @Prop({ default: 2 }) digitsAfterDecimalPoint!: number;
-  @Prop({ default: true }) showPenalty!: boolean;
-  @Prop({ default: SocketStatus.Waiting }) socketStatus!: SocketStatus;
-  @Prop({ default: () => [] }) runs!: types.Run[];
-  @Prop({ default: null }) allRuns!: null | types.Run[];
-  @Prop() searchResultUsers!: types.ListItem[];
-  @Prop({ default: null }) runDetailsData!: null | types.RunDetails;
-  @Prop({ default: null }) nextSubmissionTimestamp!: Date | null;
-  @Prop({ default: null }) nextExecutionTimestamp!: Date | null;
-  @Prop({ default: false }) lockdown!: boolean;
-  @Prop({ default: false })
-  shouldShowFirstAssociatedIdentityRunWarning!: boolean;
-  @Prop({ default: false }) isBlocked!: boolean;
-  @Prop({ default: null }) blockedMessage!: string | null;
+);
 
-  T = T;
-  ui = ui;
-  omegaup = omegaup;
-  AdmissionMode = AdmissionMode;
-  PopupDisplayed = PopupDisplayed;
-  ContestClarificationType = ContestClarificationType;
-  currentClarifications = this.clarifications;
-  activeProblem: types.NavbarProblemsetProblem | null = this.problem;
-  currentNextSubmissionTimestamp = this.nextSubmissionTimestamp;
-  currentNextExecutionTimestamp = this.nextExecutionTimestamp;
-  currentRunDetailsData = this.runDetailsData;
-  now = new Date();
-  currentPopupDisplayed = this.popupDisplayed;
+const emit = defineEmits<{
+  (e: 'update:activeTab', selectedTab: string): void;
+  (
+    e: 'navigate-to-problem',
+    payload: { problem: types.NavbarProblemsetProblem },
+  ): void;
+  (
+    e: 'submit-run',
+    payload: {
+      code: string;
+      language: string;
+      problem: types.NavbarProblemsetProblem | null;
+      target: object;
+    },
+  ): void;
+  (e: 'execute-run', payload: { target: object }): void;
+  (
+    e: 'show-run',
+    payload: { guid: string; hash: string; isAdmin: boolean },
+  ): void;
+  (e: 'new-submission-popup-displayed'): void;
+  (
+    e: 'reset-hash',
+    payload: { selectedTab: string; alias: string | null },
+  ): void;
+  (e: 'rejudge', run: types.Run): void;
+  (e: 'disqualify', request: unknown): void;
+  (e: 'requalify', run: types.Run): void;
+  (e: 'update-search-result-users-contest', request: unknown): void;
+  (e: 'update-search-result-users', request: unknown): void;
+  (e: 'apply-filter', request: unknown): void;
+  (e: 'new-clarification', payload: unknown): void;
+  (e: 'clarification-response', payload: unknown): void;
+}>();
 
-  get socketClass(): string {
-    if (this.socketStatus === SocketStatus.Connected) {
-      return 'socket-status socket-status-ok';
-    }
-    if (this.socketStatus === SocketStatus.Failed) {
-      return 'socket-status socket-status-error';
-    }
-    return 'socket-status';
+const currentClarifications = ref(props.clarifications);
+const activeProblem = ref<types.NavbarProblemsetProblem | null>(props.problem);
+const currentNextSubmissionTimestamp = ref(props.nextSubmissionTimestamp);
+const currentNextExecutionTimestamp = ref(props.nextExecutionTimestamp);
+const currentRunDetailsData = ref(props.runDetailsData);
+const now = ref(new Date());
+const currentPopupDisplayed = ref(props.popupDisplayed);
+
+const socketClass = computed((): string => {
+  if (props.socketStatus === SocketStatus.Connected) {
+    return 'socket-status socket-status-ok';
   }
-
-  get socketStatusTitle(): string {
-    if (this.socketStatus === SocketStatus.Connected) {
-      return T.socketStatusConnected;
-    }
-    if (this.socketStatus === SocketStatus.Failed) {
-      return T.socketStatusFailed;
-    }
-    return T.socketStatusWaiting;
+  if (props.socketStatus === SocketStatus.Failed) {
+    return 'socket-status socket-status-error';
   }
+  return 'socket-status';
+});
 
-  get activeProblemAlias(): null | string {
-    return this.activeProblem?.alias ?? null;
+const socketStatusTitle = computed((): string => {
+  if (props.socketStatus === SocketStatus.Connected) {
+    return T.socketStatusConnected;
   }
-
-  get deadline(): Date {
-    return this.submissionDeadline || this.contest.finish_time;
+  if (props.socketStatus === SocketStatus.Failed) {
+    return T.socketStatusFailed;
   }
+  return T.socketStatusWaiting;
+});
 
-  get isContestFinished(): boolean {
-    return this.deadline < this.now;
+const activeProblemAlias = computed((): null | string => {
+  return activeProblem.value?.alias ?? null;
+});
+
+const deadline = computed(
+  (): Date => {
+    return props.submissionDeadline || props.contest.finish_time;
+  },
+);
+
+const isContestFinished = computed((): boolean => {
+  return deadline.value < now.value;
+});
+
+const isContestStarted = computed((): boolean => {
+  return props.contest.start_time < now.value;
+});
+
+const urlPractice = computed((): string => {
+  return `/arena/${props.contest.alias}/practice/`;
+});
+
+const searchResultProblems = computed((): types.ListItem[] => {
+  if (!props.problems.length) {
+    return [];
   }
+  return props.problems.map((problem) => ({
+    key: problem.alias,
+    value: problem.text,
+  }));
+});
 
-  get isContestStarted(): boolean {
-    return this.contest.start_time < this.now;
-  }
+function confirmLeave(): boolean {
+  return window.confirm(T.lockdownMessageWarning);
+}
 
-  get urlPractice(): string {
-    return `/arena/${this.contest.alias}/practice/`;
-  }
-
-  get searchResultProblems(): types.ListItem[] {
-    if (!this.problems.length) {
-      return [];
-    }
-    return this.problems.map((problem) => ({
-      key: problem.alias,
-      value: problem.text,
-    }));
-  }
-
-  created() {
-    if (this.lockdown) {
-      window.addEventListener('beforeunload', this.beforeWindowUnload);
-    }
-  }
-
-  beforeDestroy() {
-    if (this.lockdown) {
-      window.removeEventListener('beforeunload', this.beforeWindowUnload);
-    }
-  }
-
-  confirmLeave() {
-    return window.confirm(T.lockdownMessageWarning);
-  }
-
-  beforeWindowUnload(e: BeforeUnloadEvent) {
-    if (!this.confirmLeave()) {
-      // Cancel the event
-      e.preventDefault();
-      // Chrome requires returnValue to be set
-      e.returnValue = true;
-    }
-  }
-
-  onNavigateToProblem(problem: types.NavbarProblemsetProblem) {
-    this.activeProblem = problem;
-    this.$emit('navigate-to-problem', { problem });
-  }
-
-  onRunSubmitted(request: { code: string; language: string }): void {
-    this.$emit('submit-run', {
-      ...request,
-      problem: this.activeProblem,
-      target: this,
-    });
-  }
-
-  onRunExecuted(): void {
-    this.$emit('execute-run', { target: this });
-  }
-
-  onRunAdminDetails(guid: string): void {
-    this.$emit('show-run', {
-      guid,
-      hash: `#runs/all/show-run:${guid}`,
-      isAdmin: this.contestAdmin,
-    });
-    this.currentPopupDisplayed = PopupDisplayed.RunDetails;
-  }
-
-  onRunDetails(request: SubmissionRequest): void {
-    this.$emit('show-run', {
-      ...request,
-      hash: `#problems/${this.activeProblemAlias}/show-run:${request.guid}`,
-      isAdmin: this.contestAdmin,
-    });
-  }
-
-  onPopupDismissed(): void {
-    this.currentPopupDisplayed = PopupDisplayed.None;
-    this.currentRunDetailsData = null;
-    this.$emit('reset-hash', { selectedTab: 'runs', alias: null });
-  }
-
-  @Watch('problem')
-  onActiveProblemChanged(newValue: types.NavbarProblemsetProblem | null): void {
-    if (!newValue) {
-      this.activeProblem = null;
-      return;
-    }
-    this.onNavigateToProblem(newValue);
-  }
-
-  @Watch('problemInfo')
-  onProblemInfoChanged(newValue: types.ProblemInfo | null): void {
-    if (!newValue) {
-      return;
-    }
-    this.currentNextSubmissionTimestamp =
-      newValue.nextSubmissionTimestamp ?? null;
-    this.currentNextExecutionTimestamp =
-      newValue.nextExecutionTimestamp ?? null;
-  }
-
-  @Watch('clarifications')
-  onClarificationsChanged(newValue: types.Clarification[]): void {
-    this.currentClarifications = newValue;
-  }
-
-  @Watch('runDetailsData')
-  onRunDetailsChanged(newValue: types.RunDetails): void {
-    this.currentRunDetailsData = newValue;
+function beforeWindowUnload(e: BeforeUnloadEvent): void {
+  if (!confirmLeave()) {
+    e.preventDefault();
+    e.returnValue = true;
   }
 }
+
+function onNavigateToProblem(problem: types.NavbarProblemsetProblem): void {
+  activeProblem.value = problem;
+  emit('navigate-to-problem', { problem });
+}
+
+function onRunSubmitted(request: { code: string; language: string }): void {
+  emit('submit-run', {
+    ...request,
+    problem: activeProblem.value,
+    target: {},
+  });
+}
+
+function onRunExecuted(): void {
+  emit('execute-run', { target: {} });
+}
+
+function onRunAdminDetails(guid: string): void {
+  emit('show-run', {
+    guid,
+    hash: `#runs/all/show-run:${guid}`,
+    isAdmin: props.contestAdmin,
+  });
+  currentPopupDisplayed.value = PopupDisplayed.RunDetails;
+}
+
+function onRunDetails(request: SubmissionRequest): void {
+  emit('show-run', {
+    ...request,
+    hash: `#problems/${activeProblemAlias.value}/show-run:${request.guid}`,
+    isAdmin: props.contestAdmin,
+  });
+}
+
+function onPopupDismissed(): void {
+  currentPopupDisplayed.value = PopupDisplayed.None;
+  currentRunDetailsData.value = null;
+  emit('reset-hash', { selectedTab: 'runs', alias: null });
+}
+
+// created() logic
+if (props.lockdown) {
+  window.addEventListener('beforeunload', beforeWindowUnload);
+}
+
+onBeforeUnmount(() => {
+  if (props.lockdown) {
+    window.removeEventListener('beforeunload', beforeWindowUnload);
+  }
+});
+
+watch(
+  () => props.problem,
+  (newValue) => {
+    if (!newValue) {
+      activeProblem.value = null;
+      return;
+    }
+    onNavigateToProblem(newValue);
+  },
+);
+
+watch(
+  () => props.problemInfo,
+  (newValue) => {
+    if (!newValue) {
+      return;
+    }
+    currentNextSubmissionTimestamp.value =
+      newValue.nextSubmissionTimestamp ?? null;
+    currentNextExecutionTimestamp.value =
+      newValue.nextExecutionTimestamp ?? null;
+  },
+);
+
+watch(
+  () => props.clarifications,
+  (newValue) => {
+    currentClarifications.value = newValue;
+  },
+);
+
+watch(
+  () => props.runDetailsData,
+  (newValue) => {
+    currentRunDetailsData.value = newValue ?? null;
+  },
+);
 </script>
 
 <style lang="scss" scoped>

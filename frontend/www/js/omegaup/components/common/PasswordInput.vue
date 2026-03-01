@@ -26,8 +26,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref } from 'vue';
 import T from '../../lang';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
@@ -35,27 +35,36 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 
 library.add(faEye, faEyeSlash);
 
-@Component({
-  inheritAttrs: false,
-  components: {
-    FontAwesomeIcon,
+defineOptions({ inheritAttrs: false });
+
+withDefaults(
+  defineProps<{
+    value: string;
+    name?: string;
+    inputClass?: string;
+    tabindex?: number | null;
+    autocomplete?: string;
+    size?: number | null;
+    required?: boolean;
+  }>(),
+  {
+    name: '',
+    inputClass: '',
+    tabindex: null,
+    autocomplete: 'current-password',
+    size: null,
+    required: false,
   },
-})
-export default class PasswordInput extends Vue {
-  @Prop({ required: true }) value!: string;
-  @Prop({ default: '' }) name!: string;
-  @Prop({ default: '' }) inputClass!: string;
-  @Prop({ default: null }) tabindex!: number | null;
-  @Prop({ default: 'current-password' }) autocomplete!: string;
-  @Prop({ default: null }) size!: number | null;
-  @Prop({ default: false }) required!: boolean;
+);
 
-  T = T;
-  showPassword = false;
+defineEmits<{
+  (e: 'input', value: string): void;
+}>();
 
-  togglePasswordVisibility(): void {
-    this.showPassword = !this.showPassword;
-  }
+const showPassword = ref(false);
+
+function togglePasswordVisibility(): void {
+  showPassword.value = !showPassword.value;
 }
 </script>
 

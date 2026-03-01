@@ -1,6 +1,6 @@
 <template>
   <div class="card">
-    <omegaup-countryflag
+    <CountryFlag
       v-if="profile.country_id"
       class="m-1"
       :country="profile.country_id"
@@ -16,10 +16,10 @@
     </div>
     <div class="card-title text-center">
       <div class="mb-3">
-        <omegaup-user-username
+        <UserUsername
           :classname="profile.classname"
           :username="profile.username"
-        ></omegaup-user-username>
+        ></UserUsername>
       </div>
       <div class="mb-3">
         <h4 v-if="profile.rankinfo.rank > 0" class="m-0">
@@ -67,51 +67,47 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import T from '../../lang';
-import country_Flag from '../CountryFlag.vue';
-import user_Username from './Username.vue';
+import CountryFlag from '../CountryFlag.vue';
+import UserUsername from './Username.vue';
 import { types } from '../../api_types';
 import { Problem } from '../../linkable_resource';
 
-@Component({
-  components: {
-    'omegaup-countryflag': country_Flag,
-    'omegaup-user-username': user_Username,
-  },
-})
-export default class UserMainInfo extends Vue {
-  @Prop() data!: types.ExtraProfileDetails | null;
-  @Prop() profile!: types.UserProfileInfo;
-  @Prop() edit!: boolean;
+const props = defineProps<{
+  data: types.ExtraProfileDetails | null;
+  profile: types.UserProfileInfo;
+  edit: boolean;
+}>();
 
-  T = T;
-  get buttonText(): string {
-    return this.edit ? T.userEditViewProfile : T.profileEdit;
+const buttonText = computed((): string => {
+  return props.edit ? T.userEditViewProfile : T.profileEdit;
+});
+
+const buttonUrl = computed((): string => {
+  return props.edit ? '/profile/' : '/profile/#edit-basic-information';
+});
+
+const solvedProblems = computed((): Problem[] => {
+  if (!props.data?.solvedProblems) return [];
+  return props.data.solvedProblems.map((problem) => new Problem(problem));
+});
+
+const rank = computed((): string => {
+  switch (props.profile.classname) {
+    case 'user-rank-beginner':
+      return T.profileRankBeginner;
+    case 'user-rank-specialist':
+      return T.profileRankSpecialist;
+    case 'user-rank-expert':
+      return T.profileRankExpert;
+    case 'user-rank-master':
+      return T.profileRankMaster;
+    case 'user-rank-international-master':
+      return T.profileRankInternationalMaster;
+    default:
+      return T.profileRankUnrated;
   }
-  get buttonUrl(): string {
-    return this.edit ? '/profile/' : '/profile/#edit-basic-information';
-  }
-  get solvedProblems(): Problem[] {
-    if (!this.data?.solvedProblems) return [];
-    return this.data.solvedProblems.map((problem) => new Problem(problem));
-  }
-  get rank(): string {
-    switch (this.profile.classname) {
-      case 'user-rank-beginner':
-        return T.profileRankBeginner;
-      case 'user-rank-specialist':
-        return T.profileRankSpecialist;
-      case 'user-rank-expert':
-        return T.profileRankExpert;
-      case 'user-rank-master':
-        return T.profileRankMaster;
-      case 'user-rank-international-master':
-        return T.profileRankInternationalMaster;
-      default:
-        return T.profileRankUnrated;
-    }
-  }
-}
+});
 </script>

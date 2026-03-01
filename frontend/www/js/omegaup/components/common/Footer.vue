@@ -162,8 +162,8 @@
   </footer>
 </template>
 
-<script lang="ts">
-import { Component, Vue, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { computed } from 'vue';
 import * as ui from '../../ui';
 import T from '../../lang';
 import { reportAnIssueURL } from '../../errors';
@@ -178,32 +178,22 @@ import {
 } from '@fortawesome/free-brands-svg-icons';
 library.add(faFacebook, faGithub, faDiscord);
 
-@Component({
-  components: {
-    FontAwesomeIcon,
-  },
-})
-export default class Footer extends Vue {
-  @Prop() isLoggedIn!: boolean;
-  @Prop() omegaUpLockDown!: boolean;
+defineProps<{
+  isLoggedIn: boolean;
+  omegaUpLockDown: boolean;
+}>();
 
-  T = T;
-  ui = ui;
-  reportAnIssueURL = reportAnIssueURL;
+const OmegaUpBlogURL = computed((): string => {
+  return getBlogUrl('OmegaUpBlogURL');
+});
 
-  get OmegaUpBlogURL(): string {
-    // Use the key defined in blog-links-config.json
-    return getBlogUrl('OmegaUpBlogURL');
-  }
+const PrivacyPolicyURL = computed((): string => {
+  return getBlogUrl('PrivacyPolicyURL');
+});
 
-  get PrivacyPolicyURL(): string {
-    return getBlogUrl('PrivacyPolicyURL');
-  }
-
-  get CodeofConductPolicyURL(): string {
-    return getBlogUrl('CodeofConductPolicyURL');
-  }
-}
+const CodeofConductPolicyURL = computed((): string => {
+  return getBlogUrl('CodeofConductPolicyURL');
+});
 </script>
 
 <style lang="scss" scoped>

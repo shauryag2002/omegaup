@@ -89,75 +89,72 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, computed } from 'vue';
 import T from '../../lang';
 import * as ui from '../../ui';
 import * as time from '../../time';
 import { types } from '../../api_types';
+import { getExternalUrl } from '../../urlHelper';
 
-@Component
-export default class FilteredList extends Vue {
-  @Prop() contests!: types.ContestAdminDetails[];
-  @Prop() showTimes!: boolean;
-  @Prop() showPractice!: boolean;
-  @Prop() showVirtual!: boolean;
-  @Prop() showPublicUpdated!: boolean;
-  @Prop() recommended!: boolean;
+const props = defineProps<{
+  contests: types.ContestAdminDetails[];
+  showTimes: boolean;
+  showPractice: boolean;
+  showVirtual: boolean;
+  showPublicUpdated: boolean;
+  recommended: boolean;
+}>();
 
-  T = T;
-  ui = ui;
-  time = time;
-  pageNumber = 1;
-  pageSize = 10;
+const pageNumber = ref(1);
+const pageSize = 10;
 
-  get totalPages(): number {
-    return Math.ceil(this.contests.length / this.pageSize);
+const totalPages = computed<number>(() => {
+  return Math.ceil(props.contests.length / pageSize);
+});
+
+const page = computed<types.ContestAdminDetails[]>(() => {
+  const first = (pageNumber.value - 1) * pageSize;
+  return props.contests.slice(first, first + pageSize);
+});
+
+const hasPrevious = computed<boolean>(() => {
+  return pageNumber.value > 1;
+});
+
+const hasNext = computed<boolean>(() => {
+  return pageNumber.value < totalPages.value;
+});
+
+const pagerColumns = computed<number>(() => {
+  let cols = 2;
+  if (props.showPractice) cols += 1;
+  if (props.showVirtual) cols += 1;
+  if (props.showTimes) cols += 3;
+  if (props.showPublicUpdated) cols += 1;
+  return cols;
+});
+
+function next() {
+  // TODO: Update history so the back button works correctly.
+  if (pageNumber.value >= totalPages.value) {
+    return;
   }
+  pageNumber.value++;
+  document.querySelectorAll('li.nav-item.active')[0].scrollIntoView();
+}
 
-  get page(): types.ContestAdminDetails[] {
-    let first = (this.pageNumber - 1) * this.pageSize;
-    return this.contests.slice(first, first + this.pageSize);
+function previous() {
+  // TODO: Update history so the back button works correctly.
+  if (pageNumber.value === 0) {
+    return;
   }
+  pageNumber.value--;
+  document.querySelectorAll('li.nav-item.active')[0].scrollIntoView();
+}
 
-  get hasPrevious(): boolean {
-    return this.pageNumber > 1;
-  }
-
-  get hasNext(): boolean {
-    return this.pageNumber < this.totalPages;
-  }
-
-  get pagerColumns(): number {
-    let cols = 2;
-    if (this.showPractice) cols += 1;
-    if (this.showVirtual) cols += 1;
-    if (this.showTimes) cols += 3;
-    if (this.showPublicUpdated) cols += 1;
-    return cols;
-  }
-
-  next() {
-    // TODO: Update history so the back button works correctly.
-    if (this.pageNumber >= this.totalPages) {
-      return;
-    }
-    this.pageNumber++;
-    document.querySelectorAll('li.nav-item.active')[0].scrollIntoView();
-  }
-
-  previous() {
-    // TODO: Update history so the back button works correctly.
-    if (this.pageNumber === 0) {
-      return;
-    }
-    this.pageNumber--;
-    document.querySelectorAll('li.nav-item.active')[0].scrollIntoView();
-  }
-
-  getTimeLink(time: string): string {
-    return `http://timeanddate.com/worldclock/fixedtime.html?iso=${time}`;
-  }
+function getTimeLink(time: string): string {
+  return `${getExternalUrl('TimeAndDateBaseURL')}?iso=${time}`;
 }
 </script>
 

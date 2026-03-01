@@ -12,12 +12,11 @@
             />
             <div class="input-group-append">
               <button
-                v-clipboard="contestURL"
                 copy-to-clipboard
                 class="btn btn-primary"
                 type="button"
                 :title="T.contestEditCopyContestLink"
-                @click="onCopyContestLink"
+                @click="copyAndNotify(contestURL)"
               >
                 <font-awesome-icon icon="clipboard" />
               </button>
@@ -49,7 +48,7 @@
         <div class="form-group">
           <omegaup-toggle-switch
             v-if="currentAdmissionMode !== AdmissionMode.Private"
-            :value.sync="currentDefaultShowAllContestantsInScoreboard"
+            v-model:value="currentDefaultShowAllContestantsInScoreboard"
             :checked-value="currentDefaultShowAllContestantsInScoreboard"
             :text-description="T.showDefaultAllContestantsInScoreboard"
           ></omegaup-toggle-switch>
@@ -67,7 +66,6 @@ import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
 import T from '../../lang';
 import omegaup_Markdown from '../Markdown.vue';
 import omegaup_ToggleSwitch from '../ToggleSwitch.vue';
-import Clipboard from 'v-clipboard';
 import {
   FontAwesomeIcon,
   FontAwesomeLayers,
@@ -76,7 +74,6 @@ import {
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 library.add(fas);
-Vue.use(Clipboard);
 
 export enum AdmissionMode {
   Private = 'private',
@@ -116,6 +113,11 @@ export default class ContestEditPublish extends Vue {
       defaultShowAllContestantsInScoreboard: this
         .currentDefaultShowAllContestantsInScoreboard,
     });
+  }
+
+  copyAndNotify(text: string): void {
+    navigator.clipboard.writeText(text);
+    this.$emit('show-copy-message');
   }
 
   onCopyContestLink(): void {

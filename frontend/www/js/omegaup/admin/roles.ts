@@ -3,68 +3,58 @@ import { omegaup, OmegaUp } from '../omegaup';
 import * as api from '../api';
 import * as ui from '../ui';
 import T from '../lang';
-import Vue from 'vue';
+import { createApp, h } from 'vue';
 import { types } from '../api_types';
 
 OmegaUp.on('ready', () => {
   const payload = types.payloadParsers.UserRolesPayload();
-
-  new Vue({
-    el: '#main-container',
-    components: {
-      'omegaup-user-roles': user_Roles,
-    },
-    render: function (createElement) {
-      return createElement('omegaup-user-roles', {
-        props: {
-          roles: payload.userSystemRoles,
-          groups: payload.userSystemGroups,
+  createApp({
+    render: () =>
+      h(user_Roles, {
+        roles: payload.userSystemRoles,
+        groups: payload.userSystemGroups,
+        onChangeRole: (selectedRole: omegaup.Selectable<types.UserRole>) => {
+          if (selectedRole.selected) {
+            api.User.addRole({
+              username: payload.username,
+              role: selectedRole.value.name,
+            })
+              .then(() => {
+                ui.success(T.userEditSuccess);
+              })
+              .catch(ui.apiError);
+          } else {
+            api.User.removeRole({
+              username: payload.username,
+              role: selectedRole.value.name,
+            })
+              .then(() => {
+                ui.success(T.userEditSuccess);
+              })
+              .catch(ui.apiError);
+          }
         },
-        on: {
-          'change-role': (selectedRole: omegaup.Selectable<types.UserRole>) => {
-            if (selectedRole.selected) {
-              api.User.addRole({
-                username: payload.username,
-                role: selectedRole.value.name,
+        onChangeGroup: (selectedGroup: omegaup.Selectable<types.Group>) => {
+          if (selectedGroup.selected) {
+            api.User.addGroup({
+              username: payload.username,
+              group: selectedGroup.value.name,
+            })
+              .then(() => {
+                ui.success(T.userEditSuccess);
               })
-                .then(() => {
-                  ui.success(T.userEditSuccess);
-                })
-                .catch(ui.apiError);
-            } else {
-              api.User.removeRole({
-                username: payload.username,
-                role: selectedRole.value.name,
+              .catch(ui.apiError);
+          } else {
+            api.User.removeGroup({
+              username: payload.username,
+              group: selectedGroup.value.name,
+            })
+              .then(() => {
+                ui.success(T.userEditSuccess);
               })
-                .then(() => {
-                  ui.success(T.userEditSuccess);
-                })
-                .catch(ui.apiError);
-            }
-          },
-          'change-group': (selectedGroup: omegaup.Selectable<types.Group>) => {
-            if (selectedGroup.selected) {
-              api.User.addGroup({
-                username: payload.username,
-                group: selectedGroup.value.name,
-              })
-                .then(() => {
-                  ui.success(T.userEditSuccess);
-                })
-                .catch(ui.apiError);
-            } else {
-              api.User.removeGroup({
-                username: payload.username,
-                group: selectedGroup.value.name,
-              })
-                .then(() => {
-                  ui.success(T.userEditSuccess);
-                })
-                .catch(ui.apiError);
-            }
-          },
+              .catch(ui.apiError);
+          }
         },
-      });
-    },
-  });
+      }),
+  }).mount('#main-container');
 });

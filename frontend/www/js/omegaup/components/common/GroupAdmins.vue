@@ -12,14 +12,14 @@
               :title="T.courseEditAddGroupAdminsTooltip"
               icon="info-circle"
             />
-            <omegaup-common-typeahead
+            <OmegaupCommonTypeahead
               :existing-options="searchResultGroups"
-              :value.sync="groupAlias"
+              v-model:value="groupAlias"
               :max-results="10"
               @update-existing-options="
                 (query) => $emit('update-search-result-groups', query)
               "
-            ></omegaup-common-typeahead>
+            ></OmegaupCommonTypeahead>
           </label>
         </div>
         <button class="btn btn-primary" type="submit">
@@ -66,11 +66,11 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
-import common_Typeahead from '../common/Typeahead.vue';
+import OmegaupCommonTypeahead from '../common/Typeahead.vue';
 
 import {
   FontAwesomeIcon,
@@ -81,24 +81,23 @@ import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 library.add(fas);
 
-@Component({
-  components: {
-    'omegaup-common-typeahead': common_Typeahead,
-    'font-awesome-icon': FontAwesomeIcon,
-    'font-awesome-layers': FontAwesomeLayers,
-    'font-awesome-layers-text': FontAwesomeLayersText,
+const props = defineProps<{
+  groupAdmins: types.ContestGroupAdmin[];
+  searchResultGroups: types.ListItem[];
+}>();
+
+defineEmits<{
+  (e: 'add-group-admin', key: string): void;
+  (e: 'remove-group-admin', alias: string): void;
+  (e: 'update-search-result-groups', query: string): void;
+}>();
+
+const groupAlias = ref<null | types.ListItem>(null);
+
+watch(
+  () => props.groupAdmins,
+  () => {
+    groupAlias.value = null;
   },
-})
-export default class GroupAdmin extends Vue {
-  @Prop() groupAdmins!: types.ContestGroupAdmin[];
-  @Prop() searchResultGroups!: types.ListItem[];
-
-  T = T;
-  groupAlias: null | types.ListItem = null;
-
-  @Watch('groupAdmins')
-  ongroupAdminsChange(): void {
-    this.groupAlias = null;
-  }
-}
+);
 </script>

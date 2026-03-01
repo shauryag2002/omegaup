@@ -1,7 +1,7 @@
 <template>
   <div data-code-mirror>
     <codemirror-editor
-      ref="cm-wrapper"
+      ref="cmWrapper"
       :options="editorOptions"
       :value="value"
       @change="onChange"
@@ -11,9 +11,9 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Ref, Watch } from 'vue-property-decorator';
+import { defineComponent, ref, computed, watch, onMounted } from 'vue';
 import T from '../../lang';
-import { codemirror } from 'vue-codemirror-lite';
+import CodemirrorEditor from '../common/CodemirrorEditor.vue';
 
 export const languageModeMap: {
   [language: string]: string;
@@ -72,65 +72,80 @@ export interface EditorOptions {
   gutters?: string[];
 }
 
-@Component({
+export default defineComponent({
+  name: 'CodeView',
   components: {
-    'codemirror-editor': codemirror,
+    'codemirror-editor': CodemirrorEditor,
   },
-})
-export default class CodeView extends Vue {
-  @Prop({ default: 'cpp17-gcc' }) language!: string;
-  @Prop({ default: false }) readonly!: boolean;
-  @Prop() value!: string;
-  @Ref('cm-wrapper') readonly cmWrapper!: codemirror;
-
-  T = T;
-  mode = languageModeMap[this.language] || languageModeMap['cpp17-gcc'];
-
-  refresh() {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore vue-codemirror-lite does not declare `editor` as a legitimate
-    // property, so TypeScript cannot know about it.
-    // It's also possible for the actual editor to not have been set yet if
-    // this method is used before the mounted event handler is called.
-    this.cmWrapper.editor?.refresh();
-  }
-
-  get editorOptions(): EditorOptions {
-    return {
-      tabSize: 2,
-      lineNumbers: true,
-      mode: this.mode,
-      readOnly: this.readonly,
-    };
-  }
-
-  onChange(value: string): void {
-    this.$emit('change', value);
-  }
-
-  onInput(value: string): void {
-    this.$emit('input', value);
-  }
-
-  @Watch('language')
-  onLanguageChange(newLanguage: string) {
-    this.mode = languageModeMap[newLanguage];
-  }
-  mounted() {
-    this.refresh();
-    const codeAndLanguage = {
-      code: this.value,
-      language: this.language,
-    };
-    window.dispatchEvent(
-      new CustomEvent('code-and-language-set', { detail: codeAndLanguage }),
+  props: {
+    language: { type: String, default: 'cpp17-gcc' },
+    readonly: { type: Boolean, default: false },
+    value: { type: String, required: true },
+  },
+  emits: ['change', 'input', 'change-language'],
+  setup(props, { emit, expose }) {
+    const cmWrapper = ref<InstanceType<typeof CodemirrorEditor> | null>(null);
+    const mode = ref(
+      languageModeMap[props.language] || languageModeMap['cpp17-gcc'],
     );
 
-    this.onInput(codeAndLanguage.code);
-    this.onChange(codeAndLanguage.code);
-    this.$emit('change-language', codeAndLanguage.language);
-  }
-}
+    function refresh() {
+      (cmWrapper.value as any)?.refresh();
+    }
+
+    const editorOptions = computed(
+      (): EditorOptions => {
+        return {
+          tabSize: 2,
+          lineNumbers: true,
+          mode: mode.value,
+          readOnly: props.readonly,
+        };
+      },
+    );
+
+    function onChange(value: string): void {
+      emit('change', value);
+    }
+
+    function onInput(value: string): void {
+      emit('input', value);
+    }
+
+    watch(
+      () => props.language,
+      (newLanguage: string) => {
+        mode.value = languageModeMap[newLanguage];
+      },
+    );
+
+    onMounted(() => {
+      refresh();
+      const codeAndLanguage = {
+        code: props.value,
+        language: props.language,
+      };
+      window.dispatchEvent(
+        new CustomEvent('code-and-language-set', { detail: codeAndLanguage }),
+      );
+
+      onInput(codeAndLanguage.code);
+      onChange(codeAndLanguage.code);
+      emit('change-language', codeAndLanguage.language);
+    });
+
+    expose({ refresh });
+
+    return {
+      cmWrapper,
+      mode,
+      editorOptions,
+      onChange,
+      onInput,
+      refresh,
+    };
+  },
+});
 </script>
 
 <style lang="scss">
