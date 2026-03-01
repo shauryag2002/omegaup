@@ -26,7 +26,7 @@ describe('AssignmentCard.vue', () => {
   it('Should handle assignment details', () => {
     const studentProgress = 50;
     const wrapper = mount(course_AssignmentCard, {
-      propsData: {
+      props: {
         courseAlias: 'test-course',
         assignment,
         studentProgress,
@@ -46,7 +46,7 @@ describe('AssignmentCard.vue', () => {
     };
     const studentProgress = 50;
     const wrapper = mount(course_AssignmentCard, {
-      propsData: {
+      props: {
         courseAlias: 'test-course',
         assignment: lecture,
         studentProgress,

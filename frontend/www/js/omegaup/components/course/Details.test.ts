@@ -9,7 +9,7 @@ describe('Details.vue', () => {
   it('Should handle empty assignments and progress as admin', () => {
     const courseName = 'Test course';
     const wrapper = shallowMount(course_Details, {
-      propsData: {
+      props: {
         course: {
           admission_mode: 'registration',
           alias: 'test-course',
@@ -51,7 +51,7 @@ describe('Details.vue', () => {
   it('Should handle empty assignments and progress as student', () => {
     const courseName = 'Test course';
     const wrapper = shallowMount(course_Details, {
-      propsData: {
+      props: {
         course: {
           admission_mode: 'registration',
           alias: 'test-course',
@@ -91,7 +91,7 @@ describe('Details.vue', () => {
   it('Should handle assignments without finish_time', () => {
     const courseName = 'Test course';
     const wrapper = shallowMount(course_Details, {
-      propsData: {
+      props: {
         course: {
           admission_mode: 'public',
           alias: 'test-course',

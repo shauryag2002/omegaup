@@ -34,6 +34,9 @@ module.exports = {
     'monaco-editor':
       '<rootDir>/frontend/www/third_party/js/__mocks__/monacoEditor.js',
     sugar: '<rootDir>/frontend/www/js/omegaup/__mocks__/sugar.js',
+    '^vue$': '@vue/compat',
+    'vue-codemirror-lite':
+      '<rootDir>/frontend/www/js/omegaup/__mocks__/vue-codemirror-lite.js',
   },
   setupFilesAfterEnv: ['<rootDir>/frontend/www/js/omegaup/test.setup.ts'],
   transform: {
@@ -41,6 +44,11 @@ module.exports = {
       '@vue/vue3-jest',
       {
         babelConfig,
+        compilerOptions: {
+          compatConfig: {
+            MODE: 2,
+          },
+        },
       },
     ],
     '.*\\.[jt]sx?$': ['babel-jest', babelConfig],
@@ -48,5 +56,8 @@ module.exports = {
   transformIgnorePatterns: [
     'node_modules/(?!(vue-.*|@voerro/vue-tagsinput|monaco-editor|monaco-editor-core)/)',
   ],
-  testURL: 'http://localhost:8001/',
+  testEnvironmentOptions: {
+    url: 'http://localhost:8001/',
+    customExportConditions: ['node', 'node-addons'],
+  },
 };

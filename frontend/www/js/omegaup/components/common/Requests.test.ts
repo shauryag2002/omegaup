@@ -79,7 +79,7 @@ describe('Requests.vue', () => {
 
   it('Should handle the whole list of requests', async () => {
     const wrapper = mount(common_Requests, {
-      propsData: {
+      props: {
         data: [
           {
             accepted: false,

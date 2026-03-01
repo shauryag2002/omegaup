@@ -10,7 +10,7 @@ import { clarificationStoreConfig } from './clarificationsStore';
 import { createStore } from 'vuex';
 import fetchMock from 'jest-fetch-mock';
 import { onRankingChanged, onRankingEvents } from './ranking';
-import { mocked } from 'ts-jest/utils';
+import { mocked } from 'jest-mock';
 import { ScoreMode } from './navigation';
 
 const navbarProblems: types.NavbarProblemsetProblem[] = [

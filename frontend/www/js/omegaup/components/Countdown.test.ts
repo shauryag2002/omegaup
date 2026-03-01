@@ -23,7 +23,7 @@ describe('Countdown.vue', () => {
 
   it('Should handle a countdown with 5 seconds left to finish', async () => {
     const wrapper = shallowMount(omegaup_Countdown, {
-      propsData: {
+      props: {
         targetTime: new Date(now + 10000),
       },
     });
@@ -38,7 +38,7 @@ describe('Countdown.vue', () => {
   it('Should handle countdown in mode ContestHasNotStarted', async () => {
     const seconds = 10;
     const wrapper = shallowMount(omegaup_Countdown, {
-      propsData: {
+      props: {
         targetTime: new Date(now + 1000 * seconds),
         countdownFormat: omegaup.CountdownFormat.ContestHasNotStarted,
       },
@@ -51,7 +51,7 @@ describe('Countdown.vue', () => {
   it('Should handle countdown in mode ContestHasNotStarted when contest has started', async () => {
     const seconds = 10;
     const wrapper = shallowMount(omegaup_Countdown, {
-      propsData: {
+      props: {
         targetTime: new Date(now - 1000 * seconds),
         countdownFormat: omegaup.CountdownFormat.ContestHasNotStarted,
       },
@@ -62,7 +62,7 @@ describe('Countdown.vue', () => {
   it('Should handle countdown in mode AssignmentHasNotStarted', async () => {
     const seconds = 10;
     const wrapper = shallowMount(omegaup_Countdown, {
-      propsData: {
+      props: {
         targetTime: new Date(now + 1000 * seconds),
         countdownFormat: omegaup.CountdownFormat.AssignmentHasNotStarted,
       },
@@ -75,7 +75,7 @@ describe('Countdown.vue', () => {
   it('Should handle countdown in mode AssignmentHasNotStarted when assignment has started', async () => {
     const seconds = 10;
     const wrapper = shallowMount(omegaup_Countdown, {
-      propsData: {
+      props: {
         targetTime: new Date(now - 1000 * seconds),
         countdownFormat: omegaup.CountdownFormat.AssignmentHasNotStarted,
       },
@@ -88,7 +88,7 @@ describe('Countdown.vue', () => {
   it('Should handle countdown in mode WaitBetweenUploadsSeconds', async () => {
     const seconds = 10;
     const wrapper = shallowMount(omegaup_Countdown, {
-      propsData: {
+      props: {
         targetTime: new Date(now + 1000 * seconds),
         countdownFormat: omegaup.CountdownFormat.WaitBetweenUploadsSeconds,
       },
@@ -102,7 +102,7 @@ describe('Countdown.vue', () => {
 
   it('Should emit finish method', async () => {
     const wrapper = shallowMount(omegaup_Countdown, {
-      propsData: {
+      props: {
         targetTime: new Date(now + 1000),
       },
     });
