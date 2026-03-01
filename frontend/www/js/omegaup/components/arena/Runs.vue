@@ -115,7 +115,7 @@
                 <OmegaupCommonTypeahead
                   data-search-problem
                   :existing-options="searchResultProblems"
-                  :value.sync="filterProblem"
+                  v-model:value="filterProblem"
                   @update-existing-options="
                     (query) => emit('update-search-result-problems', query)
                   "
@@ -137,7 +137,7 @@
                 <OmegaupCommonTypeahead
                   data-search-username
                   :existing-options="searchResultUsers"
-                  :value.sync="filterUsername"
+                  v-model:value="filterUsername"
                   :max-results="10"
                   @update-existing-options="updateSearchResultUsers"
                 ></OmegaupCommonTypeahead>

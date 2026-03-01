@@ -28,7 +28,7 @@
               <OmegaupCommonTypeahead
                 v-show="selectColumn == 'problem_alias'"
                 :existing-options="searchResultProblems"
-                :value.sync="queryProblem"
+                v-model:value="queryProblem"
                 :placeholder="T.wordsKeyword"
                 @update-existing-options="
                   (query) => emit('update-search-result-problems', query)
@@ -40,7 +40,7 @@
                   selectColumn == 'author_username'
                 "
                 :existing-options="searchResultUsers"
-                :value.sync="queryUsername"
+                v-model:value="queryUsername"
                 :max-results="10"
                 @update-existing-options="
                   (query) => emit('update-search-result-users', query)

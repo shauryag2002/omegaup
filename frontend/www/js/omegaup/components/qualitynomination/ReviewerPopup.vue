@@ -13,7 +13,7 @@
               </label>
               <br />
               <OmegaupRadioSwitch
-                :value.sync="qualitySeal"
+                v-model:value="qualitySeal"
                 :selected-value="qualitySeal"
               ></OmegaupRadioSwitch>
             </div>

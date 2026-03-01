@@ -49,7 +49,7 @@
         <div class="form-group">
           <omegaup-toggle-switch
             v-if="currentAdmissionMode !== AdmissionMode.Private"
-            :value.sync="currentDefaultShowAllContestantsInScoreboard"
+            v-model:value="currentDefaultShowAllContestantsInScoreboard"
             :checked-value="currentDefaultShowAllContestantsInScoreboard"
             :text-description="T.showDefaultAllContestantsInScoreboard"
           ></omegaup-toggle-switch>

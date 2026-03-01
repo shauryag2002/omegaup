@@ -94,7 +94,7 @@
       <div class="form-group col-md-4">
         <label for="inputInteractive">{{ T.settingsInteractive }}</label>
         <omegaup-radio-switch
-          :value.sync="interactive"
+          v-model:value="interactive"
           :selected-value="interactive"
           name="interactive"
         >

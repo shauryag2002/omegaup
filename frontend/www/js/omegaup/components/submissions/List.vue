@@ -22,7 +22,7 @@
       <div v-if="includeUser" class="card-body d-flex align-items-center">
         <omegaup-common-typeahead
           :existing-options="searchResultUsers"
-          :value.sync="searchedUsername"
+          v-model:value="searchedUsername"
           :max-results="10"
           class="mr-2"
           @update-existing-options="

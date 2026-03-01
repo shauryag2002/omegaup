@@ -52,7 +52,7 @@
                   <OmegaupCommonTypeahead
                     :existing-options="searchResultProblems"
                     :activation-threshold="2"
-                    :value.sync="problemAlias"
+                    v-model:value="problemAlias"
                     @update-existing-options="
                       (query) => emit('update-search-result-problems', query)
                     "

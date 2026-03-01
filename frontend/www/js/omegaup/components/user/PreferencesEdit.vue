@@ -102,7 +102,7 @@
       </b-button>
       <!-- id-lint on -->
       <b-popover
-        :show.sync="show"
+        v-model:show="show"
         target="popover-private-profile"
         variant="danger"
         placement="right"

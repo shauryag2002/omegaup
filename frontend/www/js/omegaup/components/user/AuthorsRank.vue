@@ -14,7 +14,7 @@
       <OmegaupCommonTypeahead
         class="col col-md-4 pl-0 pr-2"
         :existing-options="searchResultUsers"
-        :value.sync="searchedUsername"
+        v-model:value="searchedUsername"
         :max-results="10"
         @update-existing-options="
           (query) => emit('update-search-result-users', query)

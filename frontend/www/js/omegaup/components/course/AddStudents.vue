@@ -14,7 +14,7 @@
             <OmegaupCommonTypeahead
               class="w-100"
               :existing-options="searchResultUsers"
-              :value.sync="participant"
+              v-model:value="participant"
               :max-results="10"
               @update-existing-options="
                 (query) => emit('update-search-result-users', query)

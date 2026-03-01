@@ -23,7 +23,7 @@
       <OmegaupCommonTypeahead
         class="col col-md-4 pl-0 pr-2"
         :existing-options="searchResultSchools"
-        :value.sync="searchedSchool"
+        v-model:value="searchedSchool"
         :max-results="10"
         @update-existing-options="
           (query) => emit('update-search-result-schools', query)

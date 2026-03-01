@@ -6,7 +6,7 @@
           <label>{{ T.wordsGroup }}</label>
           <OmegaupCommonTypeahead
             :existing-options="searchResultTeamsGroups"
-            :value.sync="typeaheadGroup"
+            v-model:value="typeaheadGroup"
             :disabled="hasSubmissions"
             @update-existing-options="
               (query) => emit('update-search-result-teams-groups', query)

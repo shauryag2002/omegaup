@@ -27,7 +27,7 @@
             <label class="w-100"
               >{{ T.groupNewFormOnlyAC }}
               <OmegaupRadioSwitch
-                :value.sync="onlyAc"
+                v-model:value="onlyAc"
                 :selected-value="onlyAc"
               ></OmegaupRadioSwitch>
             </label>

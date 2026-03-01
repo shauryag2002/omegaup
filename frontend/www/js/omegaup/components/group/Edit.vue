@@ -120,7 +120,7 @@
       >
         <OmegaupGroupScoreboards
           :group-alias="groupAlias"
-          :scoreboards.sync="currentScoreboards"
+          :scoreboards="currentScoreboards"
           @create-scoreboard="
             (title, alias, description) =>
               emit('create-scoreboard', title, alias, description)

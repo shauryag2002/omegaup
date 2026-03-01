@@ -28,7 +28,7 @@
                 class="w-75"
                 :existing-options="searchResultProblems"
                 :activation-threshold="2"
-                :value.sync="alias"
+                v-model:value="alias"
                 @update-existing-options="
                   (query) =>
                     emit('update-search-result-problems', {
@@ -47,7 +47,7 @@
               >{{ T.contestAddproblemChooseVersion }}
             </label>
             <OmegaupRadioSwitch
-              :value.sync="useLatestVersion"
+              v-model:value="useLatestVersion"
               :selected-value="useLatestVersion"
               :name="'use-latest-version'"
               :text-for-true="T.contestAddproblemLatestVersion"

@@ -97,7 +97,7 @@
           :team-error-row="teamErrorRow"
           :search-result-users="searchResultUsers"
           :number-of-contestants="numberOfContestants"
-          :is-loading.sync="isLoading"
+          :is-loading="isLoading"
           @bulk-identities="(identities) => emit('bulk-identities', identities)"
           @download-teams="(identities) => emit('download-teams', identities)"
           @read-csv="(source) => emit('read-csv', source)"

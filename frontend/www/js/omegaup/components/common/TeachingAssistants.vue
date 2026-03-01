@@ -11,7 +11,7 @@
             />
             <OmegaupCommonTypeahead
               :existing-options="searchResultUsers"
-              :value.sync="username"
+              v-model:value="username"
               :max-results="10"
               @update-existing-options="
                 (query) => emit('update-search-result-users', query)

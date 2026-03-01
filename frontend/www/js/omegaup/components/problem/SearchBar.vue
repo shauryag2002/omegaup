@@ -25,7 +25,7 @@
           :max-results="10"
           :existing-options="searchResultProblems"
           :options="searchResultProblems"
-          :value.sync="currentKeyword"
+          v-model:value="currentKeyword"
           :placeholder="T.wordsKeywordSearch"
           @update-existing-options="
             (query) => $emit('update-search-result-problems', query)

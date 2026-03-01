@@ -75,7 +75,7 @@
               <OmegaupCommonTypeahead
                 :existing-options="searchResultSchools"
                 :options="searchResultSchools"
-                :value.sync="school"
+                v-model:value="school"
                 @update-existing-options="
                   (query) => $emit('update-search-result-schools', query)
                 "

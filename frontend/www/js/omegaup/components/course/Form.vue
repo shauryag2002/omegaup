@@ -67,7 +67,7 @@
               />
             </span>
             <omegaup-radio-switch
-              :value.sync="showScoreboard"
+              v-model:value="showScoreboard"
               :selected-value="showScoreboard"
               name="show-scoreboard"
               :readonly="readOnly"
@@ -98,7 +98,7 @@
               />
             </span>
             <omegaup-radio-switch
-              :value.sync="unlimitedDuration"
+              v-model:value="unlimitedDuration"
               :readonly="readOnly"
               :selected-value="unlimitedDuration"
               name="unlimited-duration"
@@ -137,7 +137,7 @@
                   :existing-options="searchResultSchools"
                   :options="searchResultSchools"
                   :readonly="readOnly"
-                  :value.sync="school"
+                  v-model:value="school"
                   @update-existing-options="
                     (query) => $emit('update-search-result-schools', query)
                   "
@@ -156,7 +156,7 @@
             <omegaup-radio-switch
               name="basic-information"
               :readonly="readOnly"
-              :value.sync="needsBasicInformation"
+              v-model:value="needsBasicInformation"
               :selected-value="needsBasicInformation"
             ></omegaup-radio-switch>
           </div>

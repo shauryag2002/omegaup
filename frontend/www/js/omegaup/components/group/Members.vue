@@ -7,7 +7,7 @@
             <label class="d-inline">{{ T.wordsMember }}</label>
             <OmegaupCommonTypeahead
               :existing-options="searchResultUsers"
-              :value.sync="searchedUsername"
+              v-model:value="searchedUsername"
               :max-results="10"
               class="input"
               @update-existing-options="

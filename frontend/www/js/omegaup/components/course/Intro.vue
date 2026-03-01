@@ -29,7 +29,7 @@
             :full-width="true"
           ></OmegaupMarkdown>
           <OmegaupRadioSwitch
-            :value.sync="shareUserInformation"
+            v-model:value="shareUserInformation"
             :selected-value="shareUserInformation"
             class="align-to-markdown ml-5 mb-3"
           ></OmegaupRadioSwitch>
@@ -41,7 +41,7 @@
             :full-width="true"
           ></OmegaupMarkdown>
           <OmegaupRadioSwitch
-            :value.sync="acceptTeacher"
+            v-model:value="acceptTeacher"
             :selected-value="acceptTeacher"
             name="accept-teacher"
             class="align-to-markdown ml-5"

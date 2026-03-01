@@ -1,9 +1,9 @@
 <template>
   <OmegaupTeamsGroupForm
-    :alias.sync="alias"
-    :description.sync="description"
-    :name.sync="name"
-    :number-of-contestants.sync="numberOfContestants"
+    v-model:alias="alias"
+    v-model:description="description"
+    v-model:name="name"
+    v-model:number-of-contestants="numberOfContestants"
     :max-number-of-contestants="maxNumberOfContestants"
     @submit="(request) => emit('create-teams-group', { ...request, alias })"
   >

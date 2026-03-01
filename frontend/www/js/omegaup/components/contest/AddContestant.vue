@@ -7,7 +7,7 @@
             <label>{{ T.addUsersMultipleOrSingleUser }}</label>
             <OmegaupCommonMultiTypeahead
               :existing-options="searchResultUsers"
-              :value.sync="typeaheadContestants"
+              v-model:value="typeaheadContestants"
               @update-existing-options="
                 (query) => emit('update-search-result-users', query)
               "

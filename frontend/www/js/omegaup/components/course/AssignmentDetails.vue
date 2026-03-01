@@ -178,10 +178,6 @@
             :assignment-problems="assignmentProblems"
             :tagged-problems="taggedProblems"
             :selected-assignment="assignment"
-            :assignment-form-mode="assignmentFormMode"
-            @update:assignment-form-mode="
-              (val) => emit('update:assignmentFormMode', val)
-            "
             :search-result-problems="searchResultProblems"
             @update-search-result-problems="
               (query) => emit('update-search-result-problems', query)

@@ -150,7 +150,7 @@
       </div>
       <div class="form-group">
         <OmegaupToggleSwitch
-          :value.sync="allowTags"
+          v-model:value="allowTags"
           :checked-value="allowTags"
           :text-description="T.problemEditFormAllowUserAddTags"
         ></OmegaupToggleSwitch>

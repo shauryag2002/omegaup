@@ -14,7 +14,7 @@
             />
             <OmegaupCommonTypeahead
               :existing-options="searchResultGroups"
-              :value.sync="group"
+              v-model:value="group"
               :max-results="10"
               @update-existing-options="
                 (query) => emit('update-search-result-groups', query)

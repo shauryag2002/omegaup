@@ -22,7 +22,7 @@
         <omegaup-common-typeahead
           class="col col-md-4 pl-0 pr-2"
           :existing-options="searchResultUsers"
-          :value.sync="searchedUsername"
+          v-model:value="searchedUsername"
           :max-results="10"
           @update-existing-options="
             (query) => $emit('update-search-result-users', query)
@@ -135,7 +135,7 @@
               </b-button>
               <!-- id-lint on -->
               <b-popover
-                :show.sync="showPopover"
+                v-model:show="showPopover"
                 target="popover-solved-problems"
                 placement="right"
               >

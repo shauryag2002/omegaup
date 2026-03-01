@@ -136,7 +136,7 @@
           :assignment-problems="assignmentProblems"
           :tagged-problems="data.taggedProblems"
           :invalid-parameter-name="invalidParameterName"
-          :assignment-form-mode.sync="assignmentFormMode"
+          v-model:assignment-form-mode="assignmentFormMode"
           :course-alias="data.course.alias"
           :search-result-problems="searchResultProblems"
           @update-search-result-problems="

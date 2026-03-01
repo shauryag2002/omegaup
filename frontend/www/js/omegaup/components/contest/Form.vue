@@ -416,7 +416,7 @@
                     }"
                     :existing-options="searchResultTeamsGroups"
                     :options="searchResultTeamsGroups"
-                    :value.sync="currentTeamsGroupAlias"
+                    v-model:value="currentTeamsGroupAlias"
                     :disabled="isSubmitting"
                     @update-existing-options="updateTeamsGroups"
                   ></omegaup-common-typeahead>

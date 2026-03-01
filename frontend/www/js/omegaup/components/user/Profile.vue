@@ -3,7 +3,7 @@
     <omegaup-user-profile-wrapper
       :profile="profile"
       :data="data"
-      :selected-tab.sync="currentSelectedTab"
+      v-model:selected-tab="currentSelectedTab"
       :has-password="hasPassword"
     >
       <template #message>
@@ -21,7 +21,7 @@
             :profile="profile"
             :profile-badges="profileBadges"
             :visitor-badges="visitorBadges"
-            :selected-tab.sync="currentViewProfileSelectedTab"
+            v-model:selected-tab="currentViewProfileSelectedTab"
             :heatmap-data="heatmapData"
             :available-years="availableYears"
             :profile-statistics="profileStatistics"

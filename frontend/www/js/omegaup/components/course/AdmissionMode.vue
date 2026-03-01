@@ -74,7 +74,7 @@
           >
             <omegaup-toggle-switch
               v-if="shouldShowPublicOption"
-              :value.sync="currentShowInPublicCoursesList"
+              v-model:value="currentShowInPublicCoursesList"
               :checked-value="currentShowInPublicCoursesList"
               :text-description="T.courseEditShowInPublicCoursesList"
             ></omegaup-toggle-switch>
