@@ -15,11 +15,11 @@
  *
  * @see https://v3-migration.vuejs.org/migration-build.html
  */
-import { configureCompat } from '@vue/compat';
+import Vue, { configureCompat } from '@vue/compat';
 
 configureCompat({
   MODE: 2,
 } as any);
 
 export * from '@vue/compat';
-export { default } from '@vue/compat';
+export default Vue;

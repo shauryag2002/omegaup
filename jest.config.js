@@ -26,7 +26,7 @@ module.exports = {
   moduleFileExtensions: ['js', 'ts', 'vue'],
   moduleDirectories: ['node_modules'],
   moduleNameMapper: {
-    '^vue$': '@vue/compat',
+    '^vue$': '<rootDir>/frontend/www/js/omegaup/vue-compat.ts',
     'vue-async-computed-decorator':
       '<rootDir>/node_modules/vue-async-computed-decorator/dist/index.js',
     '^@/(.*)$': '<rootDir>/frontend/www/$1',
@@ -38,7 +38,10 @@ module.exports = {
     'vue-codemirror-lite':
       '<rootDir>/frontend/www/js/omegaup/__mocks__/vue-codemirror-lite.js',
   },
-  setupFilesAfterEnv: ['<rootDir>/frontend/www/js/omegaup/test.setup.ts'],
+  setupFilesAfterEnv: [
+    '<rootDir>/frontend/www/js/omegaup/test.jquery-setup.ts',
+    '<rootDir>/frontend/www/js/omegaup/test.setup.ts',
+  ],
   transform: {
     '.*\\.vue$': [
       '@vue/vue3-jest',
