@@ -21,7 +21,7 @@ describe('SolutionTab.vue', () => {
 
     expect(wrapper.vm.currentSolutionMarkdown).toBe('Hello omegaUp');
 
-    const markdownContent = wrapper.find('omegaup-markdown-stub');
+    const markdownContent = wrapper.findComponent('omegaup-markdown-stub');
     expect(markdownContent.exists()).toBe(true);
 
     await wrapper.trigger('click');
@@ -30,13 +30,13 @@ describe('SolutionTab.vue', () => {
       T.problemCreatorMarkdownPreviewInitialRender + 'Hello omegaUp',
     );
 
-    expect(wrapper.vm.$store.state.problemSolutionMarkdown).toBe('');
+    expect(store.state.problemSolutionMarkdown).toBe('');
 
     const markdownSaveButton = wrapper.find('button.btn-primary');
     expect(markdownSaveButton.exists()).toBe(true);
     await markdownSaveButton.trigger('click');
 
-    expect(wrapper.vm.$store.state.problemSolutionMarkdown).toBe(
+    expect(store.state.problemSolutionMarkdown).toBe(
       'Hello omegaUp',
     );
   });

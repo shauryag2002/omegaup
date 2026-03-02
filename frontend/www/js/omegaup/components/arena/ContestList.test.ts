@@ -348,8 +348,10 @@ describe('ContestList.vue', () => {
         // Instead of checking for specific page numbers, check that the event was emitted
         // with the correct sorting order and that the page was reset to 1
         const lastEmmitedEvent = emittedEvents?.slice(-1)[0];
-        expect(lastEmmitedEvent[0].params.sort_order).toBe(field);
-        expect(lastEmmitedEvent[0].params.page).toBe(1);
+        expect(lastEmmitedEvent).toBeDefined();
+        const eventData = lastEmmitedEvent![0] as { params: { sort_order: string; page: number } };
+        expect(eventData.params.sort_order).toBe(field);
+        expect(eventData.params.page).toBe(1);
       });
     },
   );

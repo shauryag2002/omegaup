@@ -33,9 +33,9 @@ describe('CodeTab.vue', () => {
     expect(codeSaveButton.exists()).toBe(true);
     await codeSaveButton.trigger('click');
 
-    expect(wrapper.vm.$store.state.problemCodeContent).toBe(
+    expect(store.state.problemCodeContent).toBe(
       'print("Hello World")',
     );
-    expect(wrapper.vm.$store.state.problemCodeExtension).toBe('py');
+    expect(store.state.problemCodeExtension).toBe('py');
   });
 });

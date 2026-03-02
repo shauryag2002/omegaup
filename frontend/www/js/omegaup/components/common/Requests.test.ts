@@ -44,7 +44,7 @@ describe('Requests.vue', () => {
     const wrapper = shallowMount(common_Requests, { propsData });
 
     const buttons = wrapper.findAll('button.text-danger');
-    const feedbackModals = wrapper.findAll('b-modal-stub');
+    const feedbackModals = wrapper.findAllComponents('b-modal-stub');
 
     expect('test_user_1' in wrapper.vm.modalStates).toBe(false);
     await buttons[0].trigger('click');

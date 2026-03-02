@@ -22,7 +22,7 @@ describe('StatementTab.vue', () => {
 
     expect(wrapper.vm.currentMarkdown).toBe('Hello omegaUp');
 
-    const markdownContent = wrapper.find('omegaup-markdown-stub');
+    const markdownContent = wrapper.findComponent('omegaup-markdown-stub');
     expect(markdownContent.exists()).toBe(true);
 
     await wrapper.trigger('click');
@@ -31,13 +31,13 @@ describe('StatementTab.vue', () => {
       T.problemCreatorMarkdownPreviewInitialRender + 'Hello omegaUp',
     );
 
-    expect(wrapper.vm.$store.state.problemMarkdown).toBe('');
+    expect(store.state.problemMarkdown).toBe('');
 
     const markdownSaveButton = wrapper.find('button.btn-primary');
     expect(markdownSaveButton.exists()).toBe(true);
     await markdownSaveButton.trigger('click');
 
-    expect(wrapper.vm.$store.state.problemMarkdown).toBe('Hello omegaUp');
+    expect(store.state.problemMarkdown).toBe('Hello omegaUp');
   });
 
   describe('Image size validation', () => {

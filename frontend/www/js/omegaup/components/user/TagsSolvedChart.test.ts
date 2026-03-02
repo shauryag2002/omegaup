@@ -1,18 +1,20 @@
 import { shallowMount } from '@vue/test-utils';
-import Vue from 'vue';
 import TagsSolvedChart from './TagsSolvedChart.vue';
 
 // Mock Highcharts to avoid actual chart rendering in tests
 // Use render function instead of template since Vue runtime-only build
 // doesn't include the template compiler
-jest.mock('highcharts-vue', () => ({
-  Chart: {
-    name: 'highcharts',
-    render(h: Vue.CreateElement) {
-      return h('div', { class: 'highcharts-mock' });
+jest.mock('highcharts-vue', () => {
+  const { h: createVNode } = require('vue');
+  return {
+    Chart: {
+      name: 'highcharts',
+      render() {
+        return createVNode('div', { class: 'highcharts-mock' });
+      },
     },
-  },
-}));
+  };
+});
 
 describe('TagsSolvedChart.vue', () => {
   const defaultTags = [

@@ -45,6 +45,8 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, Ref, Watch } from 'vue-property-decorator';
+import type { Store } from 'vuex';
+import type { StoreState } from '../../../../problem/creator/types';
 import * as Markdown from '@/third_party/js/pagedown/Markdown.Editor.js';
 import * as markdown from '../../../../markdown';
 import * as ui from '../../../../ui';
@@ -65,6 +67,7 @@ const markdownConverter = new markdown.Converter({
   },
 })
 export default class SolutionTab extends Vue {
+  declare $store: Store<StoreState>;
   @Ref() readonly markdownButtonBar!: HTMLDivElement;
   @Ref() readonly markdownInput!: HTMLTextAreaElement;
 

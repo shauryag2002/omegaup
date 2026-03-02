@@ -73,7 +73,7 @@ describe('MultipleCasesInput.vue', () => {
       global: { plugins: [store, BootstrapVueNext] },
     });
 
-    const formSelect = wrapper.find(
+    const formSelect = wrapper.findComponent(
       'b-form-select-stub[name="multiple-cases-group"]',
     );
     expect(formSelect.props()['options']).toBe(wrapper.vm.options);

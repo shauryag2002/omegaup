@@ -356,9 +356,11 @@ describe('Runs.vue', () => {
       },
     });
 
+    // @ts-expect-error - VTU cannot infer props for dual script block components
     await wrapper.setProps({ username: 'username' });
-    expect(wrapper.vm.filterUsername?.key).toBe('username');
+    expect((wrapper.vm.filterUsername as { key: string } | undefined)?.key).toBe('username');
 
+    // @ts-expect-error - VTU cannot infer props for dual script block components
     await wrapper.setProps({ username: null });
     expect(wrapper.vm.filterUsername).toBeFalsy();
   });

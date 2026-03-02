@@ -116,7 +116,7 @@ describe('Detailsv2.vue', () => {
     const expectedTabs = [T.wordsProblem, T.wordsRuns, T.wordsClarifications];
     expect(expectedTabs.length).toBe(tabs.length);
     for (let i = 0; i < expectedTabs.length; i++) {
-      expect(tabs.at(i).attributes('title')).toBe(expectedTabs[i]);
+      expect(tabs[i].attributes('title')).toBe(expectedTabs[i]);
     }
   });
 
