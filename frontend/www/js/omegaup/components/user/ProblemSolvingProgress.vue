@@ -146,7 +146,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from 'vue-property-decorator';
+import { defineComponent, ref, computed, PropType } from 'vue';
 import T from '../../lang';
 import * as ui from '../../ui';
 
@@ -157,119 +157,150 @@ export interface DifficultyStats {
   unlabelled: number;
 }
 
-@Component
-export default class ProblemSolvingProgress extends Vue {
-  @Prop({ required: true }) difficulty!: DifficultyStats;
-  @Prop({ default: 0 }) attempting!: number;
+export default defineComponent({
+  name: 'ProblemSolvingProgress',
+  props: {
+    difficulty: {
+      type: Object as PropType<DifficultyStats>,
+      required: true,
+    },
+    attempting: {
+      type: Number,
+      default: 0,
+    },
+  },
+  setup(props) {
+    const hoveredSegment = ref<
+      'easy' | 'medium' | 'hard' | 'unlabelled' | null
+    >(null);
 
-  T = T;
-  ui = ui;
+    const circumference = 2 * Math.PI * 50; // r=50
 
-  hoveredSegment: 'easy' | 'medium' | 'hard' | 'unlabelled' | null = null;
-
-  private readonly circumference = 2 * Math.PI * 50; // r=50
-
-  private readonly segmentColors: Record<string, string> = {
-    easy: 'var(--problem-progress-easy-color)',
-    medium: 'var(--problem-progress-medium-color)',
-    hard: 'var(--problem-progress-hard-color)',
-    unlabelled: 'var(--problem-progress-unlabelled-color)',
-  };
-
-  get displayCount(): number {
-    if (!this.hoveredSegment) return this.total;
-    return this.difficulty[this.hoveredSegment];
-  }
-
-  get hoveredLabel(): string {
-    if (!this.hoveredSegment) return '';
-    const labels: Record<string, string> = {
-      easy: this.T.profileEasy,
-      medium: this.T.profileMedium,
-      hard: this.T.profileHard,
-      unlabelled: this.T.profileUnlabelled,
+    const segmentColors: Record<string, string> = {
+      easy: 'var(--problem-progress-easy-color)',
+      medium: 'var(--problem-progress-medium-color)',
+      hard: 'var(--problem-progress-hard-color)',
+      unlabelled: 'var(--problem-progress-unlabelled-color)',
     };
-    return labels[this.hoveredSegment];
-  }
 
-  getProgressTitle(segment: 'easy' | 'medium' | 'hard' | 'unlabelled'): string {
-    const labels: Record<string, string> = {
-      easy: this.T.profileEasy,
-      medium: this.T.profileMedium,
-      hard: this.T.profileHard,
-      unlabelled: this.T.profileUnlabelled,
-    };
-    return this.ui.formatString(this.T.profileDifficultyProgress, {
-      difficulty: labels[segment],
-      count: this.difficulty[segment].toString(),
-      total: this.total.toString(),
+    const total = computed((): number => {
+      return (
+        props.difficulty.easy +
+        props.difficulty.medium +
+        props.difficulty.hard +
+        props.difficulty.unlabelled
+      );
     });
-  }
 
-  get hoveredCountStyle(): Record<string, string> {
-    if (!this.hoveredSegment) return {};
-    return { color: this.segmentColors[this.hoveredSegment] };
-  }
+    const displayCount = computed((): number => {
+      if (!hoveredSegment.value) return total.value;
+      return props.difficulty[hoveredSegment.value];
+    });
 
-  get hoveredLabelStyle(): Record<string, string> {
-    if (!this.hoveredSegment) return {};
-    return { color: this.segmentColors[this.hoveredSegment] };
-  }
+    const hoveredLabel = computed((): string => {
+      if (!hoveredSegment.value) return '';
+      const labels: Record<string, string> = {
+        easy: T.profileEasy,
+        medium: T.profileMedium,
+        hard: T.profileHard,
+        unlabelled: T.profileUnlabelled,
+      };
+      return labels[hoveredSegment.value];
+    });
 
-  get total(): number {
-    return (
-      this.difficulty.easy +
-      this.difficulty.medium +
-      this.difficulty.hard +
-      this.difficulty.unlabelled
-    );
-  }
+    function getProgressTitle(
+      segment: 'easy' | 'medium' | 'hard' | 'unlabelled',
+    ): string {
+      const labels: Record<string, string> = {
+        easy: T.profileEasy,
+        medium: T.profileMedium,
+        hard: T.profileHard,
+        unlabelled: T.profileUnlabelled,
+      };
+      return ui.formatString(T.profileDifficultyProgress, {
+        difficulty: labels[segment],
+        count: props.difficulty[segment].toString(),
+        total: total.value.toString(),
+      });
+    }
 
-  get easyDash(): string {
-    if (this.total === 0) return `0 ${this.circumference}`;
-    const percent = this.difficulty.easy / this.total;
-    return `${percent * this.circumference} ${this.circumference}`;
-  }
+    const hoveredCountStyle = computed((): Record<string, string> => {
+      if (!hoveredSegment.value) return {};
+      return { color: segmentColors[hoveredSegment.value] };
+    });
 
-  get mediumDash(): string {
-    if (this.total === 0) return `0 ${this.circumference}`;
-    const percent = this.difficulty.medium / this.total;
-    return `${percent * this.circumference} ${this.circumference}`;
-  }
+    const hoveredLabelStyle = computed((): Record<string, string> => {
+      if (!hoveredSegment.value) return {};
+      return { color: segmentColors[hoveredSegment.value] };
+    });
 
-  get mediumOffset(): number {
-    if (this.total === 0) return 0;
-    const easyPercent = this.difficulty.easy / this.total;
-    return -easyPercent * this.circumference;
-  }
+    const easyDash = computed((): string => {
+      if (total.value === 0) return `0 ${circumference}`;
+      const percent = props.difficulty.easy / total.value;
+      return `${percent * circumference} ${circumference}`;
+    });
 
-  get hardDash(): string {
-    if (this.total === 0) return `0 ${this.circumference}`;
-    const percent = this.difficulty.hard / this.total;
-    return `${percent * this.circumference} ${this.circumference}`;
-  }
+    const mediumDash = computed((): string => {
+      if (total.value === 0) return `0 ${circumference}`;
+      const percent = props.difficulty.medium / total.value;
+      return `${percent * circumference} ${circumference}`;
+    });
 
-  get hardOffset(): number {
-    if (this.total === 0) return 0;
-    const prevPercent =
-      (this.difficulty.easy + this.difficulty.medium) / this.total;
-    return -prevPercent * this.circumference;
-  }
+    const mediumOffset = computed((): number => {
+      if (total.value === 0) return 0;
+      const easyPercent = props.difficulty.easy / total.value;
+      return -easyPercent * circumference;
+    });
 
-  get unlabelledDash(): string {
-    if (this.total === 0) return `0 ${this.circumference}`;
-    const percent = this.difficulty.unlabelled / this.total;
-    return `${percent * this.circumference} ${this.circumference}`;
-  }
+    const hardDash = computed((): string => {
+      if (total.value === 0) return `0 ${circumference}`;
+      const percent = props.difficulty.hard / total.value;
+      return `${percent * circumference} ${circumference}`;
+    });
 
-  get unlabelledOffset(): number {
-    if (this.total === 0) return 0;
-    const prevPercent =
-      (this.difficulty.easy + this.difficulty.medium + this.difficulty.hard) /
-      this.total;
-    return -prevPercent * this.circumference;
-  }
-}
+    const hardOffset = computed((): number => {
+      if (total.value === 0) return 0;
+      const prevPercent =
+        (props.difficulty.easy + props.difficulty.medium) / total.value;
+      return -prevPercent * circumference;
+    });
+
+    const unlabelledDash = computed((): string => {
+      if (total.value === 0) return `0 ${circumference}`;
+      const percent = props.difficulty.unlabelled / total.value;
+      return `${percent * circumference} ${circumference}`;
+    });
+
+    const unlabelledOffset = computed((): number => {
+      if (total.value === 0) return 0;
+      const prevPercent =
+        (props.difficulty.easy +
+          props.difficulty.medium +
+          props.difficulty.hard) /
+        total.value;
+      return -prevPercent * circumference;
+    });
+
+    return {
+      T,
+      ui,
+      hoveredSegment,
+      displayCount,
+      hoveredLabel,
+      getProgressTitle,
+      hoveredCountStyle,
+      hoveredLabelStyle,
+      total,
+      easyDash,
+      mediumDash,
+      mediumOffset,
+      hardDash,
+      hardOffset,
+      unlabelledDash,
+      unlabelledOffset,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>

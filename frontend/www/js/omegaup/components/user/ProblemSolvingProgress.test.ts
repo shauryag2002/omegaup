@@ -254,8 +254,8 @@ describe('ProblemSolvingProgress.vue', () => {
     // Initially visible
     expect(wrapper.find('.attempting-label').exists()).toBe(true);
 
-    // Set hover state
-    await wrapper.setData({ hoveredSegment: 'easy' });
+    // Trigger hover state via mouseenter on a segment
+    await wrapper.find('.circle-segment.easy').trigger('mouseenter');
 
     // Should be hidden now
     expect(wrapper.find('.attempting-label').exists()).toBe(false);
