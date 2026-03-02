@@ -129,7 +129,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { defineComponent, ref, computed, onMounted, PropType } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
@@ -156,121 +156,133 @@ export enum Level {
   Advanced = 'advanced',
 }
 
-@Component({
+export default defineComponent({
+  name: 'CourseTabs',
   components: {
     'omegaup-course-card-public': course_CardPublic,
     'omegaup-course-card-enrolled': course_CardEnrolled,
     'omegaup-course-card-finished': course_CardFinished,
     'omegaup-markdown': omegaup_Markdown,
   },
-})
-export default class CourseTabs extends Vue {
-  @Prop() courses!: {
-    enrolled: types.CourseCardEnrolled[];
-    public: types.CourseCardPublic[];
-    finished: types.CourseCardFinished[];
-  };
-  @Prop({ default: false }) loggedIn!: boolean;
-  @Prop({ default: Tab.Public }) selectedTab!: Tab;
-  @Prop() hasVisitedSection!: boolean;
+  props: {
+    courses: {
+      type: Object as PropType<{
+        enrolled: types.CourseCardEnrolled[];
+        public: types.CourseCardPublic[];
+        finished: types.CourseCardFinished[];
+      }>,
+      required: true,
+    },
+    loggedIn: { type: Boolean, default: false },
+    selectedTab: { type: String as PropType<Tab>, default: Tab.Public },
+    hasVisitedSection: { type: Boolean, required: true },
+  },
+  setup(props) {
+    const currentSelectedTab = ref(props.selectedTab);
+    const searchText = ref('');
+    const levelFilter = ref(Level.All);
 
-  T = T;
-  ui = ui;
-  Tab = Tab;
-  Level = Level;
-  currentSelectedTab = this.selectedTab;
-  searchText = '';
-  levelFilter = Level.All;
+    const tabNames = computed((): Record<Tab, string> => {
+      return {
+        [Tab.Public]: T.courseTabPublic,
+        [Tab.Enrolled]: props.loggedIn
+          ? ui.formatString(T.courseTabEnrolled, {
+              course_count: props.courses.enrolled.length,
+            })
+          : T.courseTabEnrolledUnlogged,
+        [Tab.Finished]: props.loggedIn
+          ? ui.formatString(T.courseTabFinished, {
+              course_count: props.courses.finished.length,
+            })
+          : T.courseTabFinishedUnlogged,
+      };
+    });
 
-  mounted() {
-    const title = T.joinCourseInteractiveGuideTitle;
-    if (!this.hasVisitedSection) {
-      introJs()
-        .setOptions({
-          nextLabel: T.interactiveGuideNextButton,
-          prevLabel: T.interactiveGuidePreviousButton,
-          doneLabel: T.interactiveGuideDoneButton,
-          steps: [
-            {
-              title,
-              intro: T.joinCourseInteractiveGuideWelcome,
-            },
-            {
-              element: document.querySelector<HTMLElement>('.introjs-tabs'),
-              title,
-              intro: T.joinCourseInteractiveGuideTabs,
-            },
-            {
-              element: document.querySelector<HTMLElement>('.introjs-search'),
-              title,
-              intro: T.joinCourseInteractiveGuideSearch,
-            },
-            {
-              element: document.querySelector<HTMLElement>('.introjs-join'),
-              title,
-              intro: T.joinCourseInteractiveGuideJoin,
-            },
-          ],
-        })
-        .start();
-      setCookie('has-visited-join-course', true);
-    }
-  }
+    const filteredCards = computed(():
+      | types.CourseCardEnrolled[]
+      | types.CourseCardPublic[]
+      | types.CourseCardFinished[] => {
+      switch (currentSelectedTab.value) {
+        case Tab.Enrolled:
+          return props.courses.enrolled.filter(
+            (course) =>
+              searchText.value === '' ||
+              latinize(course.name.toLowerCase()).includes(
+                latinize(searchText.value.toLowerCase()),
+              ),
+          );
+        case Tab.Finished:
+          return props.courses.finished.filter(
+            (course) =>
+              searchText.value === '' ||
+              latinize(course.name.toLowerCase()).includes(
+                latinize(searchText.value.toLowerCase()),
+              ),
+          );
+        default:
+          return props.courses.public.filter((course) => {
+            const matchesText =
+              searchText.value === '' ||
+              latinize(course.name.toLowerCase()).includes(
+                latinize(searchText.value.toLowerCase()),
+              );
 
-  get tabNames(): Record<Tab, string> {
+            const matchesLevel =
+              levelFilter.value === Level.All || course.level === levelFilter.value;
+
+            return matchesText && matchesLevel;
+          });
+      }
+    });
+
+    onMounted(() => {
+      const title = T.joinCourseInteractiveGuideTitle;
+      if (!props.hasVisitedSection) {
+        introJs()
+          .setOptions({
+            nextLabel: T.interactiveGuideNextButton,
+            prevLabel: T.interactiveGuidePreviousButton,
+            doneLabel: T.interactiveGuideDoneButton,
+            steps: [
+              {
+                title,
+                intro: T.joinCourseInteractiveGuideWelcome,
+              },
+              {
+                element: document.querySelector<HTMLElement>('.introjs-tabs'),
+                title,
+                intro: T.joinCourseInteractiveGuideTabs,
+              },
+              {
+                element: document.querySelector<HTMLElement>('.introjs-search'),
+                title,
+                intro: T.joinCourseInteractiveGuideSearch,
+              },
+              {
+                element: document.querySelector<HTMLElement>('.introjs-join'),
+                title,
+                intro: T.joinCourseInteractiveGuideJoin,
+              },
+            ],
+          })
+          .start();
+        setCookie('has-visited-join-course', true);
+      }
+    });
+
     return {
-      [Tab.Public]: T.courseTabPublic,
-      [Tab.Enrolled]: this.loggedIn
-        ? ui.formatString(T.courseTabEnrolled, {
-            course_count: this.courses.enrolled.length,
-          })
-        : T.courseTabEnrolledUnlogged,
-      [Tab.Finished]: this.loggedIn
-        ? ui.formatString(T.courseTabFinished, {
-            course_count: this.courses.finished.length,
-          })
-        : T.courseTabFinishedUnlogged,
+      T,
+      ui,
+      Tab,
+      Level,
+      currentSelectedTab,
+      searchText,
+      levelFilter,
+      tabNames,
+      filteredCards,
     };
-  }
-
-  get filteredCards():
-    | types.CourseCardEnrolled[]
-    | types.CourseCardPublic[]
-    | types.CourseCardFinished[] {
-    switch (this.currentSelectedTab) {
-      case Tab.Enrolled:
-        return this.courses.enrolled.filter(
-          (course) =>
-            this.searchText === '' ||
-            latinize(course.name.toLowerCase()).includes(
-              latinize(this.searchText.toLowerCase()),
-            ),
-        );
-      case Tab.Finished:
-        return this.courses.finished.filter(
-          (course) =>
-            this.searchText === '' ||
-            latinize(course.name.toLowerCase()).includes(
-              latinize(this.searchText.toLowerCase()),
-            ),
-        );
-      default:
-        // Only apply level filter to public courses
-        return this.courses.public.filter((course) => {
-          const matchesText =
-            this.searchText === '' ||
-            latinize(course.name.toLowerCase()).includes(
-              latinize(this.searchText.toLowerCase()),
-            );
-
-          const matchesLevel =
-            this.levelFilter === Level.All || course.level === this.levelFilter;
-
-          return matchesText && matchesLevel;
-        });
-    }
-  }
-}
+  },
+});
 </script>
 
 <style lang="scss">

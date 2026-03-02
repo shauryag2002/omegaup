@@ -102,129 +102,144 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+import { defineComponent, ref, computed } from 'vue';
 import store from './GraderStore';
 import { types } from '../api_types';
 import { GraderResults, CaseSelectorGroup } from './GraderStore';
 import T from '../lang';
 
-@Component
-export default class CaseSelector extends Vue {
-  newCaseWeight: null | number = null;
-  newCaseName: string = '';
-  T = T;
+export default defineComponent({
+  name: 'CaseSelector',
+  setup() {
+    const newCaseWeight = ref<null | number>(null);
+    const newCaseName = ref('');
 
-  get theme(): string {
-    return store.getters['theme'];
-  }
-  get summary(): string {
-    if (!store.state.results || !store.state.results.verdict) {
-      return '…';
-    }
-    return `${store.state.results.verdict} ${this.score(store.state.results)}`;
-  }
+    const theme = computed(() => store.getters['theme']);
 
-  get groups(): CaseSelectorGroup[] {
-    return store.getters['caseSelectorGroups'];
-  }
+    const groups = computed((): CaseSelectorGroup[] => store.getters['caseSelectorGroups']);
 
-  get currentCase(): string {
-    return store.getters['currentCase'];
-  }
-
-  set currentCase(value: string) {
-    store.dispatch('currentCase', value);
-  }
-
-  caseResult(caseName: string): null | types.CaseResult {
-    const flatCaseResults = store.getters.flatCaseResults;
-    if (!flatCaseResults[caseName]) return null;
-    return flatCaseResults[caseName];
-  }
-
-  groupResult(groupName: string): null | types.RunDetailsGroup {
-    const results = store.state.results;
-    if (!results || !results.groups) return null;
-    for (const group of results.groups) {
-      if (group.group == groupName) return group;
-    }
-    return null;
-  }
-
-  verdictLabel(
-    result: null | types.RunDetailsGroup | types.CaseResult,
-  ): string {
-    if (!result) return '…';
-
-    if (typeof result.verdict === 'undefined') {
-      if (result.contest_score == result.max_score) return '✓';
-      return '✗';
-    }
-    switch (result.verdict) {
-      case 'CE':
-        return '…';
-      case 'AC':
-        return '✓';
-      case 'PA':
-        return '½';
-      case 'WA':
-        return '✗';
-      case 'TLE':
-        return '⌚';
-    }
-    return ' ☹';
-  }
-
-  verdictClass(result: null | types.RunDetailsGroup): string {
-    if (!result) return '';
-    return result.verdict || '';
-  }
-
-  verdictTooltip(
-    result: null | types.RunDetailsGroup | types.CaseResult,
-  ): string {
-    if (!result) return '';
-    if (typeof result.verdict !== 'undefined') {
-      return `${result.verdict} ${this.score(result)}`;
-    }
-    return this.score(result);
-  }
-
-  score(
-    result: null | types.RunDetailsGroup | types.CaseResult | GraderResults,
-  ): string {
-    if (!result) return '…';
-    return `${this.formatNumber(result.contest_score)}/${this.formatNumber(
-      result.max_score || 0,
-    )}`;
-  }
-
-  formatNumber(value: number): string {
-    const str = value.toFixed(2);
-    if (str.endsWith('.00')) return str.substring(0, str.length - 3);
-    return str;
-  }
-
-  selectCase(name: string): void {
-    this.currentCase = name;
-  }
-
-  createCase(): void {
-    if (!this.newCaseName) return;
-
-    store.dispatch('createCase', {
-      name: this.newCaseName,
-      weight: this.newCaseWeight ?? 1,
+    const currentCase = computed({
+      get: (): string => store.getters['currentCase'],
+      set: (value: string) => { store.dispatch('currentCase', value); },
     });
 
-    this.newCaseWeight = null;
-    this.newCaseName = '';
-  }
+    const summary = computed(() => {
+      if (!store.state.results || !store.state.results.verdict) {
+        return '…';
+      }
+      return `${store.state.results.verdict} ${score(store.state.results)}`;
+    });
 
-  removeCase(name: string): void {
-    store.dispatch('removeCase', name);
-  }
-}
+    function caseResult(caseName: string): null | types.CaseResult {
+      const flatCaseResults = store.getters.flatCaseResults;
+      if (!flatCaseResults[caseName]) return null;
+      return flatCaseResults[caseName];
+    }
+
+    function groupResult(groupName: string): null | types.RunDetailsGroup {
+      const results = store.state.results;
+      if (!results || !results.groups) return null;
+      for (const group of results.groups) {
+        if (group.group == groupName) return group;
+      }
+      return null;
+    }
+
+    function verdictLabel(
+      result: null | types.RunDetailsGroup | types.CaseResult,
+    ): string {
+      if (!result) return '…';
+
+      if (typeof result.verdict === 'undefined') {
+        if (result.contest_score == result.max_score) return '✓';
+        return '✗';
+      }
+      switch (result.verdict) {
+        case 'CE':
+          return '…';
+        case 'AC':
+          return '✓';
+        case 'PA':
+          return '½';
+        case 'WA':
+          return '✗';
+        case 'TLE':
+          return '⌚';
+      }
+      return ' ☹';
+    }
+
+    function verdictClass(result: null | types.RunDetailsGroup): string {
+      if (!result) return '';
+      return result.verdict || '';
+    }
+
+    function verdictTooltip(
+      result: null | types.RunDetailsGroup | types.CaseResult,
+    ): string {
+      if (!result) return '';
+      if (typeof result.verdict !== 'undefined') {
+        return `${result.verdict} ${score(result)}`;
+      }
+      return score(result);
+    }
+
+    function score(
+      result: null | types.RunDetailsGroup | types.CaseResult | GraderResults,
+    ): string {
+      if (!result) return '…';
+      return `${formatNumber(result.contest_score)}/${formatNumber(
+        result.max_score || 0,
+      )}`;
+    }
+
+    function formatNumber(value: number): string {
+      const str = value.toFixed(2);
+      if (str.endsWith('.00')) return str.substring(0, str.length - 3);
+      return str;
+    }
+
+    function selectCase(name: string): void {
+      currentCase.value = name;
+    }
+
+    function createCase(): void {
+      if (!newCaseName.value) return;
+
+      store.dispatch('createCase', {
+        name: newCaseName.value,
+        weight: newCaseWeight.value ?? 1,
+      });
+
+      newCaseWeight.value = null;
+      newCaseName.value = '';
+    }
+
+    function removeCase(name: string): void {
+      store.dispatch('removeCase', name);
+    }
+
+    return {
+      T,
+      newCaseWeight,
+      newCaseName,
+      theme,
+      summary,
+      groups,
+      currentCase,
+      caseResult,
+      groupResult,
+      verdictLabel,
+      verdictClass,
+      verdictTooltip,
+      score,
+      formatNumber,
+      selectCase,
+      createCase,
+      removeCase,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>

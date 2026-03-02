@@ -131,7 +131,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Ref } from 'vue-property-decorator';
+import { defineComponent, ref, computed, PropType } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
@@ -164,7 +164,8 @@ export enum PopupDisplayed {
   Reviewer,
 }
 
-@Component({
+export default defineComponent({
+  name: 'ProblemDetails',
   components: {
     'omegaup-arena-ephemeral-grader': arena_EphemeralGrader,
     'omegaup-arena-runsubmit-popup': arena_RunSubmitPopup,
@@ -175,146 +176,148 @@ export enum PopupDisplayed {
     'omegaup-problem-settings-summary': problem_SettingsSummary,
     'omegaup-username': user_Username,
   },
-})
-export default class ProblemDetails extends Vue {
-  @Prop() allRuns!: types.Run[];
-  @Prop() currentRunDetails!: types.RunDetails | null;
-  @Prop({ default: null }) languages!: null | string[];
-  @Prop() problem!: types.ProblemDetails;
-  @Prop() user!: types.UserInfoForProblem;
-  @Prop() userRuns!: types.Run[];
+  props: {
+    allRuns: { type: Array as PropType<types.Run[]>, required: true },
+    currentRunDetails: { type: Object as PropType<types.RunDetails | null>, default: null },
+    languages: { type: Array as PropType<string[] | null>, default: null },
+    problem: { type: Object as PropType<types.ProblemDetails>, required: true },
+    user: { type: Object as PropType<types.UserInfoForProblem>, required: true },
+    userRuns: { type: Array as PropType<types.Run[]>, required: true },
+  },
+  emits: ['submit-run', 'show-run-details'],
+  setup(props, { emit }) {
+    const statementMarkdown = ref<InstanceType<typeof omegaup_problemMarkdown> | null>(null);
+    const currentPopupDisplayed = ref(PopupDisplayed.None);
 
-  @Ref('statement-markdown')
-  readonly statementMarkdown!: InstanceType<typeof omegaup_problemMarkdown>;
-
-  T = T;
-  ui = ui;
-  time = time;
-
-  PopupDisplayed = PopupDisplayed;
-  currentPopupDisplayed = PopupDisplayed.None;
-
-  get filteredLanguages(): string[] {
-    if (!this.languages) {
-      return this.problem.languages;
-    }
-    const languagesSet = new Set(this.languages);
-    return this.problem.languages.filter((language) =>
-      languagesSet.has(language),
-    );
-  }
-
-  onRunSubmitted(code: string, language: string): void {
-    this.$emit('submit-run', {
-      code,
-      language,
+    const filteredLanguages = computed(() => {
+      if (!props.languages) {
+        return props.problem.languages;
+      }
+      const languagesSet = new Set(props.languages);
+      return props.problem.languages.filter((language) =>
+        languagesSet.has(language),
+      );
     });
-    this.onPopupDismissed();
-  }
 
-  onPopupDismissed(): void {
-    this.currentPopupDisplayed = PopupDisplayed.None;
-    this.currentRunDetails = null;
-    // TODO: Update the active tab.
-  }
-
-  onNewSubmission(): void {
-    if (!this.user.loggedIn) {
-      // TODO: Redirect to login
-      return;
+    function onPopupDismissed(): void {
+      currentPopupDisplayed.value = PopupDisplayed.None;
+      // TODO: Update the active tab.
     }
-    this.currentPopupDisplayed = PopupDisplayed.RunSubmit;
-  }
 
-  // TODO: handle onRunDetails
+    function onRunSubmitted(code: string, language: string): void {
+      emit('submit-run', {
+        code,
+        language,
+      });
+      onPopupDismissed();
+    }
 
-  onProblemRendered(): void {
-    // TODO: We should probably refactor how the Markdown component is handled,
-    // one for problems (with MathJax and the problem-specific logic) and another
-    // for all other uses.
-    //
-    // It might be better for all of these things, plus the Markdown templating
-    // system altogether to be replaced by the Markdown Vue component be able
-    // to inject Vue components into the DOM after it's being rendered, so that
-    // all the templating and interactivity can be handled by Vue instead of by
-    // JavaScript.
-    const libinteractiveInterfaceNameElement = this.statementMarkdown.$el.querySelector(
-      'span.libinteractive-interface-name',
-    ) as HTMLElement;
-    if (
-      libinteractiveInterfaceNameElement &&
-      this.problem.settings?.interactive?.module_name
-    ) {
-      libinteractiveInterfaceNameElement.innerText = this.problem.settings.interactive.module_name.replace(
-        /\.idl$/,
-        '',
+    function onNewSubmission(): void {
+      if (!props.user.loggedIn) {
+        // TODO: Redirect to login
+        return;
+      }
+      currentPopupDisplayed.value = PopupDisplayed.RunSubmit;
+    }
+
+    // TODO: handle onRunDetails
+
+    function onProblemRendered(): void {
+      if (!statementMarkdown.value) return;
+      const el = statementMarkdown.value.$el;
+
+      const libinteractiveInterfaceNameElement = el.querySelector(
+        'span.libinteractive-interface-name',
+      ) as HTMLElement;
+      if (
+        libinteractiveInterfaceNameElement &&
+        props.problem.settings?.interactive?.module_name
+      ) {
+        libinteractiveInterfaceNameElement.innerText = props.problem.settings.interactive.module_name.replace(
+          /\.idl$/,
+          '',
+        );
+      }
+
+      const outputOnlyDownloadElement = el.querySelector(
+        '.output-only-download a',
       );
-    }
+      if (outputOnlyDownloadElement) {
+        outputOnlyDownloadElement.setAttribute(
+          'href',
+          `/probleminput/${props.problem.alias}/${props.problem.commit}/${props.problem.alias}-input.zip`,
+        );
+      }
 
-    const outputOnlyDownloadElement = this.statementMarkdown.$el.querySelector(
-      '.output-only-download a',
-    );
-    if (outputOnlyDownloadElement) {
-      outputOnlyDownloadElement.setAttribute(
-        'href',
-        `/probleminput/${this.problem.alias}/${this.problem.commit}/${this.problem.alias}-input.zip`,
-      );
-    }
+      const libinteractiveDownloadFormElement = el.querySelector(
+        '.libinteractive-download form',
+      ) as HTMLElement;
+      if (libinteractiveDownloadFormElement) {
+        libinteractiveDownloadFormElement.addEventListener(
+          'submit',
+          (e: Event) => {
+            e.preventDefault();
 
-    const libinteractiveDownloadFormElement = this.statementMarkdown.$el.querySelector(
-      '.libinteractive-download form',
-    ) as HTMLElement;
-    if (libinteractiveDownloadFormElement) {
-      libinteractiveDownloadFormElement.addEventListener(
-        'submit',
-        (e: Event) => {
-          e.preventDefault();
+            const form = e.target as HTMLElement;
+            const alias = props.problem.alias;
+            const commit = props.problem.commit;
+            const os = (form.querySelector('.download-os') as HTMLInputElement)
+              ?.value;
+            const lang = (form.querySelector(
+              '.download-lang',
+            ) as HTMLInputElement)?.value;
+            const extension = os == 'unix' ? '.tar.bz2' : '.zip';
 
-          const form = e.target as HTMLElement;
-          const alias = this.problem.alias;
-          const commit = this.problem.commit;
-          const os = (form.querySelector('.download-os') as HTMLInputElement)
-            ?.value;
-          const lang = (form.querySelector(
-            '.download-lang',
-          ) as HTMLInputElement)?.value;
-          const extension = os == 'unix' ? '.tar.bz2' : '.zip';
+            ui.navigateTo(
+              `${window.location.protocol}//${
+                window.location.host
+              }/templates/${encodeURIComponent(alias)}/${encodeURIComponent(
+                commit,
+              )}/${encodeURIComponent(alias)}_${encodeURIComponent(
+                os,
+              )}_${encodeURIComponent(lang)}${encodeURIComponent(extension)}`,
+            );
+          },
+        );
+      }
 
-          ui.navigateTo(
-            `${window.location.protocol}//${
-              window.location.host
-            }/templates/${encodeURIComponent(alias)}/${encodeURIComponent(
-              commit,
-            )}/${encodeURIComponent(alias)}_${encodeURIComponent(
-              os,
-            )}_${encodeURIComponent(lang)}${encodeURIComponent(extension)}`,
-          );
-        },
-      );
-    }
-
-    const libinteractiveDownloadLangElement = this.statementMarkdown.$el.querySelector(
-      '.libinteractive-download .download-lang',
-    ) as HTMLSelectElement;
-    if (libinteractiveDownloadLangElement) {
-      libinteractiveDownloadLangElement.addEventListener(
-        'change',
-        (e: Event) => {
-          let form = e.target as HTMLElement;
-          while (!form.classList.contains('libinteractive-download')) {
-            if (!form.parentElement) {
-              return;
+      const libinteractiveDownloadLangElement = el.querySelector(
+        '.libinteractive-download .download-lang',
+      ) as HTMLSelectElement;
+      if (libinteractiveDownloadLangElement) {
+        libinteractiveDownloadLangElement.addEventListener(
+          'change',
+          (e: Event) => {
+            let form = e.target as HTMLElement;
+            while (!form.classList.contains('libinteractive-download')) {
+              if (!form.parentElement) {
+                return;
+              }
+              form = form.parentElement;
             }
-            form = form.parentElement;
-          }
-          (form.querySelector(
-            '.libinteractive-extension',
-          ) as HTMLElement).innerText = libinteractiveDownloadLangElement.value;
-        },
-      );
+            (form.querySelector(
+              '.libinteractive-extension',
+            ) as HTMLElement).innerText = libinteractiveDownloadLangElement.value;
+          },
+        );
+      }
     }
-  }
-}
+
+    return {
+      T,
+      ui,
+      time,
+      PopupDisplayed,
+      currentPopupDisplayed,
+      'statement-markdown': statementMarkdown,
+      filteredLanguages,
+      onRunSubmitted,
+      onPopupDismissed,
+      onNewSubmission,
+      onProblemRendered,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>
