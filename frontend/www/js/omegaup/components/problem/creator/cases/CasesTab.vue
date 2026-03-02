@@ -28,7 +28,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch, Prop } from 'vue-property-decorator';
+import { defineComponent, ref, watch, nextTick, PropType } from 'vue';
 import problemCreator_Cases_CaseEdit from './CaseEdit.vue';
 import problemCreator_Cases_Sidebar from './Sidebar.vue';
 import probleCreator_Cases_AddPanel from './AddPanel.vue';
@@ -39,88 +39,97 @@ import T from '../../../../lang';
 import { TabIndex } from '../Tabs.vue';
 import { BCol, BRow } from 'bootstrap-vue-next';
 
-
-@Component({
+export default defineComponent({
+  name: 'CasesTab',
   components: {
     'omegaup-problem-creator-cases-sidebar': problemCreator_Cases_Sidebar,
     'omegaup-problem-creator-cases-add-panel': probleCreator_Cases_AddPanel,
     'omegaup-problem-creator-cases-case-edit': problemCreator_Cases_CaseEdit,
   },
-})
-export default class CasesTab extends Vue {
-  @Prop() activeTabIndex!: TabIndex;
+  props: {
+    activeTabIndex: { type: Number as PropType<TabIndex>, required: true },
+  },
+  emits: ['download-zip-file', 'download-input-file'],
+  setup(props) {
+    const shouldShowAddWindow = ref(false);
+    const shouldShowCaseEditWindow = ref(false);
 
-  shouldShowAddWindow = false;
-  shouldShowCaseEditWindow = false;
-
-  openCaseEditWindow() {
-    this.shouldShowAddWindow = false;
-    this.shouldShowCaseEditWindow = true;
-  }
-
-  closeCaseEditWindow() {
-    this.shouldShowCaseEditWindow = false;
-  }
-
-  closeAddWindow() {
-    this.shouldShowAddWindow = false;
-  }
-
-  openAddWindow() {
-    this.shouldShowCaseEditWindow = false;
-    this.shouldShowAddWindow = true;
-  }
-
-  @Watch('activeTabIndex')
-  onActiveTabIndexChanged(newIndex: TabIndex) {
-    if (newIndex === TabIndex.TestCases) {
-      this.startIntroGuide();
+    function openCaseEditWindow() {
+      shouldShowAddWindow.value = false;
+      shouldShowCaseEditWindow.value = true;
     }
-  }
 
-  startIntroGuide() {
-    if (!getCookie('has-visited-cases-tab')) {
-      const self = this;
-      this.$nextTick(() => {
-        const intro = introJs();
-
-        intro.setOptions({
-          nextLabel: T.interactiveGuideNextButton,
-          prevLabel: T.interactiveGuidePreviousButton,
-          doneLabel: T.interactiveGuideDoneButton,
-          steps: [
-            {
-              title: T.problemCreatorCasesTabIntroSidebarTitle,
-              intro: T.problemCreatorCasesTabIntroSidebarIntro,
-              element: document.querySelector<HTMLElement>(
-                '[data-cases-sidebar]',
-),
-            },
-            {
-              title: T.problemCreatorCasesTabIntroAddPanelTitle,
-              intro: T.problemCreatorCasesTabIntroAddPanelIntro,
-              element: document.querySelector<HTMLElement>(
-                '[data-cases-add-panel]',
-),
-            },
-          ],
-        });
-
-        intro.onbeforechange(function (
-          this: ReturnType<typeof introJs>,
-          _targetElement: HTMLElement,
-          currentStep: number,
-        ) {
-          if (currentStep === 1) {
-            self.openAddWindow();
-          }
-          return true;
-        });
-
-        intro.start();
-        setCookie('has-visited-cases-tab', true);
-      });
+    function closeCaseEditWindow() {
+      shouldShowCaseEditWindow.value = false;
     }
-  }
-}
+
+    function closeAddWindow() {
+      shouldShowAddWindow.value = false;
+    }
+
+    function openAddWindow() {
+      shouldShowCaseEditWindow.value = false;
+      shouldShowAddWindow.value = true;
+    }
+
+    function startIntroGuide() {
+      if (!getCookie('has-visited-cases-tab')) {
+        nextTick(() => {
+          const intro = introJs();
+
+          intro.setOptions({
+            nextLabel: T.interactiveGuideNextButton,
+            prevLabel: T.interactiveGuidePreviousButton,
+            doneLabel: T.interactiveGuideDoneButton,
+            steps: [
+              {
+                title: T.problemCreatorCasesTabIntroSidebarTitle,
+                intro: T.problemCreatorCasesTabIntroSidebarIntro,
+                element: document.querySelector<HTMLElement>(
+                  '[data-cases-sidebar]',
+                ),
+              },
+              {
+                title: T.problemCreatorCasesTabIntroAddPanelTitle,
+                intro: T.problemCreatorCasesTabIntroAddPanelIntro,
+                element: document.querySelector<HTMLElement>(
+                  '[data-cases-add-panel]',
+                ),
+              },
+            ],
+          });
+
+          intro.onbeforechange(function (
+            this: ReturnType<typeof introJs>,
+            _targetElement: HTMLElement,
+            currentStep: number,
+          ) {
+            if (currentStep === 1) {
+              openAddWindow();
+            }
+            return true;
+          });
+
+          intro.start();
+          setCookie('has-visited-cases-tab', true);
+        });
+      }
+    }
+
+    watch(() => props.activeTabIndex, (newIndex: TabIndex) => {
+      if (newIndex === TabIndex.TestCases) {
+        startIntroGuide();
+      }
+    });
+
+    return {
+      shouldShowAddWindow,
+      shouldShowCaseEditWindow,
+      openCaseEditWindow,
+      closeCaseEditWindow,
+      closeAddWindow,
+      openAddWindow,
+    };
+  },
+});
 </script>

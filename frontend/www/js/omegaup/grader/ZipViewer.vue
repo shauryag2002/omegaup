@@ -35,36 +35,41 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+import { defineComponent, ref, computed } from 'vue';
 import * as Util from './util';
 import T from '../lang';
 import JSZip, { JSZipObject } from 'jszip';
 import store from './GraderStore';
 
-@Component
-export default class ZipViewer extends Vue {
-  zip: JSZip | null = null;
-  active: string | null = null;
-  T = T;
+export default defineComponent({
+  name: 'ZipViewer',
+  setup() {
+    const zip = ref<JSZip | null>(null);
+    const active = ref<string | null>(null);
 
-  get theme(): string {
-    return store.getters['theme'];
-  }
+    const theme = computed((): string => store.getters['theme']);
+    const contents = computed((): string => store.getters.zipContent);
 
-  get contents(): string {
-    return store.getters.zipContent;
-  }
+    function select(item: JSZipObject): void {
+      item
+        .async('string')
+        .then((value: string) => {
+          store.dispatch('zipContent', value);
+        })
+        .catch(Util.asyncError);
+      active.value = item.name;
+    }
 
-  select(item: JSZipObject): void {
-    item
-      .async('string')
-      .then((value: string) => {
-        store.dispatch('zipContent', value);
-      })
-      .catch(Util.asyncError);
-    this.active = item.name;
-  }
-}
+    return {
+      zip,
+      active,
+      T,
+      theme,
+      contents,
+      select,
+    };
+  },
+});
 </script>
 
 <style scoped>

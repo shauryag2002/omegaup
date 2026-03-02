@@ -70,7 +70,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Prop } from 'vue-property-decorator';
+import { defineComponent, ref } from 'vue';
 import problemCreator_CasesTab from './cases/CasesTab.vue';
 import problemCreator_StatementTab from './statement/StatementTab.vue';
 import problemCreator_CodeTab from './code/CodeTab.vue';
@@ -89,7 +89,8 @@ export enum TabIndex {
   Solution = 3,
 }
 
-@Component({
+export default defineComponent({
+  name: 'Tabs',
   components: {
     FontAwesomeIcon,
     'omegaup-problem-creator-statement-tab': problemCreator_StatementTab,
@@ -97,18 +98,20 @@ export enum TabIndex {
     'omegaup-problem-creator-cases-tab': problemCreator_CasesTab,
     'omegaup-problem-creator-solution-tab': problemCreator_SolutionTab,
   },
-})
-export default class Tabs extends Vue {
-  T = T;
-  activeTabIndex = TabIndex.Statement;
+  props: {
+    currentSolutionMarkdownProp: { type: String, default: T.problemCreatorEmpty },
+    currentMarkdownProp: { type: String, default: T.problemCreatorEmpty },
+    codeProp: { type: String, default: T.problemCreatorEmpty },
+    extensionProp: { type: String, default: T.problemCreatorEmpty },
+  },
+  emits: ['show-update-success-message', 'download-zip-file', 'download-input-file'],
+  setup() {
+    const activeTabIndex = ref(TabIndex.Statement);
 
-  @Prop({ default: T.problemCreatorEmpty })
-  currentSolutionMarkdownProp!: string;
-  @Prop({ default: T.problemCreatorEmpty })
-  currentMarkdownProp!: string;
-  @Prop({ default: T.problemCreatorEmpty })
-  codeProp!: string;
-  @Prop({ default: T.problemCreatorEmpty })
-  extensionProp!: string;
-}
+    return {
+      T,
+      activeTabIndex,
+    };
+  },
+});
 </script>

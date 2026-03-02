@@ -71,7 +71,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { defineComponent, ref, computed, PropType } from 'vue';
 import T from '../../lang';
 
 // Import Bootstrap an BootstrapVue CSS files (order is important)
@@ -86,33 +86,40 @@ library.add(faCloudArrowDown);
 
 import { types } from '../../api_types';
 
-@Component({
+export default defineComponent({
+  name: 'LibinteractiveGen',
   components: {
     FontAwesomeIcon,
   },
-})
-export default class LibinteractiveGen extends Vue {
-  @Prop({ default: null }) error!: null | types.LibinteractiveError;
-  @Prop() language!: string;
-  @Prop() os!: string;
-  @Prop() name!: string;
-  @Prop() idl!: string;
+  props: {
+    error: { type: Object as PropType<types.LibinteractiveError | null>, default: null },
+    language: { type: String, required: true },
+    os: { type: String, required: true },
+    name: { type: String, required: true },
+    idl: { type: String, required: true },
+  },
+  setup(props) {
+    const currentLanguage = ref(props.language);
+    const currentOs = ref(props.os);
+    const currentName = ref(props.name);
+    const currentIdl = ref(props.idl);
+    const currentError = ref(props.error);
 
-  T = T;
-  currentLanguage = this.language;
-  currentOs = this.os;
-  currentName = this.name;
-  currentIdl = this.idl;
-  currentError = this.error;
+    const errorDescription = computed((): null | string => currentError.value?.description ?? null);
+    const errorField = computed((): null | string => currentError.value?.field ?? null);
 
-  get errorDescription(): null | string {
-    return this.currentError?.description ?? null;
-  }
-
-  get errorField(): null | string {
-    return this.currentError?.field ?? null;
-  }
-}
+    return {
+      T,
+      currentLanguage,
+      currentOs,
+      currentName,
+      currentIdl,
+      currentError,
+      errorDescription,
+      errorField,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>
