@@ -10,7 +10,7 @@ import arena_Runs, { DisqualificationType } from './Runs.vue';
 describe('Runs.vue', () => {
   it('Should handle empty runs', () => {
     const wrapper = shallowMount(arena_Runs, {
-      propsData: {
+      props: {
         contestAlias: 'admin',
         runs: [],
       },
@@ -23,7 +23,7 @@ describe('Runs.vue', () => {
   it('Should handle runs', async () => {
     const expectedDate = '1/1/2020, 12:00:00 AM';
     const wrapper = shallowMount(arena_Runs, {
-      propsData: {
+      props: {
         contestAlias: 'admin',
         runs: [
           {
@@ -118,7 +118,7 @@ describe('Runs.vue', () => {
 
   it('Should handle order runs', async () => {
     const wrapper = shallowMount(arena_Runs, {
-      propsData: {
+      props: {
         contestAlias: 'admin',
         runs,
         showContest: true,
@@ -133,7 +133,7 @@ describe('Runs.vue', () => {
       },
     });
     expect(
-      wrapper.findAll('acronym[data-run-guid]').wrappers.map((e) => e.text()),
+      wrapper.findAll('acronym[data-run-guid]').map((e) => e.text()),
     ).toEqual(['122000', '121500', '121000', '120500', '120000']);
   });
 
@@ -146,7 +146,7 @@ describe('Runs.vue', () => {
   describe.each(filtersMapping)(`A filter:`, (filter) => {
     it(`whose name is ${filter.filter} should have gotten the value ${filter.value}`, async () => {
       const wrapper = shallowMount(arena_Runs, {
-        propsData: {
+        props: {
           contestAlias: 'admin',
           runs,
           showPager: true,
@@ -163,7 +163,7 @@ describe('Runs.vue', () => {
 
   it('Should handle change page control', async () => {
     const wrapper = shallowMount(arena_Runs, {
-      propsData: {
+      props: {
         contestAlias: 'contest',
         runs,
         showPager: true,
@@ -195,7 +195,7 @@ describe('Runs.vue', () => {
 
   it('Should handle username filter', async () => {
     const wrapper = shallowMount(arena_Runs, {
-      propsData: {
+      props: {
         contestAlias: 'contest',
         runs,
         showPager: true,
@@ -213,7 +213,7 @@ describe('Runs.vue', () => {
 
   it('Should handle problem filter', async () => {
     const wrapper = shallowMount(arena_Runs, {
-      propsData: {
+      props: {
         contestAlias: 'contest',
         runs,
         showPager: true,
@@ -231,7 +231,7 @@ describe('Runs.vue', () => {
 
   it('Should handle the new submission button', async () => {
     const wrapper = shallowMount(arena_Runs, {
-      propsData: {
+      props: {
         problemAlias: 'alias',
         runs,
         showDetails: true,
@@ -251,7 +251,7 @@ describe('Runs.vue', () => {
       type: 'disqualified',
     });
     const wrapper = shallowMount(arena_Runs, {
-      propsData: {
+      props: {
         contestAlias: 'admin',
         problemAlias: 'alias',
         runs,
@@ -309,7 +309,7 @@ describe('Runs.vue', () => {
 
   it('Should handle disqualify in batch buttons for run actions', async () => {
     const wrapper = shallowMount(arena_Runs, {
-      propsData: {
+      props: {
         contestAlias: 'admin',
         problemAlias: 'alias',
         runs,
@@ -341,7 +341,7 @@ describe('Runs.vue', () => {
 
   it('Should handle filterUsername when username changes', async () => {
     const wrapper = shallowMount(arena_Runs, {
-      propsData: {
+      props: {
         contestAlias: 'admin',
         runs,
         showContest: true,
@@ -367,7 +367,7 @@ describe('Runs.vue', () => {
   describe.each(usernamesToBeFiltered)(`A user:`, (username) => {
     it(`whose username is ${username} should be filtered when they are selected.`, async () => {
       const wrapper = mount(arena_Runs, {
-        propsData: {
+        props: {
           contestAlias: 'admin',
           runs,
           showContest: true,

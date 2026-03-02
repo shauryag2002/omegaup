@@ -45,7 +45,7 @@ describe('Edit.vue', () => {
     isCertificateGenerator: true,
   };
 
-  const propsData: {
+  const props: {
     admins: types.ContestAdmin[];
     details: types.ContestAdminDetails;
     initialTab: string;

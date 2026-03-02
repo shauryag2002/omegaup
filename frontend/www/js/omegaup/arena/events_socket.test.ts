@@ -7,11 +7,10 @@ import { SocketOptions, SocketStatus, EventsSocket } from './events_socket';
 import WS from 'jest-websocket-mock';
 import { runsStoreConfig } from './runsStore';
 import { clarificationStoreConfig } from './clarificationsStore';
-
-import Vuex from 'vuex';
+import { createStore } from 'vuex';
 import fetchMock from 'jest-fetch-mock';
 import { onRankingChanged, onRankingEvents } from './ranking';
-import { mocked } from 'ts-jest/utils';
+import { mocked } from 'jest-mock';
 import { ScoreMode } from './navigation';
 
 const navbarProblems: types.NavbarProblemsetProblem[] = [
@@ -161,7 +160,7 @@ describe('EventsSocket', () => {
     jest.runOnlyPendingTimers();
     await server?.connected;
 
-    const store = new Vuex.Store(runsStoreConfig);
+    const store = createStore(runsStoreConfig);
 
     server?.send({
       message: '/run/update/',
@@ -196,7 +195,7 @@ describe('EventsSocket', () => {
     jest.runOnlyPendingTimers();
     await server?.connected;
 
-    const clarificationStore = new Vuex.Store(clarificationStoreConfig);
+    const clarificationStore = createStore(clarificationStoreConfig);
 
     server?.send({
       message: '/clarification/update/',

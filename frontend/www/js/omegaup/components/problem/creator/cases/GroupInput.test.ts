@@ -1,12 +1,15 @@
 import { shallowMount } from '@vue/test-utils';
 
 import GroupInput from './GroupInput.vue';
+import { createBootstrap } from 'bootstrap-vue-next';
 import T from '../../../../lang';
-import Vue from 'vue';
+import { nextTick } from 'vue';
+
 
 describe('GroupInput.vue', () => {
   it('Should contain all 3 inputs', async () => {
-    const wrapper = shallowMount(GroupInput, {});
+    const wrapper = shallowMount(GroupInput, {
+    });
 
     const expectedTextInputText = [
       T.problemCreatorGroupName,
@@ -14,19 +17,20 @@ describe('GroupInput.vue', () => {
       T.problemCreatorAutomaticPoints,
     ];
 
-    await Vue.nextTick();
+    await nextTick();
 
     const inputElements = wrapper.findAll('[label]');
 
     expect(inputElements.length).toBe(expectedTextInputText.length);
 
-    inputElements.wrappers.forEach((element, index) => {
+    inputElements.forEach((element, index) => {
       expect(element.attributes('label')).toBe(expectedTextInputText[index]); // We need to make it like this because that's how Vue-Bootstrap input element works
     });
   });
 
   it('Should handle autoformatting', () => {
-    const wrapper = shallowMount(GroupInput, {});
+    const wrapper = shallowMount(GroupInput, {
+    });
 
     // These any are necessary since wrapper.vm doesn't load the component's methods to typescript, even if they exist
     const invalidString = 'INVALID STRING234 !@#!@#';

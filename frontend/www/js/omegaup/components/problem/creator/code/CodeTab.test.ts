@@ -1,12 +1,14 @@
 import { shallowMount } from '@vue/test-utils';
 
 import CodeTab from './CodeTab.vue';
+import { createBootstrap } from 'bootstrap-vue-next';
 import store from '@/js/omegaup/problem/creator/store';
+
 
 describe('CodeTab.vue', () => {
   it('Should change code and extension in both wrapper and store after the file is uploaded', async () => {
     const wrapper = shallowMount(CodeTab, {
-      store,
+      global: { plugins: [store, createBootstrap()] },
     });
 
     const testFile = new File(['print("Hello World")'], 'testfile.py', {

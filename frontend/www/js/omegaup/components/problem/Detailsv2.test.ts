@@ -6,7 +6,7 @@ import T from '../../lang';
 import arena_EphemeralGrader from '../arena/EphemeralGrader.vue';
 import problem_Details from './Detailsv2.vue';
 
-import { BTab } from 'bootstrap-vue-next';
+import { createBootstrap, BTab } from 'bootstrap-vue-next';
 
 describe('Detailsv2.vue', () => {
   const problem: types.ProblemDetails = {
@@ -98,7 +98,7 @@ describe('Detailsv2.vue', () => {
 
   it('Should show the tabs', () => {
     const wrapper = shallowMount(problem_Details, {
-      propsData: {
+      props: {
         allRuns: runs,
         problem,
         user: {
@@ -109,6 +109,7 @@ describe('Detailsv2.vue', () => {
         languages: ['py2', 'py3'],
         userRuns: runs,
       },
+      global: { plugins: [createBootstrap()] },
     });
 
     const tabs = wrapper.findAllComponents(BTab);
@@ -122,7 +123,7 @@ describe('Detailsv2.vue', () => {
   it('Should show the problem tab details', () => {
     const languages = ['py2', 'py3'];
     const wrapper = mount(problem_Details, {
-      propsData: {
+      props: {
         allRuns: runs,
         problem,
         user: {
@@ -133,6 +134,7 @@ describe('Detailsv2.vue', () => {
         languages,
         userRuns: runs,
       },
+      global: { plugins: [createBootstrap()] },
     });
 
     const problemTab = wrapper.findComponent(BTab);
@@ -147,7 +149,7 @@ describe('Detailsv2.vue', () => {
 
   it('Should show the problem languages', () => {
     const wrapper = mount(problem_Details, {
-      propsData: {
+      props: {
         allRuns: runs,
         problem,
         user: {
@@ -157,6 +159,7 @@ describe('Detailsv2.vue', () => {
         },
         userRuns: runs,
       },
+      global: { plugins: [createBootstrap()] },
     });
 
     const problemTab = wrapper.findComponent(BTab);
@@ -166,7 +169,7 @@ describe('Detailsv2.vue', () => {
 
   it('Should show the problem languages', () => {
     const wrapper = mount(problem_Details, {
-      propsData: {
+      props: {
         allRuns: runs,
         problem,
         user: {
@@ -176,6 +179,7 @@ describe('Detailsv2.vue', () => {
         },
         userRuns: runs,
       },
+      global: { plugins: [createBootstrap()] },
     });
 
     const problemTab = wrapper.findComponent(BTab);
@@ -185,7 +189,7 @@ describe('Detailsv2.vue', () => {
 
   it('Should handle the user runs', async () => {
     const wrapper = mount(problem_Details, {
-      propsData: {
+      props: {
         allRuns: runs,
         problem,
         user: {
@@ -195,6 +199,7 @@ describe('Detailsv2.vue', () => {
         },
         userRuns: runs,
       },
+      global: { plugins: [createBootstrap()] },
     });
 
     expect(wrapper.find('table.runs tbody').text()).toContain(runs[0].guid);
@@ -203,7 +208,7 @@ describe('Detailsv2.vue', () => {
 
   it('Should handle the runs tab', async () => {
     const wrapper = mount(problem_Details, {
-      propsData: {
+      props: {
         allRuns: runs,
         problem,
         user: {
@@ -213,6 +218,7 @@ describe('Detailsv2.vue', () => {
         },
         userRuns: runs,
       },
+      global: { plugins: [createBootstrap()] },
     });
 
     const tabsItems = wrapper.findAllComponents(BTab);

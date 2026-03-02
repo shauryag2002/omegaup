@@ -20,7 +20,7 @@ describe('Teams.vue', () => {
     }
   });
 
-  const propsData: {
+  const props: {
     teams: types.Identity[];
     countries: dao.Countries[];
     searchResultUsers: types.ListItem[];
@@ -39,7 +39,7 @@ describe('Teams.vue', () => {
 
   it('Should handle an empty list of members and identities', () => {
     const wrapper = shallowMount(teamsgroup_Teams, {
-      propsData: {
+      props: {
         teams: [] as types.Identity[],
         countries: [{ country_id: 'mx', name: 'Mexico' }] as dao.Countries[],
       },

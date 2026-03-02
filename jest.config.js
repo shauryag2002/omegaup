@@ -27,12 +27,16 @@ module.exports = {
   moduleDirectories: ['node_modules'],
   moduleNameMapper: {
     '^vue$': '@vue/compat',
+    'vue-async-computed-decorator':
+      '<rootDir>/node_modules/vue-async-computed-decorator/dist/index.js',
     '^@/(.*)$': '<rootDir>/frontend/www/$1',
     '\\.(css|less)$':
       '<rootDir>/frontend/www/js/omegaup/__mocks__/styleMock.js',
     'monaco-editor':
       '<rootDir>/frontend/www/third_party/js/__mocks__/monacoEditor.js',
     sugar: '<rootDir>/frontend/www/js/omegaup/__mocks__/sugar.js',
+    'vue-codemirror-lite':
+      '<rootDir>/frontend/www/js/omegaup/__mocks__/vue-codemirror-lite.js',
   },
   setupFilesAfterEnv: ['<rootDir>/frontend/www/js/omegaup/test.setup.ts'],
   transform: {
@@ -40,6 +44,11 @@ module.exports = {
       '@vue/vue3-jest',
       {
         babelConfig,
+        compilerOptions: {
+          compatConfig: {
+            MODE: 2,
+          },
+        },
       },
     ],
     '.*\\.[jt]sx?$': ['babel-jest', babelConfig],
@@ -49,5 +58,6 @@ module.exports = {
   ],
   testEnvironmentOptions: {
     url: 'http://localhost:8001/',
+    customExportConditions: ['node', 'node-addons'],
   },
 };

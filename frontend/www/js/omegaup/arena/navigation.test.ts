@@ -15,8 +15,7 @@ import {
 } from './navigation';
 import { PopupDisplayed } from '../components/problem/Details.vue';
 import { storeConfig } from './problemStore';
-
-import Vuex from 'vuex';
+import { createStore } from 'vuex';
 import fetchMock from 'jest-fetch-mock';
 import { OmegaUp } from '../omegaup';
 
@@ -209,7 +208,7 @@ describe('navigation.ts', () => {
         contestAlias: 'contest_alias',
         contestMode: getScoreModeEnum('partial'),
       };
-      new Vuex.Store(storeConfig);
+      createStore(storeConfig);
       await navigateToProblem(params);
       expect(setLocationHash).toHaveBeenCalledWith(
         `#problems/${params.problem.alias}/new-run`,
@@ -226,7 +225,7 @@ describe('navigation.ts', () => {
         contestAlias: 'contest_alias',
         contestMode: getScoreModeEnum('max_per_group'),
       };
-      new Vuex.Store(storeConfig);
+      createStore(storeConfig);
       await navigateToProblem(params);
       expect(setLocationHash).toHaveBeenCalledWith(
         `#problems/${params.problem.alias}/new-run`,

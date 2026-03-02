@@ -215,7 +215,7 @@ describe('Course.vue', () => {
 
   it('Should handle course in arena', async () => {
     const wrapper = mount(arena_Course, {
-      propsData: {
+      props: {
         activeTab: 'problems',
         clarifications: [],
         course,
@@ -237,7 +237,7 @@ describe('Course.vue', () => {
 
   it('Should emit reset-hash function in arena course', async () => {
     const wrapper = mount(arena_Course, {
-      propsData: {
+      props: {
         activeTab: 'problems',
         clarifications: [],
         course,
@@ -260,7 +260,7 @@ describe('Course.vue', () => {
 
   it('Should handle run details button as student', async () => {
     const wrapper = mount(arena_Course, {
-      propsData: {
+      props: {
         activeTab: 'problems',
         clarifications: [],
         course,
@@ -292,7 +292,7 @@ describe('Course.vue', () => {
 
   it('Should handle run details button as admin', async () => {
     const wrapper = mount(arena_Course, {
-      propsData: {
+      props: {
         activeTab: 'runs',
         clarifications: [],
         course: { ...course, ...{ is_admin: true } },

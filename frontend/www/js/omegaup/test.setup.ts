@@ -2,7 +2,6 @@ import * as util from 'util';
 import 'process';
 
 import '@testing-library/jest-dom';
-import '@testing-library/jest-dom/extend-expect';
 
 import Vue, { configureCompat } from 'vue';
 import type { DirectiveBinding } from 'vue';
