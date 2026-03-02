@@ -24,14 +24,15 @@
 // TODO: Only display the gutters in the component if the logged-in user is an
 // admin or teaching assistant.
 import { Vue, Component, Prop, Ref } from 'vue-property-decorator';
+import { ComponentOptions } from 'vue';
 import T from '../../lang';
 import CodeMirror from 'codemirror';
 import { EditorOptions, languageModeMap, modeList } from './CodeView.vue';
 import Feedback, { ArenaCourseFeedback, FeedbackStatus } from './Feedback.vue';
 import FeedbackThread from './FeedbackThread.vue';
 
-const FeedbackClass = Vue.extend(Feedback);
-const FeedbackThreadClass = Vue.extend(FeedbackThread);
+const FeedbackClass = Vue.extend(Feedback as unknown as ComponentOptions);
+const FeedbackThreadClass = Vue.extend(FeedbackThread as unknown as ComponentOptions);
 
 for (const mode of modeList) {
   require(`codemirror/mode/${mode}/${mode}.js`);

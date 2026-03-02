@@ -49,6 +49,6 @@ describe('TeamsGroup.vue', () => {
       [{ alias: 'teams-group', name: 'teams group' }],
     ]);
 
-    wrapper.destroy();
+    wrapper.unmount();
   });
 });

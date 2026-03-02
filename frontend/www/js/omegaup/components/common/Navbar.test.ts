@@ -75,6 +75,7 @@ describe('Navbar.vue', () => {
 
     expect(wrapper.findComponent(UserObjectivesQuestions).exists()).toBe(false);
 
+    // @ts-expect-error - VTU cannot infer props for dual script block components
     await wrapper.setProps({ isMainUserIdentity: true });
 
     expect(wrapper.findComponent(UserObjectivesQuestions).exists()).toBe(true);

@@ -84,6 +84,7 @@ export enum AvailableViews {
   Question,
   Thanks,
 }
+export default {};
 </script>
 
 <script setup lang="ts">

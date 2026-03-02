@@ -75,7 +75,7 @@ describe('Form.vue', () => {
     );
     await wrapper.find('form button[type="submit"]').trigger('click');
     expect(wrapper.emitted('update-contest')).toBeDefined();
-    wrapper.destroy();
+    wrapper.unmount();
   });
 
   const problems: types.ProblemsetProblemWithVersions[] = [
@@ -123,7 +123,7 @@ describe('Form.vue', () => {
     });
     await wrapper.findComponent(Multiselect).vm.$emit('remove', 'cat');
     expect(wrapper.emitted('language-remove-blocked')).toBeDefined();
-    wrapper.destroy();
+    wrapper.unmount();
   });
   it('Should update score mode when', async () => {
     const startTime = new Date();

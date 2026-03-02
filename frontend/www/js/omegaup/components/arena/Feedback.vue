@@ -75,6 +75,7 @@ export interface ArenaCourseFeedback {
   timestamp?: Date;
   submissionFeedbackId?: number;
 }
+export default {};
 </script>
 
 <script setup lang="ts">

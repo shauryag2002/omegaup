@@ -1,14 +1,14 @@
 import { shallowMount } from '@vue/test-utils';
 
 import CodeTab from './CodeTab.vue';
-import { createBootstrap } from 'bootstrap-vue-next';
+import BootstrapVueNext from 'bootstrap-vue-next';
 import store from '@/js/omegaup/problem/creator/store';
 
 
 describe('CodeTab.vue', () => {
   it('Should change code and extension in both wrapper and store after the file is uploaded', async () => {
     const wrapper = shallowMount(CodeTab, {
-      global: { plugins: [store, createBootstrap()] },
+      global: { plugins: [store, BootstrapVueNext] },
     });
 
     const testFile = new File(['print("Hello World")'], 'testfile.py', {
@@ -33,9 +33,9 @@ describe('CodeTab.vue', () => {
     expect(codeSaveButton.exists()).toBe(true);
     await codeSaveButton.trigger('click');
 
-    expect(wrapper.vm.$store.state.problemCodeContent).toBe(
+    expect(store.state.problemCodeContent).toBe(
       'print("Hello World")',
     );
-    expect(wrapper.vm.$store.state.problemCodeExtension).toBe('py');
+    expect(store.state.problemCodeExtension).toBe('py');
   });
 });

@@ -80,6 +80,7 @@ export default class CasesTab extends Vue {
 
   startIntroGuide() {
     if (!getCookie('has-visited-cases-tab')) {
+      const self = this;
       this.$nextTick(() => {
         const intro = introJs();
 
@@ -91,25 +92,29 @@ export default class CasesTab extends Vue {
             {
               title: T.problemCreatorCasesTabIntroSidebarTitle,
               intro: T.problemCreatorCasesTabIntroSidebarIntro,
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '[data-cases-sidebar]',
-              ) as Element,
+),
             },
             {
               title: T.problemCreatorCasesTabIntroAddPanelTitle,
               intro: T.problemCreatorCasesTabIntroAddPanelIntro,
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '[data-cases-add-panel]',
-              ) as Element,
+),
             },
           ],
         });
 
-        intro.onbeforechange(() => {
-          var currentStep = intro.currentStep();
+        intro.onbeforechange(function (
+          this: ReturnType<typeof introJs>,
+          _targetElement: HTMLElement,
+          currentStep: number,
+        ) {
           if (currentStep === 1) {
-            this.openAddWindow();
+            self.openAddWindow();
           }
+          return true;
         });
 
         intro.start();

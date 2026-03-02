@@ -524,41 +524,41 @@ export default class ProblemForm extends Vue {
               intro: T.createProblemInteractiveGuideWelcome,
             },
             {
-              element: document.querySelector('.introjs-title') as Element,
+              element: document.querySelector<HTMLElement>('.introjs-title'),
               title,
               intro: T.createProblemInteractiveGuideProblemTitle,
             },
             {
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '.introjs-short-title',
-              ) as Element,
+),
               title,
               intro: T.createProblemInteractiveGuideShortTitle,
             },
             {
-              element: document.querySelector('.introjs-origin') as Element,
+              element: document.querySelector<HTMLElement>('.introjs-origin'),
               title,
               intro: T.createProblemInteractiveGuideOrigin,
             },
             {
-              element: document.querySelector('.introjs-file') as Element,
+              element: document.querySelector<HTMLElement>('.introjs-file'),
               title,
               intro: T.createProblemInteractiveGuideFile,
             },
             {
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '.introjs-tags-and-level',
-              ) as Element,
+),
               title,
               intro: T.createProblemInteractiveGuideTagsAndLevel,
             },
             {
-              element: document.querySelector('.introjs-type') as Element,
+              element: document.querySelector<HTMLElement>('.introjs-type'),
               title,
               intro: T.createProblemInteractiveGuideType,
             },
             {
-              element: document.querySelector('.introjs-validator') as Element,
+              element: document.querySelector<HTMLElement>('.introjs-validator'),
               title,
               intro: T.createProblemInteractiveGuideValidator,
             },

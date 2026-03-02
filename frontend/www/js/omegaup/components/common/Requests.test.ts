@@ -1,4 +1,4 @@
-import { mount, shallowMount } from '@vue/test-utils';
+import { mount, shallowMount, VueWrapper } from '@vue/test-utils';
 import { types } from '../../api_types';
 
 import T from '../../lang';
@@ -44,21 +44,21 @@ describe('Requests.vue', () => {
     const wrapper = shallowMount(common_Requests, { propsData });
 
     const buttons = wrapper.findAll('button.text-danger');
-    const feedbackModals = wrapper.findAll('b-modal-stub');
+    const feedbackModals = wrapper.findAllComponents('b-modal-stub');
 
     expect('test_user_1' in wrapper.vm.modalStates).toBe(false);
-    await buttons.at(0).trigger('click');
+    await buttons[0].trigger('click');
     expect(wrapper.vm.modalStates['test_user_1']).toBe(true);
 
     expect('test_user_2' in wrapper.vm.modalStates).toBe(false);
-    await buttons.at(1).trigger('click');
+    await buttons[1].trigger('click');
     expect(wrapper.vm.modalStates['test_user_2']).toBe(true);
 
     wrapper.vm.resolutionText = 'Hello';
-    feedbackModals.at(0).vm.$emit('ok');
+    (feedbackModals[0] as VueWrapper).vm.$emit('ok');
 
     wrapper.vm.resolutionText = 'There';
-    feedbackModals.at(1).vm.$emit('ok');
+    (feedbackModals[1] as VueWrapper).vm.$emit('ok');
 
     expect(wrapper.emitted('deny-request')).toBeDefined();
     expect(wrapper.emitted('deny-request')).toEqual([

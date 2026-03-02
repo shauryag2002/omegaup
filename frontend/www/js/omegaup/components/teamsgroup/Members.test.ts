@@ -57,7 +57,7 @@ describe('Members.vue', () => {
       ],
     ]);
 
-    wrapper.destroy();
+    wrapper.unmount();
   });
 
   it('Should handle a list of members', async () => {
@@ -92,7 +92,7 @@ describe('Members.vue', () => {
       ],
     ]);
 
-    wrapper.destroy();
+    wrapper.unmount();
   });
 
   it('Should handle change password form', async () => {

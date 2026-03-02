@@ -836,7 +836,9 @@ export default class RunsForCourses extends Vue {
   }
 
   showVerdictHelp(ev: Event): void {
-    $(ev.target as HTMLElement).popover('show');
+    (window as { $?: (el: HTMLElement) => JQuery }).$?.(
+      ev.target as HTMLElement,
+    )?.popover('show');
   }
 
   statusClass(run: types.Run): string {

@@ -45,6 +45,8 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, Ref, Watch } from 'vue-property-decorator';
+import type { Store } from 'vuex';
+import type { StoreState } from '../../../../problem/creator/types';
 import * as Markdown from '@/third_party/js/pagedown/Markdown.Editor.js';
 import * as markdown from '../../../../markdown';
 import * as ui from '../../../../ui';
@@ -65,6 +67,7 @@ const markdownConverter = new markdown.Converter({
   },
 })
 export default class SolutionTab extends Vue {
+  declare $store: Store<StoreState>;
   @Ref() readonly markdownButtonBar!: HTMLDivElement;
   @Ref() readonly markdownInput!: HTMLTextAreaElement;
 
@@ -126,30 +129,30 @@ export default class SolutionTab extends Vue {
             {
               title: T.problemCreatorSolutionTabIntroToolbarTitle,
               intro: T.problemCreatorSolutionTabIntroToolbarIntro,
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '[data-solution-markdown-toolbar]',
-              ) as Element,
+),
             },
             {
               title: T.problemCreatorSolutionTabIntroEditorTitle,
               intro: T.problemCreatorSolutionTabIntroEditorIntro,
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '[data-problem-creator-solution-editor-markdown]',
-              ) as Element,
+),
             },
             {
               title: T.problemCreatorSolutionTabIntroPreviewTitle,
               intro: T.problemCreatorSolutionTabIntroPreviewIntro,
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '[data-problem-creator-solution-previewer-markdown]',
-              ) as Element,
+),
             },
             {
               title: T.problemCreatorSolutionTabIntroSaveTitle,
               intro: T.problemCreatorSolutionTabIntroSaveIntro,
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '[data-problem-creator-solution-save-markdown]',
-              ) as Element,
+),
             },
           ],
         })

@@ -84,7 +84,7 @@ OmegaUp.on('ready', async () => {
       payload.shouldShowFirstAssociatedIdentityRunWarning,
   });
 
-  createApp({
+  const contestPractice = createApp({
     render: () =>
       h(arena_ContestPractice, {
         contest: payload.contest,
@@ -103,8 +103,8 @@ OmegaUp.on('ready', async () => {
         nextSubmissionTimestamp: state.nextSubmissionTimestamp,
         nextExecutionTimestamp: state.nextExecutionTimestamp,
         runDetailsData: state.runDetailsData,
-        shouldShowFirstAssociatedIdentityRunWarning: this
-          .shouldShowFirstAssociatedIdentityRunWarning,
+        shouldShowFirstAssociatedIdentityRunWarning:
+          state.shouldShowFirstAssociatedIdentityRunWarning,
         onNavigateToProblem: ({
           problem,
         }: {
@@ -113,7 +113,7 @@ OmegaUp.on('ready', async () => {
           navigateToProblem({
             type: NavigationType.ForContest,
             problem,
-            target: contestPractice,
+            target: state,
             problems: state.problems,
             contestAlias: payload.contest.alias,
             contestMode: getScoreModeEnum(payload.contest.score_mode),
@@ -138,7 +138,7 @@ OmegaUp.on('ready', async () => {
         onExecuteRun: ({
           target,
         }: {
-          target: Vue & { currentNextExecutionTimestamp: Date };
+          target: { currentNextExecutionTimestamp: Date };
         }) => {
           api.Run.execute()
             .then(time.remoteTimeAdapter)
@@ -157,7 +157,7 @@ OmegaUp.on('ready', async () => {
           code: string;
           language: string;
           problem: types.NavbarProblemsetProblem;
-          target: Vue & { currentNextSubmissionTimestamp: Date };
+          target: { currentNextSubmissionTimestamp: Date };
         }) => {
           api.Run.create({
             problem_alias: problem.alias,

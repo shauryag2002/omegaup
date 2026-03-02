@@ -358,6 +358,7 @@
 <script lang="ts">
 import eventBus from '../../eventBus';
 export { eventBus as EventBus };
+export default {};
 </script>
 
 <script setup lang="ts">

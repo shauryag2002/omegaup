@@ -73,6 +73,8 @@
 
 <script lang="ts">
 import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+import type { Store } from 'vuex';
+import type { StoreState } from '../../../../problem/creator/types';
 import { omegaup } from '../../../../omegaup';
 import * as ui from '../../../../ui';
 import T from '../../../../lang';
@@ -90,6 +92,7 @@ import { TabIndex } from '../Tabs.vue';
   },
 })
 export default class CodeTab extends Vue {
+  declare $store: Store<StoreState>;
   @Prop({ default: T.problemCreatorEmpty }) codeProp!: string;
   @Prop({ default: T.problemCreatorEmpty }) extensionProp!: string;
   @Prop() activeTabIndex!: TabIndex;
@@ -226,30 +229,30 @@ export default class CodeTab extends Vue {
             {
               title: T.problemCreatorCodeTabIntroSelectLanguageTitle,
               intro: T.problemCreatorCodeTabIntroSelectLanguageIntro,
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '[data-problem-creator-code-language]',
-              ) as Element,
+),
             },
             {
               title: T.problemCreatorCodeTabIntroWriteCodeTitle,
               intro: T.problemCreatorCodeTabIntroWriteCodeIntro,
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '[data-problem-creator-code-editor]',
-              ) as Element,
+),
             },
             {
               title: T.problemCreatorCodeTabIntroUploadFileTitle,
               intro: T.problemCreatorCodeTabIntroUploadFileIntro,
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '[data-problem-creator-code-input]',
-              ) as Element,
+),
             },
             {
               title: T.problemCreatorCodeTabIntroSaveCodeTitle,
               intro: T.problemCreatorCodeTabIntroSaveCodeIntro,
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '[data-problem-creator-code-save-btn]',
-              ) as Element,
+),
             },
           ],
         })

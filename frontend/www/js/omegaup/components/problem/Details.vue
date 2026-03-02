@@ -404,6 +404,7 @@ export enum PopupDisplayed {
   Demotion,
   Reviewer,
 }
+export default {};
 </script>
 
 <script setup lang="ts">

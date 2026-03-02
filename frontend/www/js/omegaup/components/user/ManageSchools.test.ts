@@ -37,7 +37,7 @@ describe('ManageSchools.vue', () => {
     await wrapper
       .findComponent(omegaupRadioSwitch)
       .find('input[value="false"]')
-      .setChecked();
+      .setValue(true);
     expect(wrapper.findComponent(datePicker).element).toBeEnabled();
   });
 
@@ -52,11 +52,11 @@ describe('ManageSchools.vue', () => {
     await wrapper
       .find('select')
       .find('option[value="bachelors"]')
-      .setSelected();
+      .setValue(true);
     await wrapper
       .findComponent(omegaupRadioSwitch)
       .find('input[value="false"]')
-      .setChecked();
+      .setValue(true);
     await wrapper.findComponent(datePicker).setValue('2010-10-10');
 
     await wrapper.find('button[type="submit"]').trigger('submit');

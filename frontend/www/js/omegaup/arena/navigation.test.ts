@@ -1,13 +1,12 @@
 jest.mock('../../../third_party/js/diff_match_patch.js');
 jest.mock('../location');
 
-import Vue from 'vue';
-import arena_ContestPractice from '../components/arena/ContestPractice.vue';
 import { types } from '../api_types';
 import { setLocationHash } from '../location';
 import {
   NavigationRequest,
   NavigationType,
+  NavigationTarget,
   navigateToProblem,
   getScoreModeEnum,
   getMaxScore,
@@ -119,24 +118,13 @@ const problemDetails: types.ProblemDetails = {
 
 OmegaUp.username = 'omegaup';
 
-const vueInstance: Vue & {
+const vueInstance: NavigationTarget & {
   problemInfo: types.ProblemInfo;
-  popupDisplayed?: PopupDisplayed;
-  problem: types.NavbarProblemsetProblem | null;
-} = new Vue({
-  components: {
-    'omegaup-arena-contest-practice': arena_ContestPractice,
-  },
-  render: function (createElement) {
-    return createElement('omegaup-badge-details', {
-      props: {
-        problemInfo: problemDetails,
-        problem: null,
-      },
-    });
-  },
-});
-vueInstance.problemInfo = problemDetails;
+} = {
+  problemInfo: problemDetails,
+  popupDisplayed: undefined,
+  problem: null,
+};
 const navbarProblems: types.NavbarProblemsetProblem[] = [
   {
     acceptsSubmissions: true,

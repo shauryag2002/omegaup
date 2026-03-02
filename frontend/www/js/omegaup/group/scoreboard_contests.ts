@@ -19,7 +19,7 @@ OmegaUp.on('ready', function () {
         availableContests: payload.availableContests,
         scoreboard: payload.scoreboardAlias,
         onAddContest: (
-          source: group_ScoreboardContests,
+          source: { reset: () => void },
           selectedContest: string,
           onlyAc: boolean,
           weight: number,

@@ -159,7 +159,7 @@ export default class Login extends Vue {
       const steps: Array<{
         title: string;
         intro: string;
-        element?: Element;
+        element?: HTMLElement;
       }> = [
         {
           title,
@@ -167,7 +167,7 @@ export default class Login extends Vue {
         },
       ];
       const addStep = (selector: string, intro: string): void => {
-        const element = document.querySelector(selector);
+        const element = document.querySelector<HTMLElement>(selector);
         if (!element) {
           return;
         }

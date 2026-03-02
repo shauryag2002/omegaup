@@ -196,17 +196,17 @@ export default class CourseTabs extends Vue {
               intro: T.joinCourseInteractiveGuideWelcome,
             },
             {
-              element: document.querySelector('.introjs-tabs') as Element,
+              element: document.querySelector<HTMLElement>('.introjs-tabs'),
               title,
               intro: T.joinCourseInteractiveGuideTabs,
             },
             {
-              element: document.querySelector('.introjs-search') as Element,
+              element: document.querySelector<HTMLElement>('.introjs-search'),
               title,
               intro: T.joinCourseInteractiveGuideSearch,
             },
             {
-              element: document.querySelector('.introjs-join') as Element,
+              element: document.querySelector<HTMLElement>('.introjs-join'),
               title,
               intro: T.joinCourseInteractiveGuideJoin,
             },

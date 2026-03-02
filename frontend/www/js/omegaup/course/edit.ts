@@ -33,6 +33,16 @@ OmegaUp.on('ready', () => {
       searchResultSchools: searchResultSchools,
     });
 
+  interface CourseEditComponent {
+    assignments: types.CourseAssignment[];
+    assignmentProblems: types.ProblemsetProblem[];
+    assignmentFormMode: omegaup.AssignmentFormMode;
+    token: string;
+    onResetAssignmentForm: () => void;
+  }
+
+  let component: CourseEditComponent;
+
   const methods = {
   
       refreshCourseAdminDetails: (): void => {
@@ -94,7 +104,7 @@ OmegaUp.on('ready', () => {
             } else {
               ui.success(T.arbitrateRequestDenySuccessfully);
             }
-            state.refreshStudentList();
+            methods.refreshStudentList();
           })
           .catch(ui.apiError);
       },
@@ -184,7 +194,7 @@ onUpdateSearchResultGroups: (query: string) => {
                     );
                     state.data.course.name = request.name;
                     window.scrollTo(0, 0);
-                    state.refreshCourseAdminDetails();
+                    methods.refreshCourseAdminDetails();
                   })
                   .catch(ui.apiError);
               })
@@ -205,7 +215,7 @@ onUpdateSearchResultGroups: (query: string) => {
               .then(() => {
                 ui.success(T.courseAssignmentAdded);
                 state.invalidParameterName = '';
-                state.refreshAssignmentsList();
+                methods.refreshAssignmentsList();
               })
               .catch((error) => {
                 ui.apiError(error);
@@ -229,7 +239,7 @@ onUpdateSearchResultGroups: (query: string) => {
               .then(() => {
                 ui.success(T.courseAssignmentUpdated);
                 state.invalidParameterName = '';
-                state.refreshAssignmentsList();
+                methods.refreshAssignmentsList();
               })
               .catch((error) => {
                 ui.apiError(error);
@@ -253,7 +263,7 @@ onUpdateSearchResultGroups: (query: string) => {
             })
               .then(() => {
                 ui.success(T.courseAssignmentDeleted);
-                state.refreshAssignmentsList();
+                methods.refreshAssignmentsList();
               })
               .catch(ui.apiError);
           },
@@ -327,12 +337,12 @@ onUpdateSearchResultGroups: (query: string) => {
                     ui.warning(T.warningPublicSolution);
                   }
                 }
-                state.refreshProblemList(assignment);
+                methods.refreshProblemList(assignment);
               })
               .catch(ui.apiError);
           },
           onSelectAssignment: (assignment: types.CourseAssignment) => {
-            state.refreshProblemList(assignment);
+            methods.refreshProblemList(assignment);
           },
           onRemoveProblem: (
             assignment: types.CourseAssignment,
@@ -358,7 +368,7 @@ onUpdateSearchResultGroups: (query: string) => {
                 } else {
                   ui.success(T.courseAssignmentProblemRemoved);
                 }
-                state.refreshProblemList(assignment);
+                methods.refreshProblemList(assignment);
               })
               .catch(ui.apiError);
           },
@@ -399,7 +409,7 @@ onUpdateSearchResultGroups: (query: string) => {
               .then(() => {
                 ui.success(T.courseEditCourseEdited);
                 if (admissionMode === AdmissionMode.Registration) {
-                  state.refreshStudentList();
+                  methods.refreshStudentList();
                 }
               })
               .catch(ui.apiError);
@@ -430,7 +440,7 @@ onUpdateSearchResultGroups: (query: string) => {
                     participantsWithError.push(result.reason.userEmail);
                   }
                 });
-                state.refreshStudentList();
+                methods.refreshStudentList();
                 if (participantsWithError.length === 0) {
                   ui.success(T.courseStudentAdded);
                   return;
@@ -449,15 +459,15 @@ onUpdateSearchResultGroups: (query: string) => {
               usernameOrEmail: student.username,
             })
               .then(() => {
-                state.refreshStudentList();
+                methods.refreshStudentList();
                 ui.success(T.courseStudentRemoved);
               })
               .catch(ui.apiError);
           },
           onAcceptRequest: ({ username }: { username: string }) =>
-            state.arbitrateRequest(username, true),
+            methods.arbitrateRequest(username, true),
           onDenyRequest: ({ username }: { username: string }) =>
-            state.arbitrateRequest(username, false),
+            methods.arbitrateRequest(username, false),
           onAddAdmin: (useradmin: string) => {
             api.Course.addAdmin({
               course_alias: courseAlias,
@@ -465,7 +475,7 @@ onUpdateSearchResultGroups: (query: string) => {
             })
               .then(() => {
                 ui.success(T.adminAdded);
-                state.refreshCourseAdminsAndTeachingAssistants();
+                methods.refreshCourseAdminsAndTeachingAssistants();
               })
               .catch(ui.apiError);
           },
@@ -476,7 +486,7 @@ onUpdateSearchResultGroups: (query: string) => {
             })
               .then(() => {
                 ui.success(T.courseEditTeachingAssistantAddedSuccessfully);
-                state.refreshCourseAdminsAndTeachingAssistants();
+                methods.refreshCourseAdminsAndTeachingAssistants();
               })
               .catch(ui.apiError);
           },
@@ -486,7 +496,7 @@ onUpdateSearchResultGroups: (query: string) => {
               usernameOrEmail: username,
             })
               .then(() => {
-                state.refreshCourseAdminsAndTeachingAssistants();
+                methods.refreshCourseAdminsAndTeachingAssistants();
                 ui.success(T.adminRemoved);
               })
               .catch(ui.apiError);
@@ -497,7 +507,7 @@ onUpdateSearchResultGroups: (query: string) => {
               usernameOrEmail: username,
             })
               .then(() => {
-                state.refreshCourseAdminsAndTeachingAssistants();
+                methods.refreshCourseAdminsAndTeachingAssistants();
                 ui.success(T.courseEditTeachingAssistantRemovedSuccessfully);
               })
               .catch(ui.apiError);
@@ -509,7 +519,7 @@ onUpdateSearchResultGroups: (query: string) => {
             })
               .then(() => {
                 ui.success(T.groupAdminAdded);
-                state.refreshCourseAdminsAndTeachingAssistants();
+                methods.refreshCourseAdminsAndTeachingAssistants();
               })
               .catch(ui.apiError);
           },
@@ -520,7 +530,7 @@ onUpdateSearchResultGroups: (query: string) => {
             })
               .then(() => {
                 ui.success(T.courseEditGroupTeachingAssistantAdded);
-                state.refreshCourseAdminsAndTeachingAssistants();
+                methods.refreshCourseAdminsAndTeachingAssistants();
               })
               .catch(ui.apiError);
           },
@@ -530,7 +540,7 @@ onUpdateSearchResultGroups: (query: string) => {
               group: groupAlias,
             })
               .then(() => {
-                state.refreshCourseAdminsAndTeachingAssistants();
+                methods.refreshCourseAdminsAndTeachingAssistants();
                 ui.success(T.groupAdminRemoved);
               })
               .catch(ui.apiError);
@@ -541,7 +551,7 @@ onUpdateSearchResultGroups: (query: string) => {
               group: groupAlias,
             })
               .then(() => {
-                state.refreshCourseAdminsAndTeachingAssistants();
+                methods.refreshCourseAdminsAndTeachingAssistants();
                 ui.success(T.courseEditGroupTeachingAssistantRemoved);
               })
               .catch(ui.apiError);
@@ -639,5 +649,5 @@ onUpdateSearchResultGroups: (query: string) => {
       new Sortable(el, binding.value || {});
     },
   });
-  app.mount('#main-container');
+  component = app.mount('#main-container') as unknown as CourseEditComponent;
 });

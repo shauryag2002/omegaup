@@ -196,7 +196,7 @@ describe('ContestList.vue', () => {
       },
     });
 
-    const currentContestTab = wrapper.findAll('.section-container').at(0);
+    const currentContestTab = wrapper.findAll('.section-container')[0];
 
     expect(currentContestTab.exists()).toBe(true);
     expect(currentContestTab.text()).toContain('Current Contest 1');
@@ -210,7 +210,7 @@ describe('ContestList.vue', () => {
       },
     });
 
-    const futureContestTab = wrapper.findAll('.section-container').at(1);
+    const futureContestTab = wrapper.findAll('.section-container')[1];
 
     expect(futureContestTab.exists()).toBe(true);
     expect(futureContestTab.text()).toContain('Future Contest 1');
@@ -224,7 +224,7 @@ describe('ContestList.vue', () => {
       },
     });
 
-    const pastContestTab = wrapper.findAll('.section-container').at(2);
+    const pastContestTab = wrapper.findAll('.section-container')[2];
 
     expect(pastContestTab.exists()).toBe(true);
     expect(pastContestTab.text()).toContain('Past Contest 1');
@@ -348,8 +348,10 @@ describe('ContestList.vue', () => {
         // Instead of checking for specific page numbers, check that the event was emitted
         // with the correct sorting order and that the page was reset to 1
         const lastEmmitedEvent = emittedEvents?.slice(-1)[0];
-        expect(lastEmmitedEvent[0].params.sort_order).toBe(field);
-        expect(lastEmmitedEvent[0].params.page).toBe(1);
+        expect(lastEmmitedEvent).toBeDefined();
+        const eventData = lastEmmitedEvent![0] as { params: { sort_order: string; page: number } };
+        expect(eventData.params.sort_order).toBe(field);
+        expect(eventData.params.page).toBe(1);
       });
     },
   );

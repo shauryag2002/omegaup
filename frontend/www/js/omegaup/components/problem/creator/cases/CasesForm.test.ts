@@ -1,7 +1,7 @@
 import { shallowMount, mount } from '@vue/test-utils';
 
 import CasesForm from './CasesForm.vue';
-import { createBootstrap } from 'bootstrap-vue-next';
+import BootstrapVueNext from 'bootstrap-vue-next';
 import store from '@/js/omegaup/problem/creator/store';
 import { nextTick } from 'vue';
 import T from '../../../../lang';
@@ -19,7 +19,7 @@ describe('CasesForm.vue', () => {
 
   it('Should render commit message input and hidden fields', async () => {
     const wrapper = shallowMount(CasesForm, {
-      global: { plugins: [store, createBootstrap()] },
+      global: { plugins: [store, BootstrapVueNext] },
       provide: { problemAlias: 'problem-alias' },
       props: { isCaseEdit: true },
     });
@@ -53,7 +53,7 @@ describe('CasesForm.vue', () => {
 
   it('Should show input and output file fields when truncated', async () => {
     const wrapper = shallowMount(CasesForm, {
-      global: { plugins: [store, createBootstrap()] },
+      global: { plugins: [store, BootstrapVueNext] },
       provide: { problemAlias: 'alias' },
       props: { isTruncatedInput: true, isTruncatedOutput: true },
     });
@@ -78,7 +78,7 @@ describe('CasesForm.vue', () => {
     });
 
     const wrapper = shallowMount(CasesForm, {
-      global: { plugins: [store, createBootstrap()] },
+      global: { plugins: [store, BootstrapVueNext] },
       provide: { problemAlias: 'alias' },
       props: { isCaseEdit: true },
     });
@@ -102,7 +102,7 @@ describe('CasesForm.vue', () => {
     });
 
     const wrapper = shallowMount(CasesForm, {
-      global: { plugins: [store, createBootstrap()] },
+      global: { plugins: [store, BootstrapVueNext] },
       provide: { problemAlias: 'alias' },
       props: { isCaseEdit: false, editGroup: editGroup },
     });
@@ -124,7 +124,7 @@ describe('CasesForm.vue', () => {
     const errorSpy = jest.spyOn(ui, 'error').mockImplementation(() => {});
 
     const wrapper = mount(CasesForm, {
-      global: { plugins: [store, createBootstrap()] },
+      global: { plugins: [store, BootstrapVueNext] },
       provide: { problemAlias: 'alias' },
       props: { isCaseEdit: false },
     });
@@ -145,7 +145,7 @@ describe('CasesForm.vue', () => {
 
   it('Should hide submit button when isEmbedded is true', async () => {
     const wrapper = mount(CasesForm, {
-      global: { plugins: [store, createBootstrap()] },
+      global: { plugins: [store, BootstrapVueNext] },
       provide: { problemAlias: 'alias' },
       props: { isEmbedded: true },
     });
@@ -156,7 +156,7 @@ describe('CasesForm.vue', () => {
 
   it('Should initialize commitMessage for Case edit', () => {
     const wrapper = shallowMount(CasesForm, {
-      global: { plugins: [store, createBootstrap()] },
+      global: { plugins: [store, BootstrapVueNext] },
       provide: { problemAlias: 'alias' },
       props: { isCaseEdit: true },
     });
@@ -165,7 +165,7 @@ describe('CasesForm.vue', () => {
 
   it('Should initialize commitMessage for Group edit', () => {
     const wrapper = shallowMount(CasesForm, {
-      global: { plugins: [store, createBootstrap()] },
+      global: { plugins: [store, BootstrapVueNext] },
       provide: { problemAlias: 'alias' },
       props: { isCaseEdit: false },
     });
@@ -174,7 +174,7 @@ describe('CasesForm.vue', () => {
 
   it('Should render submit button with correct text', async () => {
     const wrapper = shallowMount(CasesForm, {
-      global: { plugins: [store, createBootstrap()] },
+      global: { plugins: [store, BootstrapVueNext] },
       provide: { problemAlias: 'alias' },
       props: { isCaseEdit: true },
     });

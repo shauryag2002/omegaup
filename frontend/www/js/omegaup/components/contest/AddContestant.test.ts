@@ -67,6 +67,6 @@ describe('AddContestant.vue', () => {
       [['user', 'test_user_1', 'user_1', 'test_user_2']],
     ]);
 
-    wrapper.destroy();
+    wrapper.unmount();
   });
 });

@@ -19,12 +19,14 @@ export enum NavigationType {
   ForSingleProblemOrCourse,
 }
 
+export interface NavigationTarget {
+  problemInfo: types.ProblemInfo | null;
+  popupDisplayed?: PopupDisplayed;
+  problem: types.NavbarProblemsetProblem | null;
+}
+
 interface BaseNavigation {
-  target: Vue & {
-    problemInfo: types.ProblemInfo | null;
-    popupDisplayed?: PopupDisplayed;
-    problem: types.NavbarProblemsetProblem | null;
-  };
+  target: NavigationTarget;
   problem: types.NavbarProblemsetProblem;
   problems: types.NavbarProblemsetProblem[];
 }

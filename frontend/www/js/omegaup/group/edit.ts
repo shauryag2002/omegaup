@@ -36,6 +36,19 @@ OmegaUp.on('ready', () => {
     searchResultSchools: searchResultSchools,
   });
 
+  interface ScoreboardsExposed {
+    reset: () => void;
+  }
+
+  interface MembersExposed {
+    showEditForm: boolean;
+    showChangePasswordForm: boolean;
+    identity: types.Identity;
+    username: string;
+    reset: () => void;
+    $el: HTMLElement;
+  }
+
   const methods = {
     refreshGroupScoreboards: (): void => {
       api.Group.details({ group_alias: payload.groupAlias })
@@ -87,7 +100,7 @@ OmegaUp.on('ready', () => {
             .catch(ui.apiError);
         },
         onCreateScoreboard: (
-          source: group_Scoreboards,
+          source: ScoreboardsExposed,
           scoreboardName: string,
           scoreboardAlias: string,
           scoreboardDescription: string,
@@ -100,24 +113,24 @@ OmegaUp.on('ready', () => {
           })
             .then(() => {
               ui.success(T.groupEditScoreboardsAdded);
-              state.refreshGroupScoreboards();
+              methods.refreshGroupScoreboards();
               source.reset();
             })
             .catch(ui.apiError);
         },
-        onAddMember: (source: group_Members, username: string) => {
+        onAddMember: (source: MembersExposed, username: string) => {
           api.Group.addUser({
             group_alias: payload.groupAlias,
             usernameOrEmail: username,
           })
             .then(() => {
-              state.refreshMemberList();
+              methods.refreshMemberList();
               ui.success(T.groupEditMemberAdded);
               source.reset();
             })
             .catch(ui.apiError);
         },
-        onEditIdentity: (source: group_Members, identity: types.Identity) => {
+        onEditIdentity: (source: MembersExposed, identity: types.Identity) => {
           source.showEditForm = true;
           source.showChangePasswordForm = false;
           source.identity = identity;
@@ -144,17 +157,17 @@ OmegaUp.on('ready', () => {
             .then(() => {
               ui.success(T.groupEditMemberUpdated);
               request.showEditForm = false;
-              state.refreshMemberList();
+              methods.refreshMemberList();
             })
             .catch(ui.apiError);
         },
-        onChangePasswordIdentity: (source: group_Members, username: string) => {
+        onChangePasswordIdentity: (source: MembersExposed, username: string) => {
           source.showEditForm = false;
           source.showChangePasswordForm = true;
           source.username = username;
         },
         onChangePasswordIdentityMember: (
-          source: group_Members,
+          source: MembersExposed,
           username: string,
           newPassword: string,
           newPasswordRepeat: string,
@@ -170,7 +183,7 @@ OmegaUp.on('ready', () => {
             username: username,
           })
             .then(() => {
-              state.refreshMemberList();
+              methods.refreshMemberList();
               ui.success(T.groupEditMemberPasswordUpdated);
               source.showChangePasswordForm = false;
               source.reset();
@@ -183,13 +196,13 @@ OmegaUp.on('ready', () => {
             usernameOrEmail: username,
           })
             .then(() => {
-              state.refreshMemberList();
+              methods.refreshMemberList();
               ui.success(T.groupEditMemberRemoved);
             })
             .catch(ui.apiError);
         },
-        cancel: (source: group_Members) => {
-          state.refreshMemberList();
+        cancel: (source: MembersExposed) => {
+          methods.refreshMemberList();
           source.showEditForm = false;
           source.showChangePasswordForm = false;
           source.$el.scrollIntoView();
@@ -200,7 +213,7 @@ OmegaUp.on('ready', () => {
             group_alias: payload.groupAlias,
           })
             .then(() => {
-              state.refreshMemberList();
+              methods.refreshMemberList();
               window.location.hash = `#${AvailableTabs.Members}`;
               state.tab = AvailableTabs.Members;
               ui.success(T.groupsIdentitiesSuccessfullyCreated);
@@ -269,7 +282,7 @@ OmegaUp.on('ready', () => {
               ui.dismissNotifications();
               state.userErrorRow = null;
             })
-            .fail((data) => {
+            .fail((data: { error: string }) => {
               ui.error(data.error);
             });
         },

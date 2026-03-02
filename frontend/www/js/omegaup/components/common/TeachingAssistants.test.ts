@@ -89,7 +89,7 @@ describe('TeachingAssistants.vue', () => {
     expect(wrapper.emitted('add-teaching-assistant')).toEqual([
       ['test_user_1'],
     ]);
-    wrapper.destroy();
+    wrapper.unmount();
   });
 
   it('Should handle onRemove event', async () => {

@@ -124,7 +124,9 @@ import * as monaco from 'monaco-editor';
 (window as any).monaco = monaco;
 import { Component, Prop, Ref, Watch } from 'vue-property-decorator';
 import { omegaup } from '../omegaup';
-import Vue, { CreateElement } from 'vue';
+import Vue from 'vue';
+import { h } from 'vue';
+import type { VNode } from 'vue';
 import omegaup_Countdown from '../components/Countdown.vue';
 import type { Component as VueComponent } from 'vue'; // this is the component type for Vue components
 import GoldenLayout from 'golden-layout';
@@ -163,9 +165,10 @@ library.add(faUpload, faFileArchive, faDownload, faSun, faMoon);
 
 import T from '../lang';
 
-interface GraderComponent extends Vue {
+interface GraderComponent {
   title?: string;
   onResize?: () => void;
+  $watch: (source: string, cb: (value: string) => void) => void;
 }
 interface ComponentProps {
   [key: string]: any;
@@ -695,18 +698,20 @@ export default class Ephemeral extends Vue {
           }
 
           const vue = new Vue({
-            el: container.getElement()[0],
+            el: (container.getElement() as unknown as HTMLElement[])[0],
             components: {
               [componentName]: component,
             },
-            render: function (createElement: CreateElement) {
-              return createElement(componentName, {
-                props: props,
+            render: function (): VNode {
+              return h(componentName, {
+                ...props,
               });
             },
           });
 
-          const vueComponent: GraderComponent = vue.$children[0];
+          const vueComponent = (vue as unknown as Record<string, unknown>).$children
+            ? ((vue as unknown as Record<string, unknown>).$children as GraderComponent[])[0]
+            : ({} as GraderComponent);
           if (vueComponent.title) {
             container.setTitle(vueComponent.title);
             vueComponent.$watch('title', function (title: string) {

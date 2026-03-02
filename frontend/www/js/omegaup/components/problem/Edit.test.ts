@@ -1,4 +1,4 @@
-import { shallowMount } from '@vue/test-utils';
+import { shallowMount, VueWrapper } from '@vue/test-utils';
 
 import T from '../../lang';
 
@@ -57,7 +57,7 @@ describe('Edit.vue', () => {
     await wrapper.find('a[data-tab-delete]').trigger('click');
     expect(wrapper.find('.alert-heading').text()).toBe(T.wordsDangerZone);
 
-    const deleteModal = wrapper.find('b-modal-stub');
+    const deleteModal = wrapper.findComponent('b-modal-stub') as VueWrapper;
     deleteModal.vm.$emit('ok');
     expect(wrapper.emitted('remove')).toBeDefined();
     expect(wrapper.emitted('remove')).toEqual([['problem-alias']]);

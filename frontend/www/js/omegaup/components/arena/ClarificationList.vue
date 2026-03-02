@@ -121,6 +121,7 @@ export enum PopupDisplayed {
   None,
   NewClarification,
 }
+export default {};
 </script>
 
 <script setup lang="ts">

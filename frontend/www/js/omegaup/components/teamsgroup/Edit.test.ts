@@ -31,6 +31,7 @@ describe('Edit.vue', () => {
       propsData,
     });
 
+    // @ts-expect-error - VTU cannot infer props for dual script block components
     await wrapper.setProps({ tab: AvailableTabs.Edit });
     expect(wrapper.vm.selectedTab).toBe(AvailableTabs.Edit);
   });
@@ -40,6 +41,7 @@ describe('Edit.vue', () => {
       propsData,
     });
 
+    // @ts-expect-error - VTU cannot infer props for dual script block components
     await wrapper.setProps({ tab: 'wrong' });
     expect(wrapper.vm.selectedTab).toBe(AvailableTabs.Teams);
   });
@@ -58,6 +60,7 @@ describe('Edit.vue', () => {
       },
     ];
 
+    // @ts-expect-error - VTU cannot infer props for dual script block components
     await wrapper.setProps({ teamsIdentities });
     expect(wrapper.vm.currentTeamsIdentities).toBe(teamsIdentities);
   });

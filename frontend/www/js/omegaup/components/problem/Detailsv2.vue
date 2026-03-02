@@ -185,7 +185,7 @@ export default class ProblemDetails extends Vue {
   @Prop() userRuns!: types.Run[];
 
   @Ref('statement-markdown')
-  readonly statementMarkdown!: omegaup_problemMarkdown;
+  readonly statementMarkdown!: InstanceType<typeof omegaup_problemMarkdown>;
 
   T = T;
   ui = ui;

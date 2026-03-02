@@ -10,7 +10,7 @@ import Sortable from 'sortablejs';
 // Configure Vue 3 compatibility mode for tests — default to Vue 2 behavior.
 configureCompat({
   MODE: 2,
-});
+} as any);
 
 Vue.directive('Sortable', {
   mounted: (el: HTMLElement, binding: DirectiveBinding) => {

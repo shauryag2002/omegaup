@@ -96,10 +96,10 @@ Here we can add code.
     expect(wrapper.text()).toContain('out');
     expect(wrapper.text()).toContain('code');
     expect(wrapper.text()).toContain('diff');
-    expect(wrapper.get('[data-run-button]').exists()).toBe(true);
-    expect(wrapper.get('option[value="py3"]').exists()).toBe(true);
+    expect(wrapper.find('[data-run-button]').exists()).toBe(true);
+    expect(wrapper.find('option[value="py3"]').exists()).toBe(true);
 
-    wrapper.destroy();
+    wrapper.unmount();
   });
 
   it('Should handle showing the ephemeral grader for a problem after changing settings', async () => {
@@ -129,10 +129,10 @@ Here we can add code.
     expect(wrapper.text()).toContain('out');
     expect(wrapper.text()).toContain('code');
     expect(wrapper.text()).toContain('diff');
-    expect(wrapper.get('[data-run-button]').exists()).toBe(true);
-    expect(wrapper.get('[data-submit-button]').exists()).toBe(true);
-    expect(wrapper.get('option[value="cpp17-gcc"]').exists()).toBe(true);
+    expect(wrapper.find('[data-run-button]').exists()).toBe(true);
+    expect(wrapper.find('[data-submit-button]').exists()).toBe(true);
+    expect(wrapper.find('option[value="cpp17-gcc"]').exists()).toBe(true);
 
-    wrapper.destroy();
+    wrapper.unmount();
   });
 });

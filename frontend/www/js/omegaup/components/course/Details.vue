@@ -325,6 +325,7 @@ export enum Tab {
   Information = 'information',
   Content = 'content',
 }
+export default {};
 </script>
 
 <script setup lang="ts">

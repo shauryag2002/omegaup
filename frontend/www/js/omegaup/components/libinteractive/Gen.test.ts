@@ -57,7 +57,7 @@ describe('Gen.vue', () => {
     idl = wrapper.find('textarea[name="idl"]').element as HTMLInputElement;
     expect(idl.value).toEqual('any text');
 
-    wrapper.destroy();
+    wrapper.unmount();
   });
 
   it('Should handle form with initial error', async () => {

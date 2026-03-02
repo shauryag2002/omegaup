@@ -180,7 +180,7 @@ describe('Contest.vue', () => {
 
     await wrapper
       .find('select[name="language"] option[value="py3"]')
-      .setSelected();
+      .setValue(true);
 
     const runSubmitWrapper = wrapper.findComponent(arena_RunSubmit);
 
@@ -191,7 +191,7 @@ describe('Contest.vue', () => {
     await wrapper.find('form button[type="submit"]').trigger('click');
     expect(wrapper.emitted('submit-run')).toBeDefined();
 
-    wrapper.destroy();
+    wrapper.unmount();
   });
 
   const run: types.Run = {
