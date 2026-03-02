@@ -145,7 +145,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { defineComponent, PropType } from 'vue';
 import { omegaup } from '../../omegaup';
 import { types } from '../../api_types';
 import T from '../../lang';
@@ -160,7 +160,8 @@ import homepage_Sponsors from './Sponsors.vue';
 import homepage_Cookie from './CookieConsent.vue';
 import { getCookie, setCookie } from '../../cookies';
 
-@Component({
+export default defineComponent({
+  name: 'Homepage',
   components: {
     'omegaup-carousel': homepage_Carousel,
     'omegaup-coder-of-the-month': homepage_CoderOfTheMonth,
@@ -172,29 +173,57 @@ import { getCookie, setCookie } from '../../cookies';
     'omegaup-sponsors': homepage_Sponsors,
     'omegaup-cookie-accept-decline': homepage_Cookie,
   },
-})
-export default class Homepage extends Vue {
-  @Prop() coderOfTheMonth!: types.UserProfile;
-  @Prop() coderOfTheMonthFemale!: types.UserProfile;
-  @Prop() schoolOfTheMonth!: omegaup.SchoolOfTheMonth;
-  @Prop() currentUserInfo!: omegaup.User;
-  @Prop() rankTable!: omegaup.UserRankTable;
-  @Prop() schoolsRank!: omegaup.SchoolRankTable;
-  @Prop() isUnder13User!: boolean;
+  props: {
+    coderOfTheMonth: {
+      type: Object as PropType<types.UserProfile>,
+      required: true,
+    },
+    coderOfTheMonthFemale: {
+      type: Object as PropType<types.UserProfile>,
+      required: true,
+    },
+    schoolOfTheMonth: {
+      type: Object as PropType<omegaup.SchoolOfTheMonth>,
+      required: true,
+    },
+    currentUserInfo: {
+      type: Object as PropType<omegaup.User>,
+      required: true,
+    },
+    rankTable: {
+      type: Object as PropType<omegaup.UserRankTable>,
+      required: true,
+    },
+    schoolsRank: {
+      type: Object as PropType<omegaup.SchoolRankTable>,
+      required: true,
+    },
+    isUnder13User: {
+      type: Boolean,
+      required: true,
+    },
+  },
+  setup() {
+    function cookieClickedAccept() {
+      // TODO: make an API to send the response to the server
+      setCookie('accept-cookies', true);
+    }
 
-  T = T;
-  cookieClickedAccept() {
-    // TODO: make an API to send the response to the server
-    setCookie('accept-cookies', true);
-  }
+    function cookieClickedDecline() {
+      // TODO: make an API to send the response to the server
+      setCookie('accept-cookies', false);
+    }
 
-  cookieClickedDecline() {
-    // TODO: make an API to send the response to the server
-    setCookie('accept-cookies', false);
-  }
+    function cookieClickedPostpone() {
+      // TODO: make an API to send the response to the server
+    }
 
-  cookieClickedPostpone() {
-    // TODO: make an API to send the response to the server
-  }
-}
+    return {
+      T,
+      cookieClickedAccept,
+      cookieClickedDecline,
+      cookieClickedPostpone,
+    };
+  },
+});
 </script>

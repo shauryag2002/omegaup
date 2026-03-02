@@ -119,7 +119,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { defineComponent, ref, computed, PropType } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import omegaup_Markdown from '../Markdown.vue';
@@ -145,7 +145,9 @@ type TeamIdentity = types.Identity & {
 };
 
 library.add(faDownload, faUserPlus, faSpinner);
-@Component({
+
+export default defineComponent({
+  name: 'Upload',
   components: {
     FontAwesomeIcon,
     'omegaup-common-multi-typeahead': common_MultiTypeahead,
@@ -154,95 +156,124 @@ library.add(faDownload, faUserPlus, faSpinner);
     BRow,
     BCol,
   },
-})
-export default class Upload extends Vue {
-  @Prop({ default: null }) userErrorRow!: string | null;
-  @Prop() searchResultUsers!: types.ListItem[];
-  @Prop() numberOfContestants!: number;
-  @Prop() isLoading!: boolean;
-
-  T = T;
-  get SolutionViewFeatureGuideURL(): string {
-    return getBlogUrl('SolutionViewFeatureGuideURL');
-  }
-  identities: types.Identity[] = [];
-  identitiesTeams: {
-    [team: string]: { username: string; password?: string }[];
-  } = {};
-  humanReadable = false;
-  selfGeneratedIdentities = false;
-  typeaheadUsers: types.ListItem[] = [];
-  columns = [
-    {
-      key: 'username',
-      label: T.teamsGroupTeamName,
-      stickyColumn: true,
-      isRowHeader: true,
+  props: {
+    userErrorRow: {
+      type: String as PropType<string | null>,
+      default: null,
     },
-    { key: 'name', label: T.profile },
-    { key: 'country_id', label: T.profileCountry },
-    { key: 'state_id', label: T.profileState },
-    { key: 'gender', label: T.wordsGender },
-    { key: 'school_name', label: T.profileSchool },
-    { key: 'usernames', label: T.teamsGroupUsernames },
-  ];
-  identitiesColumns = [
-    { key: 'username', label: T.profileUsername },
-    { key: 'password', label: T.loginPassword },
-  ];
+    searchResultUsers: {
+      type: Array as PropType<types.ListItem[]>,
+      required: true,
+    },
+    numberOfContestants: {
+      type: Number,
+      required: true,
+    },
+    isLoading: {
+      type: Boolean,
+      required: true,
+    },
+  },
+  emits: ['bulk-identities', 'invalid-file', 'read-csv', 'download-teams'],
+  setup(props, { emit }) {
+    const identities = ref<types.Identity[]>([]);
+    const identitiesTeams = ref<{
+      [team: string]: { username: string; password?: string }[];
+    }>({});
+    const humanReadable = ref(false);
+    const selfGeneratedIdentities = ref(false);
+    const typeaheadUsers = ref<types.ListItem[]>([]);
+    const columns = [
+      {
+        key: 'username',
+        label: T.teamsGroupTeamName,
+        stickyColumn: true,
+        isRowHeader: true,
+      },
+      { key: 'name', label: T.profile },
+      { key: 'country_id', label: T.profileCountry },
+      { key: 'state_id', label: T.profileState },
+      { key: 'gender', label: T.wordsGender },
+      { key: 'school_name', label: T.profileSchool },
+      { key: 'usernames', label: T.teamsGroupUsernames },
+    ];
+    const identitiesColumns = [
+      { key: 'username', label: T.profileUsername },
+      { key: 'password', label: T.loginPassword },
+    ];
 
-  get items(): TeamIdentity[] {
-    return this.identities.map((identity) => ({
-      ...identity,
-      usernames: this.identitiesTeams[identity.username],
-    }));
-  }
+    const SolutionViewFeatureGuideURL = computed((): string =>
+      getBlogUrl('SolutionViewFeatureGuideURL'),
+    );
 
-  readFile(e: HTMLInputElement): File | null {
-    return (e.files && e.files[0]) || null;
-  }
-  readCsv(ev: Event): void {
-    const file = this.readFile(ev.target as HTMLInputElement);
-    if (!file || file.name === '') {
-      return;
-    }
-    const regex = /.*\.(?:csv|txt)$/;
-    if (!regex.test(file.name.toLowerCase())) {
-      this.$emit('invalid-file');
-      return;
-    }
-    this.identities = [];
-    this.$emit('read-csv', {
-      identitiesTeams: this.identitiesTeams,
-      identities: this.identities,
-      file: file,
-      humanReadable: this.humanReadable,
-      selfGeneratedIdentities: this.selfGeneratedIdentities,
-      numberOfContestants: this.numberOfContestants,
+    const items = computed((): TeamIdentity[] => {
+      return identities.value.map((identity) => ({
+        ...identity,
+        usernames: identitiesTeams.value[identity.username],
+      }));
     });
-  }
 
-  downloadIdentitiesCSV() {
-    const participants: types.Participant[] = [];
-    for (const team of this.items) {
-      if (!team.usernames) {
-        continue;
-      }
-      for (const participant of team.usernames) {
-        participants.push({
-          country_id: team.country_id,
-          gender: team.gender,
-          name: team.name,
-          school_name: team.school_name,
-          state_id: team.state_id,
-          username: team.username,
-          participant_username: participant.username,
-          participant_password: participant.password,
-        });
-      }
+    function readFile(e: HTMLInputElement): File | null {
+      return (e.files && e.files[0]) || null;
     }
 
-    this.$emit('download-teams', participants);
-  }
-}
+    function readCsv(ev: Event): void {
+      const file = readFile(ev.target as HTMLInputElement);
+      if (!file || file.name === '') {
+        return;
+      }
+      const regex = /.*\.(?:csv|txt)$/;
+      if (!regex.test(file.name.toLowerCase())) {
+        emit('invalid-file');
+        return;
+      }
+      identities.value = [];
+      emit('read-csv', {
+        identitiesTeams: identitiesTeams.value,
+        identities: identities.value,
+        file: file,
+        humanReadable: humanReadable.value,
+        selfGeneratedIdentities: selfGeneratedIdentities.value,
+        numberOfContestants: props.numberOfContestants,
+      });
+    }
+
+    function downloadIdentitiesCSV() {
+      const participants: types.Participant[] = [];
+      for (const team of items.value) {
+        if (!team.usernames) {
+          continue;
+        }
+        for (const participant of team.usernames) {
+          participants.push({
+            country_id: team.country_id,
+            gender: team.gender,
+            name: team.name,
+            school_name: team.school_name,
+            state_id: team.state_id,
+            username: team.username,
+            participant_username: participant.username,
+            participant_password: participant.password,
+          });
+        }
+      }
+
+      emit('download-teams', participants);
+    }
+
+    return {
+      T,
+      SolutionViewFeatureGuideURL,
+      identities,
+      identitiesTeams,
+      humanReadable,
+      selfGeneratedIdentities,
+      columns,
+      identitiesColumns,
+      items,
+      readCsv,
+      downloadIdentitiesCSV,
+    };
+  },
+});
 </script>
