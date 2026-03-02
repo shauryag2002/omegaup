@@ -71,35 +71,35 @@ function launchIntro() {
           {
             title: T.problemCreatorIntroWorkspaceTitle,
             intro: T.problemCreatorIntroWorkspaceIntro,
-            element: document.querySelector(
+            element: document.querySelector<HTMLElement>(
               '[data-problem-creator-tabs]',
-            ) as Element,
+),
           },
           {
             title: T.problemCreatorIntroLoadTitle,
             intro: T.problemCreatorIntroLoadIntro,
-            element: document.querySelector(
+            element: document.querySelector<HTMLElement>(
               '[data-load-problem-button]',
-            ) as Element,
+),
           },
           {
             title: T.problemCreatorIntroDownloadTitle,
             intro: T.problemCreatorIntroDownloadIntro,
-            element: document.querySelector('[data-download-zip]') as Element,
+            element: document.querySelector<HTMLElement>('[data-download-zip]'),
           },
           {
             title: T.problemCreatorIntroCreateTitle,
             intro: T.problemCreatorIntroCreateIntro,
-            element: document.querySelector(
+            element: document.querySelector<HTMLElement>(
               '[data-create-new-problem-button]',
-            ) as Element,
+),
           },
           {
             title: T.problemCreatorIntroNameTitle,
             intro: T.problemCreatorIntroNameIntro,
-            element: document.querySelector(
+            element: document.querySelector<HTMLElement>(
               'input[placeholder="New Problem"]',
-            ) as Element,
+            ),
           },
           {
             title: T.problemCreatorIntroReadyTitle,

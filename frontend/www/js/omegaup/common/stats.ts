@@ -20,11 +20,15 @@ OmegaUp.on('ready', () => {
   const getStats = (entityType: string): void => {
     if (entityType === 'contest') {
       api.Contest.stats({ contest_alias: payload.alias })
-        .then((s) => (statsChart.stats = s))
+        .then((s) => {
+          Object.assign(state.stats, s);
+        })
         .catch(ui.apiError);
     } else {
       api.Problem.stats({ problem_alias: payload.alias })
-        .then((s) => (statsChart.stats = s))
+        .then((s) => {
+          Object.assign(state.stats, s);
+        })
         .catch(ui.apiError);
     }
   };

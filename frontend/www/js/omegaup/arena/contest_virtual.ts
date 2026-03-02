@@ -188,7 +188,7 @@ OmegaUp.on('ready', async () => {
     blockedMessage,
   });
 
-  createApp({
+  const contestContestant = createApp({
     render: () =>
       h(arena_Contest, {
         contest: payload.contest,
@@ -249,7 +249,7 @@ OmegaUp.on('ready', async () => {
         onExecuteRun: ({
           target,
         }: {
-          target: Vue & { currentNextExecutionTimestamp: Date };
+          target: { currentNextExecutionTimestamp: Date };
         }) => {
           api.Run.execute()
             .then(time.remoteTimeAdapter)
@@ -268,7 +268,7 @@ OmegaUp.on('ready', async () => {
           problem: types.NavbarProblemsetProblem;
           code: string;
           language: string;
-          target: Vue & { currentNextSubmissionTimestamp: Date };
+          target: { currentNextSubmissionTimestamp: Date };
         }) => {
           api.Run.create({
             contest_alias: payload.contest.alias,

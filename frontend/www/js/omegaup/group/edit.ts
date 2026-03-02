@@ -87,7 +87,7 @@ OmegaUp.on('ready', () => {
             .catch(ui.apiError);
         },
         onCreateScoreboard: (
-          source: group_Scoreboards,
+          source: InstanceType<typeof group_Scoreboards>,
           scoreboardName: string,
           scoreboardAlias: string,
           scoreboardDescription: string,
@@ -105,7 +105,7 @@ OmegaUp.on('ready', () => {
             })
             .catch(ui.apiError);
         },
-        onAddMember: (source: group_Members, username: string) => {
+        onAddMember: (source: InstanceType<typeof group_Members>, username: string) => {
           api.Group.addUser({
             group_alias: payload.groupAlias,
             usernameOrEmail: username,
@@ -117,7 +117,7 @@ OmegaUp.on('ready', () => {
             })
             .catch(ui.apiError);
         },
-        onEditIdentity: (source: group_Members, identity: types.Identity) => {
+        onEditIdentity: (source: InstanceType<typeof group_Members>, identity: types.Identity) => {
           source.showEditForm = true;
           source.showChangePasswordForm = false;
           source.identity = identity;
@@ -148,13 +148,13 @@ OmegaUp.on('ready', () => {
             })
             .catch(ui.apiError);
         },
-        onChangePasswordIdentity: (source: group_Members, username: string) => {
+        onChangePasswordIdentity: (source: InstanceType<typeof group_Members>, username: string) => {
           source.showEditForm = false;
           source.showChangePasswordForm = true;
           source.username = username;
         },
         onChangePasswordIdentityMember: (
-          source: group_Members,
+          source: InstanceType<typeof group_Members>,
           username: string,
           newPassword: string,
           newPasswordRepeat: string,
@@ -188,7 +188,7 @@ OmegaUp.on('ready', () => {
             })
             .catch(ui.apiError);
         },
-        cancel: (source: group_Members) => {
+        cancel: (source: InstanceType<typeof group_Members>) => {
           state.refreshMemberList();
           source.showEditForm = false;
           source.showChangePasswordForm = false;

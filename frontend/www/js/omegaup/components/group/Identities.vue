@@ -144,50 +144,50 @@ export default class Identities extends Vue {
               intro: T.createIdentitiesInteractiveGuideWelcome,
             },
             {
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '.introjs-information p:nth-child(1)',
-              ) as Element,
+              ),
               title,
               intro: T.createIdentitiesInteractiveGuideInformation,
             },
             {
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '.introjs-information p:nth-child(2)',
-              ) as Element,
+              ),
               title,
               intro: T.createIdentitiesInteractiveGuideFormat,
             },
             {
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '.introjs-information pre',
-              ) as Element,
+              ),
               title,
               intro: T.createIdentitiesInteractiveGuideExample,
             },
             {
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '.introjs-information button',
-              ) as Element,
+              ),
               title,
               intro: T.createIdentitiesInteractiveGuideCopy,
             },
             {
-              element: document.querySelector('.introjs-password') as Element,
+              element: document.querySelector<HTMLElement>('.introjs-password'),
               title,
               intro: T.createIdentitiesInteractiveGuidePassword,
             },
             {
-              element: document.querySelector('.introjs-upload') as Element,
+              element: document.querySelector<HTMLElement>('.introjs-upload'),
               title,
               intro: T.createIdentitiesInteractiveGuideUpload,
             },
             {
-              element: document.querySelector('.introjs-info') as Element,
+              element: document.querySelector<HTMLElement>('.introjs-info'),
               title,
               intro: T.createIdentitiesInteractiveGuideInformationPassword,
             },
             {
-              element: document.querySelector('.introjs-info') as Element,
+              element: document.querySelector<HTMLElement>('.introjs-info'),
               title,
               intro: T.createIdentitiesInteractiveGuideInformationConfirm,
             },

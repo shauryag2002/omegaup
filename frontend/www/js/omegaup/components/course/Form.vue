@@ -455,82 +455,82 @@ export default class CourseDetails extends Vue {
               intro: T.createCourseInteractiveGuideWelcome,
             },
             {
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '.introjs-course-name',
-              ) as Element,
+),
               title,
               intro: T.createCourseInteractiveGuideName,
             },
             {
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '.introjs-short-title',
-              ) as Element,
+),
               title,
               intro: T.createCourseInteractiveGuideShortTitle,
             },
             {
-              element: document.querySelector('.introjs-scoreboard') as Element,
+              element: document.querySelector<HTMLElement>('.introjs-scoreboard'),
               title,
               intro: T.createCourseInteractiveGuideScoreboard,
             },
             {
-              element: document.querySelector('.introjs-start-date') as Element,
+              element: document.querySelector<HTMLElement>('.introjs-start-date'),
               title,
               intro: T.createCourseInteractiveGuideStartDate,
             },
             {
-              element: document.querySelector('.introjs-duration') as Element,
+              element: document.querySelector<HTMLElement>('.introjs-duration'),
               title,
               intro: T.createCourseInteractiveGuideDuration,
             },
             {
-              element: document.querySelector('.introjs-end-date') as Element,
+              element: document.querySelector<HTMLElement>('.introjs-end-date'),
               title,
               intro: T.createCourseInteractiveGuideEndDate,
             },
             {
-              element: document.querySelector('.introjs-school') as Element,
+              element: document.querySelector<HTMLElement>('.introjs-school'),
               title,
               intro: T.createCourseInteractiveGuideSchool,
             },
             {
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '.introjs-basic-information',
-              ) as Element,
+),
               title,
               intro: T.createCourseInteractiveGuideBasicInformation,
             },
             {
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '.introjs-ask-information',
-              ) as Element,
+),
               title,
               intro: T.createCourseInteractiveGuideAskInformation,
             },
             {
-              element: document.querySelector('.introjs-level') as Element,
+              element: document.querySelector<HTMLElement>('.introjs-level'),
               title,
               intro: T.createCourseInteractiveGuideLevel,
             },
             {
-              element: document.querySelector('.introjs-language') as Element,
+              element: document.querySelector<HTMLElement>('.introjs-language'),
               title,
               intro: T.createCourseInteractiveGuideLanguage,
             },
             {
-              element: document.querySelector('.introjs-objective') as Element,
+              element: document.querySelector<HTMLElement>('.introjs-objective'),
               title,
               intro: T.createCourseInteractiveGuideObjective,
             },
             {
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '.introjs-description',
-              ) as Element,
+),
               title,
               intro: T.createCourseInteractiveGuideDescription,
             },
             {
-              element: document.querySelector('.introjs-submit') as Element,
+              element: document.querySelector<HTMLElement>('.introjs-submit'),
               title,
               intro: T.createCourseInteractiveGuideSubmit,
             },

@@ -91,16 +91,16 @@ export default class CasesTab extends Vue {
             {
               title: T.problemCreatorCasesTabIntroSidebarTitle,
               intro: T.problemCreatorCasesTabIntroSidebarIntro,
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '[data-cases-sidebar]',
-              ) as Element,
+),
             },
             {
               title: T.problemCreatorCasesTabIntroAddPanelTitle,
               intro: T.problemCreatorCasesTabIntroAddPanelIntro,
-              element: document.querySelector(
+              element: document.querySelector<HTMLElement>(
                 '[data-cases-add-panel]',
-              ) as Element,
+),
             },
           ],
         });

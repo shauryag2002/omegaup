@@ -171,7 +171,7 @@ OmegaUp.on('ready', async () => {
     blockedMessage,
   });
 
-  createApp({
+  const contestContestant = createApp({
     render: () =>
       h(arena_Contest, {
         lockdown: commonPayload.omegaUpLockDown,
@@ -201,8 +201,8 @@ OmegaUp.on('ready', async () => {
         runDetailsData: state.runDetailsData,
         nextSubmissionTimestamp: state.nextSubmissionTimestamp,
         nextExecutionTimestamp: state.nextExecutionTimestamp,
-        shouldShowFirstAssociatedIdentityRunWarning: this
-          .shouldShowFirstAssociatedIdentityRunWarning,
+        shouldShowFirstAssociatedIdentityRunWarning:
+          state.shouldShowFirstAssociatedIdentityRunWarning,
         submissionDeadline: payload.submissionDeadline,
         isBlocked: state.isBlocked,
         blockedMessage: state.blockedMessage,
@@ -262,7 +262,7 @@ OmegaUp.on('ready', async () => {
         onExecuteRun: ({
           target,
         }: {
-          target: Vue & { currentNextExecutionTimestamp: Date };
+          target: { currentNextExecutionTimestamp: Date };
         }) => {
           api.Run.execute()
             .then(time.remoteTimeAdapter)
@@ -281,7 +281,7 @@ OmegaUp.on('ready', async () => {
           problem: types.NavbarProblemsetProblem;
           code: string;
           language: string;
-          target: Vue & { currentNextSubmissionTimestamp: Date };
+          target: { currentNextSubmissionTimestamp: Date };
         }) => {
           api.Run.create({
             contest_alias: payload.contest.alias,

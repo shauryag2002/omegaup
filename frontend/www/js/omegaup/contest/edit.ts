@@ -3,7 +3,7 @@ import { types } from '../api_types';
 import { createApp, h, reactive } from 'vue';
 import T from '../lang';
 import contest_Edit from '../components/contest/Edit.vue';
-import SearchTypes from '../components/contest/AddProblem.vue';
+import { SearchTypes } from '../components/contest/AddProblem.vue';
 import * as ui from '../ui';
 import * as api from '../api';
 import { toCsv, TableCell } from '../csv';
