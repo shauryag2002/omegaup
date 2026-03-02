@@ -36,6 +36,19 @@ OmegaUp.on('ready', () => {
     searchResultSchools: searchResultSchools,
   });
 
+  interface ScoreboardsExposed {
+    reset: () => void;
+  }
+
+  interface MembersExposed {
+    showEditForm: boolean;
+    showChangePasswordForm: boolean;
+    identity: types.Identity;
+    username: string;
+    reset: () => void;
+    $el: HTMLElement;
+  }
+
   const methods = {
     refreshGroupScoreboards: (): void => {
       api.Group.details({ group_alias: payload.groupAlias })
@@ -87,7 +100,7 @@ OmegaUp.on('ready', () => {
             .catch(ui.apiError);
         },
         onCreateScoreboard: (
-          source: InstanceType<typeof group_Scoreboards>,
+          source: ScoreboardsExposed,
           scoreboardName: string,
           scoreboardAlias: string,
           scoreboardDescription: string,
@@ -105,7 +118,7 @@ OmegaUp.on('ready', () => {
             })
             .catch(ui.apiError);
         },
-        onAddMember: (source: InstanceType<typeof group_Members>, username: string) => {
+        onAddMember: (source: MembersExposed, username: string) => {
           api.Group.addUser({
             group_alias: payload.groupAlias,
             usernameOrEmail: username,
@@ -117,7 +130,7 @@ OmegaUp.on('ready', () => {
             })
             .catch(ui.apiError);
         },
-        onEditIdentity: (source: InstanceType<typeof group_Members>, identity: types.Identity) => {
+        onEditIdentity: (source: MembersExposed, identity: types.Identity) => {
           source.showEditForm = true;
           source.showChangePasswordForm = false;
           source.identity = identity;
@@ -148,13 +161,13 @@ OmegaUp.on('ready', () => {
             })
             .catch(ui.apiError);
         },
-        onChangePasswordIdentity: (source: InstanceType<typeof group_Members>, username: string) => {
+        onChangePasswordIdentity: (source: MembersExposed, username: string) => {
           source.showEditForm = false;
           source.showChangePasswordForm = true;
           source.username = username;
         },
         onChangePasswordIdentityMember: (
-          source: InstanceType<typeof group_Members>,
+          source: MembersExposed,
           username: string,
           newPassword: string,
           newPasswordRepeat: string,
@@ -188,7 +201,7 @@ OmegaUp.on('ready', () => {
             })
             .catch(ui.apiError);
         },
-        cancel: (source: InstanceType<typeof group_Members>) => {
+        cancel: (source: MembersExposed) => {
           methods.refreshMemberList();
           source.showEditForm = false;
           source.showChangePasswordForm = false;
@@ -269,7 +282,7 @@ OmegaUp.on('ready', () => {
               ui.dismissNotifications();
               state.userErrorRow = null;
             })
-            .fail((data) => {
+            .fail((data: { error: string }) => {
               ui.error(data.error);
             });
         },

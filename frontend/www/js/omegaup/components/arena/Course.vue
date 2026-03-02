@@ -508,6 +508,12 @@ watch(
     currentRunDetailsData.value = newValue ?? null;
   },
 );
+
+defineExpose({
+  activeProblem,
+  currentPopupDisplayed,
+  feedbackMap: props.feedbackMap,
+});
 </script>
 
 <style lang="scss" scoped>

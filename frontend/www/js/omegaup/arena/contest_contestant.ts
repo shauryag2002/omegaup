@@ -214,7 +214,7 @@ OmegaUp.on('ready', async () => {
           navigateToProblem({
             type: NavigationType.ForContest,
             problem,
-            target: contestContestant,
+            target: state,
             problems: state.problems,
             contestAlias: payload.contest.alias,
             contestMode: getScoreModeEnum(payload.contest.score_mode),

@@ -161,7 +161,7 @@ OmegaUp.on('ready', async () => {
           navigateToProblem({
             type: NavigationType.ForSingleProblemOrCourse,
             problem,
-            target: arenaCourse,
+            target: state,
             problems: state.problems,
             problemsetId: payload.currentAssignment.problemset_id,
           });
@@ -657,7 +657,13 @@ OmegaUp.on('ready', async () => {
     });
   }, 5 * 60 * 1000);
 
-  const component = arenaCourse.$refs.component as InstanceType<typeof arena_Course>;
+  interface CourseComponent {
+    activeProblem: types.NavbarProblemsetProblem | null;
+    currentPopupDisplayed: PopupDisplayed;
+    feedbackMap: Map<number, ArenaCourseFeedback>;
+  }
+
+  const component = arenaCourse.$refs.component as unknown as CourseComponent;
 
   window.addEventListener('hashchange', async () => {
     const { problem, guid } = getOptionsFromLocation(window.location.hash);
@@ -665,7 +671,7 @@ OmegaUp.on('ready', async () => {
       navigateToProblem({
         type: NavigationType.ForSingleProblemOrCourse,
         problem,
-        target: arenaCourse,
+        target: state,
         problems: state.problems,
         problemsetId: payload.currentAssignment.problemset_id,
         guid,
