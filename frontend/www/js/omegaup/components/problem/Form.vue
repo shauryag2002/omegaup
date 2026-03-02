@@ -454,7 +454,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch, Ref } from 'vue-property-decorator';
+import { defineComponent, ref, computed, watch, onMounted, PropType } from 'vue';
 import problem_Settings from './Settings.vue';
 import problem_Tags from './Tags.vue';
 import T from '../../lang';
@@ -464,273 +464,335 @@ import 'intro.js/introjs.css';
 import introJs from 'intro.js';
 import { getCookie, setCookie } from '../../cookies';
 
-@Component({
+export default defineComponent({
+  name: 'ProblemForm',
   components: {
     'omegaup-problem-settings': problem_Settings,
     'omegaup-problem-tags': problem_Tags,
   },
-})
-export default class ProblemForm extends Vue {
-  @Prop() data!: types.ProblemFormPayload;
-  @Prop({ default: () => [] }) errors!: string[];
-  @Prop({ default: false }) isUpdate!: boolean;
-  @Prop({ default: 0 }) originalVisibility!: number;
-  @Prop({ default: true }) hasVisitedSection!: boolean;
+  props: {
+    data: {
+      type: Object as PropType<types.ProblemFormPayload>,
+      required: true,
+    },
+    errors: { type: Array as PropType<string[]>, default: () => [] },
+    isUpdate: { type: Boolean, default: false },
+    originalVisibility: { type: Number, default: 0 },
+    hasVisitedSection: { type: Boolean, default: true },
+  },
+  emits: ['alias-changed'],
+  setup(props, { emit }) {
+    const basicInfoRef = ref<HTMLDivElement | null>(null);
+    const tagsRef = ref<HTMLDivElement | null>(null);
+    const limitsRef = ref<HTMLDivElement | null>(null);
+    const formRef = ref<HTMLFormElement | null>(null);
 
-  @Ref('basic-info') basicInfoRef!: HTMLDivElement;
-  @Ref('tags') tagsRef!: HTMLDivElement;
-  @Ref('limits') limitsRef!: HTMLDivElement;
-  @Ref('form') formRef!: HTMLFormElement;
-
-  T = T;
-  title = this.data.title;
-  alias = this.data.alias;
-  timeLimit = this.data.timeLimit;
-  extraWallTime = this.data.extraWallTime;
-  memoryLimit = this.data.memoryLimit;
-  outputLimit = this.data.outputLimit;
-  inputLimit = this.data.inputLimit;
-  overallWallTimeLimit = this.data.overallWallTimeLimit;
-  validatorTimeLimit = this.data.validatorTimeLimit;
-  emailClarifications = this.data.emailClarifications;
-  visibility = this.data.visibility;
-  allowUserAddTags = this.data.allowUserAddTags;
-  source = this.data.source;
-  validator = this.data.validator;
-  languages = this.data.languages;
-  tags = this.data.tags;
-  problemLevel = this.data.problem_level || '';
-  showDiff = this.data.showDiff;
-  groupScorePolicy = this.data.groupScorePolicy || 'sum-if-not-zero';
-  selectedTags = this.data.selectedTags || [];
-  message = '';
-  hasFile = false;
-  public = false;
-  validLanguages = this.data.validLanguages;
-  validatorTypes = this.data.validatorTypes;
-  currentLanguages = this.data.languages;
-
-  mounted() {
-    const title = T.createProblemInteractiveGuideTitle;
-    if (!this.hasVisitedSection) {
-      introJs()
-        .setOptions({
-          nextLabel: T.interactiveGuideNextButton,
-          prevLabel: T.interactiveGuidePreviousButton,
-          doneLabel: T.interactiveGuideDoneButton,
-          steps: [
-            {
-              title,
-              intro: T.createProblemInteractiveGuideWelcome,
-            },
-            {
-              element: document.querySelector<HTMLElement>('.introjs-title'),
-              title,
-              intro: T.createProblemInteractiveGuideProblemTitle,
-            },
-            {
-              element: document.querySelector<HTMLElement>(
-                '.introjs-short-title',
-),
-              title,
-              intro: T.createProblemInteractiveGuideShortTitle,
-            },
-            {
-              element: document.querySelector<HTMLElement>('.introjs-origin'),
-              title,
-              intro: T.createProblemInteractiveGuideOrigin,
-            },
-            {
-              element: document.querySelector<HTMLElement>('.introjs-file'),
-              title,
-              intro: T.createProblemInteractiveGuideFile,
-            },
-            {
-              element: document.querySelector<HTMLElement>(
-                '.introjs-tags-and-level',
-),
-              title,
-              intro: T.createProblemInteractiveGuideTagsAndLevel,
-            },
-            {
-              element: document.querySelector<HTMLElement>('.introjs-type'),
-              title,
-              intro: T.createProblemInteractiveGuideType,
-            },
-            {
-              element: document.querySelector<HTMLElement>('.introjs-validator'),
-              title,
-              intro: T.createProblemInteractiveGuideValidator,
-            },
-          ],
-        })
-        .start();
-      setCookie('has-visited-create-problem', true);
-    }
-  }
-
-  get howToWriteProblemLink(): string {
-    return 'https://github.com/omegaup/omegaup/blob/main/frontend/www/docs/How-to-write-problems-for-omegaUp.md';
-  }
-
-  get buttonText(): string {
-    if (this.isUpdate) {
-      return T.problemEditFormUpdateProblem;
-    }
-    return T.problemEditFormCreateProblem;
-  }
-
-  get selectedTagsList(): string {
-    return JSON.stringify(this.selectedTags);
-  }
-
-  get isPublic(): boolean {
-    // when visibility is public warning, then the problem is shown as public
-    return this.visibility > this.data.visibilityStatuses.private;
-  }
-
-  set isPublic(isPublic: boolean) {
-    if (
-      this.originalVisibility === this.data.visibilityStatuses.publicWarning ||
-      this.originalVisibility === this.data.visibilityStatuses.privateWarning
-    ) {
-      this.visibility = isPublic
-        ? this.data.visibilityStatuses.publicWarning
-        : this.data.visibilityStatuses.privateWarning;
-      return;
-    }
-    if (
-      this.originalVisibility === this.data.visibilityStatuses.publicBanned ||
-      this.originalVisibility === this.data.visibilityStatuses.privateBanned
-    ) {
-      this.visibility = isPublic
-        ? this.data.visibilityStatuses.publicBanned
-        : this.data.visibilityStatuses.privateBanned;
-      return;
-    }
-    this.visibility = isPublic
-      ? this.data.visibilityStatuses.public
-      : this.data.visibilityStatuses.private;
-  }
-
-  get isEditable(): boolean {
-    return (
-      this.data.visibilityStatuses.publicBanned < this.visibility &&
-      this.visibility < this.data.visibilityStatuses.promoted
+    const title = ref(props.data.title);
+    const alias = ref(props.data.alias);
+    const timeLimit = ref(props.data.timeLimit);
+    const extraWallTime = ref(props.data.extraWallTime);
+    const memoryLimit = ref(props.data.memoryLimit);
+    const outputLimit = ref(props.data.outputLimit);
+    const inputLimit = ref(props.data.inputLimit);
+    const overallWallTimeLimit = ref(props.data.overallWallTimeLimit);
+    const validatorTimeLimit = ref(props.data.validatorTimeLimit);
+    const emailClarifications = ref(props.data.emailClarifications);
+    const visibility = ref(props.data.visibility);
+    const allowUserAddTags = ref(props.data.allowUserAddTags);
+    const source = ref(props.data.source);
+    const validator = ref(props.data.validator);
+    const languages = ref(props.data.languages);
+    const tags = ref(props.data.tags);
+    const problemLevel = ref(props.data.problem_level || '');
+    const showDiff = ref(props.data.showDiff);
+    const groupScorePolicy = ref(
+      props.data.groupScorePolicy || 'sum-if-not-zero',
     );
-  }
+    const selectedTags = ref(props.data.selectedTags || []);
+    const message = ref('');
+    const hasFile = ref(false);
+    const validLanguages = ref(props.data.validLanguages);
+    const validatorTypes = ref(props.data.validatorTypes);
+    const currentLanguages = ref(props.data.languages);
 
-  get selectedPublicTags(): string[] {
-    return this.selectedTags
-      .filter((tag) => tag.public === true)
-      .map((tag) => tag.tagname);
-  }
+    const howToWriteProblemLink = computed(
+      (): string =>
+        'https://github.com/omegaup/omegaup/blob/main/frontend/www/docs/How-to-write-problems-for-omegaUp.md',
+    );
 
-  get selectedPrivateTags(): string[] {
-    return this.selectedTags
-      .filter((tag) => tag.public === false)
-      .map((tag) => tag.tagname);
-  }
-
-  addTag(alias: string, tagname: string, isPublic: boolean): void {
-    this.selectedTags.push({
-      tagname: tagname,
-      public: isPublic,
+    const buttonText = computed((): string => {
+      if (props.isUpdate) {
+        return T.problemEditFormUpdateProblem;
+      }
+      return T.problemEditFormCreateProblem;
     });
-  }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  removeTag(alias: string, tagname: string, isPublic: boolean): void {
-    this.selectedTags = this.selectedTags.filter(
-      (tag) => tag.tagname !== tagname,
+    const selectedTagsList = computed((): string => {
+      return JSON.stringify(selectedTags.value);
+    });
+
+    const isPublic = computed({
+      get: (): boolean => {
+        return visibility.value > props.data.visibilityStatuses.private;
+      },
+      set: (val: boolean) => {
+        if (
+          props.originalVisibility ===
+            props.data.visibilityStatuses.publicWarning ||
+          props.originalVisibility ===
+            props.data.visibilityStatuses.privateWarning
+        ) {
+          visibility.value = val
+            ? props.data.visibilityStatuses.publicWarning
+            : props.data.visibilityStatuses.privateWarning;
+          return;
+        }
+        if (
+          props.originalVisibility ===
+            props.data.visibilityStatuses.publicBanned ||
+          props.originalVisibility ===
+            props.data.visibilityStatuses.privateBanned
+        ) {
+          visibility.value = val
+            ? props.data.visibilityStatuses.publicBanned
+            : props.data.visibilityStatuses.privateBanned;
+          return;
+        }
+        visibility.value = val
+          ? props.data.visibilityStatuses.public
+          : props.data.visibilityStatuses.private;
+      },
+    });
+
+    const isEditable = computed(
+      (): boolean =>
+        props.data.visibilityStatuses.publicBanned < visibility.value &&
+        visibility.value < props.data.visibilityStatuses.promoted,
     );
-  }
 
-  selectProblemLevel(levelTag: string): void {
-    this.problemLevel = levelTag;
-  }
+    const selectedPublicTags = computed((): string[] => {
+      return selectedTags.value
+        .filter((tag) => tag.public === true)
+        .map((tag) => tag.tagname);
+    });
 
-  onUploadFile(ev: InputEvent): void {
-    const uploadedFile = ev.target as HTMLInputElement;
-    this.hasFile = uploadedFile.files !== null;
-  }
+    const selectedPrivateTags = computed((): string[] => {
+      return selectedTags.value
+        .filter((tag) => tag.public === false)
+        .map((tag) => tag.tagname);
+    });
 
-  onGenerateAlias(): void {
-    if (this.isUpdate) {
-      return;
+    function addTag(
+      tagAlias: string,
+      tagname: string,
+      tagIsPublic: boolean,
+    ): void {
+      selectedTags.value.push({
+        tagname: tagname,
+        public: tagIsPublic,
+      });
     }
 
-    // Remove accents
-    let generatedAlias = latinize(this.title);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    function removeTag(
+      tagAlias: string,
+      tagname: string,
+      tagIsPublic: boolean,
+    ): void {
+      selectedTags.value = selectedTags.value.filter(
+        (tag) => tag.tagname !== tagname,
+      );
+    }
 
-    // Replace whitespace
-    generatedAlias = generatedAlias.replace(/\s+/g, '-');
+    function selectProblemLevel(levelTag: string): void {
+      problemLevel.value = levelTag;
+    }
 
-    // Remove invalid characters
-    generatedAlias = generatedAlias.replace(/[^a-zA-Z0-9_-]/g, '');
+    function onUploadFile(ev: InputEvent): void {
+      const uploadedFile = ev.target as HTMLInputElement;
+      hasFile.value = uploadedFile.files !== null;
+    }
 
-    generatedAlias = generatedAlias.substring(0, 32);
+    function onGenerateAlias(): void {
+      if (props.isUpdate) {
+        return;
+      }
+      let generatedAlias = latinize(title.value);
+      generatedAlias = generatedAlias.replace(/\s+/g, '-');
+      generatedAlias = generatedAlias.replace(/[^a-zA-Z0-9_-]/g, '');
+      generatedAlias = generatedAlias.substring(0, 32);
+      alias.value = generatedAlias;
+    }
 
-    this.alias = generatedAlias;
-  }
+    function openCollapsedIfRequired(): void {
+      if (!formRef.value) return;
+      const formData = new FormData(formRef.value);
 
-  openCollapsedIfRequired() {
-    const formData = new FormData(this.formRef);
+      let basicInfoCollapsed = basicInfoRef.value
+        ? basicInfoRef.value.classList.contains('collapsed')
+        : false;
+      let limitsCollapsed = limitsRef.value
+        ? limitsRef.value.classList.contains('collapsed')
+        : false;
+      let tagsCollapsed = !props.isUpdate
+        ? tagsRef.value
+          ? tagsRef.value.classList.contains('collapsed')
+          : false
+        : false;
 
-    let basicInfoCollapsed = this.basicInfoRef.classList.contains('collapsed');
-    let limitsCollapsed = this.limitsRef.classList.contains('collapsed');
-    let tagsCollapsed = !this.isUpdate
-      ? this.tagsRef.classList.contains('collapsed')
-      : false;
+      for (const [key, value] of formData.entries()) {
+        const isEmpty = value === '';
+        if (isEmpty) {
+          if (
+            basicInfoCollapsed &&
+            (key === 'title' || key === 'alias' || key === 'source')
+          ) {
+            basicInfoRef.value?.click();
+            basicInfoCollapsed = false;
+            continue;
+          }
+          if (basicInfoCollapsed && !props.isUpdate && !hasFile.value) {
+            basicInfoRef.value?.click();
+            basicInfoCollapsed = false;
+            continue;
+          }
 
-    for (const [key, value] of formData.entries()) {
-      const isEmpty = value === '';
-      if (isEmpty) {
-        if (
-          basicInfoCollapsed &&
-          (key === 'title' || key === 'alias' || key === 'source')
-        ) {
-          this.basicInfoRef.click();
-          basicInfoCollapsed = false;
-          continue;
-        }
-        // To avoid making a complex logic check
-        if (basicInfoCollapsed && !this.isUpdate && !this.hasFile) {
-          this.basicInfoRef.click();
-          basicInfoCollapsed = false;
-          continue;
-        }
-
-        if (tagsCollapsed && key === 'problem_level') {
-          this.tagsRef.click();
-          tagsCollapsed = false;
-          continue;
-        }
-        if (
-          limitsCollapsed &&
-          (key === 'time_limit' ||
-            key === 'overall_wall_time_limit' ||
-            key === 'extra_wall_time' ||
-            key === 'memory_limit' ||
-            key === 'output_limit' ||
-            key === 'input_limit')
-        ) {
-          this.limitsRef.click();
-          limitsCollapsed = false;
-          continue;
+          if (tagsCollapsed && key === 'problem_level') {
+            tagsRef.value?.click();
+            tagsCollapsed = false;
+            continue;
+          }
+          if (
+            limitsCollapsed &&
+            (key === 'time_limit' ||
+              key === 'overall_wall_time_limit' ||
+              key === 'extra_wall_time' ||
+              key === 'memory_limit' ||
+              key === 'output_limit' ||
+              key === 'input_limit')
+          ) {
+            limitsRef.value?.click();
+            limitsCollapsed = false;
+            continue;
+          }
         }
       }
     }
-  }
 
-  @Watch('alias')
-  onValueChanged(newValue: string): void {
-    if (this.isUpdate) {
-      return;
-    }
-    this.$emit('alias-changed', newValue);
-  }
-}
+    watch(alias, (newValue: string) => {
+      if (props.isUpdate) {
+        return;
+      }
+      emit('alias-changed', newValue);
+    });
+
+    onMounted(() => {
+      const guideTitle = T.createProblemInteractiveGuideTitle;
+      if (!props.hasVisitedSection) {
+        introJs()
+          .setOptions({
+            nextLabel: T.interactiveGuideNextButton,
+            prevLabel: T.interactiveGuidePreviousButton,
+            doneLabel: T.interactiveGuideDoneButton,
+            steps: [
+              {
+                title: guideTitle,
+                intro: T.createProblemInteractiveGuideWelcome,
+              },
+              {
+                element: document.querySelector<HTMLElement>('.introjs-title'),
+                title: guideTitle,
+                intro: T.createProblemInteractiveGuideProblemTitle,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-short-title',
+                ),
+                title: guideTitle,
+                intro: T.createProblemInteractiveGuideShortTitle,
+              },
+              {
+                element: document.querySelector<HTMLElement>('.introjs-origin'),
+                title: guideTitle,
+                intro: T.createProblemInteractiveGuideOrigin,
+              },
+              {
+                element: document.querySelector<HTMLElement>('.introjs-file'),
+                title: guideTitle,
+                intro: T.createProblemInteractiveGuideFile,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-tags-and-level',
+                ),
+                title: guideTitle,
+                intro: T.createProblemInteractiveGuideTagsAndLevel,
+              },
+              {
+                element: document.querySelector<HTMLElement>('.introjs-type'),
+                title: guideTitle,
+                intro: T.createProblemInteractiveGuideType,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-validator',
+                ),
+                title: guideTitle,
+                intro: T.createProblemInteractiveGuideValidator,
+              },
+            ],
+          })
+          .start();
+        setCookie('has-visited-create-problem', true);
+      }
+    });
+
+    return {
+      T,
+      'basic-info': basicInfoRef,
+      tags: tagsRef,
+      limits: limitsRef,
+      form: formRef,
+      title,
+      alias,
+      timeLimit,
+      extraWallTime,
+      memoryLimit,
+      outputLimit,
+      inputLimit,
+      overallWallTimeLimit,
+      validatorTimeLimit,
+      emailClarifications,
+      visibility,
+      allowUserAddTags,
+      source,
+      validator,
+      languages,
+      problemLevel,
+      showDiff,
+      groupScorePolicy,
+      selectedTags,
+      message,
+      hasFile,
+      validLanguages,
+      validatorTypes,
+      currentLanguages,
+      howToWriteProblemLink,
+      buttonText,
+      selectedTagsList,
+      isPublic,
+      isEditable,
+      selectedPublicTags,
+      selectedPrivateTags,
+      addTag,
+      removeTag,
+      selectProblemLevel,
+      onUploadFile,
+      onGenerateAlias,
+      openCollapsedIfRequired,
+    };
+  },
+});
 </script>
 
 <style>

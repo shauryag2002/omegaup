@@ -315,7 +315,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Emit } from 'vue-property-decorator';
+import { defineComponent, ref, computed, onMounted, PropType } from 'vue';
 import { types, messages } from '../../api_types';
 import T from '../../lang';
 import common_Typeahead from '../common/Typeahead.vue';
@@ -360,7 +360,8 @@ const MAX_LENGTH = {
 
 const DANGER_THRESHOLD_PERCENTAGE = 0.9;
 
-@Component({
+export default defineComponent({
+  name: 'CourseDetails',
   components: {
     'omegaup-common-typeahead': common_Typeahead,
     'omegaup-datepicker': DatePicker,
@@ -370,228 +371,286 @@ const DANGER_THRESHOLD_PERCENTAGE = 0.9;
     'font-awesome-layers-text': FontAwesomeLayersText,
     'vue-multiselect': Multiselect,
   },
-})
-export default class CourseDetails extends Vue {
-  @Prop({ default: false }) update!: boolean;
-  @Prop({ default: false }) readOnly!: boolean;
-  @Prop() course!: types.CourseDetails;
-  @Prop({ default: '' }) invalidParameterName!: string;
-  @Prop() allLanguages!: string[];
-  @Prop() searchResultSchools!: types.SchoolListItem[];
-  @Prop({ default: true }) hasVisitedSection!: boolean;
-
-  T = T;
-  alias = this.course.alias;
-  description = this.course.description;
-  finishTime = this.course.finish_time || new Date();
-  showScoreboard = this.course.show_scoreboard;
-  startTime = this.course.start_time;
-  name = this.course.name;
-  level = this.course.level ?? '';
-  objective = this.course.objective;
-  school: null | types.SchoolListItem = this.searchResultSchools[0] ?? null;
-  needsBasicInformation = this.course.needs_basic_information;
-  requestsUserInformation = this.course.requests_user_information;
-  unlimitedDuration = this.course.finish_time === null;
-  selectedLanguages = this.course.languages;
-  levelOptions = levelOptions;
-  MAX_LENGTH = MAX_LENGTH;
-
-  // Computed properties to track if required fields are complete
-  get isNameComplete(): boolean {
-    return this.name !== null && this.name.trim().length > 0;
-  }
-
-  get isAliasComplete(): boolean {
-    return this.alias !== null && this.alias.trim().length > 0;
-  }
-
-  get isSchoolComplete(): boolean {
-    return this.school !== null && this.school.key !== undefined;
-  }
-
-  get isLanguagesComplete(): boolean {
-    return (this.selectedLanguages?.length ?? 0) > 0;
-  }
-
-  get isDescriptionComplete(): boolean {
-    return this.description !== null && this.description.trim().length > 0;
-  }
-
-  // Computed properties for character limit danger thresholds
-  get isExceedingName(): boolean {
-    return this.name.length > MAX_LENGTH.name * DANGER_THRESHOLD_PERCENTAGE;
-  }
-
-  get isExceedingAlias(): boolean {
-    return this.alias.length > MAX_LENGTH.alias * DANGER_THRESHOLD_PERCENTAGE;
-  }
-
-  get isExceedingDescription(): boolean {
-    return (
-      this.description.length >
-      MAX_LENGTH.description * DANGER_THRESHOLD_PERCENTAGE
+  props: {
+    update: { type: Boolean, default: false },
+    readOnly: { type: Boolean, default: false },
+    course: { type: Object as PropType<types.CourseDetails>, required: true },
+    invalidParameterName: { type: String, default: '' },
+    allLanguages: { type: Array as PropType<string[]>, required: true },
+    searchResultSchools: {
+      type: Array as PropType<types.SchoolListItem[]>,
+      required: true,
+    },
+    hasVisitedSection: { type: Boolean, default: true },
+  },
+  emits: [
+    'submit',
+    'emit-cancel',
+    'update-search-result-schools',
+    'invalid-languages',
+    'clear-language-error',
+  ],
+  setup(props, { emit }) {
+    const alias = ref(props.course.alias);
+    const description = ref(props.course.description);
+    const finishTime = ref(props.course.finish_time || new Date());
+    const showScoreboard = ref(props.course.show_scoreboard);
+    const startTime = ref(props.course.start_time);
+    const name = ref(props.course.name);
+    const level = ref(props.course.level ?? '');
+    const objective = ref(props.course.objective);
+    const school = ref<null | types.SchoolListItem>(
+      props.searchResultSchools[0] ?? null,
     );
-  }
-
-  get isExceedingObjective(): boolean {
-    return (
-      (this.objective || '').length >
-      MAX_LENGTH.objective * DANGER_THRESHOLD_PERCENTAGE
+    const needsBasicInformation = ref(props.course.needs_basic_information);
+    const requestsUserInformation = ref(
+      props.course.requests_user_information,
     );
-  }
+    const unlimitedDuration = ref(props.course.finish_time === null);
+    const selectedLanguages = ref(props.course.languages);
 
-  mounted() {
-    const title = T.createCourseInteractiveGuideTitle;
-    if (!this.hasVisitedSection) {
-      introJs()
-        .setOptions({
-          nextLabel: T.interactiveGuideNextButton,
-          prevLabel: T.interactiveGuidePreviousButton,
-          doneLabel: T.interactiveGuideDoneButton,
-          steps: [
-            {
-              title,
-              intro: T.createCourseInteractiveGuideWelcome,
-            },
-            {
-              element: document.querySelector<HTMLElement>(
-                '.introjs-course-name',
-),
-              title,
-              intro: T.createCourseInteractiveGuideName,
-            },
-            {
-              element: document.querySelector<HTMLElement>(
-                '.introjs-short-title',
-),
-              title,
-              intro: T.createCourseInteractiveGuideShortTitle,
-            },
-            {
-              element: document.querySelector<HTMLElement>('.introjs-scoreboard'),
-              title,
-              intro: T.createCourseInteractiveGuideScoreboard,
-            },
-            {
-              element: document.querySelector<HTMLElement>('.introjs-start-date'),
-              title,
-              intro: T.createCourseInteractiveGuideStartDate,
-            },
-            {
-              element: document.querySelector<HTMLElement>('.introjs-duration'),
-              title,
-              intro: T.createCourseInteractiveGuideDuration,
-            },
-            {
-              element: document.querySelector<HTMLElement>('.introjs-end-date'),
-              title,
-              intro: T.createCourseInteractiveGuideEndDate,
-            },
-            {
-              element: document.querySelector<HTMLElement>('.introjs-school'),
-              title,
-              intro: T.createCourseInteractiveGuideSchool,
-            },
-            {
-              element: document.querySelector<HTMLElement>(
-                '.introjs-basic-information',
-),
-              title,
-              intro: T.createCourseInteractiveGuideBasicInformation,
-            },
-            {
-              element: document.querySelector<HTMLElement>(
-                '.introjs-ask-information',
-),
-              title,
-              intro: T.createCourseInteractiveGuideAskInformation,
-            },
-            {
-              element: document.querySelector<HTMLElement>('.introjs-level'),
-              title,
-              intro: T.createCourseInteractiveGuideLevel,
-            },
-            {
-              element: document.querySelector<HTMLElement>('.introjs-language'),
-              title,
-              intro: T.createCourseInteractiveGuideLanguage,
-            },
-            {
-              element: document.querySelector<HTMLElement>('.introjs-objective'),
-              title,
-              intro: T.createCourseInteractiveGuideObjective,
-            },
-            {
-              element: document.querySelector<HTMLElement>(
-                '.introjs-description',
-),
-              title,
-              intro: T.createCourseInteractiveGuideDescription,
-            },
-            {
-              element: document.querySelector<HTMLElement>('.introjs-submit'),
-              title,
-              intro: T.createCourseInteractiveGuideSubmit,
-            },
-          ],
-        })
-        .start();
-      setCookie('has-visited-create-course', true);
+    const isNameComplete = computed(
+      (): boolean => name.value !== null && name.value.trim().length > 0,
+    );
+
+    const isAliasComplete = computed(
+      (): boolean => alias.value !== null && alias.value.trim().length > 0,
+    );
+
+    const isSchoolComplete = computed(
+      (): boolean => school.value !== null && school.value.key !== undefined,
+    );
+
+    const isLanguagesComplete = computed(
+      (): boolean => (selectedLanguages.value?.length ?? 0) > 0,
+    );
+
+    const isDescriptionComplete = computed(
+      (): boolean =>
+        description.value !== null && description.value.trim().length > 0,
+    );
+
+    const isExceedingName = computed(
+      (): boolean =>
+        name.value.length > MAX_LENGTH.name * DANGER_THRESHOLD_PERCENTAGE,
+    );
+
+    const isExceedingAlias = computed(
+      (): boolean =>
+        alias.value.length > MAX_LENGTH.alias * DANGER_THRESHOLD_PERCENTAGE,
+    );
+
+    const isExceedingDescription = computed(
+      (): boolean =>
+        description.value.length >
+        MAX_LENGTH.description * DANGER_THRESHOLD_PERCENTAGE,
+    );
+
+    const isExceedingObjective = computed(
+      (): boolean =>
+        (objective.value || '').length >
+        MAX_LENGTH.objective * DANGER_THRESHOLD_PERCENTAGE,
+    );
+
+    function reset(): void {
+      alias.value = props.course.alias;
+      description.value = props.course.description;
+      finishTime.value = props.course.finish_time || new Date();
+      showScoreboard.value = props.course.show_scoreboard;
+      startTime.value = props.course.start_time;
+      name.value = props.course.name;
+      school.value = props.searchResultSchools[0];
+      needsBasicInformation.value = props.course.needs_basic_information;
+      requestsUserInformation.value = props.course.requests_user_information;
+      unlimitedDuration.value = props.course.finish_time === null;
     }
-  }
 
-  reset(): void {
-    this.alias = this.course.alias;
-    this.description = this.course.description;
-    this.finishTime = this.course.finish_time || new Date();
-    this.showScoreboard = this.course.show_scoreboard;
-    this.startTime = this.course.start_time;
-    this.name = this.course.name;
-    this.school = this.searchResultSchools[0];
-    this.needsBasicInformation = this.course.needs_basic_information;
-    this.requestsUserInformation = this.course.requests_user_information;
-    this.unlimitedDuration = this.course.finish_time === null;
-  }
-
-  onSubmit(): void {
-    if (!this.selectedLanguages || this.selectedLanguages.length === 0) {
-      this.$emit('invalid-languages');
-      return;
+    function onSubmit(): void {
+      if (!selectedLanguages.value || selectedLanguages.value.length === 0) {
+        emit('invalid-languages');
+        return;
+      }
+      const request: messages.CourseUpdateRequest = {
+        name: name.value,
+        description: description.value,
+        objective: objective.value,
+        start_time: startTime.value,
+        alias: alias.value,
+        languages: selectedLanguages.value,
+        show_scoreboard: showScoreboard.value,
+        needs_basic_information: needsBasicInformation.value,
+        requests_user_information: requestsUserInformation.value,
+        school: school.value,
+        unlimited_duration: unlimitedDuration.value,
+        finish_time: !unlimitedDuration.value
+          ? new Date(finishTime.value).setHours(23, 59, 59, 999) / 1000
+          : null,
+      };
+      if (level.value) {
+        request.level = level.value;
+      }
+      emit('submit', request);
     }
-    const request: messages.CourseUpdateRequest = {
-      name: this.name,
-      description: this.description,
-      objective: this.objective,
-      start_time: this.startTime,
-      alias: this.alias,
-      languages: this.selectedLanguages,
-      show_scoreboard: this.showScoreboard,
-      needs_basic_information: this.needsBasicInformation,
-      requests_user_information: this.requestsUserInformation,
-      school: this.school,
-      unlimited_duration: this.unlimitedDuration,
-      finish_time: !this.unlimitedDuration
-        ? new Date(this.finishTime).setHours(23, 59, 59, 999) / 1000
-        : null,
+
+    function onSelect(): void {
+      emit('clear-language-error');
+    }
+
+    function onCancel(): void {
+      reset();
+      emit('emit-cancel');
+    }
+
+    onMounted(() => {
+      const title = T.createCourseInteractiveGuideTitle;
+      if (!props.hasVisitedSection) {
+        introJs()
+          .setOptions({
+            nextLabel: T.interactiveGuideNextButton,
+            prevLabel: T.interactiveGuidePreviousButton,
+            doneLabel: T.interactiveGuideDoneButton,
+            steps: [
+              {
+                title,
+                intro: T.createCourseInteractiveGuideWelcome,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-course-name',
+                ),
+                title,
+                intro: T.createCourseInteractiveGuideName,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-short-title',
+                ),
+                title,
+                intro: T.createCourseInteractiveGuideShortTitle,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-scoreboard',
+                ),
+                title,
+                intro: T.createCourseInteractiveGuideScoreboard,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-start-date',
+                ),
+                title,
+                intro: T.createCourseInteractiveGuideStartDate,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-duration',
+                ),
+                title,
+                intro: T.createCourseInteractiveGuideDuration,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-end-date',
+                ),
+                title,
+                intro: T.createCourseInteractiveGuideEndDate,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-school',
+                ),
+                title,
+                intro: T.createCourseInteractiveGuideSchool,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-basic-information',
+                ),
+                title,
+                intro: T.createCourseInteractiveGuideBasicInformation,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-ask-information',
+                ),
+                title,
+                intro: T.createCourseInteractiveGuideAskInformation,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-level',
+                ),
+                title,
+                intro: T.createCourseInteractiveGuideLevel,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-language',
+                ),
+                title,
+                intro: T.createCourseInteractiveGuideLanguage,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-objective',
+                ),
+                title,
+                intro: T.createCourseInteractiveGuideObjective,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-description',
+                ),
+                title,
+                intro: T.createCourseInteractiveGuideDescription,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-submit',
+                ),
+                title,
+                intro: T.createCourseInteractiveGuideSubmit,
+              },
+            ],
+          })
+          .start();
+        setCookie('has-visited-create-course', true);
+      }
+    });
+
+    return {
+      T,
+      alias,
+      description,
+      finishTime,
+      showScoreboard,
+      startTime,
+      name,
+      level,
+      objective,
+      school,
+      needsBasicInformation,
+      requestsUserInformation,
+      unlimitedDuration,
+      selectedLanguages,
+      levelOptions,
+      MAX_LENGTH,
+      isNameComplete,
+      isAliasComplete,
+      isSchoolComplete,
+      isLanguagesComplete,
+      isDescriptionComplete,
+      isExceedingName,
+      isExceedingAlias,
+      isExceedingDescription,
+      isExceedingObjective,
+      onSubmit,
+      onSelect,
+      onCancel,
     };
-    // Only include level if the user selected a value
-    if (this.level) {
-      request.level = this.level;
-    }
-    this.$emit('submit', request);
-  }
-
-  onSelect(): void {
-    // Clear the languages validation error when a language is selected
-    this.$emit('clear-language-error');
-  }
-
-  @Emit('emit-cancel')
-  onCancel(): void {
-    this.reset();
-  }
-}
+  },
+});
 </script>
 
 <style lang="scss" scoped>
