@@ -19,7 +19,7 @@ import { configureCompat } from '@vue/compat';
 
 configureCompat({
   MODE: 2,
-});
+} as any);
 
 export * from '@vue/compat';
 export { default } from '@vue/compat';

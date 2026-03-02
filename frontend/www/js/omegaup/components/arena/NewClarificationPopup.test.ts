@@ -123,6 +123,6 @@ describe('NewClarification.vue', () => {
     await wrapper.find('form button[type="submit"]').trigger('click');
     expect(wrapper.emitted('new-clarification')).toBeDefined();
 
-    wrapper.destroy();
+    wrapper.unmount();
   });
 });

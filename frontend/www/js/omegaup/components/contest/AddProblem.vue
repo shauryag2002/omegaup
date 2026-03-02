@@ -172,6 +172,7 @@ export enum SearchTypes {
   ALIAS = 'alias',
   ID = 'problem_id',
 }
+export default {};
 </script>
 
 <script setup lang="ts">

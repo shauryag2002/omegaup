@@ -1,7 +1,7 @@
 import { shallowMount } from '@vue/test-utils';
 
 import SolutionTab from './SolutionTab.vue';
-import { createBootstrap } from 'bootstrap-vue-next';
+import BootstrapVueNext from 'bootstrap-vue-next';
 import store from '@/js/omegaup/problem/creator/store';
 import T from '../../../../lang';
 
@@ -9,7 +9,7 @@ import T from '../../../../lang';
 describe('SolutionTab.vue', () => {
   it('Should contain markdown buttons and contents and update the store accordingly', async () => {
     const wrapper = shallowMount(SolutionTab, {
-      global: { plugins: [store, createBootstrap()] },
+      global: { plugins: [store, BootstrapVueNext] },
     });
 
     const markdownButtons = wrapper.find('div.wmd-button-bar');

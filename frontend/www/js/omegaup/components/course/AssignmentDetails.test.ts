@@ -65,7 +65,7 @@ describe('AssignmentDetails.vue', () => {
       ],
     ]);
 
-    wrapper.destroy();
+    wrapper.unmount();
   });
 
   it('Should handle submit action for an existing assignment', async () => {
@@ -104,7 +104,7 @@ describe('AssignmentDetails.vue', () => {
       ],
     ]);
 
-    wrapper.destroy();
+    wrapper.unmount();
   });
 
   it('Should handle submit action for an existing assignment with runs', async () => {
@@ -143,6 +143,6 @@ describe('AssignmentDetails.vue', () => {
       ],
     ]);
 
-    wrapper.destroy();
+    wrapper.unmount();
   });
 });

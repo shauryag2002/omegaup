@@ -21,6 +21,7 @@ export enum ToggleSwitchSize {
   Small = 'small',
   Large = 'large',
 }
+export default {};
 </script>
 
 <script setup lang="ts">

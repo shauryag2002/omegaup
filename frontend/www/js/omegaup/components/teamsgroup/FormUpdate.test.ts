@@ -53,6 +53,6 @@ describe('FormUpdate.vue', () => {
       ],
     ]);
 
-    wrapper.destroy();
+    wrapper.unmount();
   });
 });

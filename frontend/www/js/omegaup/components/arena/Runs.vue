@@ -461,6 +461,7 @@ declare global {
     popover(action: string): JQuery;
   }
 }
+export default {};
 </script>
 
 <script setup lang="ts">

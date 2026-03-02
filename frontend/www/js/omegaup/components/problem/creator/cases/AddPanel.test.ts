@@ -1,7 +1,7 @@
 import { mount, VueWrapper } from '@vue/test-utils';
 
 import AddPanel from './AddPanel.vue';
-import { createBootstrap } from 'bootstrap-vue-next';
+import BootstrapVueNext from 'bootstrap-vue-next';
 import T from '../../../../lang';
 import { nextTick } from 'vue';
 import vuexStore from '../../../../problem/creator/store';
@@ -18,7 +18,7 @@ describe('AddPanel.vue', () => {
 
   it('Should add a case to the store', async () => {
     const wrapper: VueWrapper<InstanceType<typeof AddPanel>> = mount(AddPanel, {
-      global: { plugins: [vuexStore, createBootstrap()] },
+      global: { plugins: [vuexStore, BootstrapVueNext] },
     });
 
     await nextTick();
@@ -46,7 +46,7 @@ describe('AddPanel.vue', () => {
 
   it('Should add a group to the store and add a case to the group', async () => {
     const wrapper: VueWrapper<InstanceType<typeof AddPanel>> = mount(AddPanel, {
-      global: { plugins: [vuexStore, createBootstrap()] },
+      global: { plugins: [vuexStore, BootstrapVueNext] },
     });
 
     await wrapper.setData({ tab: 'group' });
@@ -87,7 +87,7 @@ describe('AddPanel.vue', () => {
 
   it('Should add an ungrouped case to the store', async () => {
     const wrapper: VueWrapper<InstanceType<typeof AddPanel>> = mount(AddPanel, {
-      global: { plugins: [vuexStore, createBootstrap()] },
+      global: { plugins: [vuexStore, BootstrapVueNext] },
     });
 
     await wrapper.setData({ tab: 'case' });
@@ -117,7 +117,7 @@ describe('AddPanel.vue', () => {
 
   it('Should add multiple ungrouped cases to the store', async () => {
     const wrapper: VueWrapper<InstanceType<typeof AddPanel>> = mount(AddPanel, {
-      global: { plugins: [vuexStore, createBootstrap()] },
+      global: { plugins: [vuexStore, BootstrapVueNext] },
     });
 
     await wrapper.setData({ tab: 'multiplecases' });
@@ -154,7 +154,7 @@ describe('AddPanel.vue', () => {
 
   it('Should contain 3 tabs', async () => {
     const wrapper = mount(AddPanel, {
-      global: { plugins: [vuexStore, createBootstrap()] },
+      global: { plugins: [vuexStore, BootstrapVueNext] },
       stubs: { transition: false },
     });
 

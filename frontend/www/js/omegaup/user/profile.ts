@@ -192,13 +192,8 @@ export interface HeatmapDataPoint {
   count: number;
 }
 
-// Use type declaration merging to add the methods to Vue
-declare module 'vue/types/vue' {
-  interface Vue {
-    loadInitialData(username: string): void;
-    loadHeatmapDataForYear(username: string, year: number): void;
-  }
-}
+// Vue 3 does not support module augmentation via 'vue/types/vue'.
+// These methods are defined directly on the component instance instead.
 
 OmegaUp.on('ready', () => {
   const payload = types.payloadParsers.UserProfileDetailsPayload();

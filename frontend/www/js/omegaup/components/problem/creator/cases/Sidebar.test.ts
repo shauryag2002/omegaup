@@ -1,7 +1,7 @@
 import { shallowMount, mount } from '@vue/test-utils';
 
 import Sidebar from './Sidebar.vue';
-import { createBootstrap, BButton } from 'bootstrap-vue-next';
+import BootstrapVueNext, { BButton } from 'bootstrap-vue-next';
 import store from '@/js/omegaup/problem/creator/store';
 import { nextTick } from 'vue';
 import {
@@ -27,7 +27,7 @@ describe('Sidebar.vue', () => {
   });
 
   it('Should contain buttons and Groups text', async () => {
-    const wrapper = shallowMount(Sidebar, { global: { plugins: [store, createBootstrap()] } });
+    const wrapper = shallowMount(Sidebar, { global: { plugins: [store, BootstrapVueNext] } });
 
     const buttons = wrapper.findAllComponents(BButton);
     expect(buttons.length).toBe(initialButtonsCount);
@@ -40,7 +40,7 @@ describe('Sidebar.vue', () => {
   });
 
   it('should show ungrouped testcases', async () => {
-    const wrapper = shallowMount(Sidebar, { global: { plugins: [store, createBootstrap()] } });
+    const wrapper = shallowMount(Sidebar, { global: { plugins: [store, BootstrapVueNext] } });
 
     expect(wrapper.text()).toContain(T.problemCreatorUngrouped);
 
@@ -77,7 +77,7 @@ describe('Sidebar.vue', () => {
   });
 
   it('should show groups and cases inside them', async () => {
-    const wrapper = shallowMount(Sidebar, { global: { plugins: [store, createBootstrap()] } });
+    const wrapper = shallowMount(Sidebar, { global: { plugins: [store, BootstrapVueNext] } });
 
     const newGroup1 = generateGroup({
       name: 'group1',
@@ -163,7 +163,7 @@ describe('Sidebar.vue', () => {
   });
 
   it('Should modify a group', async () => {
-    const wrapper = mount(Sidebar, { global: { plugins: [store, createBootstrap()] } });
+    const wrapper = mount(Sidebar, { global: { plugins: [store, BootstrapVueNext] } });
 
     const newGroup = generateGroup({
       name: 'group',
@@ -194,7 +194,7 @@ describe('Sidebar.vue', () => {
     const editAutoPointsInput = editModal.find(
       '[data-sidebar-edit-group-modal="edit autoPoints"]',
     );
-    await (editAutoPointsInput as any).setChecked(false);
+    await (editAutoPointsInput as any).setValue(false);
 
     await editModal.find('button.btn-success').trigger('click');
 
@@ -209,7 +209,7 @@ describe('Sidebar.vue', () => {
   });
 
   it('Should download a group', async () => {
-    const wrapper = mount(Sidebar, { global: { plugins: [store, createBootstrap()] } });
+    const wrapper = mount(Sidebar, { global: { plugins: [store, BootstrapVueNext] } });
 
     const newGroup = generateGroup({
       name: 'group',
@@ -236,7 +236,7 @@ describe('Sidebar.vue', () => {
   });
 
   it('Should validate and fix points', async () => {
-    const wrapper = mount(Sidebar, { global: { plugins: [store, createBootstrap()] } });
+    const wrapper = mount(Sidebar, { global: { plugins: [store, BootstrapVueNext] } });
 
     const fixedPointsGroup1 = generateGroup({
       name: 'fixedPointsGroup',

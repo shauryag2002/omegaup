@@ -75,7 +75,7 @@ describe('BasicInformationEdit.vue', () => {
     await wrapper
       .find('select[data-countries]')
       .find('option[value="CA"]')
-      .setSelected();
+      .setValue(true);
     expect(wrapper.find('select[data-countries]').element).toBeEnabled();
   });
 
@@ -90,15 +90,15 @@ describe('BasicInformationEdit.vue', () => {
     await wrapper
       .find('select[data-gender]')
       .find('option[value="other"]')
-      .setSelected();
+      .setValue(true);
     await wrapper
       .find('select[data-countries]')
       .find('option[value="CA"]')
-      .setSelected();
+      .setValue(true);
     await wrapper
       .find('select[data-states]')
       .find('option[value="AB"]')
-      .setSelected();
+      .setValue(true);
 
     await wrapper.find('button[type="submit"]').trigger('submit');
     expect(wrapper.emitted('update-user-basic-information')).toBeDefined();

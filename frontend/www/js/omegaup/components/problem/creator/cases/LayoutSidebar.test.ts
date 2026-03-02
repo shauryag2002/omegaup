@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils';
 
 import LayoutSidebar from './LayoutSidebar.vue';
-import { createBootstrap } from 'bootstrap-vue-next';
+import BootstrapVueNext from 'bootstrap-vue-next';
 import T from '../../../../lang';
 import { nextTick } from 'vue';
 import store from '@/js/omegaup/problem/creator/store';
@@ -52,7 +52,7 @@ describe('LayoutSidebar.vue', () => {
   });
   it('Should show layouts and methods', async () => {
     const wrapper = mount(LayoutSidebar, {
-      global: { plugins: [store, createBootstrap()] },
+      global: { plugins: [store, BootstrapVueNext] },
     });
 
     expect(wrapper.vm.getAllLayouts.length).toBe(1);
@@ -157,7 +157,7 @@ describe('LayoutSidebar.vue', () => {
     await nextTick();
     const layoutDropdownNew = wrapper
       .findAll('div[data-layout-dropdown]')
-      .at(1);
+      [1];
     expect(layoutDropdownNew.text()).toContain(
       newUngroupedCasegroup.name + '_' + newUngroupedCase.name,
     );
@@ -167,7 +167,7 @@ describe('LayoutSidebar.vue', () => {
     store.commit('casesStore/resetStore');
     store.commit('casesStore/addNewLayout');
     const wrapper = mount(LayoutSidebar, {
-      global: { plugins: [store, createBootstrap()] },
+      global: { plugins: [store, BootstrapVueNext] },
     });
 
     expect(wrapper.vm.getAllLayouts.length).toBe(1);

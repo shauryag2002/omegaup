@@ -155,7 +155,7 @@ describe('Runs.vue', () => {
       await wrapper
         .find(`select[data-select-${filter.filter}]`)
         .find(`option[value="${filter.value}"]`)
-        .setSelected();
+        .setValue(true);
 
       expect(wrapper.emitted('filter-changed')).toEqual([[filter]]);
     });
@@ -386,7 +386,7 @@ describe('Runs.vue', () => {
 
       await wrapper
         .findAll(`td[data-username="${username}"]`)
-        .at(1)
+        [1]
         .find(`a[title="${username}"]`)
         .trigger('click');
 
@@ -403,7 +403,7 @@ describe('Runs.vue', () => {
 
       await wrapper
         .findAll(`td[data-username="${username}"]`)
-        .at(1)
+        [1]
         .find(`a[title="${username}"]`)
         .trigger('click');
 

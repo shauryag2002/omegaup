@@ -1,7 +1,7 @@
 import { shallowMount } from '@vue/test-utils';
 
 import GroupInput from './GroupInput.vue';
-import { createBootstrap } from 'bootstrap-vue-next';
+import BootstrapVueNext from 'bootstrap-vue-next';
 import T from '../../../../lang';
 import { nextTick } from 'vue';
 
