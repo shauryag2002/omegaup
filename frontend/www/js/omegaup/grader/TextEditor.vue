@@ -11,43 +11,48 @@
 </template>
 
 <script lang="ts">
-import { Vue, Prop, Component } from 'vue-property-decorator';
+import { defineComponent, computed, PropType } from 'vue';
 import store from './GraderStore';
 
-@Component
-export default class TextEditor extends Vue {
-  // TODO: place more restrictions on value of keys inside storeMapping
-  @Prop({ required: true }) storeMapping!: {
-    [key: string]: string;
-  };
-  @Prop({ required: true }) extension!: string;
-  @Prop({ default: 'NA' }) module!: string;
-  @Prop({ default: false }) readOnly!: boolean;
+export default defineComponent({
+  name: 'TextEditor',
+  props: {
+    storeMapping: {
+      type: Object as PropType<{ [key: string]: string }>,
+      required: true,
+    },
+    extension: { type: String, required: true },
+    module: { type: String, default: 'NA' },
+    readOnly: { type: Boolean, default: false },
+  },
+  setup(props) {
+    const theme = computed((): string => store.getters['theme']);
 
-  get theme(): string {
-    return store.getters['theme'];
-  }
+    const filename = computed((): string => {
+      if (props.storeMapping.module) {
+        return `${store.getters[props.storeMapping.module]}.${props.extension}`;
+      }
+      return `${props.module}.${props.extension}`;
+    });
 
-  get filename(): string {
-    if (this.storeMapping.module) {
-      return `${store.getters[this.storeMapping.module]}.${this.extension}`;
-    }
-    return `${this.module}.${this.extension}`;
-  }
+    const contents = computed({
+      get: (): string => store.getters[props.storeMapping.contents],
+      set: (value: string) => {
+        if (props.readOnly) return;
+        store.dispatch(props.storeMapping.contents, value);
+      },
+    });
 
-  get contents(): string {
-    return store.getters[this.storeMapping.contents];
-  }
+    const title = computed((): string => filename.value);
 
-  set contents(value: string) {
-    if (this.readOnly) return;
-    store.dispatch(this.storeMapping.contents, value);
-  }
-
-  get title(): string {
-    return this.filename;
-  }
-}
+    return {
+      theme,
+      filename,
+      contents,
+      title,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>

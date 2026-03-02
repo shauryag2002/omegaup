@@ -24,7 +24,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { defineComponent } from 'vue';
 import T from '../../lang';
 
 import omegaup_Markdown from '../Markdown.vue';
@@ -37,16 +37,20 @@ library.add(faCircleCheck, faCircleXmark);
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
 
-@Component({
+export default defineComponent({
+  name: 'UserVerificationParentalToken',
   components: {
     FontAwesomeIcon,
     'omegaup-markdown': omegaup_Markdown,
   },
-})
-export default class UserVerificationParentalToken extends Vue {
-  @Prop() message!: string;
-  @Prop() hasParentalVerificationToken!: boolean;
-
-  T = T;
-}
+  props: {
+    message: { type: String },
+    hasParentalVerificationToken: { type: Boolean },
+  },
+  setup() {
+    return {
+      T,
+    };
+  },
+});
 </script>
