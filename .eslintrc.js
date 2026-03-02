@@ -13,7 +13,7 @@ module.exports = {
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:jest-dom/recommended',
-    // Vue 3 ruleset — using @vue/compat migration build.
+    // Vue 3 ruleset.
     'plugin:vue/vue3-recommended',
     'prettier',
     'prettier/@typescript-eslint',

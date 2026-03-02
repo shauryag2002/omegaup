@@ -227,9 +227,6 @@ module.exports = {
         options: {
           compilerOptions: {
             whitespace: 'condense',
-            compatConfig: {
-              MODE: 2,
-            },
           },
         },
       },
