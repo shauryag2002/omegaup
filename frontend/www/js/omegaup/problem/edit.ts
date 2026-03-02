@@ -262,7 +262,7 @@ OmegaUp.on('ready', () => {
             .catch(ui.apiError);
         },
         onRunsDiff: (
-          versions: types.CommitRunsDiff,
+          versions: { runsDiff: types.CommitRunsDiff },
           selectedCommit: types.ProblemVersion,
         ) => {
           api.Problem.runsDiff({

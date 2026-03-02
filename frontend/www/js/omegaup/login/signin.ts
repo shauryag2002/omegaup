@@ -167,8 +167,8 @@ OmegaUp.on('ready', () => {
       }),
   }).mount('#main-container');
 
-  const onActiveTab = (tab: AvailableTabs): void => {
-    state.initialActiveTab = tab;
+  const onActiveTab = (tab: string): void => {
+    state.initialActiveTab = tab as AvailableTabs;
     window.location.hash = `#${tab}`;
   };
   eventBus.on('update:activeTab', onActiveTab);

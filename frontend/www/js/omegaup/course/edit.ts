@@ -35,7 +35,7 @@ OmegaUp.on('ready', () => {
 
   interface CourseEditComponent {
     assignments: types.CourseAssignment[];
-    assignmentProblems: types.ProblemsetProblemWithVersions[];
+    assignmentProblems: types.ProblemsetProblem[];
     assignmentFormMode: omegaup.AssignmentFormMode;
     token: string;
     onResetAssignmentForm: () => void;

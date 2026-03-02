@@ -1,4 +1,4 @@
-import { mount, shallowMount } from '@vue/test-utils';
+import { mount, shallowMount, VueWrapper } from '@vue/test-utils';
 import { types } from '../../api_types';
 
 import T from '../../lang';
@@ -55,10 +55,10 @@ describe('Requests.vue', () => {
     expect(wrapper.vm.modalStates['test_user_2']).toBe(true);
 
     wrapper.vm.resolutionText = 'Hello';
-    feedbackModals[0].vm.$emit('ok');
+    (feedbackModals[0] as VueWrapper).vm.$emit('ok');
 
     wrapper.vm.resolutionText = 'There';
-    feedbackModals[1].vm.$emit('ok');
+    (feedbackModals[1] as VueWrapper).vm.$emit('ok');
 
     expect(wrapper.emitted('deny-request')).toBeDefined();
     expect(wrapper.emitted('deny-request')).toEqual([

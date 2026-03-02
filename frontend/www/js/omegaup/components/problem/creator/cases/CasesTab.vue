@@ -80,6 +80,7 @@ export default class CasesTab extends Vue {
 
   startIntroGuide() {
     if (!getCookie('has-visited-cases-tab')) {
+      const self = this;
       this.$nextTick(() => {
         const intro = introJs();
 
@@ -105,11 +106,15 @@ export default class CasesTab extends Vue {
           ],
         });
 
-        intro.onbeforechange(() => {
-          var currentStep = intro.currentStep();
+        intro.onbeforechange(function (
+          this: ReturnType<typeof introJs>,
+          _targetElement: HTMLElement,
+          currentStep: number,
+        ) {
           if (currentStep === 1) {
-            this.openAddWindow();
+            self.openAddWindow();
           }
+          return true;
         });
 
         intro.start();

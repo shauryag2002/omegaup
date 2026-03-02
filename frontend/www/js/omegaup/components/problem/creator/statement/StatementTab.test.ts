@@ -1,4 +1,4 @@
-import { shallowMount } from '@vue/test-utils';
+import { shallowMount, VueWrapper } from '@vue/test-utils';
 
 import store from '@/js/omegaup/problem/creator/store';
 import BootstrapVueNext from 'bootstrap-vue-next';
@@ -22,12 +22,12 @@ describe('StatementTab.vue', () => {
 
     expect(wrapper.vm.currentMarkdown).toBe('Hello omegaUp');
 
-    const markdownContent = wrapper.findComponent('omegaup-markdown-stub');
+    const markdownContent = wrapper.findComponent('omegaup-markdown-stub') as VueWrapper;
     expect(markdownContent.exists()).toBe(true);
 
     await wrapper.trigger('click');
 
-    expect(markdownContent.props()['markdown']).toBe(
+    expect((markdownContent.props() as Record<string, unknown>)['markdown']).toBe(
       T.problemCreatorMarkdownPreviewInitialRender + 'Hello omegaUp',
     );
 

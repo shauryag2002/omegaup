@@ -366,7 +366,7 @@ OmegaUp.on('ready', () => {
         },
         onRunsDiff: (
           problemAlias: string,
-          versionsComponent: types.CommitRunsDiff,
+          versionsComponent: { runsDiff: types.CommitRunsDiff },
           selectedCommit: types.ProblemVersion,
         ) => {
           api.Contest.runsDiff({

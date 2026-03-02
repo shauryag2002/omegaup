@@ -698,7 +698,7 @@ export default class Ephemeral extends Vue {
           }
 
           const vue = new Vue({
-            el: container.getElement()[0] as HTMLElement,
+            el: (container.getElement() as unknown as HTMLElement[])[0],
             components: {
               [componentName]: component,
             },
@@ -709,8 +709,8 @@ export default class Ephemeral extends Vue {
             },
           });
 
-          const vueComponent = (vue as Record<string, unknown>).$children
-            ? ((vue as Record<string, unknown>).$children as GraderComponent[])[0]
+          const vueComponent = (vue as unknown as Record<string, unknown>).$children
+            ? ((vue as unknown as Record<string, unknown>).$children as GraderComponent[])[0]
             : ({} as GraderComponent);
           if (vueComponent.title) {
             container.setTitle(vueComponent.title);

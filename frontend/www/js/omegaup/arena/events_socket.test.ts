@@ -229,8 +229,8 @@ describe('EventsSocket', () => {
     jest.runOnlyPendingTimers();
     await server?.connected;
 
-    const onRankingChangedMock = mocked(onRankingChanged, true);
-    const onRankingEventsMock = mocked(onRankingEvents, false);
+    const onRankingChangedMock = mocked(onRankingChanged);
+    const onRankingEventsMock = mocked(onRankingEvents);
     onRankingChangedMock.mockReturnValueOnce({
       users: [],
       ranking: [],

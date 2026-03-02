@@ -1,4 +1,4 @@
-import { shallowMount } from '@vue/test-utils';
+import { shallowMount, VueWrapper } from '@vue/test-utils';
 
 import MultipleCasesInput from './MultipleCasesInput.vue';
 import BootstrapVueNext from 'bootstrap-vue-next';
@@ -75,7 +75,7 @@ describe('MultipleCasesInput.vue', () => {
 
     const formSelect = wrapper.findComponent(
       'b-form-select-stub[name="multiple-cases-group"]',
-    );
-    expect(formSelect.props()['options']).toBe(wrapper.vm.options);
+    ) as VueWrapper;
+    expect((formSelect.props() as Record<string, unknown>)['options']).toBe(wrapper.vm.options);
   });
 });
