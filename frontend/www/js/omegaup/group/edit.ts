@@ -100,7 +100,7 @@ OmegaUp.on('ready', () => {
           })
             .then(() => {
               ui.success(T.groupEditScoreboardsAdded);
-              state.refreshGroupScoreboards();
+              methods.refreshGroupScoreboards();
               source.reset();
             })
             .catch(ui.apiError);
@@ -111,7 +111,7 @@ OmegaUp.on('ready', () => {
             usernameOrEmail: username,
           })
             .then(() => {
-              state.refreshMemberList();
+              methods.refreshMemberList();
               ui.success(T.groupEditMemberAdded);
               source.reset();
             })
@@ -144,7 +144,7 @@ OmegaUp.on('ready', () => {
             .then(() => {
               ui.success(T.groupEditMemberUpdated);
               request.showEditForm = false;
-              state.refreshMemberList();
+              methods.refreshMemberList();
             })
             .catch(ui.apiError);
         },
@@ -170,7 +170,7 @@ OmegaUp.on('ready', () => {
             username: username,
           })
             .then(() => {
-              state.refreshMemberList();
+              methods.refreshMemberList();
               ui.success(T.groupEditMemberPasswordUpdated);
               source.showChangePasswordForm = false;
               source.reset();
@@ -183,13 +183,13 @@ OmegaUp.on('ready', () => {
             usernameOrEmail: username,
           })
             .then(() => {
-              state.refreshMemberList();
+              methods.refreshMemberList();
               ui.success(T.groupEditMemberRemoved);
             })
             .catch(ui.apiError);
         },
         cancel: (source: InstanceType<typeof group_Members>) => {
-          state.refreshMemberList();
+          methods.refreshMemberList();
           source.showEditForm = false;
           source.showChangePasswordForm = false;
           source.$el.scrollIntoView();
@@ -200,7 +200,7 @@ OmegaUp.on('ready', () => {
             group_alias: payload.groupAlias,
           })
             .then(() => {
-              state.refreshMemberList();
+              methods.refreshMemberList();
               window.location.hash = `#${AvailableTabs.Members}`;
               state.tab = AvailableTabs.Members;
               ui.success(T.groupsIdentitiesSuccessfullyCreated);
