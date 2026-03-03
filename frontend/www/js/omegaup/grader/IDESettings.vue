@@ -119,135 +119,139 @@
 
 <script lang="ts">
 // TODO: use mapGetters, mapMutations and mapActions to get auto complete
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { defineComponent, computed, PropType } from 'vue';
 import RadioSwitch from '../components/RadioSwitch.vue';
 import store from './GraderStore';
 import * as Util from './util';
 import T from '../lang';
 
-@Component({
+export default defineComponent({
+  name: 'IDESettings',
   components: {
     'omegaup-radio-switch': RadioSwitch,
   },
-})
-export default class IDESettings extends Vue {
-  @Prop({ required: true }) storeMapping!: { [key: string]: any };
+  props: {
+    storeMapping: {
+      type: Object as PropType<{ [key: string]: any }>,
+      required: true,
+    },
+  },
+  setup() {
+    const theme = computed((): string => store.getters['theme']);
 
-  T = T;
-
-  get theme(): string {
-    return store.getters['theme'];
-  }
-
-  get timeLimit(): number {
-    return Util.parseDuration(store.state.request.input.limits.TimeLimit);
-  }
-
-  set timeLimit(value: number) {
-    // convert back the time in seconds
-    store.dispatch('limits', {
-      ...store.state.request.input.limits,
-      TimeLimit: `${value}s`,
+    const timeLimit = computed({
+      get: (): number => Util.parseDuration(store.state.request.input.limits.TimeLimit),
+      set: (value: number) => {
+        // convert back the time in seconds
+        store.dispatch('limits', {
+          ...store.state.request.input.limits,
+          TimeLimit: `${value}s`,
+        });
+      },
     });
-  }
 
-  get overallWallTimeLimit(): number {
-    return Util.parseDuration(
-      store.state.request.input.limits.OverallWallTimeLimit,
-    );
-  }
-
-  set overallWallTimeLimit(value: number) {
-    store.dispatch('limits', {
-      ...store.state.request.input.limits,
-      OverallWallTimeLimit: `${value}s`,
+    const overallWallTimeLimit = computed({
+      get: (): number => Util.parseDuration(store.state.request.input.limits.OverallWallTimeLimit),
+      set: (value: number) => {
+        store.dispatch('limits', {
+          ...store.state.request.input.limits,
+          OverallWallTimeLimit: `${value}s`,
+        });
+      },
     });
-  }
 
-  get extraWallTime(): number {
-    return Util.parseDuration(store.state.request.input.limits.ExtraWallTime);
-  }
-
-  set extraWallTime(value: number) {
-    store.dispatch('limits', {
-      ...store.state.request.input.limits,
-      ExtraWallTime: `${value}s`,
+    const extraWallTime = computed({
+      get: (): number => Util.parseDuration(store.state.request.input.limits.ExtraWallTime),
+      set: (value: number) => {
+        store.dispatch('limits', {
+          ...store.state.request.input.limits,
+          ExtraWallTime: `${value}s`,
+        });
+      },
     });
-  }
 
-  get memoryLimit(): number {
-    return Util.parseDuration(store.state.request.input.limits.MemoryLimit);
-  }
-
-  set memoryLimit(value: number) {
-    store.dispatch('limits', {
-      ...store.state.request.input.limits,
-      MemoryLimit: value,
+    const memoryLimit = computed({
+      get: (): number => Util.parseDuration(store.state.request.input.limits.MemoryLimit),
+      set: (value: number) => {
+        store.dispatch('limits', {
+          ...store.state.request.input.limits,
+          MemoryLimit: value,
+        });
+      },
     });
-  }
 
-  get outputLimit(): number {
-    return Util.parseDuration(store.state.request.input.limits.OutputLimit);
-  }
-
-  set outputLimit(value: number) {
-    store.dispatch('limits', {
-      ...store.state.request.input.limits,
-      OutputLimit: value,
+    const outputLimit = computed({
+      get: (): number => Util.parseDuration(store.state.request.input.limits.OutputLimit),
+      set: (value: number) => {
+        store.dispatch('limits', {
+          ...store.state.request.input.limits,
+          OutputLimit: value,
+        });
+      },
     });
-  }
 
-  get validator(): string {
-    return store.getters['Validator'];
-  }
+    const validator = computed({
+      get: (): string => store.getters['Validator'],
+      set: (value: string) => {
+        store.dispatch('Validator', value);
+      },
+    });
 
-  set validator(value: string) {
-    store.dispatch('Validator', value);
-  }
+    const tolerance = computed({
+      get: (): number => store.getters['Tolerance'],
+      set: (value: number) => {
+        store.dispatch('Tolerance', value);
+      },
+    });
 
-  get tolerance(): number {
-    return store.getters['Tolerance'];
-  }
+    const validatorLanguage = computed({
+      get: (): string => store.getters['request.input.validator.custom_validator.language'],
+      set: (value: string) => {
+        store.dispatch('request.input.validator.custom_validator.language', value);
+      },
+    });
 
-  set tolerance(value: number) {
-    store.dispatch('Tolerance', value);
-  }
+    const interactive = computed({
+      get: (): boolean => store.getters['isInteractive'],
+      set: (value: boolean) => {
+        // radio switch triggers an event value, make sure that value is a boolean
+        if (typeof value !== 'boolean') return;
+        if (value) store.dispatch('Interactive', {});
+        else store.dispatch('Interactive', undefined);
+      },
+    });
 
-  get validatorLanguage(): string {
-    return store.getters['request.input.validator.custom_validator.language'];
-  }
+    const interactiveLanguage = computed({
+      get: (): string => store.getters['request.input.interactive.language'],
+      set: (value: string) => {
+        store.dispatch('request.input.interactive.language', value);
+      },
+    });
 
-  set validatorLanguage(value: string) {
-    store.dispatch('request.input.validator.custom_validator.language', value);
-  }
+    const interactiveModuleName = computed({
+      get: (): string => store.getters['moduleName'],
+      set: (value: string) => {
+        store.dispatch('moduleName', value);
+      },
+    });
 
-  get interactive(): boolean {
-    return store.getters['isInteractive'];
-  }
-
-  set interactive(value: boolean) {
-    // radio switch triggers an event value, make sure that value is a boolean
-    if (typeof value !== 'boolean') return;
-    if (value) store.dispatch('Interactive', {});
-    else store.dispatch('Interactive', undefined);
-  }
-
-  get interactiveLanguage(): string {
-    return store.getters['request.input.interactive.language'];
-  }
-
-  set interactiveLanguage(value: string) {
-    store.dispatch('request.input.interactive.language', value);
-  }
-
-  get interactiveModuleName(): string {
-    return store.getters['moduleName'];
-  }
-
-  set interactiveModuleName(value: string) {
-    store.dispatch('moduleName', value);
-  }
-}
+    return {
+      T,
+      theme,
+      timeLimit,
+      overallWallTimeLimit,
+      extraWallTime,
+      memoryLimit,
+      outputLimit,
+      validator,
+      tolerance,
+      validatorLanguage,
+      interactive,
+      interactiveLanguage,
+      interactiveModuleName,
+    };
+  },
+});
 </script>
 
 <style lang="scss">

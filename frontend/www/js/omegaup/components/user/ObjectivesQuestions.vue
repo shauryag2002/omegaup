@@ -114,7 +114,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+import { defineComponent, ref, computed } from 'vue';
 import T from '../../lang';
 import * as ui from '../../ui';
 
@@ -141,112 +141,130 @@ export enum ObjectivesAnswers {
   Other = 'other',
 }
 
-@Component({
+export default defineComponent({
+  name: 'UserObjectivesQuestions',
   components: {
     'font-awesome-icon': FontAwesomeIcon,
     'font-awesome-layers': FontAwesomeLayers,
     'font-awesome-layers-text': FontAwesomeLayersText,
   },
-})
-export default class UserObjectivesQuestions extends Vue {
-  T = T;
-  ui = ui;
-  objective = ObjectivesAnswers.Learning;
-  previousObjective = ObjectivesAnswers.Learning;
-  hasCompetitiveObjective = false;
-  hasLearningObjective = false;
-  hasScholarObjective = false;
-  hasTeachingObjective = false;
-  currentModalPage = 1;
-  ObjectivesAnswers = ObjectivesAnswers;
-  showModal = true;
+  emits: ['submit'],
+  setup(props, { emit }) {
+    const objective = ref(ObjectivesAnswers.Learning);
+    const previousObjective = ref(ObjectivesAnswers.Learning);
+    const hasCompetitiveObjective = ref(false);
+    const hasLearningObjective = ref(false);
+    const hasScholarObjective = ref(false);
+    const hasTeachingObjective = ref(false);
+    const currentModalPage = ref(1);
+    const showModal = ref(true);
 
-  get lastModalPage(): number {
-    if (this.objective !== ObjectivesAnswers.None) {
-      return 2;
-    }
-    return this.currentModalPage;
-  }
+    const lastModalPage = computed((): number => {
+      if (objective.value !== ObjectivesAnswers.None) {
+        return 2;
+      }
+      return currentModalPage.value;
+    });
 
-  get description(): string {
-    if (this.currentModalPage === 1) {
-      return this.T.userObjectivesModalDescriptionUsage;
-    }
-    if (this.hasLearningObjective && this.hasTeachingObjective) {
-      return this.T.userObjectivesModalDescriptionLearningAndTeaching;
-    }
-    if (this.hasLearningObjective) {
-      return this.T.userObjectivesModalDescriptionLearning;
-    }
-    return this.T.userObjectivesModalDescriptionTeaching;
-  }
+    const description = computed((): string => {
+      if (currentModalPage.value === 1) {
+        return T.userObjectivesModalDescriptionUsage;
+      }
+      if (hasLearningObjective.value && hasTeachingObjective.value) {
+        return T.userObjectivesModalDescriptionLearningAndTeaching;
+      }
+      if (hasLearningObjective.value) {
+        return T.userObjectivesModalDescriptionLearning;
+      }
+      return T.userObjectivesModalDescriptionTeaching;
+    });
 
-  setFirstModalPageObjectives(): void {
-    switch (this.objective) {
-      case ObjectivesAnswers.Learning:
-        this.hasLearningObjective = true;
-        this.hasTeachingObjective = false;
-        break;
-      case ObjectivesAnswers.Teaching:
-        this.hasLearningObjective = false;
-        this.hasTeachingObjective = true;
-        break;
-      case ObjectivesAnswers.LearningAndTeaching:
-        this.hasLearningObjective = true;
-        this.hasTeachingObjective = true;
-        break;
-      case ObjectivesAnswers.None:
-        this.hasLearningObjective = false;
-        this.hasTeachingObjective = false;
-        break;
-    }
-  }
-
-  onNextModalPage(): void {
-    this.setFirstModalPageObjectives();
-    this.previousObjective = this.objective;
-    this.objective = ObjectivesAnswers.Scholar;
-    this.currentModalPage++;
-  }
-
-  onPreviousModalPage(): void {
-    this.objective = this.previousObjective;
-    this.currentModalPage--;
-  }
-
-  onSubmit(): void {
-    if (this.currentModalPage !== 1) {
-      switch (this.objective) {
-        case ObjectivesAnswers.Scholar:
-          this.hasScholarObjective = true;
-          this.hasCompetitiveObjective = false;
+    function setFirstModalPageObjectives(): void {
+      switch (objective.value) {
+        case ObjectivesAnswers.Learning:
+          hasLearningObjective.value = true;
+          hasTeachingObjective.value = false;
           break;
-        case ObjectivesAnswers.Competitive:
-          this.hasScholarObjective = false;
-          this.hasCompetitiveObjective = true;
+        case ObjectivesAnswers.Teaching:
+          hasLearningObjective.value = false;
+          hasTeachingObjective.value = true;
           break;
-        case ObjectivesAnswers.ScholarAndCompetitive:
-          this.hasScholarObjective = true;
-          this.hasCompetitiveObjective = true;
+        case ObjectivesAnswers.LearningAndTeaching:
+          hasLearningObjective.value = true;
+          hasTeachingObjective.value = true;
           break;
-        case ObjectivesAnswers.Other:
-          this.hasScholarObjective = false;
-          this.hasCompetitiveObjective = false;
+        case ObjectivesAnswers.None:
+          hasLearningObjective.value = false;
+          hasTeachingObjective.value = false;
           break;
       }
-    } else {
-      this.setFirstModalPageObjectives();
     }
 
-    this.showModal = false;
-    this.$emit('submit', {
-      hasCompetitiveObjective: this.hasCompetitiveObjective,
-      hasLearningObjective: this.hasLearningObjective,
-      hasScholarObjective: this.hasScholarObjective,
-      hasTeachingObjective: this.hasTeachingObjective,
-    });
-  }
-}
+    function onNextModalPage(): void {
+      setFirstModalPageObjectives();
+      previousObjective.value = objective.value;
+      objective.value = ObjectivesAnswers.Scholar;
+      currentModalPage.value++;
+    }
+
+    function onPreviousModalPage(): void {
+      objective.value = previousObjective.value;
+      currentModalPage.value--;
+    }
+
+    function onSubmit(): void {
+      if (currentModalPage.value !== 1) {
+        switch (objective.value) {
+          case ObjectivesAnswers.Scholar:
+            hasScholarObjective.value = true;
+            hasCompetitiveObjective.value = false;
+            break;
+          case ObjectivesAnswers.Competitive:
+            hasScholarObjective.value = false;
+            hasCompetitiveObjective.value = true;
+            break;
+          case ObjectivesAnswers.ScholarAndCompetitive:
+            hasScholarObjective.value = true;
+            hasCompetitiveObjective.value = true;
+            break;
+          case ObjectivesAnswers.Other:
+            hasScholarObjective.value = false;
+            hasCompetitiveObjective.value = false;
+            break;
+        }
+      } else {
+        setFirstModalPageObjectives();
+      }
+
+      showModal.value = false;
+      emit('submit', {
+        hasCompetitiveObjective: hasCompetitiveObjective.value,
+        hasLearningObjective: hasLearningObjective.value,
+        hasScholarObjective: hasScholarObjective.value,
+        hasTeachingObjective: hasTeachingObjective.value,
+      });
+    }
+
+    return {
+      T,
+      ui,
+      objective,
+      previousObjective,
+      hasCompetitiveObjective,
+      hasLearningObjective,
+      hasScholarObjective,
+      hasTeachingObjective,
+      currentModalPage,
+      ObjectivesAnswers,
+      showModal,
+      lastModalPage,
+      description,
+      onNextModalPage,
+      onPreviousModalPage,
+      onSubmit,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>

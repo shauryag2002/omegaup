@@ -23,243 +23,258 @@
 <script lang="ts">
 // TODO: Only display the gutters in the component if the logged-in user is an
 // admin or teaching assistant.
-import { Vue, Component, Prop, Ref } from 'vue-property-decorator';
-import { ComponentOptions } from 'vue';
+import { defineComponent, ref, computed, onMounted, nextTick, createApp, PropType } from 'vue';
 import T from '../../lang';
 import CodeMirror from 'codemirror';
 import { EditorOptions, languageModeMap, modeList } from './CodeView.vue';
 import Feedback, { ArenaCourseFeedback, FeedbackStatus } from './Feedback.vue';
 import FeedbackThread from './FeedbackThread.vue';
 
-const FeedbackClass = Vue.extend(Feedback as unknown as ComponentOptions);
-const FeedbackThreadClass = Vue.extend(FeedbackThread as unknown as ComponentOptions);
-
 for (const mode of modeList) {
   require(`codemirror/mode/${mode}/${mode}.js`);
 }
 
-@Component({
+export default defineComponent({
+  name: 'FeedbackCodeView',
   components: {},
-})
-export default class FeedbackCodeView extends Vue {
-  @Prop() language!: string;
-  @Prop() value!: string;
-  @Prop({ default: true }) readonly!: boolean;
-  @Prop({ default: () => new Map<number, ArenaCourseFeedback>() })
-  feedbackMap!: Map<number, ArenaCourseFeedback>;
-  @Prop({ default: () => new Map<number, ArenaCourseFeedback>() })
-  feedbackThreadMap!: Map<number, ArenaCourseFeedback>;
-  @Ref('cm-editor') private readonly cmEditor!: HTMLTextAreaElement;
-  @Prop() currentUsername!: string;
-  @Prop() currentUserClassName!: string;
+  props: {
+    language: {
+      type: String,
+      required: true,
+    },
+    value: {
+      type: String,
+      required: true,
+    },
+    readonly: {
+      type: Boolean,
+      default: true,
+    },
+    feedbackMap: {
+      type: Object as PropType<Map<number, ArenaCourseFeedback>>,
+      default: () => new Map<number, ArenaCourseFeedback>(),
+    },
+    feedbackThreadMap: {
+      type: Object as PropType<Map<number, ArenaCourseFeedback>>,
+      default: () => new Map<number, ArenaCourseFeedback>(),
+    },
+    currentUsername: {
+      type: String,
+      required: true,
+    },
+    currentUserClassName: {
+      type: String,
+      required: true,
+    },
+  },
+  emits: ['save-feedback-list', 'submit-feedback-thread'],
+  setup(props, { emit }) {
+    const cmEditor = ref<HTMLTextAreaElement | null>(null);
+    const mode = languageModeMap[props.language] ?? languageModeMap['cpp17-gcc'];
+    const mapChangeTracker = ref(1);
 
-  T = T;
-  mode = languageModeMap[this.language] ?? languageModeMap['cpp17-gcc'];
-  mapChangeTracker = 1;
+    const feedbackList = computed((): ArenaCourseFeedback[] => {
+      if (!mapChangeTracker.value) {
+        throw new Error('unreachable code');
+      }
+      return Array.from(props.feedbackMap.values());
+    });
 
-  get feedbackList(): ArenaCourseFeedback[] {
-    if (!this.mapChangeTracker) {
-      throw new Error('unreachable code');
-    }
-    return Array.from(this.feedbackMap.values());
-  }
+    const numberOfComments = computed((): number => {
+      return feedbackList.value.length;
+    });
 
-  get numberOfComments(): number {
-    return this.feedbackList.length;
-  }
+    const editorOptions = computed((): EditorOptions => {
+      return {
+        tabSize: 2,
+        lineNumbers: true,
+        mode: mode,
+        readOnly: true,
+        gutters: ['CodeMirror-linenumbers', 'custom-gutter'],
+      };
+    });
 
-  get editorOptions(): EditorOptions {
-    return {
-      tabSize: 2,
-      lineNumbers: true,
-      mode: this.mode,
-      readOnly: true,
-      gutters: ['CodeMirror-linenumbers', 'custom-gutter'],
-    };
-  }
+    const ensureTenLinesInSolution = computed({
+      get: (): string => {
+        let linesToAdd = 10 - props.value.split('\n').length;
+        if (linesToAdd <= 0) {
+          return props.value;
+        }
+        return props.value + '\n'.repeat(linesToAdd);
+      },
+      set: () => {
+        // no-op: textarea is hidden and used only for CodeMirror initialization
+      },
+    });
 
-  mounted() {
-    const editor = CodeMirror.fromTextArea(this.cmEditor, this.editorOptions);
-
-    for (const [feedbackKey, feedback] of this.feedbackMap) {
-      const feedbackForm = new FeedbackClass({
-        propsData: { feedback },
+    function setFeedback({
+      lineNumber,
+      text = null,
+      status,
+    }: {
+      lineNumber: number;
+      text: string | null;
+      status: FeedbackStatus;
+    }): void {
+      props.feedbackMap.set(lineNumber, {
+        lineNumber,
+        text,
+        status,
       });
-      feedbackForm.$mount();
+      mapChangeTracker.value++;
+    }
 
-      editor.addLineWidget(
-        feedback.lineNumber,
-        feedbackForm.$el as HTMLElement,
-        {
-          className: 'px-2',
-        },
+    function deleteFeedback({ lineNumber }: { lineNumber: number }): void {
+      props.feedbackMap.delete(lineNumber);
+      mapChangeTracker.value++;
+    }
+
+    function saveFeedbackList(): void {
+      emit(
+        'save-feedback-list',
+        feedbackList.value.map((feedback) => ({
+          lineNumber: feedback.lineNumber,
+          feedback: feedback.text,
+        })),
       );
+    }
 
-      const feedbackThreadMap = [...this.feedbackThreadMap]
-        .filter(
-          ([, feedbackThreadValue]) =>
-            feedbackThreadValue.lineNumber == feedbackKey,
-        )
-        .sort(
-          (
-            a: [number, ArenaCourseFeedback],
-            b: [number, ArenaCourseFeedback],
-          ) => a[0] - b[0],
-        );
-      for (const [, feedbackThread] of feedbackThreadMap) {
-        const feedbackThreadForm = new FeedbackThreadClass({
-          propsData: {
-            feedbackThread,
-            saved: true,
-          },
-        });
-        feedbackThreadForm.$mount();
+    onMounted(() => {
+      const editor = CodeMirror.fromTextArea(cmEditor.value!, editorOptions.value);
+
+      for (const [feedbackKey, feedback] of props.feedbackMap) {
+        const container = document.createElement('div');
+        const feedbackApp = createApp(Feedback as any, { feedback });
+        const feedbackInstance = feedbackApp.mount(container);
+
         editor.addLineWidget(
           feedback.lineNumber,
-          feedbackThreadForm.$el as HTMLElement,
+          feedbackInstance.$el as HTMLElement,
           {
             className: 'px-2',
           },
         );
 
-        feedbackThreadForm.$on(
-          'submit-feedback-thread',
-          (feedbackThread: ArenaCourseFeedback) => {
-            this.$emit('submit-feedback-thread', {
-              ...feedbackThread,
-              submissionFeedbackId: feedback.submissionFeedbackId,
-            });
-          },
-        );
-      }
+        const feedbackThreadMapEntries = [...props.feedbackThreadMap]
+          .filter(
+            ([, feedbackThreadValue]) =>
+              feedbackThreadValue.lineNumber == feedbackKey,
+          )
+          .sort(
+            (
+              a: [number, ArenaCourseFeedback],
+              b: [number, ArenaCourseFeedback],
+            ) => a[0] - b[0],
+          );
+        for (const [, feedbackThread] of feedbackThreadMapEntries) {
+          const threadContainer = document.createElement('div');
+          const feedbackThreadApp = createApp(FeedbackThread as any, {
+            feedbackThread,
+            saved: true,
+            onSubmitFeedbackThread: (ft: ArenaCourseFeedback) => {
+              emit('submit-feedback-thread', {
+                ...ft,
+                submissionFeedbackId: (feedback as any).submissionFeedbackId,
+              });
+            },
+          });
+          const feedbackThreadInstance = feedbackThreadApp.mount(threadContainer);
+          editor.addLineWidget(
+            feedback.lineNumber,
+            feedbackThreadInstance.$el as HTMLElement,
+            {
+              className: 'px-2',
+            },
+          );
+        }
 
-      const feedbackThreadNewForm = new FeedbackThreadClass({
-        propsData: {
+        const newThreadContainer = document.createElement('div');
+        const feedbackThreadNewApp = createApp(FeedbackThread as any, {
           feedbackThread: {
             lineNumber: feedback.lineNumber,
             text: null,
             status: FeedbackStatus.New,
-            author: this.currentUsername,
-            authorClassname: this.currentUserClassName,
+            author: props.currentUsername,
+            authorClassname: props.currentUserClassName,
           },
-        },
-      });
-      feedbackThreadNewForm.$mount();
-      editor.addLineWidget(
-        feedback.lineNumber,
-        feedbackThreadNewForm.$el as HTMLElement,
-        {
-          className: 'px-2',
-        },
-      );
+          onSubmitFeedbackThread: (ft: ArenaCourseFeedback) => {
+            emit('submit-feedback-thread', {
+              ...ft,
+              submissionFeedbackId: (feedback as any).submissionFeedbackId,
+            });
+          },
+        });
+        const feedbackThreadNewInstance = feedbackThreadNewApp.mount(newThreadContainer);
+        editor.addLineWidget(
+          feedback.lineNumber,
+          feedbackThreadNewInstance.$el as HTMLElement,
+          {
+            className: 'px-2',
+          },
+        );
+      }
 
-      feedbackThreadNewForm.$on(
-        'submit-feedback-thread',
-        (feedbackThread: ArenaCourseFeedback) => {
-          this.$emit('submit-feedback-thread', {
-            ...feedbackThread,
-            submissionFeedbackId: feedback.submissionFeedbackId,
-          });
-        },
-      );
-    }
+      if (props.readonly) {
+        return;
+      }
 
-    if (this.readonly) {
-      return;
-    }
+      editor.on(
+        'gutterClick',
+        (editor: CodeMirror.Editor, lineNumber: number) => {
+          if (editor.lineInfo(lineNumber).widgets?.length ?? 0 > 0) {
+            // There's already a widget in this line, so avoid creating another one.
+            return;
+          }
 
-    editor.on(
-      'gutterClick',
-      (editor: CodeMirror.Editor, lineNumber: number) => {
-        if (editor.lineInfo(lineNumber).widgets?.length ?? 0 > 0) {
-          // There's already a widget in this line, so avoid creating another one.
-          return;
-        }
-
-        const feedbackForm = new FeedbackClass({
-          propsData: {
+          let lineWidget: CodeMirror.LineWidget;
+          const gutterContainer = document.createElement('div');
+          const feedbackApp = createApp(Feedback as any, {
             feedback: {
               text: null,
               lineNumber,
               status: FeedbackStatus.New,
             },
-          },
-        });
-        feedbackForm.$mount();
-        const lineWidget = editor.addLineWidget(
-          lineNumber,
-          feedbackForm.$el as HTMLElement,
-          {
-            className: 'px-2',
-          },
-        );
-
-        feedbackForm.$on('submit', (feedback: ArenaCourseFeedback) => {
-          Vue.nextTick(() => {
-            // Now that the DOM has changed, we need to tell CodeMirror to
-            // recalculate the height of the line widget so that it knows which
-            // y coordinate corresponds to which line.
-            lineWidget.changed();
+            onSubmit: (fb: ArenaCourseFeedback) => {
+              nextTick(() => {
+                // Now that the DOM has changed, we need to tell CodeMirror to
+                // recalculate the height of the line widget so that it knows which
+                // y coordinate corresponds to which line.
+                lineWidget.changed();
+              });
+              setFeedback(fb);
+            },
+            onCancel: () => {
+              editor.removeLineWidget(lineWidget);
+              feedbackApp.unmount();
+            },
+            onDelete: (fb: ArenaCourseFeedback) => {
+              deleteFeedback({ lineNumber: fb.lineNumber });
+              editor.removeLineWidget(lineWidget);
+              feedbackApp.unmount();
+            },
           });
-          this.setFeedback(feedback);
-        });
-
-        feedbackForm.$on('cancel', () => {
-          editor.removeLineWidget(lineWidget);
-          feedbackForm.$destroy();
-        });
-
-        feedbackForm.$on('delete', (feedback: ArenaCourseFeedback) => {
-          this.deleteFeedback({ lineNumber: feedback.lineNumber });
-          editor.removeLineWidget(lineWidget);
-          feedbackForm.$destroy();
-        });
-      },
-    );
-  }
-
-  // Ensures that the code displayed always has at least 10 lines by adding
-  // empty lines if necessary. This makes a better UX.
-  get ensureTenLinesInSolution(): string {
-    let linesToAdd = 10 - this.value.split('\n').length;
-    if (linesToAdd <= 0) {
-      return this.value;
-    }
-    return this.value + '\n'.repeat(linesToAdd);
-  }
-
-  setFeedback({
-    lineNumber,
-    text = null,
-    status,
-  }: {
-    lineNumber: number;
-    text: string | null;
-    status: FeedbackStatus;
-  }): void {
-    this.feedbackMap.set(lineNumber, {
-      lineNumber,
-      text,
-      status,
+          const feedbackGutterInstance = feedbackApp.mount(gutterContainer);
+          lineWidget = editor.addLineWidget(
+            lineNumber,
+            feedbackGutterInstance.$el as HTMLElement,
+            {
+              className: 'px-2',
+            },
+          );
+        },
+      );
     });
-    this.mapChangeTracker++;
-  }
 
-  deleteFeedback({ lineNumber }: { lineNumber: number }): void {
-    this.feedbackMap.delete(lineNumber);
-    this.mapChangeTracker++;
-  }
+    return {
+      T,
+      'cm-editor': cmEditor,
+      ensureTenLinesInSolution,
+      numberOfComments,
+      saveFeedbackList,
+    };
+  },
+});
 
-  saveFeedbackList(): void {
-    this.$emit(
-      'save-feedback-list',
-      this.feedbackList.map((feedback) => ({
-        lineNumber: feedback.lineNumber,
-        feedback: feedback.text,
-      })),
-    );
-  }
-}
 </script>
 
 <style lang="scss">

@@ -369,7 +369,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Emit, Watch } from 'vue-property-decorator';
+import { defineComponent, ref, watch, PropType } from 'vue';
 import T from '../../lang';
 import * as ui from '../../ui';
 import * as time from '../../time';
@@ -397,227 +397,270 @@ export enum MaintenanceType {
   Error = 'danger',
 }
 
-@Component({
+export default defineComponent({
+  name: 'AdminSupport',
   components: {
     'font-awesome-icon': FontAwesomeIcon,
     'font-awesome-layers': FontAwesomeLayers,
     'font-awesome-layers-text': FontAwesomeLayersText,
     'omegaup-toggle-switch': omegaup_ToggleSwitch,
   },
-})
-export default class AdminSupport extends Vue {
-  @Prop() username!: string;
-  @Prop() email!: string;
-  @Prop() verified!: boolean;
-  @Prop() link!: string;
-  @Prop() lastLogin!: null | Date;
-  @Prop() birthDate!: null | Date;
-  @Prop() roles!: string[];
-  @Prop() roleNamesWithDescription!: types.UserRole[];
-
-  @Prop() contestAlias!: string;
-  @Prop() contestTitle!: string;
-  @Prop() contestFound!: boolean;
-  @Prop() isContestRecommended!: boolean;
-  @Prop() maintenanceEnabled!: boolean;
-  @Prop() maintenanceMessageEs!: string;
-  @Prop() maintenanceMessageEn!: string;
-  @Prop() maintenanceMessagePt!: string;
-  @Prop() maintenanceType!: string;
-  @Prop() preferredLanguage!: string;
-  @Prop() maintenancePredefinedTemplates!: types.PredefinedTemplate[];
-
-  selectedTemplateId: string = '';
-
-  currentContestAlias = this.contestAlias;
-  currentIsContestRecommended = this.isContestRecommended;
-  currentMaintenanceEnabled = this.maintenanceEnabled;
-  currentMaintenanceMessageEs = this.maintenanceMessageEs;
-  currentMaintenanceMessageEn = this.maintenanceMessageEn;
-  currentMaintenanceMessagePt = this.maintenanceMessagePt;
-  currentMaintenanceType = this.maintenanceType || 'info';
-
-  T = T;
-  ui = ui;
-  time = time;
-  MaintenanceType = MaintenanceType;
-  usernameOrEmail: null | string = null;
-  newEmail: null | string = null;
-
-  maintenanceTypes = [
-    { value: MaintenanceType.Info, label: this.T.maintenanceModeTypeInfo },
-    {
-      value: MaintenanceType.Warning,
-      label: this.T.maintenanceModeTypeWarning,
+  props: {
+    username: { type: String, required: true },
+    email: { type: String, required: true },
+    verified: { type: Boolean, required: true },
+    link: { type: String, required: true },
+    lastLogin: { type: Date as PropType<null | Date>, required: true },
+    birthDate: { type: Date as PropType<null | Date>, required: true },
+    roles: { type: Array as PropType<string[]>, required: true },
+    roleNamesWithDescription: {
+      type: Array as PropType<types.UserRole[]>,
+      required: true,
     },
-    { value: MaintenanceType.Error, label: this.T.maintenanceModeTypeError },
-  ];
+    contestAlias: { type: String, required: true },
+    contestTitle: { type: String, required: true },
+    contestFound: { type: Boolean, required: true },
+    isContestRecommended: { type: Boolean, required: true },
+    maintenanceEnabled: { type: Boolean, required: true },
+    maintenanceMessageEs: { type: String, required: true },
+    maintenanceMessageEn: { type: String, required: true },
+    maintenanceMessagePt: { type: String, required: true },
+    maintenanceType: { type: String, required: true },
+    preferredLanguage: { type: String, required: true },
+    maintenancePredefinedTemplates: {
+      type: Array as PropType<types.PredefinedTemplate[]>,
+      required: true,
+    },
+  },
+  emits: [
+    'search-username-or-email',
+    'update-email',
+    'verify-user',
+    'generate-token',
+    'reset',
+    'change-role',
+    'search-contest',
+    'toggle-recommended',
+    'reset-contest',
+    'toggle-maintenance',
+    'save-maintenance',
+  ],
+  setup(props, { emit }) {
+    const selectedTemplateId = ref('');
+    const currentContestAlias = ref(props.contestAlias);
+    const currentIsContestRecommended = ref(props.isContestRecommended);
+    const currentMaintenanceEnabled = ref(props.maintenanceEnabled);
+    const currentMaintenanceMessageEs = ref(props.maintenanceMessageEs);
+    const currentMaintenanceMessageEn = ref(props.maintenanceMessageEn);
+    const currentMaintenanceMessagePt = ref(props.maintenanceMessagePt);
+    const currentMaintenanceType = ref(props.maintenanceType || 'info');
+    const usernameOrEmail = ref<null | string>(null);
+    const newEmail = ref<null | string>(null);
 
-  badgeClass(type: string) {
-    switch (type) {
-      case 'warning':
-        return 'alert-warning';
-      case 'danger':
-        return 'alert-danger';
-      default:
-        return 'alert-info';
+    const maintenanceTypes = [
+      { value: MaintenanceType.Info, label: T.maintenanceModeTypeInfo },
+      {
+        value: MaintenanceType.Warning,
+        label: T.maintenanceModeTypeWarning,
+      },
+      { value: MaintenanceType.Error, label: T.maintenanceModeTypeError },
+    ];
+
+    function badgeClass(type: string) {
+      switch (type) {
+        case 'warning':
+          return 'alert-warning';
+        case 'danger':
+          return 'alert-danger';
+        default:
+          return 'alert-info';
+      }
     }
-  }
 
-  autoResize(event: Event) {
-    console.log(event);
-    const textarea = event.target as HTMLTextAreaElement;
-    textarea.style.height = 'auto';
-    textarea.style.height = textarea.scrollHeight + 'px';
-  }
+    function autoResize(event: Event) {
+      console.log(event);
+      const textarea = event.target as HTMLTextAreaElement;
+      textarea.style.height = 'auto';
+      textarea.style.height = textarea.scrollHeight + 'px';
+    }
 
-  hasRole(role: string): boolean {
-    return this.roles.indexOf(role) !== -1;
-  }
+    function hasRole(role: string): boolean {
+      return props.roles.indexOf(role) !== -1;
+    }
 
-  @Emit('search-username-or-email')
-  onSearchEmail(): null | string {
-    if (this.usernameOrEmail == null) return null;
-    return this.usernameOrEmail;
-  }
+    function onSearchEmail(): void {
+      if (usernameOrEmail.value == null) {
+        emit('search-username-or-email', null);
+        return;
+      }
+      emit('search-username-or-email', usernameOrEmail.value);
+    }
 
-  @Emit('update-email')
-  onUpdateEmail(): null | UpdateEmailRequest {
-    if (this.email == null || this.newEmail == null) return null;
-    return { email: this.email, newEmail: this.newEmail };
-  }
+    function onUpdateEmail(): void {
+      if (props.email == null || newEmail.value == null) {
+        emit('update-email', null);
+        return;
+      }
+      emit('update-email', {
+        email: props.email,
+        newEmail: newEmail.value,
+      });
+    }
 
-  @Emit('verify-user')
-  onVerifyUser(): null | string {
-    if (this.usernameOrEmail == null) return null;
-    return this.usernameOrEmail;
-  }
+    function onVerifyUser(): void {
+      if (usernameOrEmail.value == null) {
+        emit('verify-user', null);
+        return;
+      }
+      emit('verify-user', usernameOrEmail.value);
+    }
 
-  @Emit('generate-token')
-  onGenerateToken(): null | string {
-    if (this.email == null) return null;
-    return this.email;
-  }
+    function onGenerateToken(): void {
+      if (props.email == null) {
+        emit('generate-token', null);
+        return;
+      }
+      emit('generate-token', props.email);
+    }
 
-  @Emit('reset')
-  onReset() {
-    this.usernameOrEmail = null;
-    this.newEmail = null;
-  }
+    function onReset(): void {
+      usernameOrEmail.value = null;
+      newEmail.value = null;
+      emit('reset');
+    }
 
-  @Emit('change-role')
-  onChangeRole(
-    ev: Event,
-    role: types.UserRole,
-  ): omegaup.Selectable<types.UserRole> {
+    function onChangeRole(
+      ev: Event,
+      role: types.UserRole,
+    ): void {
+      emit('change-role', {
+        value: role,
+        selected: (ev.target as HTMLInputElement).checked,
+      });
+    }
+
+    function onSearchContest(): void {
+      if (currentContestAlias.value == null) {
+        emit('search-contest', null);
+        return;
+      }
+      emit('search-contest', currentContestAlias.value);
+    }
+
+    function onToggleRecommended(): void {
+      emit('toggle-recommended', currentIsContestRecommended.value);
+    }
+
+    function onResetContest(): void {
+      emit('reset-contest');
+    }
+
+    function onToggleMaintenance(newValue: boolean): void {
+      currentMaintenanceEnabled.value = newValue;
+      if (!newValue) {
+        currentMaintenanceMessageEs.value = '';
+        currentMaintenanceMessageEn.value = '';
+        currentMaintenanceMessagePt.value = '';
+        currentMaintenanceType.value = 'info';
+      }
+      emit('toggle-maintenance', newValue);
+    }
+
+    function onSaveMaintenance(): void {
+      emit('save-maintenance', {
+        enabled: currentMaintenanceEnabled.value,
+        message_es: currentMaintenanceMessageEs.value,
+        message_en: currentMaintenanceMessageEn.value,
+        message_pt: currentMaintenanceMessagePt.value,
+        type: currentMaintenanceType.value,
+      });
+    }
+
+    function onSelectTemplate(): void {
+      const template = props.maintenancePredefinedTemplates.find(
+        (t) => t.id === selectedTemplateId.value,
+      );
+      if (template && template.id !== 'custom') {
+        currentMaintenanceMessageEs.value = `${template.title.es}<br>${template.message.es}`;
+        currentMaintenanceMessageEn.value = `${template.title.en}<br>${template.message.en}`;
+        currentMaintenanceMessagePt.value = `${template.title.pt}<br>${template.message.pt}`;
+        currentMaintenanceType.value = template.type;
+        return;
+      }
+      currentMaintenanceMessageEs.value = '';
+      currentMaintenanceMessageEn.value = '';
+      currentMaintenanceMessagePt.value = '';
+      currentMaintenanceType.value = 'info';
+    }
+
+    function copyAndNotify(text: string): void {
+      navigator.clipboard.writeText(text);
+      ui.success(T.passwordResetLinkCopiedToClipboard);
+    }
+
+    watch(() => props.isContestRecommended, (newValue: boolean) => {
+      currentIsContestRecommended.value = newValue;
+    });
+
+    watch(() => props.contestAlias, (newValue: string) => {
+      currentContestAlias.value = newValue;
+    });
+
+    watch(() => props.maintenanceEnabled, (newValue: boolean) => {
+      currentMaintenanceEnabled.value = newValue;
+    });
+
+    watch(() => props.maintenanceMessageEs, (newValue: string) => {
+      currentMaintenanceMessageEs.value = newValue;
+    });
+
+    watch(() => props.maintenanceMessageEn, (newValue: string) => {
+      currentMaintenanceMessageEn.value = newValue;
+    });
+
+    watch(() => props.maintenanceMessagePt, (newValue: string) => {
+      currentMaintenanceMessagePt.value = newValue;
+    });
+
+    watch(() => props.maintenanceType, (newValue: string) => {
+      currentMaintenanceType.value = newValue;
+    });
+
     return {
-      value: role,
-      selected: (ev.target as HTMLInputElement).checked,
+      T,
+      ui,
+      time,
+      MaintenanceType,
+      selectedTemplateId,
+      currentContestAlias,
+      currentIsContestRecommended,
+      currentMaintenanceEnabled,
+      currentMaintenanceMessageEs,
+      currentMaintenanceMessageEn,
+      currentMaintenanceMessagePt,
+      currentMaintenanceType,
+      usernameOrEmail,
+      newEmail,
+      maintenanceTypes,
+      badgeClass,
+      autoResize,
+      hasRole,
+      onSearchEmail,
+      onUpdateEmail,
+      onVerifyUser,
+      onGenerateToken,
+      onReset,
+      onChangeRole,
+      onSearchContest,
+      onToggleRecommended,
+      onResetContest,
+      onToggleMaintenance,
+      onSaveMaintenance,
+      onSelectTemplate,
+      copyAndNotify,
     };
-  }
-
-  @Emit('search-contest')
-  onSearchContest(): null | string {
-    if (this.currentContestAlias == null) return null;
-    return this.currentContestAlias;
-  }
-
-  @Emit('toggle-recommended')
-  onToggleRecommended(): boolean {
-    return this.currentIsContestRecommended;
-  }
-
-  @Emit('reset-contest')
-  onResetContest(): void {
-    // The actual reset will be handled in support.ts
-  }
-
-  @Watch('isContestRecommended')
-  onContestRecommendedChange(newValue: boolean) {
-    this.currentIsContestRecommended = newValue;
-  }
-
-  @Watch('contestAlias')
-  onContestAliasChange(newValue: string) {
-    this.currentContestAlias = newValue;
-  }
-
-  @Watch('maintenanceEnabled')
-  onMaintenanceEnabledChange(newValue: boolean) {
-    this.currentMaintenanceEnabled = newValue;
-  }
-
-  @Watch('maintenanceMessageEs')
-  onMaintenanceMessageEsChange(newValue: string) {
-    this.currentMaintenanceMessageEs = newValue;
-  }
-
-  @Watch('maintenanceMessageEn')
-  onMaintenanceMessageEnChange(newValue: string) {
-    this.currentMaintenanceMessageEn = newValue;
-  }
-
-  @Watch('maintenanceMessagePt')
-  onMaintenanceMessagePtChange(newValue: string) {
-    this.currentMaintenanceMessagePt = newValue;
-  }
-
-  @Watch('maintenanceType')
-  onMaintenanceTypeChange(newValue: string) {
-    this.currentMaintenanceType = newValue;
-  }
-
-  @Emit('toggle-maintenance')
-  onToggleMaintenance(newValue: boolean): boolean {
-    this.currentMaintenanceEnabled = newValue;
-    if (!newValue) {
-      this.currentMaintenanceMessageEs = '';
-      this.currentMaintenanceMessageEn = '';
-      this.currentMaintenanceMessagePt = '';
-      this.currentMaintenanceType = 'info';
-    }
-    return newValue;
-  }
-
-  @Emit('save-maintenance')
-  onSaveMaintenance(): {
-    enabled: boolean;
-    message_es: string;
-    message_en: string;
-    message_pt: string;
-    type: string;
-  } {
-    return {
-      enabled: this.currentMaintenanceEnabled,
-      message_es: this.currentMaintenanceMessageEs,
-      message_en: this.currentMaintenanceMessageEn,
-      message_pt: this.currentMaintenanceMessagePt,
-      type: this.currentMaintenanceType,
-    };
-  }
-
-  onSelectTemplate() {
-    const template = this.maintenancePredefinedTemplates.find(
-      (t) => t.id === this.selectedTemplateId,
-    );
-    if (template && template.id !== 'custom') {
-      this.currentMaintenanceMessageEs = `${template.title.es}<br>${template.message.es}`;
-      this.currentMaintenanceMessageEn = `${template.title.en}<br>${template.message.en}`;
-      this.currentMaintenanceMessagePt = `${template.title.pt}<br>${template.message.pt}`;
-      this.currentMaintenanceType = template.type;
-      return;
-    }
-    this.currentMaintenanceMessageEs = '';
-    this.currentMaintenanceMessageEn = '';
-    this.currentMaintenanceMessagePt = '';
-    this.currentMaintenanceType = 'info';
-  }
-
-  copyAndNotify(text: string): void {
-    navigator.clipboard.writeText(text);
-    ui.success(T.passwordResetLinkCopiedToClipboard);
-  }
-}
+  },
+});
 </script>
 
 <style lang="scss" scoped>

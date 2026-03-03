@@ -280,7 +280,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+import { defineComponent, ref, computed, watch, PropType } from 'vue';
 import problem_Form from './Form.vue';
 import problem_Tags from './Tags.vue';
 import problem_Versions from './Versions.vue';
@@ -294,7 +294,8 @@ import omegaup_Markdown from '../Markdown.vue';
 import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
 import { BModal } from 'bootstrap-vue-next';
 
-@Component({
+export default defineComponent({
+  name: 'ProblemEdit',
   components: {
     'omegaup-markdown': omegaup_Markdown,
     'omegaup-problem-form': problem_Form,
@@ -304,57 +305,83 @@ import { BModal } from 'bootstrap-vue-next';
     'omegaup-common-admins': common_Admins,
     'omegaup-common-groupadmins': common_GroupAdmins,
   },
-})
-export default class ProblemEdit extends Vue {
-  @Prop() data!: types.ProblemEditPayload;
-  @Prop() admins!: types.ProblemAdmin[];
-  @Prop() initialTab!: string;
-  @Prop() groups!: types.ProblemGroupAdmin[];
-  @Prop({ default: null }) solution!: types.ProblemStatement | null;
-  @Prop() statement!: types.ProblemStatement;
-  @Prop() searchResultUsers!: types.ListItem[];
-  @Prop() searchResultGroups!: types.ListItem[];
+  props: {
+    data: { type: Object as PropType<types.ProblemEditPayload>, required: true },
+    admins: { type: Array as PropType<types.ProblemAdmin[]>, required: true },
+    initialTab: { type: String, required: true },
+    groups: { type: Array as PropType<types.ProblemGroupAdmin[]>, required: true },
+    solution: { type: Object as PropType<types.ProblemStatement | null>, default: null },
+    statement: { type: Object as PropType<types.ProblemStatement>, required: true },
+    searchResultUsers: { type: Array as PropType<types.ListItem[]>, required: true },
+    searchResultGroups: { type: Array as PropType<types.ListItem[]>, required: true },
+  },
+  emits: [
+    'update-markdown-contents',
+    'select-version',
+    'runs-diff',
+    'add-admin',
+    'remove-admin',
+    'update-search-result-users',
+    'add-group-admin',
+    'remove-group-admin',
+    'update-search-result-groups',
+    'update-problem-level',
+    'add-tag',
+    'remove-tag',
+    'change-allow-user-add-tag',
+    'remove',
+  ],
+  setup(props) {
+    const alias = ref(props.data.alias);
+    const showTab = ref(props.initialTab);
+    const currentStatement = ref<types.ProblemStatement>(props.statement);
+    const showConfirmationModal = ref(false);
 
-  T = T;
-  alias = this.data.alias;
-  showTab = this.initialTab;
-  currentStatement: types.ProblemStatement = this.statement;
-  showConfirmationModal = false;
+    const activeTab = computed(() => {
+      switch (showTab.value) {
+        case 'edit':
+          return T.problemEditEditProblem;
+        case 'markdown':
+          return T.problemEditEditMarkdown;
+        case 'version':
+          return T.problemEditChooseVersion;
+        case 'solution':
+          return T.problemEditSolution;
+        case 'admins':
+          return T.problemEditAddAdmin;
+        case 'tags':
+          return T.problemEditAddTags;
+        case 'download':
+          return T.wordsDownload;
+        case 'delete':
+          return T.wordsDelete;
+        default:
+          return T.problemEditEditProblem;
+      }
+    });
 
-  get activeTab(): string {
-    switch (this.showTab) {
-      case 'edit':
-        return T.problemEditEditProblem;
-      case 'markdown':
-        return T.problemEditEditMarkdown;
-      case 'version':
-        return T.problemEditChooseVersion;
-      case 'solution':
-        return T.problemEditSolution;
-      case 'admins':
-        return T.problemEditAddAdmin;
-      case 'tags':
-        return T.problemEditAddTags;
-      case 'download':
-        return T.wordsDownload;
-      case 'delete':
-        return T.wordsDelete;
-      default:
-        return T.problemEditEditProblem;
+    function onDownload(): void {
+      window.location.href = `/api/problem/download/problem_alias/${alias.value}/`;
     }
-  }
 
-  onDownload(): void {
-    window.location.href = `/api/problem/download/problem_alias/${this.alias}/`;
-  }
+    function onGotoPrintableVersion(): void {
+      window.location.href = `/arena/problem/${alias.value}/print/`;
+    }
 
-  @Watch('statement')
-  onStatementChange(newStatement: types.ProblemStatement): void {
-    this.currentStatement = newStatement;
-  }
+    watch(() => props.statement, (newStatement: types.ProblemStatement) => {
+      currentStatement.value = newStatement;
+    });
 
-  onGotoPrintableVersion(): void {
-    window.location.href = `/arena/problem/${this.alias}/print/`;
-  }
-}
+    return {
+      T,
+      alias,
+      showTab,
+      currentStatement,
+      showConfirmationModal,
+      activeTab,
+      onDownload,
+      onGotoPrintableVersion,
+    };
+  },
+});
 </script>

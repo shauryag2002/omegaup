@@ -35,7 +35,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+import { defineComponent, ref, computed, watch } from 'vue';
 import T from '../../lang';
 import * as ui from '../../ui';
 
@@ -48,36 +48,47 @@ import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 library.add(fas);
 
-@Component({
+export default defineComponent({
+  name: 'CourseGenerateLinkClone',
   components: {
     'font-awesome-icon': FontAwesomeIcon,
     'font-awesome-layers': FontAwesomeLayers,
     'font-awesome-layers-text': FontAwesomeLayersText,
   },
-})
-export default class CourseGenerateLinkClone extends Vue {
-  @Prop() alias!: string;
-  @Prop() token!: string;
+  props: {
+    alias: { type: String },
+    token: { type: String },
+  },
+  emits: ['generate-link'],
+  setup(props) {
+    const copiedToClipboard = ref(false);
 
-  T = T;
-  copiedToClipboard = false;
+    const cloneCourseURL = computed((): string => {
+      if (!props.token) {
+        return '';
+      }
+      return `${window.location.origin}/course/${props.alias}/clone/${props.token}/`;
+    });
 
-  get cloneCourseURL(): string {
-    if (!this.token) {
-      return '';
+    function copyAndNotify(text: string): void {
+      navigator.clipboard.writeText(text);
+      copiedToClipboard.value = true;
     }
-    return `${window.location.origin}/course/${this.alias}/clone/${this.token}/`;
-  }
 
-  copyAndNotify(text: string): void {
-    navigator.clipboard.writeText(text);
-    this.copiedToClipboard = true;
-  }
+    watch(
+      () => copiedToClipboard.value,
+      (newValue) => {
+        if (!newValue) return;
+        ui.success(T.passwordResetLinkCopiedToClipboard);
+      },
+    );
 
-  @Watch('copiedToClipboard')
-  onPropertyChanged(newValue: boolean): void {
-    if (!newValue) return;
-    ui.success(T.passwordResetLinkCopiedToClipboard);
-  }
-}
+    return {
+      T,
+      copiedToClipboard,
+      cloneCourseURL,
+      copyAndNotify,
+    };
+  },
+});
 </script>

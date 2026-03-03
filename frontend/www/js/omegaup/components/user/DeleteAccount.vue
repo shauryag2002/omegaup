@@ -33,14 +33,22 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component } from 'vue-property-decorator';
+import { defineComponent, ref } from 'vue';
 import T from '../../lang';
 import omegaup_Markdown from '../Markdown.vue';
 
-@Component({ components: { 'omegaup-markdown': omegaup_Markdown } })
-export default class UserDeleteAccount extends Vue {
-  T = T;
-  showConfirmationModal = false;
-  username = '';
-}
+export default defineComponent({
+  name: 'UserDeleteAccount',
+  components: { 'omegaup-markdown': omegaup_Markdown },
+  setup() {
+    const showConfirmationModal = ref(false);
+    const username = ref('');
+
+    return {
+      T,
+      showConfirmationModal,
+      username,
+    };
+  },
+});
 </script>

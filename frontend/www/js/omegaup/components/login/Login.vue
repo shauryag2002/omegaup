@@ -98,189 +98,195 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+import { defineComponent, ref, computed, watch, onMounted, nextTick } from 'vue';
 import T from '../../lang';
 import omegaup_PasswordInput from '../common/PasswordInput.vue';
 import 'intro.js/introjs.css';
 import introJs from 'intro.js';
 import { getCookie, setCookie } from '../../cookies';
 
-
-@Component({
+export default defineComponent({
+  name: 'Login',
   components: {
     'omegaup-password-input': omegaup_PasswordInput,
   },
-})
-export default class Login extends Vue {
-  @Prop() facebookUrl!: string;
-  @Prop({ default: '' }) githubClientId!: string;
-  @Prop({ default: null }) githubState!: string | null;
-  @Prop() googleClientId!: string;
-  @Prop({ default: 'login' }) activeTab!: string;
+  props: {
+    facebookUrl: { type: String, required: true },
+    githubClientId: { type: String, default: '' },
+    githubState: { type: String as () => string | null, default: null },
+    googleClientId: { type: String, required: true },
+    activeTab: { type: String, default: 'login' },
+  },
+  emits: ['login'],
+  setup(props) {
+    const usernameOrEmail = ref('');
+    const password = ref('');
+    const githubCsrfState = ref<string | null>(null);
+    const introStarted = ref(false);
 
-  usernameOrEmail: string = '';
-  password: string = '';
-  T = T;
-  githubCsrfState: string | null = null;
-  introStarted: boolean = false;
+    const loginUri = computed(() => document.location.href);
 
-  mounted() {
-    // The reason for loading the script here instead of the `template.tpl` file
-    // is that sometimes the script runs after the DOM is ready, and the element
-    // may not exist yet
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    document.body.appendChild(script);
+    function generateSecureRandomString(): string {
+      const validChars =
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      const len = 16;
 
-    this.initializeGithubCsrfToken();
-    this.maybeStartIntro();
-  }
+      if (typeof window.crypto === 'object') {
+        const arr = new Uint8Array(len);
+        window.crypto.getRandomValues(arr);
+        return Array.from(
+          arr,
+          (value) => validChars[value % validChars.length],
+        ).join('');
+      }
 
-  @Watch('activeTab')
-  onActiveTabChanged(newValue: string): void {
-    if (newValue === 'login') {
-      this.maybeStartIntro();
+      // Without window.crypto
+      let result = '';
+      for (let i = 0; i < len; i++) {
+        result += validChars.charAt(
+          Math.floor(Math.random() * validChars.length),
+        );
+      }
+      return result;
     }
-  }
 
-  maybeStartIntro(): void {
-    if (this.introStarted || getCookie('has-visited-login')) {
-      return;
-    }
-    if (this.activeTab !== 'login') {
-      return;
+    function initializeGithubCsrfToken(): void {
+      const storedState = sessionStorage.getItem('github_oauth_state');
+      if (storedState) {
+        githubCsrfState.value = storedState;
+      } else if (props.githubState) {
+        githubCsrfState.value = props.githubState;
+        sessionStorage.setItem('github_oauth_state', props.githubState);
+      } else {
+        const generatedState = generateSecureRandomString();
+        githubCsrfState.value = generatedState;
+        sessionStorage.setItem('github_oauth_state', generatedState);
+      }
+
+      if (githubCsrfState.value) {
+        document.cookie = `github_oauth_state=${githubCsrfState.value};path=/;SameSite=Lax`;
+      }
     }
 
-    this.$nextTick(() => {
-      if (this.introStarted || getCookie('has-visited-login')) {
+    function loginWithGithub(): void {
+      if (!props.githubClientId) {
         return;
       }
-      const title = T.loginFormInteractiveGuideTitle;
-      const steps: Array<{
-        title: string;
-        intro: string;
-        element?: HTMLElement;
-      }> = [
-        {
-          title,
-          intro: T.loginFormInteractiveGuideWelcome,
-        },
-      ];
-      const addStep = (selector: string, intro: string): void => {
-        const element = document.querySelector<HTMLElement>(selector);
-        if (!element) {
+
+      const state =
+        sessionStorage.getItem('github_oauth_state') ||
+        githubCsrfState.value ||
+        generateSecureRandomString();
+      sessionStorage.setItem('github_oauth_state', state);
+      document.cookie = `github_oauth_state=${state};path=/;SameSite=Lax`;
+
+      const redirectUri = new URL('/login', window.location.origin);
+      redirectUri.searchParams.set('third_party_login', 'github');
+
+      const currentParams = new URLSearchParams(window.location.search);
+      const redirectParam = currentParams.get('redirect');
+      if (redirectParam) {
+        redirectUri.searchParams.set('redirect', redirectParam);
+      }
+
+      const params = new URLSearchParams({
+        client_id: props.githubClientId,
+        redirect_uri: redirectUri.toString(),
+        scope: 'read:user user:email',
+        state,
+        allow_signup: 'true',
+      });
+
+      window.location.href = `https://github.com/login/oauth/authorize?${params.toString()}`;
+    }
+
+    function maybeStartIntro(): void {
+      if (introStarted.value || getCookie('has-visited-login')) {
+        return;
+      }
+      if (props.activeTab !== 'login') {
+        return;
+      }
+
+      nextTick(() => {
+        if (introStarted.value || getCookie('has-visited-login')) {
           return;
         }
-        steps.push({
-          element,
-          title,
-          intro,
-        });
-      };
+        const title = T.loginFormInteractiveGuideTitle;
+        const steps: Array<{
+          title: string;
+          intro: string;
+          element?: HTMLElement;
+        }> = [
+          {
+            title,
+            intro: T.loginFormInteractiveGuideWelcome,
+          },
+        ];
+        const addStep = (selector: string, intro: string): void => {
+          const element = document.querySelector<HTMLElement>(selector);
+          if (!element) {
+            return;
+          }
+          steps.push({
+            element,
+            title,
+            intro,
+          });
+        };
 
-      addStep('.introjs-federated', T.loginFormInteractiveGuideFederated);
-      addStep('.introjs-google', T.loginFormInteractiveGuideGoogle);
-      addStep('.introjs-github', T.loginFormInteractiveGuideGithub);
-      addStep('.introjs-native', T.loginFormInteractiveGuideNative);
-      addStep('[data-login-username]', T.loginFormInteractiveGuideUsername);
-      addStep('[data-login-password]', T.loginFormInteractiveGuidePassword);
-      addStep('[data-login-recover]', T.loginFormInteractiveGuideRecover);
-      addStep('[data-login-submit]', T.loginFormInteractiveGuideSubmit);
+        addStep('.introjs-federated', T.loginFormInteractiveGuideFederated);
+        addStep('.introjs-google', T.loginFormInteractiveGuideGoogle);
+        addStep('.introjs-github', T.loginFormInteractiveGuideGithub);
+        addStep('.introjs-native', T.loginFormInteractiveGuideNative);
+        addStep('[data-login-username]', T.loginFormInteractiveGuideUsername);
+        addStep('[data-login-password]', T.loginFormInteractiveGuidePassword);
+        addStep('[data-login-recover]', T.loginFormInteractiveGuideRecover);
+        addStep('[data-login-submit]', T.loginFormInteractiveGuideSubmit);
 
-      if (steps.length <= 1) {
-        return;
+        if (steps.length <= 1) {
+          return;
+        }
+        introStarted.value = true;
+        introJs()
+          .setOptions({
+            nextLabel: T.interactiveGuideNextButton,
+            prevLabel: T.interactiveGuidePreviousButton,
+            doneLabel: T.interactiveGuideDoneButton,
+            steps,
+          })
+          .start();
+        setCookie('has-visited-login', true);
+      });
+    }
+
+    watch(() => props.activeTab, (newValue: string) => {
+      if (newValue === 'login') {
+        maybeStartIntro();
       }
-      this.introStarted = true;
-      introJs()
-        .setOptions({
-          nextLabel: T.interactiveGuideNextButton,
-          prevLabel: T.interactiveGuidePreviousButton,
-          doneLabel: T.interactiveGuideDoneButton,
-          steps,
-        })
-        .start();
-      setCookie('has-visited-login', true);
-    });
-  }
-
-  get loginUri(): string {
-    return document.location.href;
-  }
-
-  initializeGithubCsrfToken(): void {
-    const storedState = sessionStorage.getItem('github_oauth_state');
-    if (storedState) {
-      this.githubCsrfState = storedState;
-    } else if (this.githubState) {
-      this.githubCsrfState = this.githubState;
-      sessionStorage.setItem('github_oauth_state', this.githubState);
-    } else {
-      const generatedState = this.generateSecureRandomString();
-      this.githubCsrfState = generatedState;
-      sessionStorage.setItem('github_oauth_state', generatedState);
-    }
-
-    if (this.githubCsrfState) {
-      document.cookie = `github_oauth_state=${this.githubCsrfState};path=/;SameSite=Lax`;
-    }
-  }
-
-  loginWithGithub(): void {
-    if (!this.githubClientId) {
-      return;
-    }
-
-    const state =
-      sessionStorage.getItem('github_oauth_state') ||
-      this.githubCsrfState ||
-      this.generateSecureRandomString();
-    sessionStorage.setItem('github_oauth_state', state);
-    document.cookie = `github_oauth_state=${state};path=/;SameSite=Lax`;
-
-    const redirectUri = new URL('/login', window.location.origin);
-    redirectUri.searchParams.set('third_party_login', 'github');
-
-    const currentParams = new URLSearchParams(window.location.search);
-    const redirectParam = currentParams.get('redirect');
-    if (redirectParam) {
-      redirectUri.searchParams.set('redirect', redirectParam);
-    }
-
-    const params = new URLSearchParams({
-      client_id: this.githubClientId,
-      redirect_uri: redirectUri.toString(),
-      scope: 'read:user user:email',
-      state,
-      allow_signup: 'true',
     });
 
-    window.location.href = `https://github.com/login/oauth/authorize?${params.toString()}`;
-  }
+    onMounted(() => {
+      // The reason for loading the script here instead of the `template.tpl` file
+      // is that sometimes the script runs after the DOM is ready, and the element
+      // may not exist yet
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      document.body.appendChild(script);
 
-  generateSecureRandomString(): string {
-    const validChars =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const len = 16;
+      initializeGithubCsrfToken();
+      maybeStartIntro();
+    });
 
-    if (typeof window.crypto === 'object') {
-      const arr = new Uint8Array(len);
-      window.crypto.getRandomValues(arr);
-      return Array.from(
-        arr,
-        (value) => validChars[value % validChars.length],
-      ).join('');
-    }
-
-    // Without window.crypto
-    let result = '';
-    for (let i = 0; i < len; i++) {
-      result += validChars.charAt(
-        Math.floor(Math.random() * validChars.length),
-      );
-    }
-    return result;
-  }
-}
+    return {
+      T,
+      usernameOrEmail,
+      password,
+      loginUri,
+      loginWithGithub,
+    };
+  },
+});
 </script>
 
 <style scoped>

@@ -81,7 +81,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+import { defineComponent, ref, computed, watch, reactive, PropType } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as time from '../../time';
@@ -91,43 +91,57 @@ import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
 import { BFormInput, BModal } from 'bootstrap-vue-next';
 
-
-@Component({
+export default defineComponent({
+  name: 'Requests',
   components: {
     'omegaup-username': omegaup_Username,
   },
-})
-export default class Requests extends Vue {
-  @Prop() data!: types.IdentityRequest[];
-  @Prop() textAddParticipant!: string;
+  props: {
+    data: { type: Array as PropType<types.IdentityRequest[]>, required: true },
+    textAddParticipant: { type: String, required: true },
+  },
+  emits: ['deny-request', 'accept-request'],
+  setup(props, { emit }) {
+    const requests = ref(props.data);
+    const showAllRequests = ref(false);
+    const resolutionText = ref<string | null>(null);
+    const modalStates = reactive<{ [key: string]: boolean }>({});
 
-  T = T;
-  time = time;
-  requests: types.IdentityRequest[] = this.data;
-  showAllRequests = false;
-  resolutionText: null | string = null;
-  modalStates: { [key: string]: boolean } = {};
+    watch(
+      () => props.data,
+      () => {
+        requests.value = props.data;
+      },
+    );
 
-  @Watch('data')
-  onDataChange(): void {
-    this.requests = this.data;
-  }
-
-  onDenyRequest(username: string, resolutionText: null | string): void {
-    this.$emit('deny-request', { username, resolutionText });
-    this.resolutionText = null;
-    this.toggleFeedbackModal(username);
-  }
-
-  toggleFeedbackModal(username: string): void {
-    this.$set(this.modalStates, username, !this.modalStates[username]);
-  }
-
-  get filteredRequests(): types.IdentityRequest[] {
-    if (this.showAllRequests) {
-      return this.requests;
+    function onDenyRequest(username: string, resolution: string | null): void {
+      emit('deny-request', { username, resolutionText: resolution });
+      resolutionText.value = null;
+      toggleFeedbackModal(username);
     }
-    return this.requests.filter((request) => !request.accepted);
-  }
-}
+
+    function toggleFeedbackModal(username: string): void {
+      modalStates[username] = !modalStates[username];
+    }
+
+    const filteredRequests = computed((): types.IdentityRequest[] => {
+      if (showAllRequests.value) {
+        return requests.value;
+      }
+      return requests.value.filter((request) => !request.accepted);
+    });
+
+    return {
+      T,
+      time,
+      requests,
+      showAllRequests,
+      resolutionText,
+      modalStates,
+      onDenyRequest,
+      toggleFeedbackModal,
+      filteredRequests,
+    };
+  },
+});
 </script>

@@ -92,7 +92,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { defineComponent, ref, computed, PropType } from 'vue';
 import { types } from '../../api_types';
 import * as time from '../../time';
 import * as ui from '../../ui';
@@ -111,46 +111,63 @@ import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 library.add(fas);
 
-@Component({
+export default defineComponent({
+  name: 'UserNextRegisteredContest',
   components: {
     FontAwesomeIcon,
     'omegaup-countdown': omegaup_Countdown,
   },
-})
-export default class UserNextRegisteredContest extends Vue {
-  @Prop() nextRegisteredContest!: types.ContestListItem;
-  T = T;
-  ui = ui;
-  omegaup = omegaup;
-  showContestInfo = true;
-  now = new Date();
+  props: {
+    nextRegisteredContest: {
+      type: Object as PropType<types.ContestListItem>,
+      required: true,
+    },
+  },
+  emits: ['redirect'],
+  setup(props, { emit }) {
+    const showContestInfo = ref(true);
+    const now = ref(new Date());
 
-  get contestDuration(): string {
-    return time.formatContestDuration(
-      this.nextRegisteredContest.start_time,
-      this.nextRegisteredContest.finish_time,
-    );
-  }
+    const contestDuration = computed((): string => {
+      return time.formatContestDuration(
+        props.nextRegisteredContest.start_time,
+        props.nextRegisteredContest.finish_time,
+      );
+    });
 
-  get startContestDate(): string {
-    return `${this.nextRegisteredContest.start_time.toLocaleDateString()} ${this.nextRegisteredContest.start_time.toLocaleTimeString()}`;
-  }
+    const startContestDate = computed((): string => {
+      return `${props.nextRegisteredContest.start_time.toLocaleDateString()} ${props.nextRegisteredContest.start_time.toLocaleTimeString()}`;
+    });
 
-  get startTimeLink(): string {
-    return `${getExternalUrl(
-      'TimeAndDateBaseURL',
-    )}?iso=${this.nextRegisteredContest.start_time.toISOString()}`;
-  }
+    const startTimeLink = computed((): string => {
+      return `${getExternalUrl(
+        'TimeAndDateBaseURL',
+      )}?iso=${props.nextRegisteredContest.start_time.toISOString()}`;
+    });
 
-  get isContestStarted(): boolean {
-    return this.nextRegisteredContest.start_time < this.now;
-  }
+    const isContestStarted = computed((): boolean => {
+      return props.nextRegisteredContest.start_time < now.value;
+    });
 
-  onClick(): void {
-    this.showContestInfo = false;
-    this.$emit('redirect', this.nextRegisteredContest.alias);
-  }
-}
+    function onClick(): void {
+      showContestInfo.value = false;
+      emit('redirect', props.nextRegisteredContest.alias);
+    }
+
+    return {
+      T,
+      ui,
+      omegaup,
+      showContestInfo,
+      now,
+      contestDuration,
+      startContestDate,
+      startTimeLink,
+      isContestStarted,
+      onClick,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>

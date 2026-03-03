@@ -26,9 +26,7 @@ module.exports = {
   moduleFileExtensions: ['js', 'ts', 'vue'],
   moduleDirectories: ['node_modules'],
   moduleNameMapper: {
-    '^vue$': '<rootDir>/frontend/www/js/omegaup/vue-compat.ts',
-    'vue-async-computed-decorator':
-      '<rootDir>/node_modules/vue-async-computed-decorator/dist/index.js',
+    '^vue$': 'vue',
     '^@/(.*)$': '<rootDir>/frontend/www/$1',
     '\\.(css|less)$':
       '<rootDir>/frontend/www/js/omegaup/__mocks__/styleMock.js',
@@ -47,11 +45,6 @@ module.exports = {
       '@vue/vue3-jest',
       {
         babelConfig,
-        compilerOptions: {
-          compatConfig: {
-            MODE: 2,
-          },
-        },
       },
     ],
     '.*\\.[jt]sx?$': ['babel-jest', babelConfig],

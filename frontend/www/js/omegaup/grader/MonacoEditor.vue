@@ -18,137 +18,133 @@
 
 <script lang="ts">
 // TODO: replace all instances of any with correct type
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+import { defineComponent, ref, computed, watch, onMounted, onUnmounted, PropType } from 'vue';
 import store from './GraderStore';
 import * as Util from './util';
 import * as monaco from 'monaco-editor';
 import T from '../lang';
 
-@Component
-export default class MonacoEditor extends Vue {
-  // TODO: place more restrictions on value of keys inside storeMapping
-  @Prop({ required: true }) storeMapping!: {
-    [key: string]: string;
-  };
-  @Prop({ default: false }) readOnly!: boolean;
+export default defineComponent({
+  name: 'MonacoEditor',
+  props: {
+    // TODO: place more restrictions on value of keys inside storeMapping
+    storeMapping: {
+      type: Object as PropType<{ [key: string]: string }>,
+      required: true,
+    },
+    readOnly: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  setup(props) {
+    let editor: monaco.editor.IStandaloneCodeEditor | null = null;
+    let model: monaco.editor.ITextModel | null = null;
 
-  _editor: monaco.editor.IStandaloneCodeEditor | null = null;
-  _model: monaco.editor.ITextModel | null = null;
+    const selectedFontSize = ref<number>(12);
+    const fontSizes: number[] = [12, 14, 16, 18, 20];
 
-  // default font size and line height
-  selectedFontSize: number = 12;
-  fontSizes: number[] = [12, 14, 16, 18, 20];
+    const editorContainer = ref<HTMLElement | null>(null);
 
-  T = T; //getting translations
+    const theme = computed((): string => store.getters['theme']);
+    const language = computed((): string => store.getters[props.storeMapping.language]);
+    const module = computed((): string => store.getters[props.storeMapping.module]);
 
-  get theme(): string {
-    return store.getters['theme'];
-  }
-
-  get language(): string {
-    return store.getters[this.storeMapping.language];
-  }
-
-  get module(): string {
-    return store.getters[this.storeMapping.module];
-  }
-
-  get contents(): string {
-    return store.getters[this.storeMapping.contents];
-  }
-
-  set contents(value: string) {
-    store.dispatch(this.storeMapping.contents, value);
-  }
-
-  get filename(): string {
-    return `${this.module}.${Util.supportedLanguages[this.language].extension}`;
-  }
-
-  get title(): string {
-    return this.filename;
-  }
-
-  @Watch('language')
-  onLanguageChange(value: string): void {
-    if (this._model) {
-      monaco.editor.setModelLanguage(
-        this._model,
-        Util.supportedLanguages[value].modelMapping,
-      );
-    }
-  }
-
-  @Watch('contents')
-  onContentsChange(value: string): void {
-    if (this._model && this._model.getValue() !== value) {
-      this._model.setValue(value);
-    }
-  }
-  @Watch('theme')
-  onThemeChange(value: string): void {
-    if (this._editor) {
-      this._editor.updateOptions({
-        theme: value,
-      });
-    }
-  }
-
-  mounted(): void {
-    window.addEventListener('code-and-language-set', this.onCodeAndLanguageSet);
-
-    const container = this.$refs.editorContainer as HTMLElement;
-    if (!container) return;
-
-    this._editor = monaco.editor.create(container, {
-      autoIndent: 'brackets',
-      formatOnPaste: true,
-      formatOnType: true,
-      language: Util.supportedLanguages[this.language].modelMapping,
-      readOnly: this.readOnly,
-      theme: this.theme,
-      value: this.contents,
-      fontSize: this.selectedFontSize,
-    } as monaco.editor.IStandaloneEditorConstructionOptions);
-    this._model = this._editor.getModel();
-    if (!this._model) return;
-
-    this._model.onDidChangeContent(() => {
-      store.dispatch(this.storeMapping.contents, this._model?.getValue() || '');
+    const contents = computed({
+      get: (): string => store.getters[props.storeMapping.contents],
+      set: (value: string) => {
+        store.dispatch(props.storeMapping.contents, value);
+      },
     });
 
-    window.addEventListener('resize', this.onResize);
-    this.onResize();
-  }
+    const filename = computed((): string => `${module.value}.${Util.supportedLanguages[language.value].extension}`);
+    const title = computed((): string => filename.value);
 
-  unmounted(): void {
-    window.removeEventListener(
-      'code-and-language-set',
-      this.onCodeAndLanguageSet,
-    );
-    window.removeEventListener('resize', this.onResize);
-  }
+    watch(language, (value: string) => {
+      if (model) {
+        monaco.editor.setModelLanguage(
+          model,
+          Util.supportedLanguages[value].modelMapping,
+        );
+      }
+    });
 
-  onResize(): void {
-    if (this._editor) {
-      // scaling does not work as intended
-      // the cursor does not click where it's supposed to
-      // this is an alternative solution to zooming in/out
-      this._editor.layout();
+    watch(contents, (value: string) => {
+      if (model && model.getValue() !== value) {
+        model.setValue(value);
+      }
+    });
+
+    watch(theme, (value: string) => {
+      if (editor) {
+        editor.updateOptions({
+          theme: value,
+        });
+      }
+    });
+
+    function onResize(): void {
+      if (editor) {
+        // scaling does not work as intended
+        // the cursor does not click where it's supposed to
+        // this is an alternative solution to zooming in/out
+        editor.layout();
+      }
     }
-  }
 
-  onCodeAndLanguageSet(e: any) {
-    e.detail.code = this.contents;
-    e.detail.language = this.language;
-  }
-
-  onFontSizeChange(): void {
-    if (this._editor) {
-      this._editor.updateOptions({ fontSize: this.selectedFontSize });
+    function onCodeAndLanguageSet(e: any) {
+      e.detail.code = contents.value;
+      e.detail.language = language.value;
     }
-  }
-}
+
+    function onFontSizeChange(): void {
+      if (editor) {
+        editor.updateOptions({ fontSize: selectedFontSize.value });
+      }
+    }
+
+    onMounted(() => {
+      window.addEventListener('code-and-language-set', onCodeAndLanguageSet);
+
+      const container = editorContainer.value;
+      if (!container) return;
+
+      editor = monaco.editor.create(container, {
+        autoIndent: 'brackets',
+        formatOnPaste: true,
+        formatOnType: true,
+        language: Util.supportedLanguages[language.value].modelMapping,
+        readOnly: props.readOnly,
+        theme: theme.value,
+        value: contents.value,
+        fontSize: selectedFontSize.value,
+      } as monaco.editor.IStandaloneEditorConstructionOptions);
+      model = editor.getModel();
+      if (!model) return;
+
+      model.onDidChangeContent(() => {
+        store.dispatch(props.storeMapping.contents, model?.getValue() || '');
+      });
+
+      window.addEventListener('resize', onResize);
+      onResize();
+    });
+
+    onUnmounted(() => {
+      window.removeEventListener('code-and-language-set', onCodeAndLanguageSet);
+      window.removeEventListener('resize', onResize);
+    });
+
+    return {
+      T,
+      selectedFontSize,
+      fontSizes,
+      editorContainer,
+      theme,
+      onFontSizeChange,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>

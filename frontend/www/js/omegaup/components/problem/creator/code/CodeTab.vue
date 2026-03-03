@@ -72,8 +72,8 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
-import type { Store } from 'vuex';
+import { defineComponent, ref, computed, watch, PropType } from 'vue';
+import { useStore } from 'vuex';
 import type { StoreState } from '../../../../problem/creator/types';
 import { omegaup } from '../../../../omegaup';
 import * as ui from '../../../../ui';
@@ -85,183 +85,199 @@ import 'intro.js/introjs.css';
 import { getCookie, setCookie } from '../../../../cookies';
 import { TabIndex } from '../Tabs.vue';
 
-
-@Component({
+export default defineComponent({
+  name: 'CodeTab',
   components: {
     'omegaup-creator-code-view': creator_CodeView,
   },
-})
-export default class CodeTab extends Vue {
-  declare $store: Store<StoreState>;
-  @Prop({ default: T.problemCreatorEmpty }) codeProp!: string;
-  @Prop({ default: T.problemCreatorEmpty }) extensionProp!: string;
-  @Prop() activeTabIndex!: TabIndex;
+  props: {
+    codeProp: {
+      type: String,
+      default: T.problemCreatorEmpty,
+    },
+    extensionProp: {
+      type: String,
+      default: T.problemCreatorEmpty,
+    },
+    activeTabIndex: {
+      type: Number as PropType<TabIndex>,
+      required: true,
+    },
+  },
+  emits: ['show-update-success-message'],
+  setup(props, { emit }) {
+    const store = useStore<StoreState>();
+    const inputLimit = 512 * 1024; // Hardcoded as 512kiB _must_ be enough for anybody.
+    const selectedLanguage = ref('');
+    const codeInternal = ref(T.problemCreatorEmpty);
+    const extensionInternal = ref(T.problemCreatorEmpty);
 
-  inputLimit = 512 * 1024; // Hardcoded as 512kiB _must_ be enough for anybody.
-  T = T;
-  ui = ui;
-  omegaup = omegaup;
-  selectedLanguage = '';
-  codeInternal = T.problemCreatorEmpty;
-  extensionInternal = T.problemCreatorEmpty;
-
-  get code(): string {
-    return this.codeInternal;
-  }
-  set code(newCode: string) {
-    this.codeInternal = newCode;
-  }
-
-  get extension(): string {
-    return this.extensionInternal;
-  }
-  set extension(newExtension: string) {
-    this.extensionInternal = newExtension;
-  }
-
-  @Watch('codeProp')
-  onCodePropChanged() {
-    this.code = this.codeProp;
-  }
-
-  @Watch('extensionProp')
-  onextensionPropChanged() {
-    if (
-      this.extensionProp &&
-      this.allowedExtensions.includes(this.extensionProp)
-    ) {
-      const languageInfo = Object.values(supportedLanguages).find(
-        (language) => language.extension === this.extensionProp,
-      );
-      if (languageInfo) {
-        this.selectedLanguage = languageInfo.language;
-      }
-    }
-  }
-
-  @Watch('activeTabIndex')
-  onActiveTabIndexChanged(newIndex: TabIndex) {
-    if (newIndex === TabIndex.Code) {
-      this.startIntroGuide();
-    }
-  }
-
-  get allowedLanguages(): omegaup.Languages {
-    let allowedLanguages: omegaup.Languages = {};
-    Object.values(supportedLanguages).forEach((languageInfo: LanguageInfo) => {
-      allowedLanguages[languageInfo.language] = languageInfo.name;
+    const code = computed({
+      get: (): string => codeInternal.value,
+      set: (newCode: string) => {
+        codeInternal.value = newCode;
+      },
     });
-    return allowedLanguages;
-  }
 
-  get allowedExtensions(): string[] {
-    let allowedExtensions: string[] = [];
-    Object.values(supportedLanguages).forEach((languageInfo: LanguageInfo) => {
-      allowedExtensions.push(languageInfo.extension);
+    const extension = computed({
+      get: (): string => extensionInternal.value,
+      set: (newExtension: string) => {
+        extensionInternal.value = newExtension;
+      },
     });
-    return allowedExtensions;
-  }
 
-  @Watch('selectedLanguage')
-  onSelectedLanguageChanged() {
-    const languageInfo = Object.values(supportedLanguages).find(
-      (language) => language.language === this.selectedLanguage,
-    );
-    if (languageInfo) {
-      this.extension = languageInfo.extension;
-    }
-  }
+    const allowedLanguages = computed((): omegaup.Languages => {
+      let languages: omegaup.Languages = {};
+      Object.values(supportedLanguages).forEach((languageInfo: LanguageInfo) => {
+        languages[languageInfo.language] = languageInfo.name;
+      });
+      return languages;
+    });
 
-  readFile(e: HTMLInputElement): File | null {
-    return (e.files && e.files[0]) || null;
-  }
+    const allowedExtensions = computed((): string[] => {
+      let extensions: string[] = [];
+      Object.values(supportedLanguages).forEach((languageInfo: LanguageInfo) => {
+        extensions.push(languageInfo.extension);
+      });
+      return extensions;
+    });
 
-  handleInputFile(ev: Event): void {
-    const file = this.readFile(ev.target as HTMLInputElement);
+    watch(() => props.codeProp, () => {
+      code.value = props.codeProp;
+    });
 
-    if (file) {
-      if (this.inputLimit && file.size >= this.inputLimit) {
-        alert(
-          ui.formatString(T.problemCreatorCodeUploadFilesize, {
-            limit: `${this.inputLimit / 1024} KiB`,
-          }),
-        );
-        return;
-      }
-      let fileExtension = file.name.split('.').pop()?.toLowerCase();
-      if (fileExtension && this.allowedExtensions.includes(fileExtension)) {
+    watch(() => props.extensionProp, () => {
+      if (
+        props.extensionProp &&
+        allowedExtensions.value.includes(props.extensionProp)
+      ) {
         const languageInfo = Object.values(supportedLanguages).find(
-          (language) => language.extension === fileExtension,
+          (language) => language.extension === props.extensionProp,
         );
         if (languageInfo) {
-          this.selectedLanguage = languageInfo.language;
+          selectedLanguage.value = languageInfo.language;
         }
       }
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result ?? null;
-        if (result) {
-          this.code = result.toString();
+    });
+
+    watch(() => props.activeTabIndex, (newIndex: TabIndex) => {
+      if (newIndex === TabIndex.Code) {
+        startIntroGuide();
+      }
+    });
+
+    watch(selectedLanguage, () => {
+      const languageInfo = Object.values(supportedLanguages).find(
+        (language) => language.language === selectedLanguage.value,
+      );
+      if (languageInfo) {
+        extension.value = languageInfo.extension;
+      }
+    });
+
+    function readFile(e: HTMLInputElement): File | null {
+      return (e.files && e.files[0]) || null;
+    }
+
+    function handleInputFile(ev: Event): void {
+      const file = readFile(ev.target as HTMLInputElement);
+
+      if (file) {
+        if (inputLimit && file.size >= inputLimit) {
+          alert(
+            ui.formatString(T.problemCreatorCodeUploadFilesize, {
+              limit: `${inputLimit / 1024} KiB`,
+            }),
+          );
+          return;
         }
-      };
-      reader.readAsText(file);
+        let fileExtension = file.name.split('.').pop()?.toLowerCase();
+        if (fileExtension && allowedExtensions.value.includes(fileExtension)) {
+          const languageInfo = Object.values(supportedLanguages).find(
+            (language) => language.extension === fileExtension,
+          );
+          if (languageInfo) {
+            selectedLanguage.value = languageInfo.language;
+          }
+        }
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const result = event.target?.result ?? null;
+          if (result) {
+            code.value = result.toString();
+          }
+        };
+        reader.readAsText(file);
+      }
     }
-  }
 
-  handleChangeLanguage(language: string): void {
-    this.selectedLanguage = language;
-  }
-
-  updateCode() {
-    this.$store.commit('updateCodeContent', this.code);
-    this.$store.commit('updateCodeExtension', this.extension);
-    this.$emit('show-update-success-message');
-  }
-
-  startIntroGuide() {
-    if (!getCookie('has-visited-code-tab')) {
-      introJs()
-        .setOptions({
-          nextLabel: T.interactiveGuideNextButton,
-          prevLabel: T.interactiveGuidePreviousButton,
-          doneLabel: T.interactiveGuideDoneButton,
-          steps: [
-            {
-              title: T.problemCreatorCodeTabIntroSelectLanguageTitle,
-              intro: T.problemCreatorCodeTabIntroSelectLanguageIntro,
-              element: document.querySelector<HTMLElement>(
-                '[data-problem-creator-code-language]',
-),
-            },
-            {
-              title: T.problemCreatorCodeTabIntroWriteCodeTitle,
-              intro: T.problemCreatorCodeTabIntroWriteCodeIntro,
-              element: document.querySelector<HTMLElement>(
-                '[data-problem-creator-code-editor]',
-),
-            },
-            {
-              title: T.problemCreatorCodeTabIntroUploadFileTitle,
-              intro: T.problemCreatorCodeTabIntroUploadFileIntro,
-              element: document.querySelector<HTMLElement>(
-                '[data-problem-creator-code-input]',
-),
-            },
-            {
-              title: T.problemCreatorCodeTabIntroSaveCodeTitle,
-              intro: T.problemCreatorCodeTabIntroSaveCodeIntro,
-              element: document.querySelector<HTMLElement>(
-                '[data-problem-creator-code-save-btn]',
-),
-            },
-          ],
-        })
-        .start();
-
-      setCookie('has-visited-code-tab', true);
+    function handleChangeLanguage(language: string): void {
+      selectedLanguage.value = language;
     }
-  }
-}
+
+    function updateCode() {
+      store.commit('updateCodeContent', code.value);
+      store.commit('updateCodeExtension', extension.value);
+      emit('show-update-success-message');
+    }
+
+    function startIntroGuide() {
+      if (!getCookie('has-visited-code-tab')) {
+        introJs()
+          .setOptions({
+            nextLabel: T.interactiveGuideNextButton,
+            prevLabel: T.interactiveGuidePreviousButton,
+            doneLabel: T.interactiveGuideDoneButton,
+            steps: [
+              {
+                title: T.problemCreatorCodeTabIntroSelectLanguageTitle,
+                intro: T.problemCreatorCodeTabIntroSelectLanguageIntro,
+                element: document.querySelector<HTMLElement>(
+                  '[data-problem-creator-code-language]',
+),
+              },
+              {
+                title: T.problemCreatorCodeTabIntroWriteCodeTitle,
+                intro: T.problemCreatorCodeTabIntroWriteCodeIntro,
+                element: document.querySelector<HTMLElement>(
+                  '[data-problem-creator-code-editor]',
+),
+              },
+              {
+                title: T.problemCreatorCodeTabIntroUploadFileTitle,
+                intro: T.problemCreatorCodeTabIntroUploadFileIntro,
+                element: document.querySelector<HTMLElement>(
+                  '[data-problem-creator-code-input]',
+),
+              },
+              {
+                title: T.problemCreatorCodeTabIntroSaveCodeTitle,
+                intro: T.problemCreatorCodeTabIntroSaveCodeIntro,
+                element: document.querySelector<HTMLElement>(
+                  '[data-problem-creator-code-save-btn]',
+),
+              },
+            ],
+          })
+          .start();
+
+        setCookie('has-visited-code-tab', true);
+      }
+    }
+
+    return {
+      T,
+      ui,
+      omegaup,
+      selectedLanguage,
+      code,
+      allowedLanguages,
+      handleInputFile,
+      handleChangeLanguage,
+      updateCode,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>

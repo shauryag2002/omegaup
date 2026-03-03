@@ -122,13 +122,13 @@
 <script lang="ts">
 import * as monaco from 'monaco-editor';
 (window as any).monaco = monaco;
-import { Component, Prop, Ref, Watch } from 'vue-property-decorator';
+import { defineComponent, ref, computed, watch, onBeforeMount, onMounted, nextTick, PropType } from 'vue';
 import { omegaup } from '../omegaup';
 import Vue from 'vue';
 import { h } from 'vue';
 import type { VNode } from 'vue';
 import omegaup_Countdown from '../components/Countdown.vue';
-import type { Component as VueComponent } from 'vue'; // this is the component type for Vue components
+import type { Component as VueComponent } from 'vue';
 import GoldenLayout from 'golden-layout';
 import JSZip from 'jszip';
 import pako from 'pako';
@@ -177,595 +177,638 @@ interface ComponentState {
   [key: string]: any;
 }
 
-@Component({
+export default defineComponent({
+  name: 'Ephemeral',
   components: {
     'font-awesome-icon': FontAwesomeIcon,
     'omegaup-countdown': omegaup_Countdown,
   },
-})
-export default class Ephemeral extends Vue {
-  @Prop({ required: true }) acceptedLanguages!: string[];
-  @Prop({ required: true }) isEmbedded!: boolean;
-  @Prop({ required: true }) canRun!: boolean;
-  @Prop({ required: true }) shouldShowSubmitButton!: boolean;
-  @Prop({ required: true }) initialLanguage!: string;
-  @Prop({ required: true }) initialTheme!: Util.MonacoThemes;
-  @Prop({ required: true }) problem!: types.ProblemInfo;
-  @Prop({ default: null }) nextSubmissionTimestamp!: null | Date;
-  @Prop({ default: null }) nextExecutionTimestamp!: null | Date;
+  props: {
+    acceptedLanguages: {
+      type: Array as PropType<string[]>,
+      required: true,
+    },
+    isEmbedded: { type: Boolean, required: true },
+    canRun: { type: Boolean, required: true },
+    shouldShowSubmitButton: { type: Boolean, required: true },
+    initialLanguage: { type: String, required: true },
+    initialTheme: {
+      type: String as PropType<Util.MonacoThemes>,
+      required: true,
+    },
+    problem: {
+      type: Object as PropType<types.ProblemInfo>,
+      required: true,
+    },
+    nextSubmissionTimestamp: {
+      type: Date as PropType<null | Date>,
+      default: null,
+    },
+    nextExecutionTimestamp: {
+      type: Date as PropType<null | Date>,
+      default: null,
+    },
+  },
+  emits: ['execute-run'],
+  setup(props, { emit }) {
+    const layoutRoot = ref<HTMLElement | null>(null);
 
-  @Ref('layout-root') readonly layoutRoot!: HTMLElement;
+    const themeToRef: { [key: string]: string } = {
+      [Util.MonacoThemes
+        .VSLight]: `https://golden-layout.com/assets/css/goldenlayout-light-theme.css`,
+      [Util.MonacoThemes
+        .VSDark]: `https://golden-layout.com/assets/css/goldenlayout-dark-theme.css`,
+    };
+    let goldenLayout: GoldenLayout | null = null;
+    const componentMapping: { [key: string]: GraderComponent } = {};
+    const isRunLoading = ref(false);
+    const isSubmitLoading = ref(false);
+    const zipHref = ref<string | null>(null);
+    const zipDownload = ref<string | null>(null);
+    const now = ref<number>(Date.now());
 
-  readonly themeToRef: { [key: string]: string } = {
-    [Util.MonacoThemes
-      .VSLight]: `https://golden-layout.com/assets/css/goldenlayout-light-theme.css`,
-    [Util.MonacoThemes
-      .VSDark]: `https://golden-layout.com/assets/css/goldenlayout-dark-theme.css`,
-  };
-  goldenLayout: GoldenLayout | null = null;
-  componentMapping: { [key: string]: GraderComponent } = {};
-  T = T;
-  omegaup = omegaup;
-  isRunLoading = false;
-  isSubmitLoading = false;
-  zipHref: string | null = null;
-  zipDownload: string | null = null;
-  now: number = Date.now();
+    const isSubmitButton = computed(() => store.getters['showSubmitButton']);
+    const isRunButton = computed(() => store.getters['showRunButton']);
+    const isDirty = computed(() => store.getters['isDirty']);
+    const theme = computed(() => store.getters['theme']);
 
-  get isSubmitButton() {
-    return store.getters['showSubmitButton'];
-  }
-  get isRunButton() {
-    return store.getters['showRunButton'];
-  }
-  get isDirty() {
-    return store.getters['isDirty'];
-  }
-  get theme() {
-    return store.getters['theme'];
-  }
+    const selectedLanguage = computed({
+      get: () => store.getters['request.language'],
+      set: (language: string) => {
+        store.dispatch('request.language', language);
+      },
+    });
 
-  get selectedLanguage() {
-    return store.getters['request.language'];
-  }
-  set selectedLanguage(language: string) {
-    store.dispatch('request.language', language);
-  }
-  getLanguageName(language: string): string {
-    return Util.supportedLanguages[language].name;
-  }
-  get languages(): string[] {
-    return store.getters['languages'];
-  }
-  get currentCase(): string {
-    return store.getters['currentCase'];
-  }
-  get isDark() {
-    return this.theme === Util.MonacoThemes.VSDark;
-  }
-  get canSubmit(): boolean {
-    if (!this.nextSubmissionTimestamp) {
-      return true;
+    function getLanguageName(language: string): string {
+      return Util.supportedLanguages[language].name;
     }
-    return this.nextSubmissionTimestamp.getTime() <= this.now;
-  }
-  get canExecute(): boolean {
-    if (!this.nextExecutionTimestamp) {
-      return true;
-    }
-    return this.nextExecutionTimestamp.getTime() <= this.now;
-  }
 
-  toggleTheme() {
-    store.dispatch(
-      'theme',
-      this.theme === Util.MonacoThemes.VSLight
-        ? Util.MonacoThemes.VSDark
-        : Util.MonacoThemes.VSLight,
-    );
-  }
-  initProblem() {
-    // use commits for synchronous behavior
-    // or else bugs occur where layout toggles cases column
-    // when it shouldn't
-    store.commit('updatingSettings', true);
-    store
-      .dispatch('initProblem', {
-        initialLanguage: this.initialLanguage,
-        initialTheme: this.initialTheme,
-        languages: this.acceptedLanguages,
-        problem: this.problem,
-        showRunButton: this.canRun,
-        showSubmitButton: this.shouldShowSubmitButton,
-      })
-      .then(() => {
-        store.commit('updatingSettings', false);
-        this.$nextTick(() => {
-          if (!this.isEmbedded || !this.goldenLayout?.isInitialised) return;
-          let mainColumn = this.goldenLayout.root.getItemsById(
-            'main-column',
-          )[0];
-          mainColumn.parent.setActiveContentItem(mainColumn);
-        });
-      })
-      .catch(Util.asyncError);
-  }
-  @Watch('problem')
-  @Watch('initialLanguage')
-  onProblemChange() {
-    this.initProblem();
-  }
-  @Watch('currentCase', { immediate: true })
-  onCurrentCaseChange() {
-    if (!this.isEmbedded || store.getters['isUpdatingSettings']) return;
-    const casesColumn = this.goldenLayout?.root.getItemsById('cases-column')[0];
-    if (!casesColumn) return;
-    casesColumn.parent.setActiveContentItem(casesColumn);
-  }
-  @Watch('isDirty')
-  onDirtyChange(value: boolean) {
-    if (!value || this.isEmbedded) return;
-    this.zipHref = null;
-    this.zipDownload = null;
-  }
-  @Watch('theme')
-  onThemeChange() {
-    // remove old theme
-    for (const theme in this.themeToRef) {
-      if (theme === this.theme) continue;
-      const link = document.getElementById(this.themeToRef[theme]);
-      if (link) link.remove();
-    }
-    this.downloadThemeStylesheet(this.theme);
-  }
+    const languages = computed((): string[] => store.getters['languages']);
+    const currentCase = computed((): string => store.getters['currentCase']);
+    const isDark = computed(() => theme.value === Util.MonacoThemes.VSDark);
 
-  onDetailsJsonReady(results: GraderResults) {
-    store.dispatch('results', results);
-    store.dispatch('compilerOutput', results.compile_error || '');
-  }
-  onFilesZipReady(blob: Blob | null) {
-    if (blob == null || blob.size == 0) {
-      if (this.componentMapping.zipviewer) {
-        (this.componentMapping.zipviewer as ZipViewer).zip = null;
+    const canSubmit = computed((): boolean => {
+      if (!props.nextSubmissionTimestamp) {
+        return true;
       }
-      store.dispatch('clearOutputs');
-      return;
+      return props.nextSubmissionTimestamp.getTime() <= now.value;
+    });
+
+    const canExecute = computed((): boolean => {
+      if (!props.nextExecutionTimestamp) {
+        return true;
+      }
+      return props.nextExecutionTimestamp.getTime() <= now.value;
+    });
+
+    function toggleTheme() {
+      store.dispatch(
+        'theme',
+        theme.value === Util.MonacoThemes.VSLight
+          ? Util.MonacoThemes.VSDark
+          : Util.MonacoThemes.VSLight,
+      );
     }
 
-    const reader = new FileReader();
-    reader.addEventListener('loadend', (e) => {
-      if (e.target?.readyState != FileReader.DONE) return;
-      if (!reader.result) return;
-
-      JSZip.loadAsync(reader.result)
-        .then((zip) => {
-          if (this.componentMapping.zipviewer) {
-            (this.componentMapping.zipviewer as ZipViewer).zip = zip;
-          }
-          store.dispatch('clearOutputs');
-
-          Promise.all([
-            zip.file('Main/compile.err')?.async('string'),
-            zip.file('Main/compile.out')?.async('string'),
-          ])
-            .then((values) => {
-              for (const value of values) {
-                if (!value) continue;
-                store.dispatch('compilerOutput', value);
-                return;
-              }
-              store.dispatch('compilerOutput', '');
-            })
-            .catch(Util.asyncError);
-
-          for (const filename in zip.files) {
-            if (filename.indexOf('/') !== -1) continue;
-            zip
-              .file(filename)
-              ?.async('string')
-              .then((contents) => {
-                store.dispatch('output', {
-                  name: filename,
-                  contents: contents,
-                });
-              })
-              .catch(Util.asyncError);
-          }
+    function initProblem() {
+      store.commit('updatingSettings', true);
+      store
+        .dispatch('initProblem', {
+          initialLanguage: props.initialLanguage,
+          initialTheme: props.initialTheme,
+          languages: props.acceptedLanguages,
+          problem: props.problem,
+          showRunButton: props.canRun,
+          showSubmitButton: props.shouldShowSubmitButton,
+        })
+        .then(() => {
+          store.commit('updatingSettings', false);
+          nextTick(() => {
+            if (!props.isEmbedded || !goldenLayout?.isInitialised) return;
+            let mainColumn = goldenLayout.root.getItemsById(
+              'main-column',
+            )[0];
+            mainColumn.parent.setActiveContentItem(mainColumn);
+          });
         })
         .catch(Util.asyncError);
-    });
-    reader.readAsArrayBuffer(blob);
-  }
-
-  handleSubmit() {
-    postMessage({
-      method: 'submitRun',
-      params: {
-        problem_alias: store.getters['alias'],
-        language: store.getters['request.language'],
-        source: store.getters['request.source'],
-      },
-    });
-  }
-  handleRun() {
-    if (this.isRunLoading) return;
-
-    postMessage({
-      method: 'executeRun',
-      params: {
-        problem_alias: store.getters['alias'],
-        language: store.getters['request.language'],
-        source: store.getters['request.source'],
-      },
-    });
-    this.$emit('execute-run');
-
-    this.isRunLoading = true;
-    fetch(`/grader/ephemeral/run/new/`, {
-      method: 'POST',
-      headers: new Headers({
-        'Content-Type': 'application/json',
-      }),
-      body: JSON.stringify(store.getters['request']),
-    })
-      .then((response) => {
-        if (!response.ok) return null;
-        return response.formData();
-      })
-      .then((formData) => {
-        if (!formData) {
-          this.onDetailsJsonReady({
-            contest_score: 0,
-            judged_by: 'runner',
-            max_score: 0,
-            score: 0,
-            verdict: 'JE',
-          });
-          store.dispatch('logs', '');
-          this.onFilesZipReady(null);
-          return;
-        }
-
-        if (formData.has('details.json')) {
-          const reader = new FileReader();
-          reader.addEventListener('loadend', () => {
-            if (!reader.result) {
-              this.onDetailsJsonReady({
-                contest_score: 0,
-                judged_by: 'runner',
-                max_score: 0,
-                score: 0,
-                verdict: 'JE',
-              });
-            } else this.onDetailsJsonReady(JSON.parse(reader.result as string));
-          });
-          reader.readAsText(formData.get('details.json') as File);
-        }
-
-        if (formData.has('logs.txt.gz')) {
-          const reader = new FileReader();
-          reader.addEventListener('loadend', function () {
-            if (
-              reader.result instanceof ArrayBuffer &&
-              reader.result.byteLength == 0
-            ) {
-              store.dispatch('logs', '');
-              return;
-            }
-            store.dispatch(
-              'logs',
-              new TextDecoder('utf-8').decode(
-                pako.inflate(reader.result as ArrayBuffer),
-              ),
-            );
-          });
-          reader.readAsArrayBuffer(formData.get('logs.txt.gz') as File);
-        } else {
-          store.dispatch('logs', '');
-        }
-
-        this.onFilesZipReady(formData.get('files.zip') as File);
-      })
-      .catch(Util.asyncError)
-      .finally(() => {
-        this.isRunLoading = false;
-      });
-  }
-  handleDownload(e: Event) {
-    // the state is dirty when we need to re-configure zip file
-    // if not, download the url (continue default behavior)
-    if (!this.isDirty) return true;
-
-    e.preventDefault();
-    const zip = new JSZip();
-    const cases = zip.folder('cases');
-    if (!cases) {
-      console.error('could not create cases folder');
-      return;
     }
 
-    const inputCases = store.getters['inputCases'];
-    let testplan = '';
-    for (const caseName in inputCases) {
-      if (!inputCases[caseName]) continue;
-      cases.file(`${caseName}.in`, inputCases[caseName].in);
-      cases.file(`${caseName}.out`, inputCases[caseName].out);
-      testplan += `${caseName} ${inputCases[caseName].weight || 1}\n`;
+    watch(() => props.problem, () => {
+      initProblem();
+    });
+
+    watch(() => props.initialLanguage, () => {
+      initProblem();
+    });
+
+    watch(currentCase, () => {
+      if (!props.isEmbedded || store.getters['isUpdatingSettings']) return;
+      const casesColumn = goldenLayout?.root.getItemsById('cases-column')[0];
+      if (!casesColumn) return;
+      casesColumn.parent.setActiveContentItem(casesColumn);
+    }, { immediate: true });
+
+    watch(isDirty, (value: boolean) => {
+      if (!value || props.isEmbedded) return;
+      zipHref.value = null;
+      zipDownload.value = null;
+    });
+
+    watch(theme, () => {
+      for (const t in themeToRef) {
+        if (t === theme.value) continue;
+        const link = document.getElementById(themeToRef[t]);
+        if (link) link.remove();
+      }
+      downloadThemeStylesheet(theme.value);
+    });
+
+    function onDetailsJsonReady(results: GraderResults) {
+      store.dispatch('results', results);
+      store.dispatch('compilerOutput', results.compile_error || '');
     }
-    zip.file('testplan', testplan);
 
-    const customValidator = store.getters['customValidator'];
-    const settingsJson: Partial<types.ProblemSettings> = {
-      Cases: store.getters['settingsCases'],
-      Limits: store.getters['limits'],
-      Validator: {
-        Name: store.getters['Validator'],
-        Tolerance: store.getters['Tolerance'] || 0,
-        // Lang only appears if language exists
-        ...(customValidator?.language
-          ? { Lang: customValidator?.language }
-          : {}),
-      },
-    };
-    zip.file('settings.json', JSON.stringify(settingsJson, null, '  '));
-
-    const interactive: undefined | types.InteractiveSettingsDistrib =
-      store.getters['Interactive'];
-    if (interactive) {
-      const interactiveFolder = zip.folder('interactive');
-      if (!interactiveFolder) {
-        console.error('could not create interactive folder');
+    function onFilesZipReady(blob: Blob | null) {
+      if (blob == null || blob.size == 0) {
+        if (componentMapping.zipviewer) {
+          (componentMapping.zipviewer as ZipViewer).zip = null;
+        }
+        store.dispatch('clearOutputs');
         return;
       }
 
-      interactiveFolder.file(`${interactive.module_name}.idl`, interactive.idl);
-      interactiveFolder.file(
-        `Main.${Util.supportedLanguages[interactive.language].extension}`,
-        interactive.main_source,
-      );
-      interactiveFolder.file('examples/sample.in', inputCases.sample?.in || '');
-    }
+      const reader = new FileReader();
+      reader.addEventListener('loadend', (e) => {
+        if (e.target?.readyState != FileReader.DONE) return;
+        if (!reader.result) return;
 
-    if (customValidator) {
-      zip.file(
-        `validator.${
-          Util.supportedLanguages[customValidator.language].extension
-        }`,
-        customValidator.source,
-      );
-    }
+        JSZip.loadAsync(reader.result)
+          .then((zip) => {
+            if (componentMapping.zipviewer) {
+              (componentMapping.zipviewer as ZipViewer).zip = zip;
+            }
+            store.dispatch('clearOutputs');
 
-    zip
-      .generateAsync({ type: 'blob' })
-      .then((blob) => {
-        this.zipDownload = `${store.getters['moduleName']}.zip`;
-        this.zipHref = window.URL.createObjectURL(blob);
-
-        store.dispatch('isDirty', false);
-      })
-      .catch(Util.asyncError);
-  }
-  handleUpload(e: Event) {
-    const files = (e.target as HTMLInputElement)?.files;
-    if (!files || files.length !== 1) return;
-
-    const reader = new FileReader();
-    reader.addEventListener('loadend', async (e) => {
-      if (e.target?.readyState != FileReader.DONE) return;
-      // due to the way files are strcutured
-      // to work as intended i use async awaits instead of promises
-
-      JSZip.loadAsync(reader.result as ArrayBuffer).then(async (zip) => {
-        await store.dispatch('reset');
-        await store.dispatch('removeCase', 'long');
-
-        // testplan is only used to give weights to cases
-        // we need to get weights before creating the cases
-        const testplanValue = await zip.file('testplan')?.async('string');
-        const casesWeights: { [key: string]: number } = {};
-        if (testplanValue) {
-          for (const line of testplanValue.split('\n')) {
-            if (line.startsWith('#') || line.trim() === '') continue;
-            const tokens = line.split(/\s+/);
-
-            if (tokens.length !== 2) continue;
-            const [caseName, weight] = tokens;
-            casesWeights[caseName] = parseFloat(weight);
-          }
-        }
-
-        for (const fileName in zip.files) {
-          if (!zip.files[fileName]) continue;
-
-          if (fileName.startsWith('cases/') && fileName.endsWith('.in')) {
-            const caseName = fileName.substring(
-              'cases/'.length,
-              fileName.length - '.in'.length,
-            );
-            const caseInFileName = fileName;
-            const caseOutFileName = `cases/${caseName}.out`;
-
-            // both casename.in and casename.out must exist
             Promise.all([
-              zip.file(caseInFileName)?.async('string'),
-              zip.file(caseOutFileName)?.async('string'),
+              zip.file('Main/compile.err')?.async('string'),
+              zip.file('Main/compile.out')?.async('string'),
             ])
-              .then(([caseIn, caseOut]) => {
-                store.dispatch('createCase', {
-                  name: caseName,
-                  in: caseIn,
-                  out: caseOut,
-                  weight: casesWeights[caseName] || 1,
-                });
+              .then((values) => {
+                for (const value of values) {
+                  if (!value) continue;
+                  store.dispatch('compilerOutput', value);
+                  return;
+                }
+                store.dispatch('compilerOutput', '');
               })
               .catch(Util.asyncError);
-          } else if (fileName.startsWith('validator.')) {
-            const extension = fileName.substring('validator.'.length);
-            if (!Util.supportedExtensions.includes(extension)) continue;
 
-            zip
-              .file(fileName)
-              ?.async('string')
-              .then((value) => {
-                // the validator need to be set first
-                // before updating language and source
-                store.dispatch('Validator', 'custom').then(() => {
-                  store.dispatch(
-                    'request.input.validator.custom_validator.language',
-                    extension,
-                  );
-                  store.dispatch(
-                    'request.input.validator.custom_validator.source',
-                    value,
-                  );
-                });
-              })
-              .catch(Util.asyncError);
-          } else if (
-            fileName.startsWith('interactive/') &&
-            fileName.endsWith('.idl')
-          ) {
-            const moduleName = fileName.substring(
-              'interactive/'.length,
-              fileName.length - '.idl'.length,
-            );
-
-            zip
-              .file(fileName)
-              ?.async('string')
-              .then((value) => {
-                store.dispatch('Interactive', {
-                  idl: value,
-                  module_name: moduleName,
-                });
-              })
-              .catch(Util.asyncError);
-          } else if (fileName.startsWith('interactive/Main.')) {
-            const extension = fileName.substring('interactive/Main.'.length);
-            if (!Util.supportedExtensions.includes(extension)) continue;
-
-            zip
-              .file(fileName)
-              ?.async('string')
-              .then((value) => {
-                store.dispatch('Interactive', {
-                  language: extension,
-                  main_source: value,
-                });
-              })
-              .catch(Util.asyncError);
-          }
-        }
-        zip
-          .file('settings.json')
-          ?.async('string')
-          .then((value) => {
-            const settings: Partial<types.ProblemSettings> = JSON.parse(value);
-            if (settings.Limits) {
-              store.dispatch('limits', settings.Limits);
-            }
-            if (settings.Validator?.Name) {
-              store.dispatch('Validator', settings.Validator.Name);
-            }
-            if (settings.Validator?.Tolerance) {
-              store.dispatch('Tolerance', settings.Validator.Tolerance);
+            for (const filename in zip.files) {
+              if (filename.indexOf('/') !== -1) continue;
+              zip
+                .file(filename)
+                ?.async('string')
+                .then((contents) => {
+                  store.dispatch('output', {
+                    name: filename,
+                    contents: contents,
+                  });
+                })
+                .catch(Util.asyncError);
             }
           })
           .catch(Util.asyncError);
       });
-    });
-    reader.readAsArrayBuffer(files[0]);
-  }
-  RegisterVueComponent(componentName: string, component: VueComponent) {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const self = this;
+      reader.readAsArrayBuffer(blob);
+    }
 
-    this.goldenLayout?.registerComponent(
-      componentName,
-      // cannot use an arrow function because
-      // it causes a "ComponentConstructor is not a constructor" error
-      function (
-        container: GoldenLayout.Container,
-        componentState: ComponentState,
-      ) {
-        container.on('open', () => {
-          const props: ComponentProps = {
-            storeMapping: componentState.storeMapping,
-          };
-          for (const k in componentState) {
-            if (k === 'id' || !componentState[k]) continue;
-            props[k] = componentState[k];
-          }
+    function handleSubmit() {
+      postMessage({
+        method: 'submitRun',
+        params: {
+          problem_alias: store.getters['alias'],
+          language: store.getters['request.language'],
+          source: store.getters['request.source'],
+        },
+      });
+    }
 
-          const vue = new Vue({
-            el: (container.getElement() as unknown as HTMLElement[])[0],
-            components: {
-              [componentName]: component,
-            },
-            render: function (): VNode {
-              return h(componentName, {
-                ...props,
-              });
-            },
-          });
+    function handleRun() {
+      if (isRunLoading.value) return;
 
-          const vueComponent = (vue as unknown as Record<string, unknown>).$children
-            ? ((vue as unknown as Record<string, unknown>).$children as GraderComponent[])[0]
-            : ({} as GraderComponent);
-          if (vueComponent.title) {
-            container.setTitle(vueComponent.title);
-            vueComponent.$watch('title', function (title: string) {
-              container.setTitle(title);
+      postMessage({
+        method: 'executeRun',
+        params: {
+          problem_alias: store.getters['alias'],
+          language: store.getters['request.language'],
+          source: store.getters['request.source'],
+        },
+      });
+      emit('execute-run');
+
+      isRunLoading.value = true;
+      fetch(`/grader/ephemeral/run/new/`, {
+        method: 'POST',
+        headers: new Headers({
+          'Content-Type': 'application/json',
+        }),
+        body: JSON.stringify(store.getters['request']),
+      })
+        .then((response) => {
+          if (!response.ok) return null;
+          return response.formData();
+        })
+        .then((formData) => {
+          if (!formData) {
+            onDetailsJsonReady({
+              contest_score: 0,
+              judged_by: 'runner',
+              max_score: 0,
+              score: 0,
+              verdict: 'JE',
             });
+            store.dispatch('logs', '');
+            onFilesZipReady(null);
+            return;
           }
-          if (vueComponent.onResize) {
-            container.on('resize', () => vueComponent.onResize?.());
+
+          if (formData.has('details.json')) {
+            const reader = new FileReader();
+            reader.addEventListener('loadend', () => {
+              if (!reader.result) {
+                onDetailsJsonReady({
+                  contest_score: 0,
+                  judged_by: 'runner',
+                  max_score: 0,
+                  score: 0,
+                  verdict: 'JE',
+                });
+              } else
+                onDetailsJsonReady(JSON.parse(reader.result as string));
+            });
+            reader.readAsText(formData.get('details.json') as File);
           }
-          self.componentMapping[componentState.id] = vueComponent;
+
+          if (formData.has('logs.txt.gz')) {
+            const reader = new FileReader();
+            reader.addEventListener('loadend', function () {
+              if (
+                reader.result instanceof ArrayBuffer &&
+                reader.result.byteLength == 0
+              ) {
+                store.dispatch('logs', '');
+                return;
+              }
+              store.dispatch(
+                'logs',
+                new TextDecoder('utf-8').decode(
+                  pako.inflate(reader.result as ArrayBuffer),
+                ),
+              );
+            });
+            reader.readAsArrayBuffer(formData.get('logs.txt.gz') as File);
+          } else {
+            store.dispatch('logs', '');
+          }
+
+          onFilesZipReady(formData.get('files.zip') as File);
+        })
+        .catch(Util.asyncError)
+        .finally(() => {
+          isRunLoading.value = false;
         });
-      },
-    );
-  }
-
-  onResized() {
-    if (!this.layoutRoot.clientWidth) return;
-    if (!this.goldenLayout?.isInitialised) {
-      this.goldenLayout?.init();
     }
-    this.goldenLayout?.updateSize();
-  }
-  downloadThemeStylesheet(theme: string) {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = this.themeToRef[theme];
-    document.head.appendChild(link);
-  }
-  beforeMount() {
-    this.initProblem();
-    this.downloadThemeStylesheet(this.theme);
-  }
-  mounted() {
-    this.goldenLayout = new GoldenLayout(
-      this.isEmbedded ? EMBEDDED_CONFIG : UNEMBEDDED_CONFIG,
-      this.layoutRoot,
-    );
 
-    this.RegisterVueComponent(CASE_SELECTOR_COMPONENT_NAME, CaseSelector);
-    this.RegisterVueComponent(MONACO_EDITOR_COMPONENT_NAME, MonacoEditor);
-    this.RegisterVueComponent(MONACO_DIFF_COMPONENT_NAME, DiffEditor);
-    this.RegisterVueComponent(SETTINGS_COMPONENT_NAME, IDESettings);
-    this.RegisterVueComponent(TEXT_EDITOR_COMPONENT_NAME, TextEditor);
-    this.RegisterVueComponent(ZIP_VIEWER_COMPONENT_NAME, ZipViewer);
+    function handleDownload(e: Event) {
+      if (!isDirty.value) return true;
 
-    this.goldenLayout.init();
+      e.preventDefault();
+      const zip = new JSZip();
+      const cases = zip.folder('cases');
+      if (!cases) {
+        console.error('could not create cases folder');
+        return;
+      }
 
-    if (window.ResizeObserver) {
-      new ResizeObserver(this.onResized).observe(this.layoutRoot);
-    } else {
-      window.addEventListener('resize', this.onResized);
+      const inputCases = store.getters['inputCases'];
+      let testplan = '';
+      for (const caseName in inputCases) {
+        if (!inputCases[caseName]) continue;
+        cases.file(`${caseName}.in`, inputCases[caseName].in);
+        cases.file(`${caseName}.out`, inputCases[caseName].out);
+        testplan += `${caseName} ${inputCases[caseName].weight || 1}\n`;
+      }
+      zip.file('testplan', testplan);
+
+      const customValidator = store.getters['customValidator'];
+      const settingsJson: Partial<types.ProblemSettings> = {
+        Cases: store.getters['settingsCases'],
+        Limits: store.getters['limits'],
+        Validator: {
+          Name: store.getters['Validator'],
+          Tolerance: store.getters['Tolerance'] || 0,
+          ...(customValidator?.language
+            ? { Lang: customValidator?.language }
+            : {}),
+        },
+      };
+      zip.file('settings.json', JSON.stringify(settingsJson, null, '  '));
+
+      const interactive: undefined | types.InteractiveSettingsDistrib =
+        store.getters['Interactive'];
+      if (interactive) {
+        const interactiveFolder = zip.folder('interactive');
+        if (!interactiveFolder) {
+          console.error('could not create interactive folder');
+          return;
+        }
+
+        interactiveFolder.file(
+          `${interactive.module_name}.idl`,
+          interactive.idl,
+        );
+        interactiveFolder.file(
+          `Main.${Util.supportedLanguages[interactive.language].extension}`,
+          interactive.main_source,
+        );
+        interactiveFolder.file(
+          'examples/sample.in',
+          inputCases.sample?.in || '',
+        );
+      }
+
+      if (customValidator) {
+        zip.file(
+          `validator.${
+            Util.supportedLanguages[customValidator.language].extension
+          }`,
+          customValidator.source,
+        );
+      }
+
+      zip
+        .generateAsync({ type: 'blob' })
+        .then((blob) => {
+          zipDownload.value = `${store.getters['moduleName']}.zip`;
+          zipHref.value = window.URL.createObjectURL(blob);
+
+          store.dispatch('isDirty', false);
+        })
+        .catch(Util.asyncError);
     }
-  }
-}
+
+    function handleUpload(e: Event) {
+      const files = (e.target as HTMLInputElement)?.files;
+      if (!files || files.length !== 1) return;
+
+      const reader = new FileReader();
+      reader.addEventListener('loadend', async (e) => {
+        if (e.target?.readyState != FileReader.DONE) return;
+
+        JSZip.loadAsync(reader.result as ArrayBuffer).then(async (zip) => {
+          await store.dispatch('reset');
+          await store.dispatch('removeCase', 'long');
+
+          const testplanValue = await zip.file('testplan')?.async('string');
+          const casesWeights: { [key: string]: number } = {};
+          if (testplanValue) {
+            for (const line of testplanValue.split('\n')) {
+              if (line.startsWith('#') || line.trim() === '') continue;
+              const tokens = line.split(/\s+/);
+
+              if (tokens.length !== 2) continue;
+              const [caseName, weight] = tokens;
+              casesWeights[caseName] = parseFloat(weight);
+            }
+          }
+
+          for (const fileName in zip.files) {
+            if (!zip.files[fileName]) continue;
+
+            if (fileName.startsWith('cases/') && fileName.endsWith('.in')) {
+              const caseName = fileName.substring(
+                'cases/'.length,
+                fileName.length - '.in'.length,
+              );
+              const caseInFileName = fileName;
+              const caseOutFileName = `cases/${caseName}.out`;
+
+              Promise.all([
+                zip.file(caseInFileName)?.async('string'),
+                zip.file(caseOutFileName)?.async('string'),
+              ])
+                .then(([caseIn, caseOut]) => {
+                  store.dispatch('createCase', {
+                    name: caseName,
+                    in: caseIn,
+                    out: caseOut,
+                    weight: casesWeights[caseName] || 1,
+                  });
+                })
+                .catch(Util.asyncError);
+            } else if (fileName.startsWith('validator.')) {
+              const extension = fileName.substring('validator.'.length);
+              if (!Util.supportedExtensions.includes(extension)) continue;
+
+              zip
+                .file(fileName)
+                ?.async('string')
+                .then((value) => {
+                  store.dispatch('Validator', 'custom').then(() => {
+                    store.dispatch(
+                      'request.input.validator.custom_validator.language',
+                      extension,
+                    );
+                    store.dispatch(
+                      'request.input.validator.custom_validator.source',
+                      value,
+                    );
+                  });
+                })
+                .catch(Util.asyncError);
+            } else if (
+              fileName.startsWith('interactive/') &&
+              fileName.endsWith('.idl')
+            ) {
+              const moduleName = fileName.substring(
+                'interactive/'.length,
+                fileName.length - '.idl'.length,
+              );
+
+              zip
+                .file(fileName)
+                ?.async('string')
+                .then((value) => {
+                  store.dispatch('Interactive', {
+                    idl: value,
+                    module_name: moduleName,
+                  });
+                })
+                .catch(Util.asyncError);
+            } else if (fileName.startsWith('interactive/Main.')) {
+              const extension = fileName.substring(
+                'interactive/Main.'.length,
+              );
+              if (!Util.supportedExtensions.includes(extension)) continue;
+
+              zip
+                .file(fileName)
+                ?.async('string')
+                .then((value) => {
+                  store.dispatch('Interactive', {
+                    language: extension,
+                    main_source: value,
+                  });
+                })
+                .catch(Util.asyncError);
+            }
+          }
+          zip
+            .file('settings.json')
+            ?.async('string')
+            .then((value) => {
+              const settings: Partial<types.ProblemSettings> =
+                JSON.parse(value);
+              if (settings.Limits) {
+                store.dispatch('limits', settings.Limits);
+              }
+              if (settings.Validator?.Name) {
+                store.dispatch('Validator', settings.Validator.Name);
+              }
+              if (settings.Validator?.Tolerance) {
+                store.dispatch('Tolerance', settings.Validator.Tolerance);
+              }
+            })
+            .catch(Util.asyncError);
+        });
+      });
+      reader.readAsArrayBuffer(files[0]);
+    }
+
+    function RegisterVueComponent(
+      componentName: string,
+      component: VueComponent,
+    ) {
+      goldenLayout?.registerComponent(
+        componentName,
+        function (
+          container: GoldenLayout.Container,
+          componentState: ComponentState,
+        ) {
+          container.on('open', () => {
+            const compProps: ComponentProps = {
+              storeMapping: componentState.storeMapping,
+            };
+            for (const k in componentState) {
+              if (k === 'id' || !componentState[k]) continue;
+              compProps[k] = componentState[k];
+            }
+
+            const vue = new Vue({
+              el: (container.getElement() as unknown as HTMLElement[])[0],
+              components: {
+                [componentName]: component,
+              },
+              render: function (): VNode {
+                return h(componentName, {
+                  ...compProps,
+                });
+              },
+            });
+
+            const vueComponent = (
+              vue as unknown as Record<string, unknown>
+            ).$children
+              ? (
+                  (vue as unknown as Record<string, unknown>)
+                    .$children as GraderComponent[]
+                )[0]
+              : ({} as GraderComponent);
+            if (vueComponent.title) {
+              container.setTitle(vueComponent.title);
+              vueComponent.$watch('title', function (title: string) {
+                container.setTitle(title);
+              });
+            }
+            if (vueComponent.onResize) {
+              container.on('resize', () => vueComponent.onResize?.());
+            }
+            componentMapping[componentState.id] = vueComponent;
+          });
+        },
+      );
+    }
+
+    function onResized() {
+      if (!layoutRoot.value?.clientWidth) return;
+      if (!goldenLayout?.isInitialised) {
+        goldenLayout?.init();
+      }
+      goldenLayout?.updateSize();
+    }
+
+    function downloadThemeStylesheet(themeStr: string) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = themeToRef[themeStr];
+      document.head.appendChild(link);
+    }
+
+    onBeforeMount(() => {
+      initProblem();
+      downloadThemeStylesheet(theme.value);
+    });
+
+    onMounted(() => {
+      goldenLayout = new GoldenLayout(
+        props.isEmbedded ? EMBEDDED_CONFIG : UNEMBEDDED_CONFIG,
+        layoutRoot.value!,
+      );
+
+      RegisterVueComponent(CASE_SELECTOR_COMPONENT_NAME, CaseSelector);
+      RegisterVueComponent(MONACO_EDITOR_COMPONENT_NAME, MonacoEditor);
+      RegisterVueComponent(MONACO_DIFF_COMPONENT_NAME, DiffEditor);
+      RegisterVueComponent(SETTINGS_COMPONENT_NAME, IDESettings);
+      RegisterVueComponent(TEXT_EDITOR_COMPONENT_NAME, TextEditor);
+      RegisterVueComponent(ZIP_VIEWER_COMPONENT_NAME, ZipViewer);
+
+      goldenLayout.init();
+
+      if (window.ResizeObserver) {
+        new ResizeObserver(onResized).observe(layoutRoot.value!);
+      } else {
+        window.addEventListener('resize', onResized);
+      }
+    });
+
+    return {
+      T,
+      omegaup,
+      'layout-root': layoutRoot,
+      isRunLoading,
+      isSubmitLoading,
+      zipHref,
+      zipDownload,
+      now,
+      isSubmitButton,
+      isRunButton,
+      isDirty,
+      theme,
+      selectedLanguage,
+      getLanguageName,
+      languages,
+      isDark,
+      canSubmit,
+      canExecute,
+      toggleTheme,
+      handleSubmit,
+      handleRun,
+      handleDownload,
+      handleUpload,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>

@@ -136,7 +136,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { defineComponent, ref, computed, PropType } from 'vue';
 import { ObjectivesAnswers } from './ObjectivesQuestions.vue';
 import { types } from '../../api_types';
 import T from '../../lang';
@@ -150,133 +150,165 @@ import { BButton, BPopover } from 'bootstrap-vue-next';
 
 // Import Only Required Plugins
 
-@Component({
+export default defineComponent({
+  name: 'UserPreferencesEdit',
   components: {
     FontAwesomeIcon,
   },
-})
-export default class UserPreferencesEdit extends Vue {
-  @Prop() profile!: types.UserProfileInfo;
+  props: {
+    profile: {
+      type: Object as PropType<types.UserProfileInfo>,
+      required: true,
+    },
+  },
+  emits: ['update-user-preferences'],
+  setup(props, { emit }) {
+    const show = ref(false);
+    const email = ref(props.profile.email);
+    const locale = ref(props.profile.locale);
+    const preferredLanguage = ref(props.profile.preferred_language);
+    const programmingLanguages = ref(props.profile.programming_languages);
+    const isPrivate = ref(props.profile.is_private);
+    const hideProblemTags = ref(props.profile.hide_problem_tags);
+    const hasCompetitiveObjective = ref(
+      props.profile.has_competitive_objective ?? false,
+    );
+    const hasLearningObjective = ref(
+      props.profile.has_learning_objective ?? true,
+    );
+    const hasScholarObjective = ref(
+      props.profile.has_scholar_objective ?? true,
+    );
+    const hasTeachingObjective = ref(
+      props.profile.has_teaching_objective ?? false,
+    );
 
-  show: boolean = false;
-  T = T;
-  ObjectivesAnswers = ObjectivesAnswers;
-  email = this.profile.email;
-  locale = this.profile.locale;
-  preferredLanguage = this.profile.preferred_language;
-  programmingLanguages = this.profile.programming_languages;
-  isPrivate = this.profile.is_private;
-  hideProblemTags = this.profile.hide_problem_tags;
-  hasCompetitiveObjective = this.profile.has_competitive_objective ?? false;
-  hasLearningObjective = this.profile.has_learning_objective ?? true;
-  hasScholarObjective = this.profile.has_scholar_objective ?? true;
-  hasTeachingObjective = this.profile.has_teaching_objective ?? false;
-
-  get scholarCompetitiveObjectiveQuestion(): string {
-    if (this.hasLearningObjective && this.hasTeachingObjective) {
-      return this.T.userObjectivesModalDescriptionLearningAndTeaching;
-    }
-    if (this.hasLearningObjective) {
-      return this.T.userObjectivesModalDescriptionLearning;
-    }
-    if (this.hasTeachingObjective) {
-      return this.T.userObjectivesModalDescriptionTeaching;
-    }
-    return T.userObjectivesModalDescriptionUsage;
-  }
-
-  get GravatarURL(): string {
-    return getExternalUrl('GravatarURL');
-  }
-
-  get learningTeachingObjective(): string {
-    if (this.hasLearningObjective && this.hasTeachingObjective) {
-      return ObjectivesAnswers.LearningAndTeaching;
-    }
-    if (this.hasLearningObjective) {
-      return ObjectivesAnswers.Learning;
-    }
-    if (this.hasTeachingObjective) {
-      return ObjectivesAnswers.Teaching;
-    }
-    return ObjectivesAnswers.None;
-  }
-
-  set learningTeachingObjective(newValue: string) {
-    switch (newValue) {
-      case ObjectivesAnswers.Learning:
-        this.hasLearningObjective = true;
-        this.hasTeachingObjective = false;
-        break;
-      case ObjectivesAnswers.Teaching:
-        this.hasLearningObjective = false;
-        this.hasTeachingObjective = true;
-        break;
-      case ObjectivesAnswers.LearningAndTeaching:
-        this.hasLearningObjective = true;
-        this.hasTeachingObjective = true;
-        break;
-      case ObjectivesAnswers.None:
-        this.hasLearningObjective = false;
-        this.hasTeachingObjective = false;
-        this.hasScholarObjective = false;
-        this.hasCompetitiveObjective = false;
-        break;
-    }
-  }
-
-  get scholarCompetitiveObjective(): string {
-    if (this.hasCompetitiveObjective && this.hasScholarObjective) {
-      return ObjectivesAnswers.ScholarAndCompetitive;
-    }
-    if (this.hasCompetitiveObjective) {
-      return ObjectivesAnswers.Competitive;
-    }
-    if (this.hasScholarObjective) {
-      return ObjectivesAnswers.Scholar;
-    }
-    return ObjectivesAnswers.Other;
-  }
-
-  set scholarCompetitiveObjective(newValue: string) {
-    switch (newValue) {
-      case ObjectivesAnswers.Scholar:
-        this.hasScholarObjective = true;
-        this.hasCompetitiveObjective = false;
-        break;
-      case ObjectivesAnswers.Competitive:
-        this.hasScholarObjective = false;
-        this.hasCompetitiveObjective = true;
-        break;
-      case ObjectivesAnswers.ScholarAndCompetitive:
-        this.hasScholarObjective = true;
-        this.hasCompetitiveObjective = true;
-        break;
-      case ObjectivesAnswers.Other:
-        this.hasScholarObjective = false;
-        this.hasCompetitiveObjective = false;
-        break;
-    }
-  }
-
-  onUpdateUserPreferences(): void {
-    this.$emit('update-user-preferences', {
-      userPreferences: {
-        locale: this.locale,
-        preferred_language: this.preferredLanguage ?? null,
-        is_private: this.isPrivate,
-        hide_problem_tags: this.hideProblemTags,
-        has_competitive_objective: this.hasCompetitiveObjective,
-        has_learning_objective: this.hasLearningObjective,
-        has_scholar_objective: this.hasScholarObjective,
-        has_teaching_objective: this.hasTeachingObjective,
-      },
-      localeChanged: this.locale != this.profile.locale,
+    const scholarCompetitiveObjectiveQuestion = computed((): string => {
+      if (hasLearningObjective.value && hasTeachingObjective.value) {
+        return T.userObjectivesModalDescriptionLearningAndTeaching;
+      }
+      if (hasLearningObjective.value) {
+        return T.userObjectivesModalDescriptionLearning;
+      }
+      if (hasTeachingObjective.value) {
+        return T.userObjectivesModalDescriptionTeaching;
+      }
+      return T.userObjectivesModalDescriptionUsage;
     });
-  }
 
-  handlePrivateProfileCheckboxChange(): void {
-    this.show = this.isPrivate;
-  }
-}
+    const GravatarURL = computed((): string => {
+      return getExternalUrl('GravatarURL');
+    });
+
+    const learningTeachingObjective = computed({
+      get: (): string => {
+        if (hasLearningObjective.value && hasTeachingObjective.value) {
+          return ObjectivesAnswers.LearningAndTeaching;
+        }
+        if (hasLearningObjective.value) {
+          return ObjectivesAnswers.Learning;
+        }
+        if (hasTeachingObjective.value) {
+          return ObjectivesAnswers.Teaching;
+        }
+        return ObjectivesAnswers.None;
+      },
+      set: (newValue: string) => {
+        switch (newValue) {
+          case ObjectivesAnswers.Learning:
+            hasLearningObjective.value = true;
+            hasTeachingObjective.value = false;
+            break;
+          case ObjectivesAnswers.Teaching:
+            hasLearningObjective.value = false;
+            hasTeachingObjective.value = true;
+            break;
+          case ObjectivesAnswers.LearningAndTeaching:
+            hasLearningObjective.value = true;
+            hasTeachingObjective.value = true;
+            break;
+          case ObjectivesAnswers.None:
+            hasLearningObjective.value = false;
+            hasTeachingObjective.value = false;
+            hasScholarObjective.value = false;
+            hasCompetitiveObjective.value = false;
+            break;
+        }
+      },
+    });
+
+    const scholarCompetitiveObjective = computed({
+      get: (): string => {
+        if (hasCompetitiveObjective.value && hasScholarObjective.value) {
+          return ObjectivesAnswers.ScholarAndCompetitive;
+        }
+        if (hasCompetitiveObjective.value) {
+          return ObjectivesAnswers.Competitive;
+        }
+        if (hasScholarObjective.value) {
+          return ObjectivesAnswers.Scholar;
+        }
+        return ObjectivesAnswers.Other;
+      },
+      set: (newValue: string) => {
+        switch (newValue) {
+          case ObjectivesAnswers.Scholar:
+            hasScholarObjective.value = true;
+            hasCompetitiveObjective.value = false;
+            break;
+          case ObjectivesAnswers.Competitive:
+            hasScholarObjective.value = false;
+            hasCompetitiveObjective.value = true;
+            break;
+          case ObjectivesAnswers.ScholarAndCompetitive:
+            hasScholarObjective.value = true;
+            hasCompetitiveObjective.value = true;
+            break;
+          case ObjectivesAnswers.Other:
+            hasScholarObjective.value = false;
+            hasCompetitiveObjective.value = false;
+            break;
+        }
+      },
+    });
+
+    function onUpdateUserPreferences(): void {
+      emit('update-user-preferences', {
+        userPreferences: {
+          locale: locale.value,
+          preferred_language: preferredLanguage.value ?? null,
+          is_private: isPrivate.value,
+          hide_problem_tags: hideProblemTags.value,
+          has_competitive_objective: hasCompetitiveObjective.value,
+          has_learning_objective: hasLearningObjective.value,
+          has_scholar_objective: hasScholarObjective.value,
+          has_teaching_objective: hasTeachingObjective.value,
+        },
+        localeChanged: locale.value != props.profile.locale,
+      });
+    }
+
+    function handlePrivateProfileCheckboxChange(): void {
+      show.value = isPrivate.value;
+    }
+
+    return {
+      T,
+      ObjectivesAnswers,
+      show,
+      email,
+      locale,
+      preferredLanguage,
+      programmingLanguages,
+      isPrivate,
+      hideProblemTags,
+      scholarCompetitiveObjectiveQuestion,
+      GravatarURL,
+      learningTeachingObjective,
+      scholarCompetitiveObjective,
+      onUpdateUserPreferences,
+      handlePrivateProfileCheckboxChange,
+    };
+  },
+});
 </script>

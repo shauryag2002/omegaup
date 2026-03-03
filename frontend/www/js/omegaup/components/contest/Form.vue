@@ -861,7 +861,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+import { defineComponent, ref, computed, watch, onMounted, nextTick, PropType } from 'vue';
 import T from '../../lang';
 import common_Typeahead from '../common/Typeahead.vue';
 import DateTimePicker from '../DateTimePicker.vue';
@@ -922,10 +922,6 @@ interface LocalErrors {
   [key: string]: string;
 }
 
-/**
- * Field mapping for error checking by section
- * Used to determine which fields belong to which accordion section
- */
 const SECTION_FIELDS: Record<SectionName, string[]> = {
   [SectionName.Basic]: [
     FieldName.Title,
@@ -946,11 +942,8 @@ const SECTION_FIELDS: Record<SectionName, string[]> = {
   ],
 };
 
-/**
- * Preset configurations for different contest types
- */
 interface PresetConfig {
-  languages?: boolean; // Whether to set all languages
+  languages?: boolean;
   titlePlaceHolder: string;
   windowLengthEnabled: boolean;
   windowLength: number | null;
@@ -1037,7 +1030,8 @@ const MAX_LENGTH = {
 
 const DANGER_THRESHOLD_PERCENTAGE = 0.8;
 
-@Component({
+export default defineComponent({
+  name: 'ContestForm',
   components: {
     'omegaup-common-typeahead': common_Typeahead,
     'omegaup-datetimepicker': DateTimePicker,
@@ -1049,431 +1043,552 @@ const DANGER_THRESHOLD_PERCENTAGE = 0.8;
   directives: {
     tooltip: VTooltip,
   },
-})
-export default class Form extends Vue {
-  T = T;
-  ScoreMode = ScoreMode;
-  PresetType = PresetType;
-  FieldName = FieldName;
-  SectionName = SectionName;
-  MAX_LENGTH = MAX_LENGTH;
+  props: {
+    update: { type: Boolean, required: true },
+    allLanguages: { type: Array as PropType<string[]>, required: true },
+    admissionMode: { type: String, default: 'private' },
+    defaultShowAllContestantsInScoreboard: {
+      type: Boolean,
+      default: false,
+    },
+    initialAlias: { type: String, default: '' },
+    initialDescription: { type: String, default: '' },
+    initialFeedback: { type: String, default: 'none' },
+    initialLanguages: {
+      type: Array as PropType<string[]>,
+      required: true,
+    },
+    initialFinishTime: {
+      type: Date as PropType<Date>,
+      required: true,
+    },
+    initialNeedsBasicInformation: { type: Boolean, default: false },
+    initialPenalty: { type: Number, default: 0 },
+    initialPenaltyType: { type: String, default: 'none' },
+    initialPointsDecayFactor: { type: Number, default: 0.0 },
+    initialRequestsUserInformation: { type: String, default: 'no' },
+    initialScoreboard: { type: Number, default: 100 },
+    initialShowScoreboardAfter: { type: Boolean, default: true },
+    scoreMode: {
+      type: String as PropType<ScoreMode>,
+      default: ScoreMode.Partial,
+    },
+    hasSubmissions: { type: Boolean, default: false },
+    initialStartTime: {
+      type: Date as PropType<Date>,
+      required: true,
+    },
+    initialSubmissionsGap: { type: Number, required: true },
+    initialTitle: { type: String, default: '' },
+    initialWindowLength: {
+      type: Number as PropType<null | number>,
+      default: null,
+    },
+    invalidParameterName: {
+      type: String as PropType<null | string>,
+      default: null,
+    },
+    teamsGroupAlias: {
+      type: Object as PropType<null | types.ListItem>,
+      default: null,
+    },
+    searchResultTeamsGroups: {
+      type: Array as PropType<types.ListItem[]>,
+      required: true,
+    },
+    contestForTeams: { type: Boolean, default: false },
+    problems: {
+      type: Array as PropType<types.ProblemsetProblemWithVersions[]>,
+      default: null,
+    },
+    hasVisitedSection: { type: Boolean, default: true },
+    canSetRecommended: { type: Boolean, default: false },
+    initialRecommended: { type: Boolean, default: false },
+  },
+  emits: [
+    'update-contest',
+    'create-contest',
+    'language-remove-blocked',
+    'update-search-result-teams-groups',
+  ],
+  setup(props, { emit }) {
+    const basicInfo = ref<HTMLElement | null>(null);
+    const logistics = ref<HTMLElement | null>(null);
+    const scoringRules = ref<HTMLElement | null>(null);
+    const privacy = ref<HTMLElement | null>(null);
 
-  @Prop() update!: boolean;
-  @Prop() allLanguages!: string[];
-  @Prop({ default: 'private' }) admissionMode!: string;
-  @Prop({ default: false }) defaultShowAllContestantsInScoreboard!: boolean;
-  @Prop({ default: '' }) initialAlias!: string;
-  @Prop({ default: '' }) initialDescription!: string;
-  @Prop({ default: 'none' }) initialFeedback!: string;
-  @Prop() initialLanguages!: string[];
-  @Prop() initialFinishTime!: Date;
-  @Prop({ default: false }) initialNeedsBasicInformation!: boolean;
-  @Prop({ default: 0 }) initialPenalty!: number;
-  @Prop({ default: 'none' }) initialPenaltyType!: string;
-  @Prop({ default: 0.0 }) initialPointsDecayFactor!: number;
-  @Prop({ default: 'no' }) initialRequestsUserInformation!: string;
-  @Prop({ default: 100 }) initialScoreboard!: number;
-  @Prop({ default: true }) initialShowScoreboardAfter!: boolean;
-  @Prop({ default: ScoreMode.Partial }) scoreMode!: ScoreMode;
-  @Prop({ default: false }) hasSubmissions!: boolean;
-  @Prop() initialStartTime!: Date;
-  @Prop() initialSubmissionsGap!: number;
-  @Prop({ default: '' }) initialTitle!: string;
-  @Prop({ default: null }) initialWindowLength!: null | number;
-  @Prop({ default: null }) invalidParameterName!: null | string;
-  @Prop({ default: null }) teamsGroupAlias!: null | types.ListItem;
-  @Prop() searchResultTeamsGroups!: types.ListItem[];
-  @Prop({ default: false }) contestForTeams!: boolean;
-  @Prop({ default: null }) problems!: types.ProblemsetProblemWithVersions[];
-  @Prop({ default: true }) hasVisitedSection!: boolean;
-  @Prop({ default: false }) canSetRecommended!: boolean;
-  @Prop({ default: false }) initialRecommended!: boolean;
+    const alias = ref(props.initialAlias);
+    const description = ref(props.initialDescription);
+    const feedback = ref(props.initialFeedback);
+    const finishTime = ref(props.initialFinishTime);
+    const languages = ref(props.initialLanguages);
+    const needsBasicInformation = ref(props.initialNeedsBasicInformation);
+    const penalty = ref(props.initialPenalty);
+    const penaltyType = ref(props.initialPenaltyType);
+    const pointsDecayFactor = ref(props.initialPointsDecayFactor);
+    const requestsUserInformation = ref(
+      props.initialRequestsUserInformation,
+    );
+    const scoreboard = ref(props.initialScoreboard);
+    const showScoreboardAfter = ref(props.initialShowScoreboardAfter);
+    const currentScoreMode = ref(props.scoreMode);
+    const startTime = ref(props.initialStartTime);
+    const submissionsGap = ref(
+      props.initialSubmissionsGap
+        ? props.initialSubmissionsGap / 60
+        : 1,
+    );
+    const title = ref(props.initialTitle);
+    const windowLength = ref<null | number>(props.initialWindowLength);
+    const windowLengthEnabled = ref(props.initialWindowLength !== null);
+    const currentContestForTeams = ref(props.contestForTeams);
+    const currentTeamsGroupAlias = ref(props.teamsGroupAlias);
+    const titlePlaceHolder = ref('');
+    const recommended = ref(props.initialRecommended);
+    const isSubmitting = ref(false);
+    const localErrors = ref<LocalErrors>({});
+    const hasFormChanged = ref(false);
 
-  alias = this.initialAlias;
-  description = this.initialDescription;
-  feedback = this.initialFeedback;
-  finishTime = this.initialFinishTime;
-  languages = this.initialLanguages;
-  needsBasicInformation = this.initialNeedsBasicInformation;
-  penalty = this.initialPenalty;
-  penaltyType = this.initialPenaltyType;
-  pointsDecayFactor = this.initialPointsDecayFactor;
-  requestsUserInformation = this.initialRequestsUserInformation;
-  scoreboard = this.initialScoreboard;
-  showScoreboardAfter = this.initialShowScoreboardAfter;
-  currentScoreMode = this.scoreMode;
-  startTime = this.initialStartTime;
-  submissionsGap = this.initialSubmissionsGap
-    ? this.initialSubmissionsGap / 60
-    : 1;
-  title = this.initialTitle;
-  windowLength = this.initialWindowLength;
-  windowLengthEnabled = this.initialWindowLength !== null;
-  currentContestForTeams = this.contestForTeams;
-  currentTeamsGroupAlias = this.teamsGroupAlias;
-  titlePlaceHolder = '';
-  recommended = this.initialRecommended;
-  isSubmitting = false;
-  localErrors: LocalErrors = {};
-  hasFormChanged = false;
-
-  mounted() {
-    const title = T.createContestInteractiveGuideTitle;
-    if (!this.hasVisitedSection) {
-      introJs()
-        .setOptions({
-          nextLabel: T.interactiveGuideNextButton,
-          prevLabel: T.interactiveGuidePreviousButton,
-          doneLabel: T.interactiveGuideDoneButton,
-          steps: [
-            {
-              title,
-              intro: T.createContestInteractiveGuideWelcome,
-            },
-            {
-              element: document.querySelector<HTMLElement>('.introjs-style'),
-              title,
-              intro: T.createContestInteractiveGuideStyle,
-            },
-            {
-              element: document.querySelector<HTMLElement>(
-                '.introjs-contest-title',
-),
-              title,
-              intro: T.createContestInteractiveGuideContestTitle,
-            },
-            {
-              element: document.querySelector<HTMLElement>(
-                '.introjs-short-title',
-),
-              title,
-              intro: T.createContestInteractiveGuideShortTitle,
-            },
-            {
-              element: document.querySelector<HTMLElement>(
-                '.introjs-description',
-),
-              title,
-              intro: T.createContestInteractiveGuideDescription,
-            },
-            {
-              element: document.querySelector<HTMLElement>('.introjs-schedule'),
-              title,
-              intro: T.createContestInteractiveGuideSchedule,
-            },
-          ],
-        })
-        .start();
-      setCookie('has-visited-create-contest', true);
-    }
-  }
-
-  @Watch('windowLengthEnabled')
-  onPropertyChange(newValue: boolean): void {
-    if (!newValue) {
-      this.windowLength = null;
-      this.clearFieldError(FieldName.WindowLength);
-    }
-  }
-
-  @Watch('invalidParameterName')
-  onInvalidParameterChange(newValue: string | null): void {
-    if (!newValue) {
-      return;
-    }
-    this.$nextTick(() => {
-      const invalidElement = document.querySelector('.is-invalid');
-      if (invalidElement) {
-        invalidElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const minDateTimeForContest = computed((): null | Date => {
+      if (props.update) {
+        return null;
       }
+      return new Date();
     });
-  }
 
-  hasErrorsInSection(section: SectionName): boolean {
-    const fields = SECTION_FIELDS[section] || [];
-    return fields.some((field) => this.localErrors[field]);
-  }
+    const teamsGroupName = computed(
+      (): null | string => currentTeamsGroupAlias.value?.value ?? null,
+    );
 
-  validateField(fieldName: FieldName): boolean {
-    switch (fieldName) {
-      case FieldName.Title:
-        if (!this.title || this.title.trim().length === 0) {
-          this.localErrors[fieldName] = T.contestNewFormTitleRequired;
-          return false;
+    const catLanguageBlocked = computed((): boolean => {
+      if (!props.problems) {
+        return false;
+      }
+      for (const problem of props.problems) {
+        if (problem.languages.split(',').includes('cat')) {
+          return true;
         }
-        break;
-      case FieldName.Alias:
-        if (!this.alias || this.alias.trim().length === 0) {
-          this.localErrors[fieldName] = T.contestNewFormShortTitleRequired;
-          return false;
-        }
-        if (!isValidAlias(this.alias)) {
-          this.localErrors[fieldName] = T.contestNewFormAliasInvalid;
-          return false;
-        }
-        break;
-      case FieldName.Description:
-        if (!this.description || this.description.trim().length === 0) {
-          this.localErrors[fieldName] = T.contestNewFormDescriptionRequired;
-          return false;
-        }
-        break;
-      case FieldName.Scoreboard:
-        if (this.scoreboard < 0 || this.scoreboard > 100) {
-          this.localErrors[fieldName] = T.contestNewFormScoreboardInvalid;
-          return false;
-        }
-        break;
-      case FieldName.SubmissionsGap:
-        if (this.submissionsGap < 0) {
-          this.localErrors[fieldName] = T.contestNewFormSubmissionsGapInvalid;
-          return false;
-        }
-        break;
-      case FieldName.Penalty:
-        if (this.penalty < 0) {
-          this.localErrors[fieldName] = T.contestNewFormPenaltyInvalid;
-          return false;
-        }
-        break;
-      case FieldName.PointsDecayFactor:
-        if (this.pointsDecayFactor < 0 || this.pointsDecayFactor > 1) {
-          this.localErrors[fieldName] =
-            T.contestNewFormPointsDecayFactorInvalid;
-          return false;
-        }
-        break;
-      case FieldName.WindowLength:
-        if (
-          this.windowLengthEnabled &&
-          (!this.windowLength || this.windowLength <= 0)
-        ) {
-          this.localErrors[fieldName] = T.contestNewFormWindowLengthInvalid;
-          return false;
-        }
-        break;
-    }
-    return true;
-  }
+      }
+      return false;
+    });
 
-  validateDates(): void {
-    this.clearFieldError(FieldName.FinishTime);
-    if (
-      this.startTime &&
-      this.finishTime &&
-      this.finishTime <= this.startTime
-    ) {
-      this.localErrors[FieldName.FinishTime] =
-        T.contestNewFormFinishTimeInvalid;
-    }
-  }
+    const isExceedingTitle = computed(
+      (): boolean =>
+        title.value.length >
+        MAX_LENGTH.title * DANGER_THRESHOLD_PERCENTAGE,
+    );
 
-  clearFieldError(fieldName: FieldName | string): void {
-    delete this.localErrors[fieldName];
-    if (Object.keys(this.localErrors).length === 0) {
-      ui.dismissNotifications();
-    }
-    this.$forceUpdate();
-  }
+    const isExceedingAlias = computed(
+      (): boolean =>
+        alias.value.length >
+        MAX_LENGTH.alias * DANGER_THRESHOLD_PERCENTAGE,
+    );
 
-  validateForm(): boolean {
-    this.localErrors = {};
+    const isExceedingDescription = computed(
+      (): boolean =>
+        description.value.length >
+        MAX_LENGTH.description * DANGER_THRESHOLD_PERCENTAGE,
+    );
 
-    const fields = [
-      FieldName.Title,
-      FieldName.Alias,
-      FieldName.Description,
-      FieldName.Scoreboard,
-      FieldName.SubmissionsGap,
-      FieldName.Penalty,
-      FieldName.PointsDecayFactor,
-    ];
-
-    fields.forEach((field) => this.validateField(field));
-    this.validateDates();
-
-    if (this.languages.length === 0) {
-      this.localErrors[FieldName.Languages] = T.contestNewFormLanguagesRequired;
+    function hasErrorsInSection(section: SectionName): boolean {
+      const fields = SECTION_FIELDS[section] || [];
+      return fields.some((field) => localErrors.value[field]);
     }
 
-    if (this.currentContestForTeams && !this.currentTeamsGroupAlias) {
-      this.localErrors[FieldName.TeamsGroup] =
-        T.contestNewFormTeamsGroupRequired;
+    function validateField(fieldName: FieldName): boolean {
+      switch (fieldName) {
+        case FieldName.Title:
+          if (!title.value || title.value.trim().length === 0) {
+            localErrors.value[fieldName] = T.contestNewFormTitleRequired;
+            return false;
+          }
+          break;
+        case FieldName.Alias:
+          if (!alias.value || alias.value.trim().length === 0) {
+            localErrors.value[fieldName] =
+              T.contestNewFormShortTitleRequired;
+            return false;
+          }
+          if (!isValidAlias(alias.value)) {
+            localErrors.value[fieldName] = T.contestNewFormAliasInvalid;
+            return false;
+          }
+          break;
+        case FieldName.Description:
+          if (
+            !description.value ||
+            description.value.trim().length === 0
+          ) {
+            localErrors.value[fieldName] =
+              T.contestNewFormDescriptionRequired;
+            return false;
+          }
+          break;
+        case FieldName.Scoreboard:
+          if (scoreboard.value < 0 || scoreboard.value > 100) {
+            localErrors.value[fieldName] =
+              T.contestNewFormScoreboardInvalid;
+            return false;
+          }
+          break;
+        case FieldName.SubmissionsGap:
+          if (submissionsGap.value < 0) {
+            localErrors.value[fieldName] =
+              T.contestNewFormSubmissionsGapInvalid;
+            return false;
+          }
+          break;
+        case FieldName.Penalty:
+          if (penalty.value < 0) {
+            localErrors.value[fieldName] = T.contestNewFormPenaltyInvalid;
+            return false;
+          }
+          break;
+        case FieldName.PointsDecayFactor:
+          if (
+            pointsDecayFactor.value < 0 ||
+            pointsDecayFactor.value > 1
+          ) {
+            localErrors.value[fieldName] =
+              T.contestNewFormPointsDecayFactorInvalid;
+            return false;
+          }
+          break;
+        case FieldName.WindowLength:
+          if (
+            windowLengthEnabled.value &&
+            (!windowLength.value || windowLength.value <= 0)
+          ) {
+            localErrors.value[fieldName] =
+              T.contestNewFormWindowLengthInvalid;
+            return false;
+          }
+          break;
+      }
+      return true;
     }
 
-    return Object.keys(this.localErrors).length === 0;
-  }
+    function validateDates(): void {
+      clearFieldError(FieldName.FinishTime);
+      if (
+        startTime.value &&
+        finishTime.value &&
+        finishTime.value <= startTime.value
+      ) {
+        localErrors.value[FieldName.FinishTime] =
+          T.contestNewFormFinishTimeInvalid;
+      }
+    }
 
-  confirmPresetChange(presetType: PresetType): void {
-    if (this.hasFormChanged && !this.update) {
-      if (!confirm(T.contestNewFormPresetOverwriteWarning)) {
+    function clearFieldError(fieldName: FieldName | string): void {
+      delete localErrors.value[fieldName];
+      if (Object.keys(localErrors.value).length === 0) {
+        ui.dismissNotifications();
+      }
+    }
+
+    function validateForm(): boolean {
+      localErrors.value = {};
+
+      const fields = [
+        FieldName.Title,
+        FieldName.Alias,
+        FieldName.Description,
+        FieldName.Scoreboard,
+        FieldName.SubmissionsGap,
+        FieldName.Penalty,
+        FieldName.PointsDecayFactor,
+      ];
+
+      fields.forEach((field) => validateField(field));
+      validateDates();
+
+      if (languages.value.length === 0) {
+        localErrors.value[FieldName.Languages] =
+          T.contestNewFormLanguagesRequired;
+      }
+
+      if (
+        currentContestForTeams.value &&
+        !currentTeamsGroupAlias.value
+      ) {
+        localErrors.value[FieldName.TeamsGroup] =
+          T.contestNewFormTeamsGroupRequired;
+      }
+
+      return Object.keys(localErrors.value).length === 0;
+    }
+
+    function confirmPresetChange(presetType: PresetType): void {
+      if (hasFormChanged.value && !props.update) {
+        if (!confirm(T.contestNewFormPresetOverwriteWarning)) {
+          return;
+        }
+      }
+
+      applyPreset(presetType);
+      hasFormChanged.value = true;
+    }
+
+    function applyPreset(presetType: PresetType): void {
+      const preset = CONTEST_PRESETS[presetType];
+
+      if (preset.languages) {
+        const allLangs = Object.keys(props.allLanguages);
+        languages.value = preset.languageFilter
+          ? allLangs.filter(preset.languageFilter)
+          : allLangs;
+      }
+
+      titlePlaceHolder.value = preset.titlePlaceHolder;
+      windowLengthEnabled.value = preset.windowLengthEnabled;
+      windowLength.value = preset.windowLength;
+      scoreboard.value = preset.scoreboard;
+      pointsDecayFactor.value = preset.pointsDecayFactor;
+      submissionsGap.value = preset.submissionsGap;
+      feedback.value = preset.feedback;
+      penalty.value = preset.penalty;
+      penaltyType.value = preset.penaltyType;
+      showScoreboardAfter.value = preset.showScoreboardAfter;
+      currentScoreMode.value = preset.currentScoreMode;
+      localErrors.value = {};
+    }
+
+    function onSubmit() {
+      if (!validateForm()) {
+        const errorsList = Object.values(localErrors.value)
+          .filter(Boolean)
+          .map((error) => `<li>${error}</li>`)
+          .join('');
+        ui.error(
+          `**${T.formValidationSummaryTitle}**<ul>${errorsList}</ul>`,
+        );
+
+        nextTick(() => {
+          const firstInvalid = document.querySelector('.is-invalid');
+          if (firstInvalid) {
+            firstInvalid.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+            });
+          }
+        });
         return;
       }
-    }
 
-    this.applyPreset(presetType);
-    this.hasFormChanged = true;
-  }
+      isSubmitting.value = true;
 
-  applyPreset(presetType: PresetType): void {
-    const preset = CONTEST_PRESETS[presetType];
+      const contest: types.ContestAdminDetails = {
+        admin: true,
+        admission_mode: props.update ? props.admissionMode : 'private',
+        alias: alias.value,
+        archived: false,
+        available_languages: {},
+        canSetRecommended: false,
+        director: '',
+        opened: false,
+        penalty_calc_policy: 'sum',
+        problemset_id: 0,
+        show_penalty: true,
+        title: title.value,
+        description: description.value,
+        has_submissions: props.hasSubmissions,
+        start_time: startTime.value,
+        finish_time: finishTime.value,
+        points_decay_factor: pointsDecayFactor.value,
+        submissions_gap: (submissionsGap.value || 1) * 60,
+        languages: languages.value,
+        feedback: feedback.value,
+        penalty: penalty.value,
+        scoreboard: scoreboard.value,
+        penalty_type: penaltyType.value,
+        default_show_all_contestants_in_scoreboard:
+          props.defaultShowAllContestantsInScoreboard,
+        show_scoreboard_after: showScoreboardAfter.value,
+        score_mode: currentScoreMode.value,
+        needs_basic_information: needsBasicInformation.value,
+        requests_user_information: requestsUserInformation.value,
+        contest_for_teams: currentContestForTeams.value,
+      };
 
-    if (preset.languages) {
-      const allLangs = Object.keys(this.allLanguages);
-      this.languages = preset.languageFilter
-        ? allLangs.filter(preset.languageFilter)
-        : allLangs;
-    }
-
-    this.titlePlaceHolder = preset.titlePlaceHolder;
-    this.windowLengthEnabled = preset.windowLengthEnabled;
-    this.windowLength = preset.windowLength;
-    this.scoreboard = preset.scoreboard;
-    this.pointsDecayFactor = preset.pointsDecayFactor;
-    this.submissionsGap = preset.submissionsGap;
-    this.feedback = preset.feedback;
-    this.penalty = preset.penalty;
-    this.penaltyType = preset.penaltyType;
-    this.showScoreboardAfter = preset.showScoreboardAfter;
-    this.currentScoreMode = preset.currentScoreMode;
-    this.localErrors = {};
-  }
-
-  onSubmit() {
-    if (!this.validateForm()) {
-      const errorsList = Object.values(this.localErrors)
-        .filter(Boolean)
-        .map((error) => `<li>${error}</li>`)
-        .join('');
-      ui.error(`**${T.formValidationSummaryTitle}**<ul>${errorsList}</ul>`);
-
-      this.$nextTick(() => {
-        const firstInvalid = document.querySelector('.is-invalid');
-        if (firstInvalid) {
-          firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      });
-      return;
-    }
-
-    this.isSubmitting = true;
-
-    const contest: types.ContestAdminDetails = {
-      admin: true,
-      admission_mode: this.update ? this.admissionMode : 'private',
-      alias: this.alias,
-      archived: false,
-      available_languages: {},
-      canSetRecommended: false,
-      director: '',
-      opened: false,
-      penalty_calc_policy: 'sum',
-      problemset_id: 0,
-      show_penalty: true,
-      title: this.title,
-      description: this.description,
-      has_submissions: this.hasSubmissions,
-      start_time: this.startTime,
-      finish_time: this.finishTime,
-      points_decay_factor: this.pointsDecayFactor,
-      submissions_gap: (this.submissionsGap || 1) * 60,
-      languages: this.languages,
-      feedback: this.feedback,
-      penalty: this.penalty,
-      scoreboard: this.scoreboard,
-      penalty_type: this.penaltyType,
-      default_show_all_contestants_in_scoreboard: this
-        .defaultShowAllContestantsInScoreboard,
-      show_scoreboard_after: this.showScoreboardAfter,
-      score_mode: this.currentScoreMode,
-      needs_basic_information: this.needsBasicInformation,
-      requests_user_information: this.requestsUserInformation,
-      contest_for_teams: this.currentContestForTeams,
-    };
-
-    if (this.canSetRecommended) {
-      contest.recommended = this.recommended;
-    }
-
-    if (this.windowLengthEnabled && this.windowLength) {
-      contest.window_length = this.windowLength;
-    }
-
-    const request = {
-      contest,
-      teamsGroupAlias: this.currentTeamsGroupAlias?.key,
-    };
-
-    setTimeout(() => {
-      this.isSubmitting = false;
-    }, 1000);
-
-    if (this.update) {
-      this.$emit('update-contest', request);
-      return;
-    }
-    this.$emit('create-contest', request);
-  }
-
-  get minDateTimeForContest(): null | Date {
-    if (this.update) {
-      return null;
-    }
-    return new Date();
-  }
-
-  get teamsGroupName(): null | string {
-    return this.currentTeamsGroupAlias?.value ?? null;
-  }
-
-  get catLanguageBlocked(): boolean {
-    if (!this.problems) {
-      return false;
-    }
-    for (const problem of this.problems) {
-      if (problem.languages.split(',').includes('cat')) {
-        return true;
+      if (props.canSetRecommended) {
+        contest.recommended = recommended.value;
       }
+
+      if (windowLengthEnabled.value && windowLength.value) {
+        contest.window_length = windowLength.value;
+      }
+
+      const request = {
+        contest,
+        teamsGroupAlias: currentTeamsGroupAlias.value?.key,
+      };
+
+      setTimeout(() => {
+        isSubmitting.value = false;
+      }, 1000);
+
+      if (props.update) {
+        emit('update-contest', request);
+        return;
+      }
+      emit('create-contest', request);
     }
-    return false;
-  }
 
-  // Computed properties for character limit danger thresholds
-  get isExceedingTitle(): boolean {
-    return this.title.length > MAX_LENGTH.title * DANGER_THRESHOLD_PERCENTAGE;
-  }
+    function onRemove(language: string) {
+      if (catLanguageBlocked.value && language == 'cat') {
+        emit('language-remove-blocked', language);
+        return;
+      }
+      const index = languages.value.indexOf(language);
+      languages.value.splice(index, 1);
+      hasFormChanged.value = true;
+    }
 
-  get isExceedingAlias(): boolean {
-    return this.alias.length > MAX_LENGTH.alias * DANGER_THRESHOLD_PERCENTAGE;
-  }
+    function onSelect(language: string) {
+      languages.value.push(language);
+      hasFormChanged.value = true;
+      clearFieldError(FieldName.Languages);
+    }
 
-  get isExceedingDescription(): boolean {
-    return (
-      this.description.length >
-      MAX_LENGTH.description * DANGER_THRESHOLD_PERCENTAGE
+    function updateTeamsGroups(query: string) {
+      emit('update-search-result-teams-groups', query);
+    }
+
+    watch(windowLengthEnabled, (newValue: boolean) => {
+      if (!newValue) {
+        windowLength.value = null;
+        clearFieldError(FieldName.WindowLength);
+      }
+    });
+
+    watch(
+      () => props.invalidParameterName,
+      (newValue: string | null) => {
+        if (!newValue) {
+          return;
+        }
+        nextTick(() => {
+          const invalidElement = document.querySelector('.is-invalid');
+          if (invalidElement) {
+            invalidElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+            });
+          }
+        });
+      },
     );
-  }
 
-  onRemove(language: string) {
-    if (this.catLanguageBlocked && language == 'cat') {
-      this.$emit('language-remove-blocked', language);
-      return;
-    }
-    const index = this.languages.indexOf(language);
-    this.languages.splice(index, 1);
-    this.hasFormChanged = true;
-  }
+    onMounted(() => {
+      const guideTitle = T.createContestInteractiveGuideTitle;
+      if (!props.hasVisitedSection) {
+        introJs()
+          .setOptions({
+            nextLabel: T.interactiveGuideNextButton,
+            prevLabel: T.interactiveGuidePreviousButton,
+            doneLabel: T.interactiveGuideDoneButton,
+            steps: [
+              {
+                title: guideTitle,
+                intro: T.createContestInteractiveGuideWelcome,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-style',
+                ),
+                title: guideTitle,
+                intro: T.createContestInteractiveGuideStyle,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-contest-title',
+                ),
+                title: guideTitle,
+                intro: T.createContestInteractiveGuideContestTitle,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-short-title',
+                ),
+                title: guideTitle,
+                intro: T.createContestInteractiveGuideShortTitle,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-description',
+                ),
+                title: guideTitle,
+                intro: T.createContestInteractiveGuideDescription,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-schedule',
+                ),
+                title: guideTitle,
+                intro: T.createContestInteractiveGuideSchedule,
+              },
+            ],
+          })
+          .start();
+        setCookie('has-visited-create-contest', true);
+      }
+    });
 
-  onSelect(language: string) {
-    this.languages.push(language);
-    this.hasFormChanged = true;
-    this.clearFieldError(FieldName.Languages);
-  }
-
-  updateTeamsGroups(query: string) {
-    this.$emit('update-search-result-teams-groups', query);
-  }
-}
+    return {
+      T,
+      ScoreMode,
+      PresetType,
+      FieldName,
+      SectionName,
+      MAX_LENGTH,
+      basicInfo,
+      logistics,
+      scoringRules,
+      privacy,
+      alias,
+      description,
+      feedback,
+      finishTime,
+      languages,
+      needsBasicInformation,
+      penalty,
+      penaltyType,
+      pointsDecayFactor,
+      requestsUserInformation,
+      scoreboard,
+      showScoreboardAfter,
+      currentScoreMode,
+      startTime,
+      submissionsGap,
+      title,
+      windowLength,
+      windowLengthEnabled,
+      currentContestForTeams,
+      currentTeamsGroupAlias,
+      titlePlaceHolder,
+      recommended,
+      isSubmitting,
+      localErrors,
+      hasFormChanged,
+      minDateTimeForContest,
+      teamsGroupName,
+      catLanguageBlocked,
+      isExceedingTitle,
+      isExceedingAlias,
+      isExceedingDescription,
+      hasErrorsInSection,
+      validateField,
+      validateDates,
+      clearFieldError,
+      confirmPresetChange,
+      onSubmit,
+      onRemove,
+      onSelect,
+      updateTeamsGroups,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>

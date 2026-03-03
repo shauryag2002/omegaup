@@ -245,7 +245,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { defineComponent, ref, computed, reactive, PropType } from 'vue';
 import T from '../../lang';
 import { types } from '../../api_types';
 import common_Paginator from '../common/Paginator.vue';
@@ -271,78 +271,87 @@ library.add(
   faBan,
 );
 
-@Component({
+export default defineComponent({
+  name: 'ProblemMine',
   components: {
     FontAwesomeIcon,
     'omegaup-common-paginator': common_Paginator,
   },
-})
-export default class ProblemMine extends Vue {
-  @Prop() problems!: types.ProblemListItem[];
-  @Prop() pagerItems!: types.PageItem[];
-  @Prop() privateProblemsAlert!: boolean;
-  @Prop() isSysadmin!: boolean;
-  @Prop() visibilityStatuses!: Record<string, number>;
-  @Prop() query!: string | null;
+  props: {
+    problems: { type: Array as PropType<types.ProblemListItem[]>, required: true },
+    pagerItems: { type: Array as PropType<types.PageItem[]>, required: true },
+    privateProblemsAlert: { type: Boolean, required: true },
+    isSysadmin: { type: Boolean, required: true },
+    visibilityStatuses: { type: Object as PropType<Record<string, number>>, required: true },
+    query: { type: String as PropType<string | null>, default: null },
+  },
+  emits: ['change-show-all-problems', 'remove', 'remove-all-problems', 'change-visibility', 'go-to-page'],
+  setup(props, { emit }) {
+    const currentQuery = ref(props.query ?? '');
+    const shouldShowAllProblems = ref(false);
+    const selectedProblems = ref<types.ProblemListItem[]>([]);
+    const allProblemsVisibilityOption = ref(-1);
+    const confirmationModal = reactive<Record<string, boolean>>({});
+    const showConfirmationModalDeleteAll = ref(false);
 
-  T = T;
-  ui = ui;
-  currentQuery = this.query ?? '';
-  shouldShowAllProblems = false;
-  selectedProblems: types.ProblemListItem[] = [];
-  allProblemsVisibilityOption = -1;
-  confirmationModal: Record<string, boolean> = {};
-  showConfirmationModalDeleteAll = false;
+    const statementShowAllProblems = computed(() => {
+      return props.isSysadmin
+        ? T.problemListShowAdminProblemsAndDeleted
+        : T.problemListShowAdminProblems;
+    });
 
-  get statementShowAllProblems(): string {
-    return this.isSysadmin
-      ? T.problemListShowAdminProblemsAndDeleted
-      : T.problemListShowAdminProblems;
-  }
+    const canDeleteSelectedProblems = computed(() => {
+      if (!selectedProblems.value.length) return false;
+      return selectedProblems.value.every(
+        (problem) => problem.can_be_removed === true,
+      );
+    });
 
-  get canDeleteSelectedProblems(): boolean {
-    if (!this.selectedProblems.length) return false;
-    return this.selectedProblems.every(
-      (problem) => problem.can_be_removed === true,
-    );
-  }
-
-  problemCanBeDeleted(problem: types.ProblemListItem): boolean {
-    return (
-      problem.can_be_removed === true &&
-      problem.visibility !== this.visibilityStatuses['deleted']
-    );
-  }
-
-  toggleConfirmationModal(problemAlias: string): void {
-    this.$set(
-      this.confirmationModal,
-      problemAlias,
-      !this.confirmationModal[problemAlias],
-    );
-  }
-
-  onChangeVisibility(): void {
-    // If no problems are selected, exit the function
-    if (!this.selectedProblems.length) {
-      return;
+    function problemCanBeDeleted(problem: types.ProblemListItem): boolean {
+      return (
+        problem.can_be_removed === true &&
+        problem.visibility !== props.visibilityStatuses['deleted']
+      );
     }
 
-    // If the option is "Remove", show the confirmation modal and exit
-    if (this.allProblemsVisibilityOption == 2) {
-      this.showConfirmationModalDeleteAll = true;
-      return;
+    function toggleConfirmationModal(problemAlias: string): void {
+      confirmationModal[problemAlias] = !confirmationModal[problemAlias];
     }
 
-    // Otherwise, emit the "change-visibility" action and reset the selected
-    // problems and visibility option
-    this.$emit(
-      'change-visibility',
-      this.selectedProblems,
-      this.allProblemsVisibilityOption,
-    );
-    this.selectedProblems = [];
-    this.allProblemsVisibilityOption = -1;
-  }
-}
+    function onChangeVisibility(): void {
+      if (!selectedProblems.value.length) {
+        return;
+      }
+
+      if (allProblemsVisibilityOption.value == 2) {
+        showConfirmationModalDeleteAll.value = true;
+        return;
+      }
+
+      emit(
+        'change-visibility',
+        selectedProblems.value,
+        allProblemsVisibilityOption.value,
+      );
+      selectedProblems.value = [];
+      allProblemsVisibilityOption.value = -1;
+    }
+
+    return {
+      T,
+      ui,
+      currentQuery,
+      shouldShowAllProblems,
+      selectedProblems,
+      allProblemsVisibilityOption,
+      confirmationModal,
+      showConfirmationModalDeleteAll,
+      statementShowAllProblems,
+      canDeleteSelectedProblems,
+      problemCanBeDeleted,
+      toggleConfirmationModal,
+      onChangeVisibility,
+    };
+  },
+});
 </script>

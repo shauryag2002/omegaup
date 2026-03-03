@@ -83,120 +83,147 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+import { defineComponent, ref, computed, watch, PropType } from 'vue';
 import { dao, types } from '../../api_types';
 import T from '../../lang';
 import * as time from '../../time';
 import * as iso3166 from '@/third_party/js/iso-3166-2.js/iso3166.min.js';
 import DatePicker from '../DatePicker.vue';
 
-@Component({
+export default defineComponent({
+  name: 'UserBasicInformationEdit',
   components: {
     'omegaup-datepicker': DatePicker,
   },
-})
-export default class UserBasicInformationEdit extends Vue {
-  @Prop() data!: types.UserProfileDetailsPayload;
-  @Prop() countries!: dao.Countries[];
-  @Prop() profile!: types.UserProfileInfo;
-
-  T = T;
-  username = this.profile.username;
-  name = this.profile.name;
-  gender = this.profile.gender;
-  countryId = this.profile.country_id ?? null;
-  stateId = this.profile.state_id ?? null;
-  birthDate = this.profile.birth_date
-    ? time.convertLocalDateToGMTDate(this.profile.birth_date)
-    : new Date('');
-
-  get isCountrySelected(): boolean {
-    return Boolean(this.countryId);
-  }
-
-  get countryStates(): iso3166.Subdivisions {
-    const countryId = this.countryId;
-    if (!countryId) {
-      return {};
-    }
-    const countrySelected = iso3166.country(countryId);
-    const subdivisions: iso3166.Subdivisions = Object.entries(
-      countrySelected.sub,
-    )
-      .sort((a, b) => Intl.Collator().compare(a[0], b[0]))
-      .reduce((r, [code, name]: any) => ({ ...r, [code]: name }), {});
-    return subdivisions;
-  }
-
-  get isValidUsername(): boolean {
-    if (!this.username || this.username.length < 2) {
-      return false;
-    }
-    // Using the same regex pattern as the server
-    return !/[^a-zA-Z0-9_.-]/.test(this.username);
-  }
-
-  get hasChanges(): boolean {
-    return (
-      this.username !== this.profile.username ||
-      this.name !== this.profile.name ||
-      this.gender !== this.profile.gender ||
-      this.countryId !== (this.profile.country_id ?? null) ||
-      this.stateId !== (this.profile.state_id ?? null) ||
-      this.birthDate.getTime() !==
-        (this.profile.birth_date
-          ? time.convertLocalDateToGMTDate(this.profile.birth_date).getTime()
-          : new Date('').getTime())
+  props: {
+    data: {
+      type: Object as PropType<types.UserProfileDetailsPayload>,
+      required: true,
+    },
+    countries: {
+      type: Array as PropType<dao.Countries[]>,
+      required: true,
+    },
+    profile: {
+      type: Object as PropType<types.UserProfileInfo>,
+      required: true,
+    },
+  },
+  emits: ['update-user-basic-information-error', 'update-user-basic-information'],
+  setup(props, { emit }) {
+    const username = ref(props.profile.username);
+    const name = ref(props.profile.name);
+    const gender = ref(props.profile.gender);
+    const countryId = ref<string | null>(props.profile.country_id ?? null);
+    const stateId = ref<string | null>(props.profile.state_id ?? null);
+    const birthDate = ref(
+      props.profile.birth_date
+        ? time.convertLocalDateToGMTDate(props.profile.birth_date)
+        : new Date(''),
     );
-  }
 
-  onUpdateUserBasicInformation(): void {
-    if (!this.isValidUsername) {
-      this.$emit('update-user-basic-information-error', {
-        description: T.parameterInvalidAlias,
-      });
-      return;
-    }
-
-    if (this.name && this.name.length > 50) {
-      this.$emit('update-user-basic-information-error', {
-        description: T.userEditNameTooLong,
-      });
-      return;
-    }
-
-    // Ensure birthDate is converted to a UTC Date object or set to null if invalid
-    // Otherwise, timezone discrepancies may cause incorrect DOB display.
-    // See bug report: https://github.com/omegaup/omegaup/issues/7478
-
-    const formattedBirthDate = this.birthDate
-      ? new Date(
-          Date.UTC(
-            this.birthDate.getFullYear(),
-            this.birthDate.getMonth(),
-            this.birthDate.getDate(),
-          ),
-        )
-      : null;
-
-    this.$emit('update-user-basic-information', {
-      username: this.username,
-      name: this.name,
-      gender: this.gender,
-      country_id: this.countryId,
-      state_id: this.stateId,
-      birth_date: formattedBirthDate,
+    const isCountrySelected = computed((): boolean => {
+      return Boolean(countryId.value);
     });
-  }
 
-  @Watch('countryId')
-  onCountryIdChanged(newCountryId: string): void {
-    if (!newCountryId) {
-      this.countryId = null;
-      this.stateId = null;
-      return;
+    const countryStates = computed((): iso3166.Subdivisions => {
+      const id = countryId.value;
+      if (!id) {
+        return {};
+      }
+      const countrySelected = iso3166.country(id);
+      const subdivisions: iso3166.Subdivisions = Object.entries(
+        countrySelected.sub,
+      )
+        .sort((a, b) => Intl.Collator().compare(a[0], b[0]))
+        .reduce((r, [code, name]: any) => ({ ...r, [code]: name }), {});
+      return subdivisions;
+    });
+
+    const isValidUsername = computed((): boolean => {
+      if (!username.value || username.value.length < 2) {
+        return false;
+      }
+      // Using the same regex pattern as the server
+      return !/[^a-zA-Z0-9_.-]/.test(username.value);
+    });
+
+    const hasChanges = computed((): boolean => {
+      return (
+        username.value !== props.profile.username ||
+        name.value !== props.profile.name ||
+        gender.value !== props.profile.gender ||
+        countryId.value !== (props.profile.country_id ?? null) ||
+        stateId.value !== (props.profile.state_id ?? null) ||
+        birthDate.value.getTime() !==
+          (props.profile.birth_date
+            ? time.convertLocalDateToGMTDate(props.profile.birth_date).getTime()
+            : new Date('').getTime())
+      );
+    });
+
+    function onUpdateUserBasicInformation(): void {
+      if (!isValidUsername.value) {
+        emit('update-user-basic-information-error', {
+          description: T.parameterInvalidAlias,
+        });
+        return;
+      }
+
+      if (name.value && name.value.length > 50) {
+        emit('update-user-basic-information-error', {
+          description: T.userEditNameTooLong,
+        });
+        return;
+      }
+
+      // Ensure birthDate is converted to a UTC Date object or set to null if invalid
+      // Otherwise, timezone discrepancies may cause incorrect DOB display.
+      // See bug report: https://github.com/omegaup/omegaup/issues/7478
+
+      const formattedBirthDate = birthDate.value
+        ? new Date(
+            Date.UTC(
+              birthDate.value.getFullYear(),
+              birthDate.value.getMonth(),
+              birthDate.value.getDate(),
+            ),
+          )
+        : null;
+
+      emit('update-user-basic-information', {
+        username: username.value,
+        name: name.value,
+        gender: gender.value,
+        country_id: countryId.value,
+        state_id: stateId.value,
+        birth_date: formattedBirthDate,
+      });
     }
-    this.stateId = Object.keys(this.countryStates)[0].split('-')[1];
-  }
-}
+
+    watch(countryId, (newCountryId: string | null): void => {
+      if (!newCountryId) {
+        countryId.value = null;
+        stateId.value = null;
+        return;
+      }
+      stateId.value = Object.keys(countryStates.value)[0].split('-')[1];
+    });
+
+    return {
+      T,
+      username,
+      name,
+      gender,
+      countryId,
+      stateId,
+      birthDate,
+      isCountrySelected,
+      countryStates,
+      isValidUsername,
+      hasChanges,
+      onUpdateUserBasicInformation,
+    };
+  },
+});
 </script>

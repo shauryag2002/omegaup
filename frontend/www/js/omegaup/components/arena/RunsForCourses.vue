@@ -511,7 +511,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch, Emit } from 'vue-property-decorator';
+import { defineComponent, ref, computed, watch, PropType } from 'vue';
 import { omegaup } from '../../omegaup';
 import * as ui from '../../ui';
 import T from '../../lang';
@@ -602,7 +602,8 @@ export enum PopupDisplayed {
   Reviewer,
 }
 
-@Component({
+export default defineComponent({
+  name: 'RunsForCourses',
   components: {
     FontAwesomeIcon,
     'omegaup-arena-rundetails-popup': arena_RunDetailsPopup,
@@ -611,562 +612,699 @@ export enum PopupDisplayed {
     'omegaup-common-typeahead': common_Typeahead,
     'omegaup-user-username': user_Username,
   },
-})
-export default class RunsForCourses extends Vue {
-  @Prop({ default: false }) isContestFinished!: boolean;
-  @Prop({ default: true }) isProblemsetOpened!: boolean;
-  @Prop({ default: false }) showContest!: boolean;
-  @Prop({ default: false }) showDetails!: boolean;
-  @Prop({ default: false }) showDisqualify!: boolean;
-  @Prop({ default: false }) showFilters!: boolean;
-  @Prop({ default: false }) showPoints!: boolean;
-  @Prop({ default: false }) showProblem!: boolean;
-  @Prop({ default: false }) showRejudge!: boolean;
-  @Prop({ default: false }) showUser!: boolean;
-  @Prop({ default: false }) useNewSubmissionButton!: boolean;
-  @Prop({ default: null }) contestAlias!: string | null;
-  @Prop({ default: null }) problemAlias!: string | null;
-  @Prop({ default: () => [] }) problemsetProblems!: types.ProblemsetProblem[];
-  @Prop({ default: null }) username!: string | null;
-  @Prop({ default: 100 }) rowCount!: number;
-  @Prop() runs!: null | types.Run[];
-  @Prop() searchResultUsers!: types.ListItem[];
-  @Prop({ default: null }) runDetailsData!: types.RunDetails | null;
-  @Prop({ default: PopupDisplayed.None }) popupDisplayed!: PopupDisplayed;
-  @Prop({ default: null }) guid!: null | string;
-  @Prop({ default: false }) showAllRuns!: boolean;
-  @Prop() totalRuns!: number;
-  @Prop() searchResultProblems!: types.ListItem[];
-  @Prop() requestFeedback!: boolean;
-  @Prop({ default: 10 }) itemsPerPage!: number;
-  @Prop({ default: false }) showGUID!: boolean;
-  @Prop({ default: null }) createdGuid!: null | string;
-  @Prop({ default: null }) nextSubmissionTimestamp!: null | Date;
+  props: {
+    isContestFinished: {
+      type: Boolean,
+      default: false,
+    },
+    isProblemsetOpened: {
+      type: Boolean,
+      default: true,
+    },
+    showContest: {
+      type: Boolean,
+      default: false,
+    },
+    showDetails: {
+      type: Boolean,
+      default: false,
+    },
+    showDisqualify: {
+      type: Boolean,
+      default: false,
+    },
+    showFilters: {
+      type: Boolean,
+      default: false,
+    },
+    showPoints: {
+      type: Boolean,
+      default: false,
+    },
+    showProblem: {
+      type: Boolean,
+      default: false,
+    },
+    showRejudge: {
+      type: Boolean,
+      default: false,
+    },
+    showUser: {
+      type: Boolean,
+      default: false,
+    },
+    useNewSubmissionButton: {
+      type: Boolean,
+      default: false,
+    },
+    contestAlias: {
+      type: String as PropType<string | null>,
+      default: null,
+    },
+    problemAlias: {
+      type: String as PropType<string | null>,
+      default: null,
+    },
+    problemsetProblems: {
+      type: Array as PropType<types.ProblemsetProblem[]>,
+      default: () => [],
+    },
+    username: {
+      type: String as PropType<string | null>,
+      default: null,
+    },
+    rowCount: {
+      type: Number,
+      default: 100,
+    },
+    runs: {
+      type: Array as PropType<types.Run[] | null>,
+      default: null,
+    },
+    searchResultUsers: {
+      type: Array as PropType<types.ListItem[]>,
+      required: true,
+    },
+    runDetailsData: {
+      type: Object as PropType<types.RunDetails | null>,
+      default: null,
+    },
+    popupDisplayed: {
+      type: Number as PropType<PopupDisplayed>,
+      default: PopupDisplayed.None,
+    },
+    guid: {
+      type: String as PropType<string | null>,
+      default: null,
+    },
+    showAllRuns: {
+      type: Boolean,
+      default: false,
+    },
+    totalRuns: {
+      type: Number,
+      required: true,
+    },
+    searchResultProblems: {
+      type: Array as PropType<types.ListItem[]>,
+      required: true,
+    },
+    requestFeedback: {
+      type: Boolean,
+      required: true,
+    },
+    itemsPerPage: {
+      type: Number,
+      default: 10,
+    },
+    showGUID: {
+      type: Boolean,
+      default: false,
+    },
+    createdGuid: {
+      type: String as PropType<string | null>,
+      default: null,
+    },
+    nextSubmissionTimestamp: {
+      type: Object as PropType<Date | null>,
+      default: null,
+    },
+  },
+  emits: [
+    'details',
+    'reset-hash',
+    'filter-changed',
+    'new-submission',
+    'rejudge',
+    'disqualify',
+    'requalify',
+    'request-feedback',
+    'update-search-result-problems',
+    'update-search-result-users-contest',
+    'update-search-result-users',
+  ],
+  setup(props, { emit }) {
+    const filterLanguage = ref('');
+    const filterOffset = ref(0);
+    const filterProblem = ref<null | types.ListItem>(null);
+    const filterUsername = ref<null | types.ListItem>(null);
+    const filterContest = ref('');
+    const filterExecution = ref('');
+    const filterOutput = ref('');
+    const filters = ref<{ name: string; value: string }[]>([]);
+    const currentRunDetailsData = ref(props.runDetailsData);
+    const currentPopupDisplayed = ref(props.popupDisplayed);
+    const currentPage = ref(1);
+    const currentDataPage = ref(1);
+    const newFieldsLaunchDate = new Date('2023-10-22');
+    const now = ref(Date.now());
 
-  NumericOutputStatus = NumericOutputStatus;
-  PopupDisplayed = PopupDisplayed;
-  T = T;
-  time = time;
-  DisqualificationType = DisqualificationType;
-  omegaup = omegaup;
-
-  filterLanguage: string = '';
-  filterOffset: number = 0;
-  filterProblem: null | types.ListItem = null;
-  filterUsername: null | types.ListItem = null;
-  filterContest: string = '';
-  filterExecution: string = '';
-  filterOutput: string = '';
-  filters: { name: string; value: string }[] = [];
-  currentRunDetailsData = this.runDetailsData;
-  currentPopupDisplayed = this.popupDisplayed;
-  currentPage: number = 1;
-  currentDataPage: number = 1;
-  newFieldsLaunchDate: Date = new Date('2023-10-22');
-  now: number = Date.now();
-
-  get totalRows(): number {
-    if (this.totalRuns === undefined) {
-      return this.filteredRuns.length;
-    }
-    return this.totalRuns;
-  }
-
-  get totalPages(): number {
-    if (this.totalRows > 0) {
-      return Math.ceil(this.totalRows / this.itemsPerPage);
-    }
-    return 1;
-  }
-
-  get canSubmit(): boolean {
-    if (!this.nextSubmissionTimestamp) {
-      return true;
-    }
-    return this.nextSubmissionTimestamp.getTime() <= this.now;
-  }
-
-  onPageClick(bvEvent: any, page: number): void {
-    if (page == this.currentPage - 1 || page == this.currentPage + 1) {
-      if (this.currentPage + 1 == page) {
-        this.filterOffset++;
-      } else if (this.currentPage - 1 == page) {
-        this.filterOffset--;
+    const totalRows = computed((): number => {
+      if (props.totalRuns === undefined) {
+        return filteredRuns.value.length;
       }
-    } else {
-      bvEvent.preventDefault();
-    }
-  }
-
-  get paginatedRuns(): types.Run[] {
-    if (!this.showFilters) {
-      this.currentDataPage = this.currentPage;
-    }
-    const startIndex = (this.currentDataPage - 1) * this.itemsPerPage;
-    const endIndex = startIndex + this.itemsPerPage;
-    return this.filteredRuns.slice(startIndex, endIndex);
-  }
-
-  getShortGuid(guid: string): string {
-    return guid.substring(0, 8);
-  }
-
-  get filteredRuns(): types.Run[] {
-    if (
-      !this.filterLanguage &&
-      !this.filterProblem &&
-      !this.filterUsername &&
-      !this.filterContest &&
-      !this.filterExecution &&
-      !this.filterOutput
-    ) {
-      return this.sortedRuns;
-    }
-    return this.sortedRuns.filter((run) => {
-      if (this.filterLanguage && run.language !== this.filterLanguage) {
-        return false;
-      }
-      if (this.filterProblem && run.alias !== this.filterProblem.key) {
-        return false;
-      }
-      if (this.filterUsername && run.username !== this.filterUsername.key) {
-        return false;
-      }
-      if (this.filterContest && run.contest_alias !== this.filterContest) {
-        return false;
-      }
-      if (this.filterExecution && run.execution !== this.filterExecution) {
-        return false;
-      }
-      if (this.filterOutput && run.output !== this.filterOutput) {
-        return false;
-      }
-      return true;
+      return props.totalRuns;
     });
-  }
 
-  get filtersExcludingOffset(): { name: string; value: string }[] {
-    return this.filters.filter((filter) => filter.name !== 'offset');
-  }
+    const totalPages = computed((): number => {
+      if (totalRows.value > 0) {
+        return Math.ceil(totalRows.value / props.itemsPerPage);
+      }
+      return 1;
+    });
 
-  get sortedRuns(): types.Run[] {
-    if (!this.runs) {
-      return [];
-    }
-    return this.runs
-      .slice()
-      .sort((a, b) => b.time.getTime() - a.time.getTime());
-  }
+    const canSubmit = computed((): boolean => {
+      if (!props.nextSubmissionTimestamp) {
+        return true;
+      }
+      return props.nextSubmissionTimestamp.getTime() <= now.value;
+    });
 
-  get newSubmissionUrl(): string {
-    if (this.isProblemsetOpened) {
-      return `#problems/${this.problemAlias}/new-run`;
-    }
-    return `/arena/${this.contestAlias}/`;
-  }
-
-  get newSubmissionDescription(): string {
-    if (this.isProblemsetOpened) {
-      return T.wordsNewSubmissions;
-    }
-    return T.arenaContestNotOpened;
-  }
-
-  memory(run: types.Run): string {
-    if (
-      run.status !== 'ready' ||
-      run.status_memory === MemoryStatus.NotAvailable
-    )
-      return '—';
-    if (run.status_memory === MemoryStatus.Exceeded)
-      return T.runDetailsExceeded;
-    return `${(run.memory / (1024 * 1024)).toFixed(2)} MB`;
-  }
-
-  penalty(run: types.Run): string {
-    if (
-      run.status == 'ready' &&
-      run.verdict != 'JE' &&
-      run.verdict != 'VE' &&
-      run.verdict != 'CE'
-    ) {
-      return run.penalty.toFixed(2);
-    }
-    return '—';
-  }
-
-  percentage(run: types.Run): string {
-    if (
-      run.status == 'ready' &&
-      run.verdict != 'JE' &&
-      run.verdict != 'VE' &&
-      run.verdict != 'CE'
-    ) {
-      return `${(run.score * 100).toFixed(2)}%`;
-    }
-    return '—';
-  }
-
-  points(run: types.Run): string {
-    if (
-      run.status == 'ready' &&
-      run.verdict != 'JE' &&
-      run.verdict != 'VE' &&
-      run.verdict != 'CE' &&
-      typeof run.contest_score !== 'undefined'
-    ) {
-      return run.contest_score.toFixed(2);
-    }
-    return '—';
-  }
-
-  runtime(run: types.Run): string {
-    if (
-      run.status !== 'ready' ||
-      run.status_runtime === RuntimeStatus.NotAvailable
-    ) {
-      return '—';
-    }
-
-    if (run.status_runtime === RuntimeStatus.Exceeded) {
-      return T.runDetailsExceeded;
-    }
-
-    return `${(run.runtime / 1000).toFixed(2)} s`;
-  }
-
-  showVerdictHelp(ev: Event): void {
-    (window as { $?: (el: HTMLElement) => JQuery }).$?.(
-      ev.target as HTMLElement,
-    )?.popover('show');
-  }
-
-  statusClass(run: types.Run): string {
-    if (run.status != 'ready') return '';
-    if (run.type == 'disqualified') return 'status-disqualified';
-    if (run.verdict == 'AC') {
-      return 'status-ac';
-    }
-    if (run.verdict == 'CE') {
-      return 'status-ce';
-    }
-    if (run.verdict == 'JE' || run.verdict == 'VE') {
-      return 'status-je-ve';
-    }
-    return '';
-  }
-
-  status(run: types.Run): string {
-    if (run.type == 'disqualified') return T.arenaRunsActionsDisqualified;
-
-    return run.status == 'ready' ? run.verdict : run.status;
-  }
-
-  statusHelp(run: types.Run): string {
-    if (run.status != 'ready' || run.verdict == 'AC') {
-      return '';
-    }
-
-    if (run.language == 'kj' || run.language == 'kp') {
-      if (run.verdict == 'RTE' || run.verdict == 'RE') {
-        return T.verdictHelpKarelRTE;
-      } else if (run.verdict == 'TLE' || run.verdict == 'TO') {
-        return T.verdictHelpKarelTLE;
+    function onPageClick(bvEvent: any, page: number): void {
+      if (page == currentPage.value - 1 || page == currentPage.value + 1) {
+        if (currentPage.value + 1 == page) {
+          filterOffset.value++;
+        } else if (currentPage.value - 1 == page) {
+          filterOffset.value--;
+        }
+      } else {
+        bvEvent.preventDefault();
       }
     }
-    if (run.type == 'disqualified') return T.verdictHelpDisqualified;
-    const verdict = T[`verdict${run.verdict}`];
-    const verdictHelp = T[`verdictHelp${run.verdict}`];
 
-    return `${verdict}: ${verdictHelp}`;
-  }
+    const paginatedRuns = computed((): types.Run[] => {
+      if (!props.showFilters) {
+        currentDataPage.value = currentPage.value;
+      }
+      const startIndex = (currentDataPage.value - 1) * props.itemsPerPage;
+      const endIndex = startIndex + props.itemsPerPage;
+      return filteredRuns.value.slice(startIndex, endIndex);
+    });
 
-  execution(run: types.Run): string {
-    if (run.time < this.newFieldsLaunchDate) {
-      return T.runDetailsNotAvailable;
+    function getShortGuid(guid: string): string {
+      return guid.substring(0, 8);
     }
 
-    if (run.status !== 'ready') {
-      return '—';
-    }
+    const sortedRuns = computed((): types.Run[] => {
+      if (!props.runs) {
+        return [];
+      }
+      return props.runs
+        .slice()
+        .sort((a, b) => b.time.getTime() - a.time.getTime());
+    });
 
-    switch (run.execution) {
-      case ExecutionStatus.JudgeError:
-        return T.runDetailsJudgeError;
-      case ExecutionStatus.ValidatorError:
-        return T.runDetailsValidatorError;
-      case ExecutionStatus.CompilationError:
-        return T.runDetailsCompilationError;
-      case ExecutionStatus.RuntimeFunctionError:
-        return T.runDetailsRuntimeFunctionError;
-      case ExecutionStatus.RuntimeError:
-        return T.runDetailsRuntimeError;
-      case ExecutionStatus.Interrupted:
-        return T.runDetailsInterrupted;
-      default:
-        return T.runDetailsFinished;
-    }
-  }
+    const filteredRuns = computed((): types.Run[] => {
+      if (
+        !filterLanguage.value &&
+        !filterProblem.value &&
+        !filterUsername.value &&
+        !filterContest.value &&
+        !filterExecution.value &&
+        !filterOutput.value
+      ) {
+        return sortedRuns.value;
+      }
+      return sortedRuns.value.filter((run) => {
+        if (filterLanguage.value && run.language !== filterLanguage.value) {
+          return false;
+        }
+        if (filterProblem.value && run.alias !== filterProblem.value.key) {
+          return false;
+        }
+        if (filterUsername.value && run.username !== filterUsername.value.key) {
+          return false;
+        }
+        if (filterContest.value && run.contest_alias !== filterContest.value) {
+          return false;
+        }
+        if (filterExecution.value && run.execution !== filterExecution.value) {
+          return false;
+        }
+        if (filterOutput.value && run.output !== filterOutput.value) {
+          return false;
+        }
+        return true;
+      });
+    });
 
-  output(run: types.Run): string {
-    if (run.time < this.newFieldsLaunchDate) {
-      return T.runDetailsNotAvailable;
-    }
+    const filtersExcludingOffset = computed((): { name: string; value: string }[] => {
+      return filters.value.filter((filter) => filter.name !== 'offset');
+    });
 
-    if (run.status !== 'ready') {
-      return '—';
-    }
+    const newSubmissionUrl = computed((): string => {
+      if (props.isProblemsetOpened) {
+        return `#problems/${props.problemAlias}/new-run`;
+      }
+      return `/arena/${props.contestAlias}/`;
+    });
 
-    switch (run.output) {
-      case StringOutputStatus.Exceeded:
+    const newSubmissionDescription = computed((): string => {
+      if (props.isProblemsetOpened) {
+        return T.wordsNewSubmissions;
+      }
+      return T.arenaContestNotOpened;
+    });
+
+    function memory(run: types.Run): string {
+      if (
+        run.status !== 'ready' ||
+        run.status_memory === MemoryStatus.NotAvailable
+      )
+        return '—';
+      if (run.status_memory === MemoryStatus.Exceeded)
         return T.runDetailsExceeded;
-      case StringOutputStatus.Incorrect:
-        return T.runDetailsIncorrect;
-      case StringOutputStatus.Interrupted:
-        return T.runDetailsInterrupted;
-      default:
-        return T.runDetailsCorrect;
+      return `${(run.memory / (1024 * 1024)).toFixed(2)} MB`;
     }
-  }
 
-  statusPercentageClass(run: types.Run): string {
-    if (run.status !== 'ready') {
+    function penalty(run: types.Run): string {
+      if (
+        run.status == 'ready' &&
+        run.verdict != 'JE' &&
+        run.verdict != 'VE' &&
+        run.verdict != 'CE'
+      ) {
+        return run.penalty.toFixed(2);
+      }
+      return '—';
+    }
+
+    function percentage(run: types.Run): string {
+      if (
+        run.status == 'ready' &&
+        run.verdict != 'JE' &&
+        run.verdict != 'VE' &&
+        run.verdict != 'CE'
+      ) {
+        return `${(run.score * 100).toFixed(2)}%`;
+      }
+      return '—';
+    }
+
+    function points(run: types.Run): string {
+      if (
+        run.status == 'ready' &&
+        run.verdict != 'JE' &&
+        run.verdict != 'VE' &&
+        run.verdict != 'CE' &&
+        typeof run.contest_score !== 'undefined'
+      ) {
+        return run.contest_score.toFixed(2);
+      }
+      return '—';
+    }
+
+    function runtime(run: types.Run): string {
+      if (
+        run.status !== 'ready' ||
+        run.status_runtime === RuntimeStatus.NotAvailable
+      ) {
+        return '—';
+      }
+
+      if (run.status_runtime === RuntimeStatus.Exceeded) {
+        return T.runDetailsExceeded;
+      }
+
+      return `${(run.runtime / 1000).toFixed(2)} s`;
+    }
+
+    function showVerdictHelp(ev: Event): void {
+      (window as { $?: (el: HTMLElement) => JQuery }).$?.(
+        ev.target as HTMLElement,
+      )?.popover('show');
+    }
+
+    function statusClass(run: types.Run): string {
+      if (run.status != 'ready') return '';
+      if (run.type == 'disqualified') return 'status-disqualified';
+      if (run.verdict == 'AC') {
+        return 'status-ac';
+      }
+      if (run.verdict == 'CE') {
+        return 'status-ce';
+      }
+      if (run.verdict == 'JE' || run.verdict == 'VE') {
+        return 'status-je-ve';
+      }
       return '';
     }
 
-    if (run.verdict == 'JE' || run.verdict == 'VE') {
-      return 'status-je-ve';
+    function status(run: types.Run): string {
+      if (run.type == 'disqualified') return T.arenaRunsActionsDisqualified;
+
+      return run.status == 'ready' ? run.verdict : run.status;
     }
 
-    if (run.verdict == 'CE') {
-      return 'status-ce';
+    function statusHelp(run: types.Run): string {
+      if (run.status != 'ready' || run.verdict == 'AC') {
+        return '';
+      }
+
+      if (run.language == 'kj' || run.language == 'kp') {
+        if (run.verdict == 'RTE' || run.verdict == 'RE') {
+          return T.verdictHelpKarelRTE;
+        } else if (run.verdict == 'TLE' || run.verdict == 'TO') {
+          return T.verdictHelpKarelTLE;
+        }
+      }
+      if (run.type == 'disqualified') return T.verdictHelpDisqualified;
+      const verdict = T[`verdict${run.verdict}`];
+      const verdictHelp = T[`verdictHelp${run.verdict}`];
+
+      return `${verdict}: ${verdictHelp}`;
     }
 
-    if (run.type === 'disqualified') {
-      return 'status-disqualified';
+    function execution(run: types.Run): string {
+      if (run.time < newFieldsLaunchDate) {
+        return T.runDetailsNotAvailable;
+      }
+
+      if (run.status !== 'ready') {
+        return '—';
+      }
+
+      switch (run.execution) {
+        case ExecutionStatus.JudgeError:
+          return T.runDetailsJudgeError;
+        case ExecutionStatus.ValidatorError:
+          return T.runDetailsValidatorError;
+        case ExecutionStatus.CompilationError:
+          return T.runDetailsCompilationError;
+        case ExecutionStatus.RuntimeFunctionError:
+          return T.runDetailsRuntimeFunctionError;
+        case ExecutionStatus.RuntimeError:
+          return T.runDetailsRuntimeError;
+        case ExecutionStatus.Interrupted:
+          return T.runDetailsInterrupted;
+        default:
+          return T.runDetailsFinished;
+      }
     }
 
-    const scorePercentage = (run.score * 100).toFixed(2);
+    function output(run: types.Run): string {
+      if (run.time < newFieldsLaunchDate) {
+        return T.runDetailsNotAvailable;
+      }
 
-    if (scorePercentage !== '100.00') {
-      return '';
+      if (run.status !== 'ready') {
+        return '—';
+      }
+
+      switch (run.output) {
+        case StringOutputStatus.Exceeded:
+          return T.runDetailsExceeded;
+        case StringOutputStatus.Incorrect:
+          return T.runDetailsIncorrect;
+        case StringOutputStatus.Interrupted:
+          return T.runDetailsInterrupted;
+        default:
+          return T.runDetailsCorrect;
+      }
     }
-    if (run.verdict == 'AC') {
+
+    function statusPercentageClass(run: types.Run): string {
+      if (run.status !== 'ready') {
+        return '';
+      }
+
+      if (run.verdict == 'JE' || run.verdict == 'VE') {
+        return 'status-je-ve';
+      }
+
+      if (run.verdict == 'CE') {
+        return 'status-ce';
+      }
+
+      if (run.type === 'disqualified') {
+        return 'status-disqualified';
+      }
+
+      const scorePercentage = (run.score * 100).toFixed(2);
+
+      if (scorePercentage !== '100.00') {
+        return '';
+      }
+      if (run.verdict == 'AC') {
+        return 'status-ac';
+      }
+      if (run.verdict == 'TLE') {
+        return 'status-tle';
+      }
+      if (run.verdict == 'MLE') {
+        return 'status-mle';
+      }
+      if (run.verdict == 'WA') {
+        return 'status-wa';
+      }
       return 'status-ac';
     }
-    if (run.verdict == 'TLE') {
-      return 'status-tle';
-    }
-    if (run.verdict == 'MLE') {
-      return 'status-mle';
-    }
-    if (run.verdict == 'WA') {
-      return 'status-wa';
-    }
-    return 'status-ac';
-  }
 
-  outputIconColorStatus(run: types.Run): number {
-    if (
-      !(run.status === 'ready' && run.output !== StringOutputStatus.Exceeded) ||
-      run.time < this.newFieldsLaunchDate
-    ) {
-      return NumericOutputStatus.None;
+    function outputIconColorStatus(run: types.Run): number {
+      if (
+        !(run.status === 'ready' && run.output !== StringOutputStatus.Exceeded) ||
+        run.time < newFieldsLaunchDate
+      ) {
+        return NumericOutputStatus.None;
+      }
+
+      if (run.output === StringOutputStatus.Incorrect) {
+        return NumericOutputStatus.Incorrect;
+      } else if (run.output === StringOutputStatus.Interrupted) {
+        return NumericOutputStatus.Interrupted;
+      }
+
+      return NumericOutputStatus.Correct;
     }
 
-    if (run.output === StringOutputStatus.Incorrect) {
-      return NumericOutputStatus.Incorrect;
-    } else if (run.output === StringOutputStatus.Interrupted) {
-      return NumericOutputStatus.Interrupted;
+    function onRunDetails(run: types.Run): void {
+      emit('details', {
+        guid: run.guid,
+        isAdmin: true,
+        hash: `#runs/all/show-run:${run.guid}`,
+      });
+      currentPopupDisplayed.value = PopupDisplayed.RunDetails;
     }
 
-    return NumericOutputStatus.Correct;
-  }
+    function onPopupDismissed(): void {
+      currentPopupDisplayed.value = PopupDisplayed.None;
+      currentRunDetailsData.value = null;
+      emit('reset-hash');
+    }
 
-  onRunDetails(run: types.Run): void {
-    this.$emit('details', {
-      guid: run.guid,
-      isAdmin: true,
-      hash: `#runs/all/show-run:${run.guid}`,
+    function onEmitFilterChanged({
+      filter,
+      value,
+    }: {
+      filter: string;
+      value: null | string;
+    }): void {
+      filterOffset.value = 0;
+      if (!value) {
+        filters.value = filters.value.filter((item) => item.name !== filter);
+        emit('filter-changed', { filter, value });
+        return;
+      }
+      if (filter === 'contest') {
+        // This field does not appear as filter
+        filterContest.value = value;
+      }
+      const currentFilterItem = filters.value.find((item) => item.name === filter);
+      if (!currentFilterItem) {
+        filters.value.push({ name: filter, value: value });
+      } else {
+        currentFilterItem.value = value;
+      }
+      emit('filter-changed', { filter, value });
+    }
+
+    function onSubmit(): void {
+      if (!canSubmit.value && props.nextSubmissionTimestamp) {
+        alert(
+          ui.formatString(T.arenaRunSubmitWaitBetweenUploads, {
+            submissionGap: Math.ceil(
+              (props.nextSubmissionTimestamp.getTime() - Date.now()) / 1000,
+            ),
+          }),
+        );
+        return;
+      }
+      emit('new-submission');
+    }
+
+    function onRemoveFilter(filter: string): void {
+      currentPage.value = 1;
+      currentDataPage.value = 1;
+      if (filter === 'all') {
+        filterLanguage.value = '';
+        filterProblem.value = null;
+        filterUsername.value = null;
+        filterContest.value = '';
+        filterExecution.value = '';
+        filterOutput.value = '';
+        filterOffset.value = 0;
+
+        filters.value = [];
+        return;
+      }
+      switch (filter) {
+        case 'language':
+          filterLanguage.value = '';
+          break;
+        case 'problem':
+          filterProblem.value = null;
+          break;
+        case 'username':
+          filterUsername.value = null;
+          break;
+        case 'contest':
+          filterContest.value = '';
+          break;
+        case 'execution':
+          filterExecution.value = '';
+          break;
+        case 'output':
+          filterOutput.value = '';
+      }
+      filters.value = filters.value.filter((item) => item.name !== filter);
+    }
+
+    function updateSearchResultUsers(query: string): void {
+      if (props.problemsetProblems.length !== 0 && props.contestAlias) {
+        emit('update-search-result-users-contest', {
+          query,
+          contestAlias: props.contestAlias,
+        });
+        return;
+      }
+      emit('update-search-result-users', { query });
+    }
+
+    watch(() => props.runDetailsData, (newValue) => {
+      currentRunDetailsData.value = newValue;
     });
-    this.currentPopupDisplayed = PopupDisplayed.RunDetails;
-  }
 
-  onPopupDismissed(): void {
-    this.currentPopupDisplayed = PopupDisplayed.None;
-    this.currentRunDetailsData = null;
-    this.$emit('reset-hash');
-  }
+    watch(() => props.username, (newValue) => {
+      if (!newValue) {
+        filterUsername.value = null;
+        return;
+      }
+      filterUsername.value = { key: newValue, value: newValue };
+    });
 
-  @Watch('runDetailsData')
-  onRunDetailsChanged(newValue: types.RunDetails): void {
-    this.currentRunDetailsData = newValue;
-  }
+    watch(() => props.problemAlias, (newValue) => {
+      if (!newValue) {
+        filterProblem.value = null;
+        return;
+      }
+      filterProblem.value = { key: newValue, value: newValue };
+    });
 
-  @Watch('username')
-  onUsernameChanged(newValue: string | null) {
-    if (!newValue) {
-      this.filterUsername = null;
-      return;
-    }
-    this.filterUsername = { key: newValue, value: newValue };
-  }
+    watch(filterLanguage, (newValue) => {
+      onEmitFilterChanged({ filter: 'language', value: newValue });
+    });
 
-  @Watch('problemAlias')
-  onProblemAliasChanged(newValue: string | null) {
-    if (!newValue) {
-      this.filterProblem = null;
-      return;
-    }
-    this.filterProblem = { key: newValue, value: newValue };
-  }
+    watch(filterOffset, (newValue) => {
+      emit('filter-changed', { filter: 'offset', value: `${newValue}` });
+    });
 
-  @Watch('filterLanguage')
-  onFilterLanguageChanged(newValue: string) {
-    this.onEmitFilterChanged({ filter: 'language', value: newValue });
-  }
+    watch(filterProblem, (newValue) => {
+      if (!newValue) {
+        onEmitFilterChanged({ filter: 'problem', value: null });
+        return;
+      }
+      onEmitFilterChanged({ filter: 'problem', value: newValue.key });
+    });
 
-  @Watch('filterOffset')
-  onFilterOffsetChanged(newValue: number) {
-    this.$emit('filter-changed', { filter: 'offset', value: `${newValue}` });
-  }
+    watch(filterUsername, (newValue) => {
+      if (!newValue) {
+        onEmitFilterChanged({ filter: 'username', value: null });
+        return;
+      }
+      onEmitFilterChanged({ filter: 'username', value: newValue.key });
+    });
 
-  @Watch('filterProblem')
-  onFilterProblemChanged(newValue: null | types.ListItem) {
-    if (!newValue) {
-      this.onEmitFilterChanged({ filter: 'problem', value: null });
-      return;
-    }
-    this.onEmitFilterChanged({ filter: 'problem', value: newValue.key });
-  }
+    watch(filterExecution, (newValue) => {
+      onEmitFilterChanged({ filter: 'execution', value: newValue });
+    });
 
-  @Watch('filterUsername')
-  onFilterUsernameChanged(newValue: null | types.ListItem) {
-    if (!newValue) {
-      this.onEmitFilterChanged({ filter: 'username', value: null });
-      return;
-    }
-    this.onEmitFilterChanged({ filter: 'username', value: newValue.key });
-  }
+    watch(filterOutput, (newValue) => {
+      onEmitFilterChanged({ filter: 'output', value: newValue });
+    });
 
-  @Watch('filterExecution')
-  onFilterExecutionChanged(newValue: string) {
-    this.onEmitFilterChanged({ filter: 'execution', value: newValue });
-  }
+    watch(() => props.createdGuid, (newValue) => {
+      if (!newValue) {
+        return;
+      }
 
-  @Watch('filterOutput')
-  onfilterOutputChanged(newValue: string) {
-    this.onEmitFilterChanged({ filter: 'output', value: newValue });
-  }
-
-  @Emit('filter-changed')
-  onEmitFilterChanged({
-    filter,
-    value,
-  }: {
-    filter: string;
-    value: null | string;
-  }): void {
-    this.filterOffset = 0;
-    if (!value) {
-      this.filters = this.filters.filter((item) => item.name !== filter);
-      return;
-    }
-    if (filter === 'contest') {
-      // This field does not appear as filter
-      this.filterContest = value;
-    }
-    const currentFilter = this.filters.find((item) => item.name === filter);
-    if (!currentFilter) {
-      this.filters.push({ name: filter, value: value });
-    } else {
-      currentFilter.value = value;
-    }
-  }
-
-  @Watch('createdGuid')
-  onCreatedGuidChanged(newValue: null | string) {
-    if (!newValue) {
-      return;
-    }
-
-    const singleProblemRuns = document.getElementsByClassName(
-      'single-problem-runs',
-    );
-    if (singleProblemRuns.length === 0) {
-      return;
-    }
-    singleProblemRuns[0].scrollIntoView({ behavior: 'smooth' });
-    const selectedElements = document.getElementsByClassName('selected');
-    setTimeout(() => {
-      Array.from(selectedElements).forEach((element) => {
-        element.classList.remove('selected');
-      });
-    }, 10000);
-  }
-
-  onSubmit(): void {
-    if (!this.canSubmit && this.nextSubmissionTimestamp) {
-      alert(
-        ui.formatString(T.arenaRunSubmitWaitBetweenUploads, {
-          submissionGap: Math.ceil(
-            (this.nextSubmissionTimestamp.getTime() - Date.now()) / 1000,
-          ),
-        }),
+      const singleProblemRuns = document.getElementsByClassName(
+        'single-problem-runs',
       );
-      return;
-    }
-    this.$emit('new-submission');
-  }
+      if (singleProblemRuns.length === 0) {
+        return;
+      }
+      singleProblemRuns[0].scrollIntoView({ behavior: 'smooth' });
+      const selectedElements = document.getElementsByClassName('selected');
+      setTimeout(() => {
+        Array.from(selectedElements).forEach((element) => {
+          element.classList.remove('selected');
+        });
+      }, 10000);
+    });
 
-  onRemoveFilter(filter: string): void {
-    this.currentPage = 1;
-    this.currentDataPage = 1;
-    if (filter === 'all') {
-      this.filterLanguage = '';
-      this.filterProblem = null;
-      this.filterUsername = null;
-      this.filterContest = '';
-      this.filterExecution = '';
-      this.filterOutput = '';
-      this.filterOffset = 0;
+    return {
+      NumericOutputStatus,
+      PopupDisplayed,
+      T,
+      time,
+      DisqualificationType,
+      omegaup,
+      filterLanguage,
+      filterOffset,
+      filterProblem,
+      filterUsername,
+      filterContest,
+      filterExecution,
+      filterOutput,
+      filters,
+      currentRunDetailsData,
+      currentPopupDisplayed,
+      currentPage,
+      currentDataPage,
+      now,
+      totalRows,
+      totalPages,
+      canSubmit,
+      paginatedRuns,
+      filteredRuns,
+      filtersExcludingOffset,
+      newSubmissionUrl,
+      newSubmissionDescription,
+      getShortGuid,
+      onPageClick,
+      memory,
+      penalty,
+      percentage,
+      points,
+      runtime,
+      showVerdictHelp,
+      statusClass,
+      status,
+      statusHelp,
+      execution,
+      output,
+      statusPercentageClass,
+      outputIconColorStatus,
+      onRunDetails,
+      onPopupDismissed,
+      onEmitFilterChanged,
+      onSubmit,
+      onRemoveFilter,
+      updateSearchResultUsers,
+    };
+  },
+});
 
-      this.filters = [];
-      return;
-    }
-    switch (filter) {
-      case 'language':
-        this.filterLanguage = '';
-        break;
-      case 'problem':
-        this.filterProblem = null;
-        break;
-      case 'username':
-        this.filterUsername = null;
-        break;
-      case 'contest':
-        this.filterContest = '';
-        break;
-      case 'execution':
-        this.filterExecution = '';
-        break;
-      case 'output':
-        this.filterOutput = '';
-    }
-    this.filters = this.filters.filter((item) => item.name !== filter);
-  }
-
-  updateSearchResultUsers(query: string): void {
-    if (this.problemsetProblems.length !== 0 && this.contestAlias) {
-      this.$emit('update-search-result-users-contest', {
-        query,
-        contestAlias: this.contestAlias,
-      });
-      return;
-    }
-    this.$emit('update-search-result-users', { query });
-  }
-}
 </script>
 
 <style lang="scss" scoped>

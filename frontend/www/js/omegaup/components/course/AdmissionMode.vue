@@ -94,7 +94,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+import { defineComponent, ref, computed, watch, PropType } from 'vue';
 import T from '../../lang';
 import omegaup_Markdown from '../Markdown.vue';
 import omegaup_ToggleSwitch from '../ToggleSwitch.vue';
@@ -109,7 +109,8 @@ import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 library.add(fas);
 
-@Component({
+export default defineComponent({
+  name: 'CourseAdmissionMode',
   components: {
     'font-awesome-icon': FontAwesomeIcon,
     'font-awesome-layers': FontAwesomeLayers,
@@ -117,43 +118,55 @@ library.add(fas);
     'omegaup-markdown': omegaup_Markdown,
     'omegaup-toggle-switch': omegaup_ToggleSwitch,
   },
-})
-export default class CourseAdmissionMode extends Vue {
-  @Prop() admissionMode!: AdmissionMode;
-  @Prop() courseAlias!: string;
-  @Prop() shouldShowPublicOption!: boolean;
-  @Prop({ default: false }) showInPublicCoursesList!: boolean;
+  props: {
+    admissionMode: { type: String as PropType<AdmissionMode>, required: true },
+    courseAlias: { type: String, required: true },
+    shouldShowPublicOption: { type: Boolean, required: true },
+    showInPublicCoursesList: { type: Boolean, default: false },
+  },
+  emits: ['update-admission-mode'],
+  setup(props, { emit }) {
+    const currentAdmissionMode = ref(props.admissionMode);
+    const currentShowInPublicCoursesList = ref(props.showInPublicCoursesList);
+    const copiedToClipboard = ref(false);
 
-  T = T;
-  AdmissionMode = AdmissionMode;
-  currentAdmissionMode = this.admissionMode;
-  currentShowInPublicCoursesList = this.showInPublicCoursesList;
-  copiedToClipboard = false;
+    const courseURL = computed(
+      (): string => `${window.location.origin}/course/${props.courseAlias}/`,
+    );
 
-  onSubmit(): void {
-    this.$emit('update-admission-mode', {
-      admissionMode: this.currentAdmissionMode,
-      showInPublicCoursesList: this.currentShowInPublicCoursesList,
+    function onSubmit(): void {
+      emit('update-admission-mode', {
+        admissionMode: currentAdmissionMode.value,
+        showInPublicCoursesList: currentShowInPublicCoursesList.value,
+      });
+    }
+
+    function copyAndNotify(text: string): void {
+      navigator.clipboard.writeText(text);
+      copiedToClipboard.value = true;
+    }
+
+    watch(copiedToClipboard, () => {
+      setTimeout(() => (copiedToClipboard.value = false), 5000);
     });
-  }
 
-  copyAndNotify(text: string): void {
-    navigator.clipboard.writeText(text);
-    this.copiedToClipboard = true;
-  }
+    watch(
+      () => props.admissionMode,
+      () => {
+        currentAdmissionMode.value = props.admissionMode;
+      },
+    );
 
-  @Watch('copiedToClipboard')
-  onPropertyChanged(): void {
-    setTimeout(() => (this.copiedToClipboard = false), 5000);
-  }
-
-  @Watch('admissionMode')
-  onCourseChange(): void {
-    this.currentAdmissionMode = this.admissionMode;
-  }
-
-  get courseURL(): string {
-    return `${window.location.origin}/course/${this.courseAlias}/`;
-  }
-}
+    return {
+      T,
+      AdmissionMode,
+      currentAdmissionMode,
+      currentShowInPublicCoursesList,
+      copiedToClipboard,
+      courseURL,
+      onSubmit,
+      copyAndNotify,
+    };
+  },
+});
 </script>

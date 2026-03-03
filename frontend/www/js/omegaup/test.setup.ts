@@ -3,20 +3,17 @@ import 'process';
 
 import '@testing-library/jest-dom';
 
-import Vue, { configureCompat } from 'vue';
-import type { DirectiveBinding } from 'vue';
+import { createApp, type DirectiveBinding } from 'vue';
 import Sortable from 'sortablejs';
 
-// Configure Vue 3 compatibility mode for tests — default to Vue 2 behavior.
-configureCompat({
-  MODE: 2,
-} as any);
-
-Vue.directive('Sortable', {
+// Register global Sortable directive for tests.
+// In Vue 3, global directives are registered per-app, but for tests we can
+// register it via a temporary app to make it available.
+const sortableDirective = {
   mounted: (el: HTMLElement, binding: DirectiveBinding) => {
     new Sortable(el, binding.value || {});
   },
-});
+};
 
 // Intercept all API calls. Only let `API.Session.currentSession()` work and
 // fail everything else.

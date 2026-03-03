@@ -152,7 +152,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+import { defineComponent, ref, computed, watch, PropType } from 'vue';
 import { omegaup } from '../../omegaup';
 import { types } from '../../api_types';
 import T from '../../lang';
@@ -201,140 +201,147 @@ export function toOds(courseName: string, table: TableCell[][] | null): string {
   return result;
 }
 
-@Component({
+export default defineComponent({
+  name: 'CourseViewProgress',
   components: {
     'omegaup-common-sort-controls': common_SortControls,
     'omegaup-course-student-progress': course_StudentProgress,
     'omegaup-common-paginator': common_Paginator,
   },
-})
-export default class CourseViewProgress extends Vue {
-  @Prop() course!: types.CourseDetails;
-  @Prop({ default: null })
-  completeStudentsProgress!: types.StudentProgressInCourse[] | null;
-  @Prop() students!: types.StudentProgressInCourse[];
-  @Prop() assignmentsProblems!: types.AssignmentsProblemsPoints[];
-  @Prop() pagerItems!: types.PageItem[];
-  @Prop() page!: number;
-  @Prop() length!: number;
-  @Prop() totalRows!: number;
+  props: {
+    course: { type: Object as PropType<types.CourseDetails>, required: true },
+    completeStudentsProgress: {
+      type: Array as PropType<types.StudentProgressInCourse[]>,
+      default: null,
+    },
+    students: {
+      type: Array as PropType<types.StudentProgressInCourse[]>,
+      required: true,
+    },
+    assignmentsProblems: {
+      type: Array as PropType<types.AssignmentsProblemsPoints[]>,
+      required: true,
+    },
+    pagerItems: {
+      type: Array as PropType<types.PageItem[]>,
+      required: true,
+    },
+    page: { type: Number, required: true },
+    length: { type: Number, required: true },
+    totalRows: { type: Number, required: true },
+  },
+  setup(props) {
+    const sortOrder = ref<omegaup.SortOrder>(omegaup.SortOrder.Ascending);
+    const columnName = ref('student');
+    const odsDataUrl = ref('');
 
-  T = T;
-  ui = ui;
-  sortOrder: omegaup.SortOrder = omegaup.SortOrder.Ascending;
-  columnName = 'student';
-
-  get sortedStudents(): types.StudentProgressInCourse[] {
-    switch (this.columnName) {
-      case 'student':
-        if (this.sortOrder === omegaup.SortOrder.Descending) {
-          return this.students.sort((a, b) =>
-            a.username > b.username ? 1 : b.username > a.username ? -1 : 0,
+    const sortedStudents = computed((): types.StudentProgressInCourse[] => {
+      switch (columnName.value) {
+        case 'student':
+          if (sortOrder.value === omegaup.SortOrder.Descending) {
+            return props.students.sort((a, b) =>
+              a.username > b.username ? 1 : b.username > a.username ? -1 : 0,
+            );
+          }
+          return props.students.sort((a, b) =>
+            a.username < b.username ? 1 : b.username < a.username ? -1 : 0,
+          );
+        case 'total': {
+          const sortFactor =
+            sortOrder.value === omegaup.SortOrder.Descending ? 1 : -1;
+          return props.students.sort(
+            (a, b) => sortFactor * (a.courseProgress - b.courseProgress),
           );
         }
-        return this.students.sort((a, b) =>
-          a.username < b.username ? 1 : b.username < a.username ? -1 : 0,
-        );
-      case 'total': {
-        const sortFactor =
-          this.sortOrder === omegaup.SortOrder.Descending ? 1 : -1;
-        return this.students.sort(
-          (a, b) => sortFactor * (a.courseProgress - b.courseProgress),
-        );
+        default:
+          return props.students.sort((a, b) =>
+            a.username > b.username ? 1 : b.username > a.username ? -1 : 0,
+          );
       }
-      default:
-        return this.students.sort((a, b) =>
-          a.username > b.username ? 1 : b.username > a.username ? -1 : 0,
-        );
-    }
-  }
-
-  get progressTable(): TableCell[][] | null {
-    if (this.completeStudentsProgress === null) return null;
-    const table: TableCell[][] = [];
-    const header = [
-      T.profileUsername,
-      T.wordsName,
-      T.courseProgressGlobalScore,
-    ];
-    header.push();
-    for (const assignment of this.assignmentsProblems) {
-      header.push(
-        `${assignment.name} ${
-          assignment.extraPoints > 0
-            ? ui.formatString(T.studentProgressDescriptionTotalPoints, {
-                points: assignment.points,
-                extraPoints: assignment.extraPoints,
-              })
-            : ui.formatString(T.studentProgressPoints, {
-                points: assignment.points,
-              })
-        }`,
-      );
-    }
-    table.push(header);
-
-    for (const student of this.completeStudentsProgress) {
-      const row: TableCell[] = [
-        student.username,
-        student.name || '',
-        new Percentage(student.courseProgress / 100),
-      ];
-      for (const assignment of this.assignmentsProblems) {
-        row.push(
-          assignment.alias in student.assignments
-            ? new Percentage(
-                student.assignments[assignment.alias].progress / 100,
-              )
-            : 0,
-        );
-      }
-      table.push(row);
-    }
-    return table;
-  }
-
-  get csvDataUrl(): string {
-    if (!this.progressTable) return '';
-    return window.URL.createObjectURL(
-      new Blob([toCsv(this.progressTable)], {
-        type: 'text/csv;charset=utf-8;',
-      }),
-    );
-  }
-
-  get courseTotalPoints(): number {
-    return this.assignmentsProblems.reduce((acc, curr) => acc + curr.points, 0);
-  }
-
-  get courseTotalExtraPoints(): number {
-    return this.assignmentsProblems.reduce(
-      (acc, curr) => acc + curr.extraPoints,
-      0,
-    );
-  }
-
-  odsDataUrl: string = '';
-
-  @Watch('progressTable', { immediate: true })
-  onProgressTableChanged(): void {
-    this.computeOdsDataUrl();
-  }
-
-  async computeOdsDataUrl(): Promise<void> {
-    if (!this.progressTable) {
-      this.odsDataUrl = '';
-      return;
-    }
-    let zip = new JSZip();
-    zip.file('mimetype', 'application/vnd.oasis.opendocument.spreadsheet', {
-      compression: 'STORE',
     });
-    let metaInf = zip.folder('META-INF');
-    let table = this.progressTable;
-    metaInf?.file(
-      'manifest.xml',
-      `<?xml version="1.0" encoding="UTF-8"?>
+
+    const progressTable = computed((): TableCell[][] | null => {
+      if (props.completeStudentsProgress === null) return null;
+      const table: TableCell[][] = [];
+      const header = [
+        T.profileUsername,
+        T.wordsName,
+        T.courseProgressGlobalScore,
+      ];
+      header.push();
+      for (const assignment of props.assignmentsProblems) {
+        header.push(
+          `${assignment.name} ${
+            assignment.extraPoints > 0
+              ? ui.formatString(T.studentProgressDescriptionTotalPoints, {
+                  points: assignment.points,
+                  extraPoints: assignment.extraPoints,
+                })
+              : ui.formatString(T.studentProgressPoints, {
+                  points: assignment.points,
+                })
+          }`,
+        );
+      }
+      table.push(header);
+
+      for (const student of props.completeStudentsProgress) {
+        const row: TableCell[] = [
+          student.username,
+          student.name || '',
+          new Percentage(student.courseProgress / 100),
+        ];
+        for (const assignment of props.assignmentsProblems) {
+          row.push(
+            assignment.alias in student.assignments
+              ? new Percentage(
+                  student.assignments[assignment.alias].progress / 100,
+                )
+              : 0,
+          );
+        }
+        table.push(row);
+      }
+      return table;
+    });
+
+    const csvDataUrl = computed((): string => {
+      if (!progressTable.value) return '';
+      return window.URL.createObjectURL(
+        new Blob([toCsv(progressTable.value)], {
+          type: 'text/csv;charset=utf-8;',
+        }),
+      );
+    });
+
+    const courseTotalPoints = computed((): number => {
+      return props.assignmentsProblems.reduce(
+        (acc, curr) => acc + curr.points,
+        0,
+      );
+    });
+
+    const courseTotalExtraPoints = computed((): number => {
+      return props.assignmentsProblems.reduce(
+        (acc, curr) => acc + curr.extraPoints,
+        0,
+      );
+    });
+
+    async function computeOdsDataUrl(): Promise<void> {
+      if (!progressTable.value) {
+        odsDataUrl.value = '';
+        return;
+      }
+      let zip = new JSZip();
+      zip.file('mimetype', 'application/vnd.oasis.opendocument.spreadsheet', {
+        compression: 'STORE',
+      });
+      let metaInf = zip.folder('META-INF');
+      let table = progressTable.value;
+      metaInf?.file(
+        'manifest.xml',
+        `<?xml version="1.0" encoding="UTF-8"?>
   <manifest:manifest
       xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0"
       manifest:version="1.2">
@@ -344,26 +351,26 @@ export default class CourseViewProgress extends Vue {
    <manifest:file-entry manifest:full-path="meta.xml" manifest:media-type="text/xml"/>
    <manifest:file-entry manifest:full-path="styles.xml" manifest:media-type="text/xml"/>
   </manifest:manifest>`,
-    );
-    zip.file(
-      'styles.xml',
-      `<?xml version="1.0" encoding="UTF-8"?>
+      );
+      zip.file(
+        'styles.xml',
+        `<?xml version="1.0" encoding="UTF-8"?>
   <office:document-styles
       xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
       office:version="1.2">
   </office:document-styles>`,
-    );
-    zip.file(
-      'settings.xml',
-      `<?xml version="1.0" encoding="UTF-8"?>
+      );
+      zip.file(
+        'settings.xml',
+        `<?xml version="1.0" encoding="UTF-8"?>
   <office:document-settings
       xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
       office:version="1.2">
   </office:document-settings>`,
-    );
-    zip.file(
-      'meta.xml',
-      `<?xml version="1.0" encoding="UTF-8"?>
+      );
+      zip.file(
+        'meta.xml',
+        `<?xml version="1.0" encoding="UTF-8"?>
   <office:document-meta
       xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
       xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0"
@@ -372,10 +379,10 @@ export default class CourseViewProgress extends Vue {
       <meta:generator>omegaUp</meta:generator>
     </office:meta>
   </office:document-meta>`,
-    );
-    zip.file(
-      'content.xml',
-      `<?xml version="1.0" encoding="UTF-8"?>
+      );
+      zip.file(
+        'content.xml',
+        `<?xml version="1.0" encoding="UTF-8"?>
   <office:document-content
       xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
       xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
@@ -383,28 +390,47 @@ export default class CourseViewProgress extends Vue {
       office:version="1.2">
     <office:body>
       <office:spreadsheet>` +
-        toOds(this.course.name, table) +
-        `</office:spreadsheet>
+          toOds(props.course.name, table) +
+          `</office:spreadsheet>
     </office:body>
   </office:document-content>`,
-    );
-    this.odsDataUrl = window.URL.createObjectURL(
-      await zip.generateAsync({
-        type: 'blob',
-        mimeType: 'application/ods',
-        compression: 'DEFLATE',
-      }),
-    );
-  }
+      );
+      odsDataUrl.value = window.URL.createObjectURL(
+        await zip.generateAsync({
+          type: 'blob',
+          mimeType: 'application/ods',
+          compression: 'DEFLATE',
+        }),
+      );
+    }
 
-  onApplyFilter(columnName: string, sortOrder: string): void {
-    this.columnName = columnName;
-    this.sortOrder =
-      sortOrder === omegaup.SortOrder.Ascending
-        ? omegaup.SortOrder.Ascending
-        : omegaup.SortOrder.Descending;
-  }
-}
+    watch(progressTable, () => {
+      computeOdsDataUrl();
+    }, { immediate: true });
+
+    function onApplyFilter(newColumnName: string, newSortOrder: string): void {
+      columnName.value = newColumnName;
+      sortOrder.value =
+        newSortOrder === omegaup.SortOrder.Ascending
+          ? omegaup.SortOrder.Ascending
+          : omegaup.SortOrder.Descending;
+    }
+
+    return {
+      T,
+      ui,
+      sortOrder,
+      columnName,
+      sortedStudents,
+      progressTable,
+      csvDataUrl,
+      courseTotalPoints,
+      courseTotalExtraPoints,
+      odsDataUrl,
+      onApplyFilter,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>
