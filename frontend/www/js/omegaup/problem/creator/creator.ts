@@ -1,7 +1,7 @@
 import problem_creator from '../../components/problem/creator/Creator.vue';
 import { OmegaUp } from '../../omegaup';
 import { createApp, h } from 'vue';
-import { BootstrapVueNext } from 'bootstrap-vue-next';
+import { createBootstrap } from 'bootstrap-vue-next';
 import store from './store';
 import T from '../../lang';
 import * as ui from '../../ui';
@@ -54,6 +54,6 @@ OmegaUp.on('ready', () => {
       }),
   });
   app.use(store);
-  app.use(BootstrapVueNext);
+  app.use(createBootstrap());
   app.mount('#main-container');
 });

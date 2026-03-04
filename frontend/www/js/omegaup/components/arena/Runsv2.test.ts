@@ -3,11 +3,17 @@ import { types } from '../../api_types';
 import T from '../../lang';
 import arena_Runs from './Runsv2.vue';
 
-import BootstrapVueNext, { BTable } from 'bootstrap-vue-next';
+import { createBootstrap, BTable } from 'bootstrap-vue-next';
 import { defineComponent } from 'vue';
-const BIconQuestionCircleFill = defineComponent({ template: '<span class="b-icon-question-circle-fill" />' });
-const BIconChevronRight = defineComponent({ template: '<span class="b-icon-chevron-right" />' });
-const BIconChevronDown = defineComponent({ template: '<span class="b-icon-chevron-down" />' });
+const BIconQuestionCircleFill = defineComponent({
+  template: '<span class="b-icon-question-circle-fill" />',
+});
+const BIconChevronRight = defineComponent({
+  template: '<span class="b-icon-chevron-right" />',
+});
+const BIconChevronDown = defineComponent({
+  template: '<span class="b-icon-chevron-down" />',
+});
 
 describe('Runsv2.vue', () => {
   const baseRunData: types.Run = {
@@ -80,8 +86,8 @@ describe('Runsv2.vue', () => {
   ];
 
   it('Should handle empty runs', () => {
-    const wrapper = mount(arena_Runs, {
-      global: { plugins: [BootstrapVueNext] },
+    const wrapper = mount(arena_Runs as any, {
+      global: { plugins: [createBootstrap()] },
       props: {
         runs: [] as types.Run[],
         problemAlias: 'test-problem-1',
@@ -89,21 +95,21 @@ describe('Runsv2.vue', () => {
     });
 
     expect(wrapper.find('h5').text()).toBe(T.wordsSubmissions);
-    const tableComponent = wrapper.findComponent(BTable);
+    const tableComponent = wrapper.findComponent(BTable as any);
     expect(tableComponent.exists()).toBe(true);
     expect(tableComponent.findAll('table tbody tr').length).toBe(0);
   });
 
   it('Should handle AC runs', () => {
-    const wrapper = mount(arena_Runs, {
-      global: { plugins: [BootstrapVueNext] },
+    const wrapper = mount(arena_Runs as any, {
+      global: { plugins: [createBootstrap()] },
       props: {
         runs,
         problemAlias: 'test-problem-1',
       },
     });
 
-    const tableComponent = wrapper.findComponent(BTable);
+    const tableComponent = wrapper.findComponent(BTable as any);
     expect(tableComponent.findAll('table tbody tr').length).toBe(runs.length);
     expect(tableComponent.find('td.table-success').exists()).toBe(true);
     expect(
@@ -138,15 +144,15 @@ describe('Runsv2.vue', () => {
         time: new Date('1/1/2020, 12:05:00 AM'),
       },
     ];
-    const wrapper = mount(arena_Runs, {
-      global: { plugins: [BootstrapVueNext] },
+    const wrapper = mount(arena_Runs as any, {
+      global: { plugins: [createBootstrap()] },
       props: {
         runs,
         problemAlias: 'test-problem-1',
       },
     });
 
-    const tableComponent = wrapper.findComponent(BTable);
+    const tableComponent = wrapper.findComponent(BTable as any);
     expect(tableComponent.findAll('table tbody tr').length).toBe(runs.length);
     expect(tableComponent.find('td.table-success').exists()).toBe(false);
     expect(
@@ -181,15 +187,15 @@ describe('Runsv2.vue', () => {
         time: new Date('1/1/2020, 12:05:00 AM'),
       },
     ];
-    const wrapper = mount(arena_Runs, {
-      global: { plugins: [BootstrapVueNext] },
+    const wrapper = mount(arena_Runs as any, {
+      global: { plugins: [createBootstrap()] },
       props: {
         runs,
         problemAlias: 'test-problem-1',
       },
     });
 
-    const tableComponent = wrapper.findComponent(BTable);
+    const tableComponent = wrapper.findComponent(BTable as any);
     expect(tableComponent.findAll('table tbody tr').length).toBe(runs.length);
     expect(
       tableComponent.findAll('svg[data-icon="circle-question"]').length,
@@ -199,8 +205,8 @@ describe('Runsv2.vue', () => {
   });
 
   it('Should handle the run details button', async () => {
-    const wrapper = mount(arena_Runs, {
-      global: { plugins: [BootstrapVueNext] },
+    const wrapper = mount(arena_Runs as any, {
+      global: { plugins: [createBootstrap()] },
       props: {
         runs,
         problemAlias: 'test-problem-1',
@@ -208,16 +214,16 @@ describe('Runsv2.vue', () => {
       },
     });
 
-    const tableComponent = wrapper.findComponent(BTable);
+    const tableComponent = wrapper.findComponent(BTable as any);
 
     // Run details should be hidden
     expect(tableComponent.text()).not.toContain(runDetails.source);
-    expect(
-      tableComponent.find('svg[data-icon="chevron-right"]').exists(),
-    ).toBe(true);
-    expect(
-      tableComponent.find('svg[data-icon="chevron-down"]').exists(),
-    ).toBe(false);
+    expect(tableComponent.find('svg[data-icon="chevron-right"]').exists()).toBe(
+      true,
+    );
+    expect(tableComponent.find('svg[data-icon="chevron-down"]').exists()).toBe(
+      false,
+    );
 
     // Click to show the details
     await tableComponent
@@ -226,8 +232,8 @@ describe('Runsv2.vue', () => {
 
     // Run details should be shown
     expect(tableComponent.text()).toContain(runDetails.source);
-    expect(
-      tableComponent.find('svg[data-icon="chevron-down"]').exists(),
-    ).toBe(true);
+    expect(tableComponent.find('svg[data-icon="chevron-down"]').exists()).toBe(
+      true,
+    );
   });
 });

@@ -116,11 +116,15 @@ export default defineComponent({
 
     const theme = computed(() => store.getters['theme']);
 
-    const groups = computed((): CaseSelectorGroup[] => store.getters['caseSelectorGroups']);
+    const groups = computed(
+      (): CaseSelectorGroup[] => store.getters['caseSelectorGroups'],
+    );
 
     const currentCase = computed({
       get: (): string => store.getters['currentCase'],
-      set: (value: string) => { store.dispatch('currentCase', value); },
+      set: (value: string) => {
+        store.dispatch('currentCase', value);
+      },
     });
 
     const summary = computed(() => {

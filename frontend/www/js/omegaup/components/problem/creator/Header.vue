@@ -92,7 +92,11 @@ import { Group, CaseGroupID } from '@/js/omegaup/problem/creator/types';
 import { BButton, BCol, BFormInput, BModal, BRow } from 'bootstrap-vue-next';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faDownload, faPlus, faUpload } from '@fortawesome/free-solid-svg-icons';
+import {
+  faDownload,
+  faPlus,
+  faUpload,
+} from '@fortawesome/free-solid-svg-icons';
 library.add(faDownload, faPlus, faUpload);
 
 export default defineComponent({

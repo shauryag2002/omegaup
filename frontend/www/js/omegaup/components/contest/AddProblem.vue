@@ -247,22 +247,20 @@ const availableSearchTypes: types.ListItem[] = [
   { key: SearchTypes.ID, value: T.contestEditAddProblemSearchById },
 ];
 
-const problemMapping = computed(
-  (): MappedProblems => {
-    let mapping: MappedProblems = {};
-    for (const problem of problems.value) {
-      const commitVersions: { [commit: string]: types.ProblemVersion } = {};
-      for (const version of problem.versions.log) {
-        commitVersions[version.commit] = version;
-      }
-      mapping[problem.alias] = {
-        problem,
-        commitVersions,
-      };
+const problemMapping = computed((): MappedProblems => {
+  let mapping: MappedProblems = {};
+  for (const problem of problems.value) {
+    const commitVersions: { [commit: string]: types.ProblemVersion } = {};
+    for (const version of problem.versions.log) {
+      commitVersions[version.commit] = version;
     }
-    return mapping;
-  },
-);
+    mapping[problem.alias] = {
+      problem,
+      commitVersions,
+    };
+  }
+  return mapping;
+});
 
 const isUpdate = computed((): boolean => {
   if (!alias.value) return false;

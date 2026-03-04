@@ -58,7 +58,10 @@
         </div>
         <div class="form-group text-right">
           <b-button variant="primary" type="submit">
-            <FontAwesomeIcon :icon="['fas', 'cloud-arrow-down']" aria-hidden="true" />
+            <FontAwesomeIcon
+              :icon="['fas', 'cloud-arrow-down']"
+              aria-hidden="true"
+            />
             {{ T.wordsDownload }}
           </b-button>
         </div>
@@ -92,7 +95,10 @@ export default defineComponent({
     FontAwesomeIcon,
   },
   props: {
-    error: { type: Object as PropType<types.LibinteractiveError | null>, default: null },
+    error: {
+      type: Object as PropType<types.LibinteractiveError | null>,
+      default: null,
+    },
     language: { type: String, required: true },
     os: { type: String, required: true },
     name: { type: String, required: true },
@@ -105,8 +111,12 @@ export default defineComponent({
     const currentIdl = ref(props.idl);
     const currentError = ref(props.error);
 
-    const errorDescription = computed((): null | string => currentError.value?.description ?? null);
-    const errorField = computed((): null | string => currentError.value?.field ?? null);
+    const errorDescription = computed(
+      (): null | string => currentError.value?.description ?? null,
+    );
+    const errorField = computed(
+      (): null | string => currentError.value?.field ?? null,
+    );
 
     return {
       T,

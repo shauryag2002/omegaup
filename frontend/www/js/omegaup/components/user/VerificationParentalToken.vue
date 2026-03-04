@@ -31,7 +31,10 @@ import omegaup_Markdown from '../Markdown.vue';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faCircleCheck, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
+import {
+  faCircleCheck,
+  faCircleXmark,
+} from '@fortawesome/free-solid-svg-icons';
 library.add(faCircleCheck, faCircleXmark);
 
 import 'bootstrap/dist/css/bootstrap.css';

@@ -90,15 +90,11 @@ function groupElements(elements: CourseProblems): GroupedCourseProblems {
   return groups;
 }
 
-const groupedSolvedProblems = computed(
-  (): GroupedCourseProblems => {
-    return groupElements(props.solvedProblems);
-  },
-);
+const groupedSolvedProblems = computed((): GroupedCourseProblems => {
+  return groupElements(props.solvedProblems);
+});
 
-const groupedUnsolvedProblems = computed(
-  (): GroupedCourseProblems => {
-    return groupElements(props.unsolvedProblems);
-  },
-);
+const groupedUnsolvedProblems = computed((): GroupedCourseProblems => {
+  return groupElements(props.unsolvedProblems);
+});
 </script>

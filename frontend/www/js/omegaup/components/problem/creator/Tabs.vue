@@ -79,7 +79,12 @@ import T from '../../../lang';
 import { BTab, BTabs } from 'bootstrap-vue-next';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faCircleCheck, faFileCircleCheck, faFileCode, faPencil } from '@fortawesome/free-solid-svg-icons';
+import {
+  faCircleCheck,
+  faFileCircleCheck,
+  faFileCode,
+  faPencil,
+} from '@fortawesome/free-solid-svg-icons';
 library.add(faCircleCheck, faFileCircleCheck, faFileCode, faPencil);
 
 export enum TabIndex {
@@ -99,12 +104,19 @@ export default defineComponent({
     'omegaup-problem-creator-solution-tab': problemCreator_SolutionTab,
   },
   props: {
-    currentSolutionMarkdownProp: { type: String, default: T.problemCreatorEmpty },
+    currentSolutionMarkdownProp: {
+      type: String,
+      default: T.problemCreatorEmpty,
+    },
     currentMarkdownProp: { type: String, default: T.problemCreatorEmpty },
     codeProp: { type: String, default: T.problemCreatorEmpty },
     extensionProp: { type: String, default: T.problemCreatorEmpty },
   },
-  emits: ['show-update-success-message', 'download-zip-file', 'download-input-file'],
+  emits: [
+    'show-update-success-message',
+    'download-zip-file',
+    'download-input-file',
+  ],
   setup() {
     const activeTabIndex = ref(TabIndex.Statement);
 

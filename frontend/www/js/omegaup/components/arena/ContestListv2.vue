@@ -459,6 +459,7 @@ export interface UrlParams {
   query: string;
   sort_order: ContestOrder;
   filter: ContestFilter;
+  replaceState?: boolean;
 }
 
 export default defineComponent({

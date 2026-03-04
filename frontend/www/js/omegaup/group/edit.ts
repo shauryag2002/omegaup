@@ -161,7 +161,10 @@ OmegaUp.on('ready', () => {
             })
             .catch(ui.apiError);
         },
-        onChangePasswordIdentity: (source: MembersExposed, username: string) => {
+        onChangePasswordIdentity: (
+          source: MembersExposed,
+          username: string,
+        ) => {
           source.showEditForm = false;
           source.showChangePasswordForm = true;
           source.username = username;

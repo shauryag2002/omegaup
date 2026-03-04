@@ -73,14 +73,14 @@ function launchIntro() {
             intro: T.problemCreatorIntroWorkspaceIntro,
             element: document.querySelector<HTMLElement>(
               '[data-problem-creator-tabs]',
-),
+            ),
           },
           {
             title: T.problemCreatorIntroLoadTitle,
             intro: T.problemCreatorIntroLoadIntro,
             element: document.querySelector<HTMLElement>(
               '[data-load-problem-button]',
-),
+            ),
           },
           {
             title: T.problemCreatorIntroDownloadTitle,
@@ -92,7 +92,7 @@ function launchIntro() {
             intro: T.problemCreatorIntroCreateIntro,
             element: document.querySelector<HTMLElement>(
               '[data-create-new-problem-button]',
-),
+            ),
           },
           {
             title: T.problemCreatorIntroNameTitle,

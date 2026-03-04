@@ -55,5 +55,5 @@ jQueryMock.event = { special: {} };
 // Set jQuery as global for bootstrap plugins
 (global as Record<string, unknown>).$ = jQueryMock;
 (global as Record<string, unknown>).jQuery = jQueryMock;
-(window as Record<string, unknown>).$ = jQueryMock;
-(window as Record<string, unknown>).jQuery = jQueryMock;
+(window as unknown as Record<string, unknown>).$ = jQueryMock;
+(window as unknown as Record<string, unknown>).jQuery = jQueryMock;

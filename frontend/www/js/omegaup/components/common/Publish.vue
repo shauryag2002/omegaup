@@ -105,7 +105,8 @@ export default defineComponent({
     );
 
     const contestURL = computed(
-      (): string => `${window.location.origin}/arena/${props.alias}/startfresh/`,
+      (): string =>
+        `${window.location.origin}/arena/${props.alias}/startfresh/`,
     );
 
     function onSubmit(): void {

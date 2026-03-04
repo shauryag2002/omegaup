@@ -5,7 +5,7 @@ import { ArenaCourseFeedback, FeedbackStatus } from './Feedback.vue';
 
 describe('FeedbackCodeView.vue', () => {
   it('Should handle feedback codeview with empty comments list', async () => {
-    const wrapper = mount(arena_FeedbackCodeView, {
+    const wrapper = mount(arena_FeedbackCodeView as any, {
       props: {
         language: 'java',
         readonly: false,
@@ -24,7 +24,7 @@ describe('FeedbackCodeView.vue', () => {
       text: 'some text',
       status: FeedbackStatus.New,
     });
-    const wrapper = mount(arena_FeedbackCodeView, {
+    const wrapper = mount(arena_FeedbackCodeView as any, {
       props: {
         language: 'java',
         value: 'This \ncode \nhas \nfour lines;',

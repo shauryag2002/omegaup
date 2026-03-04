@@ -18,7 +18,15 @@
 
 <script lang="ts">
 // TODO: replace all instances of any with correct type
-import { defineComponent, ref, computed, watch, onMounted, onUnmounted, PropType } from 'vue';
+import {
+  defineComponent,
+  ref,
+  computed,
+  watch,
+  onMounted,
+  onUnmounted,
+  PropType,
+} from 'vue';
 import store from './GraderStore';
 import * as Util from './util';
 import * as monaco from 'monaco-editor';
@@ -47,8 +55,12 @@ export default defineComponent({
     const editorContainer = ref<HTMLElement | null>(null);
 
     const theme = computed((): string => store.getters['theme']);
-    const language = computed((): string => store.getters[props.storeMapping.language]);
-    const module = computed((): string => store.getters[props.storeMapping.module]);
+    const language = computed(
+      (): string => store.getters[props.storeMapping.language],
+    );
+    const module = computed(
+      (): string => store.getters[props.storeMapping.module],
+    );
 
     const contents = computed({
       get: (): string => store.getters[props.storeMapping.contents],
@@ -57,7 +69,10 @@ export default defineComponent({
       },
     });
 
-    const filename = computed((): string => `${module.value}.${Util.supportedLanguages[language.value].extension}`);
+    const filename = computed(
+      (): string =>
+        `${module.value}.${Util.supportedLanguages[language.value].extension}`,
+    );
     const title = computed((): string => filename.value);
 
     watch(language, (value: string) => {

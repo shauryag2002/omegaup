@@ -44,7 +44,15 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, watch, onMounted, nextTick, PropType } from 'vue';
+import {
+  defineComponent,
+  ref,
+  computed,
+  watch,
+  onMounted,
+  nextTick,
+  PropType,
+} from 'vue';
 import { useStore } from 'vuex';
 import type { StoreState } from '../../../../problem/creator/types';
 import * as Markdown from '@/third_party/js/pagedown/Markdown.Editor.js';
@@ -93,24 +101,30 @@ export default defineComponent({
       },
     });
 
-    watch(() => props.currentSolutionMarkdownProp, () => {
-      currentSolutionMarkdown.value = props.currentSolutionMarkdownProp;
-    });
+    watch(
+      () => props.currentSolutionMarkdownProp,
+      () => {
+        currentSolutionMarkdown.value = props.currentSolutionMarkdownProp;
+      },
+    );
 
-    watch(() => props.activeTabIndex, (newIndex: TabIndex) => {
-      if (newIndex === TabIndex.Solution) {
-        nextTick(() => {
-          startIntroGuide();
-        });
-      }
-    });
+    watch(
+      () => props.activeTabIndex,
+      (newIndex: TabIndex) => {
+        if (newIndex === TabIndex.Solution) {
+          nextTick(() => {
+            startIntroGuide();
+          });
+        }
+      },
+    );
 
     onMounted(() => {
       markdownEditor = new Markdown.Editor(markdownConverter.converter, '', {
         panels: {
-          buttonBar: markdownButtonBar.value,
+          buttonBar: markdownButtonBar.value!,
           preview: null,
-          input: markdownInput.value,
+          input: markdownInput.value!,
         },
       });
       markdownEditor.run();
@@ -134,28 +148,28 @@ export default defineComponent({
                 intro: T.problemCreatorSolutionTabIntroToolbarIntro,
                 element: document.querySelector<HTMLElement>(
                   '[data-solution-markdown-toolbar]',
-),
+                ),
               },
               {
                 title: T.problemCreatorSolutionTabIntroEditorTitle,
                 intro: T.problemCreatorSolutionTabIntroEditorIntro,
                 element: document.querySelector<HTMLElement>(
                   '[data-problem-creator-solution-editor-markdown]',
-),
+                ),
               },
               {
                 title: T.problemCreatorSolutionTabIntroPreviewTitle,
                 intro: T.problemCreatorSolutionTabIntroPreviewIntro,
                 element: document.querySelector<HTMLElement>(
                   '[data-problem-creator-solution-previewer-markdown]',
-),
+                ),
               },
               {
                 title: T.problemCreatorSolutionTabIntroSaveTitle,
                 intro: T.problemCreatorSolutionTabIntroSaveIntro,
                 element: document.querySelector<HTMLElement>(
                   '[data-problem-creator-solution-save-markdown]',
-),
+                ),
               },
             ],
           })

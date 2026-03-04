@@ -156,10 +156,16 @@ export default defineComponent({
       default: null,
     },
   },
-  emits: ['compare', 'update-search-result-users', 'update:selectedUser1', 'update:selectedUser2'],
+  emits: [
+    'compare',
+    'update-search-result-users',
+    'update:selectedUser1',
+    'update:selectedUser2',
+  ],
   setup(props, { emit }) {
     const canCompare = computed(
-      (): boolean => props.selectedUser1 !== null && props.selectedUser2 !== null,
+      (): boolean =>
+        props.selectedUser1 !== null && props.selectedUser2 !== null,
     );
 
     function fetchComparison(): void {

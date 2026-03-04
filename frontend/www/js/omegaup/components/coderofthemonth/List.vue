@@ -115,11 +115,9 @@ const visibleCoders = computed((): types.CoderOfTheMonthList[] => {
   }
 });
 
-const currentTabComponent = computed(
-  (): VueComponent => {
-    return componentMap[currentSelectedTab.value] ?? OmegaupCodersList;
-  },
-);
+const currentTabComponent = computed((): VueComponent => {
+  return componentMap[currentSelectedTab.value] ?? OmegaupCodersList;
+});
 
 function getSelectedTab(tab: { id: string; title: string }): void {
   currentSelectedTab.value = tab.id;

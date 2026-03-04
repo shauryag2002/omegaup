@@ -7,5 +7,5 @@ const CodeMirror = {};
 module.exports = {
   codemirror,
   CodeMirror,
-  install: function() {},
+  install: function () {},
 };

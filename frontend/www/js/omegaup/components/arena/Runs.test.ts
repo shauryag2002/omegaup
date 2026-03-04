@@ -358,7 +358,9 @@ describe('Runs.vue', () => {
 
     // @ts-expect-error - VTU cannot infer props for dual script block components
     await wrapper.setProps({ username: 'username' });
-    expect((wrapper.vm.filterUsername as { key: string } | undefined)?.key).toBe('username');
+    expect(
+      (wrapper.vm.filterUsername as { key: string } | undefined)?.key,
+    ).toBe('username');
 
     // @ts-expect-error - VTU cannot infer props for dual script block components
     await wrapper.setProps({ username: null });
@@ -387,8 +389,7 @@ describe('Runs.vue', () => {
       expect(wrapper.findAll('table tbody tr').length).toBe(runs.length);
 
       await wrapper
-        .findAll(`td[data-username="${username}"]`)
-        [1]
+        .findAll(`td[data-username="${username}"]`)[1]
         .find(`a[title="${username}"]`)
         .trigger('click');
 
@@ -404,8 +405,7 @@ describe('Runs.vue', () => {
       expect(wrapper.findAll('table tbody tr').length).toBe(runs.length);
 
       await wrapper
-        .findAll(`td[data-username="${username}"]`)
-        [1]
+        .findAll(`td[data-username="${username}"]`)[1]
         .find(`a[title="${username}"]`)
         .trigger('click');
 

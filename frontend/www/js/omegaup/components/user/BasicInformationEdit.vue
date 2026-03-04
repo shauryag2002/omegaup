@@ -109,7 +109,10 @@ export default defineComponent({
       required: true,
     },
   },
-  emits: ['update-user-basic-information-error', 'update-user-basic-information'],
+  emits: [
+    'update-user-basic-information-error',
+    'update-user-basic-information',
+  ],
   setup(props, { emit }) {
     const username = ref(props.profile.username);
     const name = ref(props.profile.name);

@@ -98,7 +98,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, watch, onMounted, nextTick } from 'vue';
+import {
+  defineComponent,
+  ref,
+  computed,
+  watch,
+  onMounted,
+  nextTick,
+} from 'vue';
 import T from '../../lang';
 import omegaup_PasswordInput from '../common/PasswordInput.vue';
 import 'intro.js/introjs.css';
@@ -260,11 +267,14 @@ export default defineComponent({
       });
     }
 
-    watch(() => props.activeTab, (newValue: string) => {
-      if (newValue === 'login') {
-        maybeStartIntro();
-      }
-    });
+    watch(
+      () => props.activeTab,
+      (newValue: string) => {
+        if (newValue === 'login') {
+          maybeStartIntro();
+        }
+      },
+    );
 
     onMounted(() => {
       // The reason for loading the script here instead of the `template.tpl` file

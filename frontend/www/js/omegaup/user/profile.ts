@@ -314,7 +314,7 @@ OmegaUp.on('ready', () => {
   const app = createApp({
     methods,
     render: () =>
-      h(user_Profile, {
+      h(user_Profile as any, {
         data: payload.extraProfileDetails,
         profile: state.profile,
         profileBadges: new Set(

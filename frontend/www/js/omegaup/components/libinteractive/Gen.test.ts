@@ -18,7 +18,7 @@ describe('Gen.vue', () => {
   });
 
   it('Should handle empty form to be filled', async () => {
-    const wrapper = shallowMount(course_LibinteractiveGen, {
+    const wrapper = shallowMount(course_LibinteractiveGen as any, {
       attachTo: '#root',
       props: {
         language: null,
@@ -66,7 +66,7 @@ describe('Gen.vue', () => {
       field: 'idl',
     };
 
-    const wrapper = shallowMount(course_LibinteractiveGen, {
+    const wrapper = shallowMount(course_LibinteractiveGen as any, {
       props: {
         language: null,
         os: null,

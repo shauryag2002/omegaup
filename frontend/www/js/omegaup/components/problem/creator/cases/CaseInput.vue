@@ -52,7 +52,12 @@ import { ref, computed } from 'vue';
 import store from '../../../../problem/creator/store';
 import { NIL } from 'uuid';
 import T from '../../../../lang';
-import { BFormCheckbox, BFormGroup, BFormInput, BFormSelect } from 'bootstrap-vue-next';
+import {
+  BFormCheckbox,
+  BFormGroup,
+  BFormInput,
+  BFormSelect,
+} from 'bootstrap-vue-next';
 
 const props = withDefaults(
   defineProps<{

@@ -132,8 +132,8 @@ export default defineComponent({
     },
   },
   setup(props) {
-    const CategoriesFeatureGuideURL = computed(
-      (): string => getBlogUrl('CategoriesFeatureGuideURL'),
+    const CategoriesFeatureGuideURL = computed((): string =>
+      getBlogUrl('CategoriesFeatureGuideURL'),
     );
 
     const urlUsername = computed(

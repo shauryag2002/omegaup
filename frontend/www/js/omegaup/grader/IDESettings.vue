@@ -140,7 +140,8 @@ export default defineComponent({
     const theme = computed((): string => store.getters['theme']);
 
     const timeLimit = computed({
-      get: (): number => Util.parseDuration(store.state.request.input.limits.TimeLimit),
+      get: (): number =>
+        Util.parseDuration(store.state.request.input.limits.TimeLimit),
       set: (value: number) => {
         // convert back the time in seconds
         store.dispatch('limits', {
@@ -151,7 +152,10 @@ export default defineComponent({
     });
 
     const overallWallTimeLimit = computed({
-      get: (): number => Util.parseDuration(store.state.request.input.limits.OverallWallTimeLimit),
+      get: (): number =>
+        Util.parseDuration(
+          store.state.request.input.limits.OverallWallTimeLimit,
+        ),
       set: (value: number) => {
         store.dispatch('limits', {
           ...store.state.request.input.limits,
@@ -161,7 +165,8 @@ export default defineComponent({
     });
 
     const extraWallTime = computed({
-      get: (): number => Util.parseDuration(store.state.request.input.limits.ExtraWallTime),
+      get: (): number =>
+        Util.parseDuration(store.state.request.input.limits.ExtraWallTime),
       set: (value: number) => {
         store.dispatch('limits', {
           ...store.state.request.input.limits,
@@ -171,7 +176,8 @@ export default defineComponent({
     });
 
     const memoryLimit = computed({
-      get: (): number => Util.parseDuration(store.state.request.input.limits.MemoryLimit),
+      get: (): number =>
+        Util.parseDuration(store.state.request.input.limits.MemoryLimit),
       set: (value: number) => {
         store.dispatch('limits', {
           ...store.state.request.input.limits,
@@ -181,7 +187,8 @@ export default defineComponent({
     });
 
     const outputLimit = computed({
-      get: (): number => Util.parseDuration(store.state.request.input.limits.OutputLimit),
+      get: (): number =>
+        Util.parseDuration(store.state.request.input.limits.OutputLimit),
       set: (value: number) => {
         store.dispatch('limits', {
           ...store.state.request.input.limits,
@@ -205,9 +212,13 @@ export default defineComponent({
     });
 
     const validatorLanguage = computed({
-      get: (): string => store.getters['request.input.validator.custom_validator.language'],
+      get: (): string =>
+        store.getters['request.input.validator.custom_validator.language'],
       set: (value: string) => {
-        store.dispatch('request.input.validator.custom_validator.language', value);
+        store.dispatch(
+          'request.input.validator.custom_validator.language',
+          value,
+        );
       },
     });
 

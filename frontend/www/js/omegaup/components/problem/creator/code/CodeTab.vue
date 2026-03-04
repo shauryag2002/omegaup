@@ -128,43 +128,56 @@ export default defineComponent({
 
     const allowedLanguages = computed((): omegaup.Languages => {
       let languages: omegaup.Languages = {};
-      Object.values(supportedLanguages).forEach((languageInfo: LanguageInfo) => {
-        languages[languageInfo.language] = languageInfo.name;
-      });
+      Object.values(supportedLanguages).forEach(
+        (languageInfo: LanguageInfo) => {
+          languages[languageInfo.language] = languageInfo.name;
+        },
+      );
       return languages;
     });
 
     const allowedExtensions = computed((): string[] => {
       let extensions: string[] = [];
-      Object.values(supportedLanguages).forEach((languageInfo: LanguageInfo) => {
-        extensions.push(languageInfo.extension);
-      });
+      Object.values(supportedLanguages).forEach(
+        (languageInfo: LanguageInfo) => {
+          extensions.push(languageInfo.extension);
+        },
+      );
       return extensions;
     });
 
-    watch(() => props.codeProp, () => {
-      code.value = props.codeProp;
-    });
+    watch(
+      () => props.codeProp,
+      () => {
+        code.value = props.codeProp;
+      },
+    );
 
-    watch(() => props.extensionProp, () => {
-      if (
-        props.extensionProp &&
-        allowedExtensions.value.includes(props.extensionProp)
-      ) {
-        const languageInfo = Object.values(supportedLanguages).find(
-          (language) => language.extension === props.extensionProp,
-        );
-        if (languageInfo) {
-          selectedLanguage.value = languageInfo.language;
+    watch(
+      () => props.extensionProp,
+      () => {
+        if (
+          props.extensionProp &&
+          allowedExtensions.value.includes(props.extensionProp)
+        ) {
+          const languageInfo = Object.values(supportedLanguages).find(
+            (language) => language.extension === props.extensionProp,
+          );
+          if (languageInfo) {
+            selectedLanguage.value = languageInfo.language;
+          }
         }
-      }
-    });
+      },
+    );
 
-    watch(() => props.activeTabIndex, (newIndex: TabIndex) => {
-      if (newIndex === TabIndex.Code) {
-        startIntroGuide();
-      }
-    });
+    watch(
+      () => props.activeTabIndex,
+      (newIndex: TabIndex) => {
+        if (newIndex === TabIndex.Code) {
+          startIntroGuide();
+        }
+      },
+    );
 
     watch(selectedLanguage, () => {
       const languageInfo = Object.values(supportedLanguages).find(
@@ -234,28 +247,28 @@ export default defineComponent({
                 intro: T.problemCreatorCodeTabIntroSelectLanguageIntro,
                 element: document.querySelector<HTMLElement>(
                   '[data-problem-creator-code-language]',
-),
+                ),
               },
               {
                 title: T.problemCreatorCodeTabIntroWriteCodeTitle,
                 intro: T.problemCreatorCodeTabIntroWriteCodeIntro,
                 element: document.querySelector<HTMLElement>(
                   '[data-problem-creator-code-editor]',
-),
+                ),
               },
               {
                 title: T.problemCreatorCodeTabIntroUploadFileTitle,
                 intro: T.problemCreatorCodeTabIntroUploadFileIntro,
                 element: document.querySelector<HTMLElement>(
                   '[data-problem-creator-code-input]',
-),
+                ),
               },
               {
                 title: T.problemCreatorCodeTabIntroSaveCodeTitle,
                 intro: T.problemCreatorCodeTabIntroSaveCodeIntro,
                 element: document.querySelector<HTMLElement>(
                   '[data-problem-creator-code-save-btn]',
-),
+                ),
               },
             ],
           })

@@ -178,15 +178,23 @@ export default defineComponent({
   },
   props: {
     allRuns: { type: Array as PropType<types.Run[]>, required: true },
-    currentRunDetails: { type: Object as PropType<types.RunDetails | null>, default: null },
+    currentRunDetails: {
+      type: Object as PropType<types.RunDetails | null>,
+      default: null,
+    },
     languages: { type: Array as PropType<string[] | null>, default: null },
     problem: { type: Object as PropType<types.ProblemDetails>, required: true },
-    user: { type: Object as PropType<types.UserInfoForProblem>, required: true },
+    user: {
+      type: Object as PropType<types.UserInfoForProblem>,
+      required: true,
+    },
     userRuns: { type: Array as PropType<types.Run[]>, required: true },
   },
   emits: ['submit-run', 'show-run-details'],
   setup(props, { emit }) {
-    const statementMarkdown = ref<InstanceType<typeof omegaup_problemMarkdown> | null>(null);
+    const statementMarkdown = ref<InstanceType<
+      typeof omegaup_problemMarkdown
+    > | null>(null);
     const currentPopupDisplayed = ref(PopupDisplayed.None);
 
     const filteredLanguages = computed(() => {
@@ -233,10 +241,8 @@ export default defineComponent({
         libinteractiveInterfaceNameElement &&
         props.problem.settings?.interactive?.module_name
       ) {
-        libinteractiveInterfaceNameElement.innerText = props.problem.settings.interactive.module_name.replace(
-          /\.idl$/,
-          '',
-        );
+        libinteractiveInterfaceNameElement.innerText =
+          props.problem.settings.interactive.module_name.replace(/\.idl$/, '');
       }
 
       const outputOnlyDownloadElement = el.querySelector(
@@ -263,9 +269,9 @@ export default defineComponent({
             const commit = props.problem.commit;
             const os = (form.querySelector('.download-os') as HTMLInputElement)
               ?.value;
-            const lang = (form.querySelector(
-              '.download-lang',
-            ) as HTMLInputElement)?.value;
+            const lang = (
+              form.querySelector('.download-lang') as HTMLInputElement
+            )?.value;
             const extension = os == 'unix' ? '.tar.bz2' : '.zip';
 
             ui.navigateTo(
@@ -295,9 +301,9 @@ export default defineComponent({
               }
               form = form.parentElement;
             }
-            (form.querySelector(
-              '.libinteractive-extension',
-            ) as HTMLElement).innerText = libinteractiveDownloadLangElement.value;
+            (
+              form.querySelector('.libinteractive-extension') as HTMLElement
+            ).innerText = libinteractiveDownloadLangElement.value;
           },
         );
       }

@@ -51,7 +51,11 @@
               type="button"
               :title="T.certificateListMineCopyToClipboard"
               :data-code="certificate.verification_code"
-              @click="copyAndNotify(getVerificationLink(certificate.verification_code))"
+              @click="
+                copyAndNotify(
+                  getVerificationLink(certificate.verification_code),
+                )
+              "
             >
               <font-awesome-icon icon="clipboard" />
             </button>
@@ -95,7 +99,10 @@ export default defineComponent({
     'font-awesome-layers-text': FontAwesomeLayersText,
   },
   props: {
-    certificates: { type: Array as PropType<types.CertificateListItem[]>, required: true },
+    certificates: {
+      type: Array as PropType<types.CertificateListItem[]>,
+      required: true,
+    },
     selectedCertificate: { type: String, default: undefined },
     location: { type: String, required: true },
   },

@@ -33,7 +33,7 @@ OmegaUp.on('ready', () => {
 
   createApp({
     render: () =>
-      h(users_Rank, {
+      h(users_Rank as any, {
         page: payload.page,
         length: payload.length,
         isLogged: payload.isLogged,

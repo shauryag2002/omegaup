@@ -131,8 +131,15 @@ import T from '../../lang';
 // Import Bootstrap an BootstrapVue CSS files (order is important)
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
-import { BButton, BCard, BCardText, BCol, BContainer, BDropdown, BRow } from 'bootstrap-vue-next';
-
+import {
+  BButton,
+  BCard,
+  BCardText,
+  BCol,
+  BContainer,
+  BDropdown,
+  BRow,
+} from 'bootstrap-vue-next';
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
@@ -185,7 +192,6 @@ export default defineComponent({
     };
   },
 });
-
 </script>
 
 <style lang="scss" scoped>

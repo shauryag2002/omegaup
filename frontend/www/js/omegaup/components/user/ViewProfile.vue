@@ -392,19 +392,15 @@ export default defineComponent({
 
     const unsolvedProblems = computed((): Problem[] => {
       if (!props.data?.unsolvedProblems) return [];
-      return props.data.unsolvedProblems.map(
-        (problem) => new Problem(problem),
-      );
+      return props.data.unsolvedProblems.map((problem) => new Problem(problem));
     });
 
-    const columnNames = computed(
-      (): Array<{ name: string; style: string }> => {
-        return [
-          { name: T.profileContestsTableContest, style: 'text-left' },
-          { name: T.profileContestsTablePlace, style: 'text-right' },
-        ];
-      },
-    );
+    const columnNames = computed((): Array<{ name: string; style: string }> => {
+      return [
+        { name: T.profileContestsTableContest, style: 'text-left' },
+        { name: T.profileContestsTablePlace, style: 'text-right' },
+      ];
+    });
 
     const solvedProblems = computed((): Problem[] => {
       if (!props.data?.solvedProblems) return [];

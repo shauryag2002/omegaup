@@ -375,7 +375,8 @@ OmegaUp.on('ready', () => {
             version: selectedCommit.version,
           })
             .then((response) => {
-              versionsComponent.runsDiff[selectedCommit.version] = response.diff;
+              versionsComponent.runsDiff[selectedCommit.version] =
+                response.diff;
             })
             .catch(ui.apiError);
         },
@@ -389,11 +390,13 @@ OmegaUp.on('ready', () => {
           api.Contest.update({
             contest_alias: payload.details.alias,
             admission_mode: admissionMode,
-            default_show_all_contestants_in_scoreboard: defaultShowAllContestantsInScoreboard,
+            default_show_all_contestants_in_scoreboard:
+              defaultShowAllContestantsInScoreboard,
           })
             .then(() => {
               state.details.admission_mode = admissionMode;
-              state.details.default_show_all_contestants_in_scoreboard = defaultShowAllContestantsInScoreboard;
+              state.details.default_show_all_contestants_in_scoreboard =
+                defaultShowAllContestantsInScoreboard;
               ui.success(
                 ui.formatString(T.contestEditContestEdited, {
                   alias: payload.details.alias,

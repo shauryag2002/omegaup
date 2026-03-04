@@ -17,7 +17,7 @@ OmegaUp.on('ready', () => {
   }));
   createApp({
     render: () =>
-      h(Homepage, {
+      h(Homepage as any, {
         coderOfTheMonth: payload.coderOfTheMonthData
           ? payload.coderOfTheMonthData.all
           : null,

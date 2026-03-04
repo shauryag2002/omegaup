@@ -529,10 +529,7 @@ export default defineComponent({
       emit('reset');
     }
 
-    function onChangeRole(
-      ev: Event,
-      role: types.UserRole,
-    ): void {
+    function onChangeRole(ev: Event, role: types.UserRole): void {
       emit('change-role', {
         value: role,
         selected: (ev.target as HTMLInputElement).checked,
@@ -598,33 +595,54 @@ export default defineComponent({
       ui.success(T.passwordResetLinkCopiedToClipboard);
     }
 
-    watch(() => props.isContestRecommended, (newValue: boolean) => {
-      currentIsContestRecommended.value = newValue;
-    });
+    watch(
+      () => props.isContestRecommended,
+      (newValue: boolean) => {
+        currentIsContestRecommended.value = newValue;
+      },
+    );
 
-    watch(() => props.contestAlias, (newValue: string) => {
-      currentContestAlias.value = newValue;
-    });
+    watch(
+      () => props.contestAlias,
+      (newValue: string) => {
+        currentContestAlias.value = newValue;
+      },
+    );
 
-    watch(() => props.maintenanceEnabled, (newValue: boolean) => {
-      currentMaintenanceEnabled.value = newValue;
-    });
+    watch(
+      () => props.maintenanceEnabled,
+      (newValue: boolean) => {
+        currentMaintenanceEnabled.value = newValue;
+      },
+    );
 
-    watch(() => props.maintenanceMessageEs, (newValue: string) => {
-      currentMaintenanceMessageEs.value = newValue;
-    });
+    watch(
+      () => props.maintenanceMessageEs,
+      (newValue: string) => {
+        currentMaintenanceMessageEs.value = newValue;
+      },
+    );
 
-    watch(() => props.maintenanceMessageEn, (newValue: string) => {
-      currentMaintenanceMessageEn.value = newValue;
-    });
+    watch(
+      () => props.maintenanceMessageEn,
+      (newValue: string) => {
+        currentMaintenanceMessageEn.value = newValue;
+      },
+    );
 
-    watch(() => props.maintenanceMessagePt, (newValue: string) => {
-      currentMaintenanceMessagePt.value = newValue;
-    });
+    watch(
+      () => props.maintenanceMessagePt,
+      (newValue: string) => {
+        currentMaintenanceMessagePt.value = newValue;
+      },
+    );
 
-    watch(() => props.maintenanceType, (newValue: string) => {
-      currentMaintenanceType.value = newValue;
-    });
+    watch(
+      () => props.maintenanceType,
+      (newValue: string) => {
+        currentMaintenanceType.value = newValue;
+      },
+    );
 
     return {
       T,

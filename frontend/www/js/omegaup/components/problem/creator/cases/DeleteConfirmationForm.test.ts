@@ -1,15 +1,14 @@
 import { shallowMount, mount } from '@vue/test-utils';
-import BootstrapVueNext from 'bootstrap-vue-next';
+import { createBootstrap } from 'bootstrap-vue-next';
 import { nextTick } from 'vue';
 import DeleteConfirmationForm from './DeleteConfirmationForm.vue';
 import T from '../../../../lang';
 import * as ui from '@/js/omegaup/ui';
 
-
 describe('DeleteConfirmationForm.vue', () => {
   it('Should set commitMessage when visible changes', async () => {
     const wrapper = shallowMount(DeleteConfirmationForm, {
-      global: { plugins: [BootstrapVueNext] },
+      global: { plugins: [createBootstrap()] },
       props: {
         visible: false,
         itemName: 'My Item',
@@ -37,7 +36,7 @@ describe('DeleteConfirmationForm.vue', () => {
 
   it('Should display correct button labels', async () => {
     const wrapper = mount(DeleteConfirmationForm, {
-      global: { plugins: [BootstrapVueNext] },
+      global: { plugins: [createBootstrap()] },
       props: {
         visible: true,
         itemName: 'Item',
@@ -56,7 +55,7 @@ describe('DeleteConfirmationForm.vue', () => {
 
   it('Should include proper hidden fields (request, alias, contents)', async () => {
     const wrapper = shallowMount(DeleteConfirmationForm, {
-      global: { plugins: [BootstrapVueNext] },
+      global: { plugins: [createBootstrap()] },
       props: {
         visible: true,
         itemName: 'Deleted Item',
@@ -93,7 +92,7 @@ describe('DeleteConfirmationForm.vue', () => {
   it('Should prevent submit and show error when commitMessage empty', async () => {
     const errorSpy = jest.spyOn(ui, 'error').mockImplementation(() => {});
     const wrapper = mount(DeleteConfirmationForm, {
-      global: { plugins: [BootstrapVueNext] },
+      global: { plugins: [createBootstrap()] },
       props: {
         visible: true,
         itemName: 'to delete',
@@ -118,7 +117,7 @@ describe('DeleteConfirmationForm.vue', () => {
     const onCancel = jest.fn();
 
     const wrapper = mount(DeleteConfirmationForm, {
-      global: { plugins: [BootstrapVueNext] },
+      global: { plugins: [createBootstrap()] },
       props: {
         visible: false,
         itemName: 'to delete',
@@ -144,7 +143,7 @@ describe('DeleteConfirmationForm.vue', () => {
 
   it('Should disable submit button when commitMessage is empty', async () => {
     const wrapper = mount(DeleteConfirmationForm, {
-      global: { plugins: [BootstrapVueNext] },
+      global: { plugins: [createBootstrap()] },
       props: {
         visible: true,
         itemName: 'Item',

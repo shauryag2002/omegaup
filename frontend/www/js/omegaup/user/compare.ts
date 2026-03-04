@@ -21,7 +21,7 @@ OmegaUp.on('ready', () => {
 
   createApp({
     render: () =>
-      h(user_CompareUsers, {
+      h(user_CompareUsers as any, {
         user1: state.user1,
         user2: state.user2,
         username1: state.username1,

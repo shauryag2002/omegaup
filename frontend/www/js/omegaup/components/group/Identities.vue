@@ -185,7 +185,8 @@ export default defineComponent({
                 intro: T.createIdentitiesInteractiveGuideCopy,
               },
               {
-                element: document.querySelector<HTMLElement>('.introjs-password'),
+                element:
+                  document.querySelector<HTMLElement>('.introjs-password'),
                 title,
                 intro: T.createIdentitiesInteractiveGuidePassword,
               },

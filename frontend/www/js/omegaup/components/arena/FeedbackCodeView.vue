@@ -23,7 +23,15 @@
 <script lang="ts">
 // TODO: Only display the gutters in the component if the logged-in user is an
 // admin or teaching assistant.
-import { defineComponent, ref, computed, onMounted, nextTick, createApp, PropType } from 'vue';
+import {
+  defineComponent,
+  ref,
+  computed,
+  onMounted,
+  nextTick,
+  createApp,
+  PropType,
+} from 'vue';
 import T from '../../lang';
 import CodeMirror from 'codemirror';
 import { EditorOptions, languageModeMap, modeList } from './CodeView.vue';
@@ -70,7 +78,8 @@ export default defineComponent({
   emits: ['save-feedback-list', 'submit-feedback-thread'],
   setup(props, { emit }) {
     const cmEditor = ref<HTMLTextAreaElement | null>(null);
-    const mode = languageModeMap[props.language] ?? languageModeMap['cpp17-gcc'];
+    const mode =
+      languageModeMap[props.language] ?? languageModeMap['cpp17-gcc'];
     const mapChangeTracker = ref(1);
 
     const feedbackList = computed((): ArenaCourseFeedback[] => {
@@ -140,7 +149,10 @@ export default defineComponent({
     }
 
     onMounted(() => {
-      const editor = CodeMirror.fromTextArea(cmEditor.value!, editorOptions.value);
+      const editor = CodeMirror.fromTextArea(
+        cmEditor.value!,
+        editorOptions.value,
+      );
 
       for (const [feedbackKey, feedback] of props.feedbackMap) {
         const container = document.createElement('div');
@@ -178,7 +190,8 @@ export default defineComponent({
               });
             },
           });
-          const feedbackThreadInstance = feedbackThreadApp.mount(threadContainer);
+          const feedbackThreadInstance =
+            feedbackThreadApp.mount(threadContainer);
           editor.addLineWidget(
             feedback.lineNumber,
             feedbackThreadInstance.$el as HTMLElement,
@@ -204,7 +217,8 @@ export default defineComponent({
             });
           },
         });
-        const feedbackThreadNewInstance = feedbackThreadNewApp.mount(newThreadContainer);
+        const feedbackThreadNewInstance =
+          feedbackThreadNewApp.mount(newThreadContainer);
         editor.addLineWidget(
           feedback.lineNumber,
           feedbackThreadNewInstance.$el as HTMLElement,
@@ -274,7 +288,6 @@ export default defineComponent({
     };
   },
 });
-
 </script>
 
 <style lang="scss">

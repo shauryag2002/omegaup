@@ -9,7 +9,9 @@
             v-model="currentMarkdown"
             data-problem-creator-editor-markdown
             class="wmd-input"
-            @change="currentMarkdown = ($event.target as HTMLTextAreaElement).value"
+            @change="
+              currentMarkdown = ($event.target as HTMLTextAreaElement).value
+            "
             @paste="handlePaste"
             @drop="handleDrop"
           ></textarea>

@@ -142,7 +142,6 @@ import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
 import { BButton, BCard } from 'bootstrap-vue-next';
 
-
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
@@ -194,7 +193,6 @@ export default defineComponent({
     };
   },
 });
-
 </script>
 
 <style lang="scss" scoped>

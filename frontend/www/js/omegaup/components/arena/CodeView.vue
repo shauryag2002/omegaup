@@ -93,16 +93,14 @@ export default defineComponent({
       (cmWrapper.value as any)?.refresh();
     }
 
-    const editorOptions = computed(
-      (): EditorOptions => {
-        return {
-          tabSize: 2,
-          lineNumbers: true,
-          mode: mode.value,
-          readOnly: props.readonly,
-        };
-      },
-    );
+    const editorOptions = computed((): EditorOptions => {
+      return {
+        tabSize: 2,
+        lineNumbers: true,
+        mode: mode.value,
+        readOnly: props.readonly,
+      };
+    });
 
     function onChange(value: string): void {
       emit('change', value);

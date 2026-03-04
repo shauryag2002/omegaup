@@ -25,7 +25,7 @@ describe('Form.vue', () => {
   it('Should handle add contest form', async () => {
     const startTime = new Date();
     const finishTime = new Date(startTime.getTime() + 60 * 60 * 1000);
-    const wrapper = shallowMount(contest_Form, {
+    const wrapper = shallowMount(contest_Form as any, {
       props: {
         update: false,
         allLanguages: [{ py2: 'Python 2' }, { py3: 'Python 3' }],
@@ -55,7 +55,7 @@ describe('Form.vue', () => {
   it('Should handle edit contest form', async () => {
     const startTime = new Date();
     const finishTime = new Date(startTime.getTime() + 60 * 60 * 1000);
-    const wrapper = shallowMount(contest_Form, {
+    const wrapper = shallowMount(contest_Form as any, {
       attachTo: '#root',
       props: {
         update: true,
@@ -103,7 +103,7 @@ describe('Form.vue', () => {
   it('Should block language removal', async () => {
     const startTime = new Date();
     const finishTime = new Date(startTime.getTime() + 60 * 60 * 1000);
-    const wrapper = shallowMount(contest_Form, {
+    const wrapper = shallowMount(contest_Form as any, {
       props: {
         update: true,
         allLanguages: [
@@ -128,7 +128,7 @@ describe('Form.vue', () => {
   it('Should update score mode when', async () => {
     const startTime = new Date();
     const finishTime = new Date(startTime.getTime() + 60 * 60 * 1000);
-    const wrapper = shallowMount(contest_Form, {
+    const wrapper = shallowMount(contest_Form as any, {
       props: {
         update: true,
         allLanguages: [
@@ -147,14 +147,14 @@ describe('Form.vue', () => {
       },
     });
 
-    expect(wrapper.vm.currentScoreMode).toBe('partial');
+    expect((wrapper.vm as any).currentScoreMode).toBe('partial');
     await wrapper.find('[data-contest-icpc]').trigger('click');
-    expect(wrapper.vm.currentScoreMode).toBe('all_or_nothing');
+    expect((wrapper.vm as any).currentScoreMode).toBe('all_or_nothing');
     await wrapper.find('[data-contest-preioi]').trigger('click');
-    expect(wrapper.vm.currentScoreMode).toBe('partial');
+    expect((wrapper.vm as any).currentScoreMode).toBe('partial');
     await wrapper.find('[data-contest-omi]').trigger('click');
-    expect(wrapper.vm.currentScoreMode).toBe('partial');
+    expect((wrapper.vm as any).currentScoreMode).toBe('partial');
     await wrapper.find('[data-contest-conacup]').trigger('click');
-    expect(wrapper.vm.currentScoreMode).toBe('partial');
+    expect((wrapper.vm as any).currentScoreMode).toBe('partial');
   });
 });

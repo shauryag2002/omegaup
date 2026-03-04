@@ -598,7 +598,8 @@ const storeOptions: StoreOptions<GraderStore> = {
           'interactive',
         )
       ) {
-        state.request.input.interactive = {} as types.InteractiveSettingsDistrib;
+        state.request.input.interactive =
+          {} as types.InteractiveSettingsDistrib;
       }
 
       // update interactive problem data

@@ -306,14 +306,32 @@ export default defineComponent({
     'omegaup-common-groupadmins': common_GroupAdmins,
   },
   props: {
-    data: { type: Object as PropType<types.ProblemEditPayload>, required: true },
+    data: {
+      type: Object as PropType<types.ProblemEditPayload>,
+      required: true,
+    },
     admins: { type: Array as PropType<types.ProblemAdmin[]>, required: true },
     initialTab: { type: String, required: true },
-    groups: { type: Array as PropType<types.ProblemGroupAdmin[]>, required: true },
-    solution: { type: Object as PropType<types.ProblemStatement | null>, default: null },
-    statement: { type: Object as PropType<types.ProblemStatement>, required: true },
-    searchResultUsers: { type: Array as PropType<types.ListItem[]>, required: true },
-    searchResultGroups: { type: Array as PropType<types.ListItem[]>, required: true },
+    groups: {
+      type: Array as PropType<types.ProblemGroupAdmin[]>,
+      required: true,
+    },
+    solution: {
+      type: Object as PropType<types.ProblemStatement | null>,
+      default: null,
+    },
+    statement: {
+      type: Object as PropType<types.ProblemStatement>,
+      required: true,
+    },
+    searchResultUsers: {
+      type: Array as PropType<types.ListItem[]>,
+      required: true,
+    },
+    searchResultGroups: {
+      type: Array as PropType<types.ListItem[]>,
+      required: true,
+    },
   },
   emits: [
     'update-markdown-contents',
@@ -368,9 +386,12 @@ export default defineComponent({
       window.location.href = `/arena/problem/${alias.value}/print/`;
     }
 
-    watch(() => props.statement, (newStatement: types.ProblemStatement) => {
-      currentStatement.value = newStatement;
-    });
+    watch(
+      () => props.statement,
+      (newStatement: types.ProblemStatement) => {
+        currentStatement.value = newStatement;
+      },
+    );
 
     return {
       T,

@@ -9,7 +9,10 @@
           size="sm"
           @click="toggleDetails(row)"
         >
-          <FontAwesomeIcon v-if="!row.detailsShowing" :icon="['fas', 'chevron-right']" />
+          <FontAwesomeIcon
+            v-if="!row.detailsShowing"
+            :icon="['fas', 'chevron-right']"
+          />
           <FontAwesomeIcon v-else :icon="['fas', 'chevron-down']" />
         </b-button>
       </template>
@@ -51,7 +54,11 @@ import { BButton, BTable, vBTooltip } from 'bootstrap-vue-next';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faChevronRight, faChevronDown, faCircleQuestion } from '@fortawesome/free-solid-svg-icons';
+import {
+  faChevronRight,
+  faChevronDown,
+  faCircleQuestion,
+} from '@fortawesome/free-solid-svg-icons';
 library.add(faChevronRight, faChevronDown, faCircleQuestion);
 
 export enum PopupDisplayed {
@@ -112,7 +119,10 @@ export default defineComponent({
   setup(props, { emit }) {
     const showDetails = ref(false);
 
-    function toggleDetails(row: { toggleDetails: () => void; item: TableRunItem }): void {
+    function toggleDetails(row: {
+      toggleDetails: () => void;
+      item: TableRunItem;
+    }): void {
       showDetails.value = !showDetails.value;
       if (showDetails.value) {
         emit('show-run-details', { guid: row.item.guid });
@@ -321,5 +331,4 @@ export default defineComponent({
     };
   },
 });
-
 </script>

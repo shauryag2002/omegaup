@@ -104,8 +104,7 @@ export default defineComponent({
     function onUpdateUserSchools(): void {
       emit('update-user-schools', {
         graduation_date:
-          isCurrentlyEnrolled.value ||
-          isNaN(graduationDate.value.getTime())
+          isCurrentlyEnrolled.value || isNaN(graduationDate.value.getTime())
             ? null
             : graduationDate.value,
         school_id:

@@ -430,7 +430,15 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, watch, onMounted, onBeforeUnmount, PropType } from 'vue';
+import {
+  defineComponent,
+  ref,
+  computed,
+  watch,
+  onMounted,
+  onBeforeUnmount,
+  PropType,
+} from 'vue';
 import { types } from '../../api_types';
 import * as time from '../../time';
 import T from '../../lang';
@@ -438,7 +446,14 @@ import { getExternalUrl } from '../../urlHelper';
 
 // Import Bootstrap an BootstrapVue CSS files (order is important)
 import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
-import { BCard, BCol, BContainer, BDropdown, BRow, BTabs } from 'bootstrap-vue-next';
+import {
+  BCard,
+  BCol,
+  BContainer,
+  BDropdown,
+  BRow,
+  BTabs,
+} from 'bootstrap-vue-next';
 import 'bootstrap/dist/css/bootstrap.css';
 
 // Import Only Required Plugins
@@ -644,7 +659,9 @@ export default defineComponent({
     }
 
     function getTimeLink(timeVal: Date): string {
-      return `${getExternalUrl('TimeAndDateBaseURL')}?iso=${timeVal.toISOString()}`;
+      return `${getExternalUrl(
+        'TimeAndDateBaseURL',
+      )}?iso=${timeVal.toISOString()}`;
     }
 
     function orderByTitle() {
@@ -710,25 +727,37 @@ export default defineComponent({
 
     // Watchers for props - sync internal state when parent updates props (e.g., via popstate)
     // Set isFromBrowserNavigation flag to prevent pushState from corrupting history
-    watch(() => props.tab, (newValue) => {
-      isFromBrowserNavigation.value = true;
-      currentTab.value = newValue;
-    });
+    watch(
+      () => props.tab,
+      (newValue) => {
+        isFromBrowserNavigation.value = true;
+        currentTab.value = newValue;
+      },
+    );
 
-    watch(() => props.sortOrder, (newValue) => {
-      isFromBrowserNavigation.value = true;
-      currentOrder.value = newValue;
-    });
+    watch(
+      () => props.sortOrder,
+      (newValue) => {
+        isFromBrowserNavigation.value = true;
+        currentOrder.value = newValue;
+      },
+    );
 
-    watch(() => props.filter, (newValue) => {
-      isFromBrowserNavigation.value = true;
-      currentFilter.value = newValue;
-    });
+    watch(
+      () => props.filter,
+      (newValue) => {
+        isFromBrowserNavigation.value = true;
+        currentFilter.value = newValue;
+      },
+    );
 
-    watch(() => props.page, (newValue) => {
-      isFromBrowserNavigation.value = true;
-      currentPage.value = newValue;
-    });
+    watch(
+      () => props.page,
+      (newValue) => {
+        isFromBrowserNavigation.value = true;
+        currentPage.value = newValue;
+      },
+    );
 
     // Watchers for internal state - fetch data when user interacts with UI
     watch(currentTab, (newValue, oldValue) => {
@@ -790,7 +819,6 @@ export default defineComponent({
     };
   },
 });
-
 </script>
 
 <style lang="scss" scoped>

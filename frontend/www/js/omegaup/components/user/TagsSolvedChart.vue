@@ -73,7 +73,7 @@ export default defineComponent({
         },
         tooltip: {
           formatter: function (): string {
-            const point = (this as unknown) as Highcharts.Point;
+            const point = this as unknown as Highcharts.Point;
             return `<b>${point.y}</b> ${T.profileProblemsCount}`;
           },
         },

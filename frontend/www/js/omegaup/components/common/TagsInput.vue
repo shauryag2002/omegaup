@@ -130,8 +130,7 @@ const filteredOptions = computed((): TagItem[] => {
     .filter((tag) => {
       if (selectedKeys.has(tag.key)) return false;
       return (
-        tag.value.toLowerCase().includes(q) ||
-        tag.key.toLowerCase().includes(q)
+        tag.value.toLowerCase().includes(q) || tag.key.toLowerCase().includes(q)
       );
     })
     .slice(0, props.typeaheadMaxResults);

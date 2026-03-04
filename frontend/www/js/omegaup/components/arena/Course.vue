@@ -384,42 +384,40 @@ const deadline = computed((): null | Date => {
   return props.currentAssignment.finish_time ?? null;
 });
 
-const problemDetailsPopup = computed(
-  (): PopupDisplayed => {
-    if (!props.problemInfo) {
-      return currentPopupDisplayed.value;
-    }
+const problemDetailsPopup = computed((): PopupDisplayed => {
+  if (!props.problemInfo) {
+    return currentPopupDisplayed.value;
+  }
 
-    if (
-      !props.problemInfo.nominationStatus.solved &&
-      !props.problemInfo.nominationStatus.tried
-    ) {
-      return currentPopupDisplayed.value;
-    }
+  if (
+    !props.problemInfo.nominationStatus.solved &&
+    !props.problemInfo.nominationStatus.tried
+  ) {
+    return currentPopupDisplayed.value;
+  }
 
-    if (
-      props.problemInfo.nominationStatus.dismissed ||
-      (props.problemInfo.nominationStatus.dismissedBeforeAc &&
-        !props.problemInfo.nominationStatus.solved)
-    ) {
-      return currentPopupDisplayed.value;
-    }
+  if (
+    props.problemInfo.nominationStatus.dismissed ||
+    (props.problemInfo.nominationStatus.dismissedBeforeAc &&
+      !props.problemInfo.nominationStatus.solved)
+  ) {
+    return currentPopupDisplayed.value;
+  }
 
-    if (
-      props.problemInfo.nominationStatus.nominated ||
-      (props.problemInfo.nominationStatus.nominatedBeforeAc &&
-        !props.problemInfo.nominationStatus.solved)
-    ) {
-      return currentPopupDisplayed.value;
-    }
+  if (
+    props.problemInfo.nominationStatus.nominated ||
+    (props.problemInfo.nominationStatus.nominatedBeforeAc &&
+      !props.problemInfo.nominationStatus.solved)
+  ) {
+    return currentPopupDisplayed.value;
+  }
 
-    if (!props.problemInfo.nominationStatus.canNominateProblem) {
-      return currentPopupDisplayed.value;
-    }
+  if (!props.problemInfo.nominationStatus.canNominateProblem) {
+    return currentPopupDisplayed.value;
+  }
 
-    return PopupDisplayed.Promotion;
-  },
-);
+  return PopupDisplayed.Promotion;
+});
 
 const searchResultProblems = computed((): types.ListItem[] => {
   if (!props.problems.length) {

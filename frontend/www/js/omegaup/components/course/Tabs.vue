@@ -198,42 +198,45 @@ export default defineComponent({
       };
     });
 
-    const filteredCards = computed(():
-      | types.CourseCardEnrolled[]
-      | types.CourseCardPublic[]
-      | types.CourseCardFinished[] => {
-      switch (currentSelectedTab.value) {
-        case Tab.Enrolled:
-          return props.courses.enrolled.filter(
-            (course) =>
-              searchText.value === '' ||
-              latinize(course.name.toLowerCase()).includes(
-                latinize(searchText.value.toLowerCase()),
-              ),
-          );
-        case Tab.Finished:
-          return props.courses.finished.filter(
-            (course) =>
-              searchText.value === '' ||
-              latinize(course.name.toLowerCase()).includes(
-                latinize(searchText.value.toLowerCase()),
-              ),
-          );
-        default:
-          return props.courses.public.filter((course) => {
-            const matchesText =
-              searchText.value === '' ||
-              latinize(course.name.toLowerCase()).includes(
-                latinize(searchText.value.toLowerCase()),
-              );
+    const filteredCards = computed(
+      ():
+        | types.CourseCardEnrolled[]
+        | types.CourseCardPublic[]
+        | types.CourseCardFinished[] => {
+        switch (currentSelectedTab.value) {
+          case Tab.Enrolled:
+            return props.courses.enrolled.filter(
+              (course) =>
+                searchText.value === '' ||
+                latinize(course.name.toLowerCase()).includes(
+                  latinize(searchText.value.toLowerCase()),
+                ),
+            );
+          case Tab.Finished:
+            return props.courses.finished.filter(
+              (course) =>
+                searchText.value === '' ||
+                latinize(course.name.toLowerCase()).includes(
+                  latinize(searchText.value.toLowerCase()),
+                ),
+            );
+          default:
+            return props.courses.public.filter((course) => {
+              const matchesText =
+                searchText.value === '' ||
+                latinize(course.name.toLowerCase()).includes(
+                  latinize(searchText.value.toLowerCase()),
+                );
 
-            const matchesLevel =
-              levelFilter.value === Level.All || course.level === levelFilter.value;
+              const matchesLevel =
+                levelFilter.value === Level.All ||
+                course.level === levelFilter.value;
 
-            return matchesText && matchesLevel;
-          });
-      }
-    });
+              return matchesText && matchesLevel;
+            });
+        }
+      },
+    );
 
     onMounted(() => {
       const title = T.joinCourseInteractiveGuideTitle;

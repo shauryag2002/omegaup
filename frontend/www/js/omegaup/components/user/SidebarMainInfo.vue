@@ -208,10 +208,7 @@ export default defineComponent({
     watch(
       () => props.selectedTab,
       (newValue: string) => {
-        const validTab = getSelectedValidTab(
-          newValue,
-          currentUrlMapping.value,
-        );
+        const validTab = getSelectedValidTab(newValue, currentUrlMapping.value);
         currentSelectedTab.value = validTab;
         if (validTab !== newValue) {
           emit('update:selectedTab', validTab);

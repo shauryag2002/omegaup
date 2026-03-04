@@ -128,11 +128,24 @@ import problem_Details from '../problem/Detailsv2.vue';
 
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
-import { BButton, BCard, BCardHeader, BCol, BContainer, BNav, BNavItem, BRow } from 'bootstrap-vue-next';
+import {
+  BButton,
+  BCard,
+  BCardHeader,
+  BCol,
+  BContainer,
+  BNav,
+  BNavItem,
+  BRow,
+} from 'bootstrap-vue-next';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faChevronLeft, faCircleArrowLeft, faCircleArrowRight } from '@fortawesome/free-solid-svg-icons';
+import {
+  faChevronLeft,
+  faCircleArrowLeft,
+  faCircleArrowRight,
+} from '@fortawesome/free-solid-svg-icons';
 library.add(faChevronLeft, faCircleArrowLeft, faCircleArrowRight);
 
 export enum Tabs {
@@ -208,15 +221,21 @@ export default defineComponent({
     });
 
     const nextAssignment = computed((): types.CourseAssignment | null => {
-      if (currentAssignmentIndex.value === props.course.assignments.length - 1) {
+      if (
+        currentAssignmentIndex.value ===
+        props.course.assignments.length - 1
+      ) {
         return null;
       }
       return props.course.assignments[currentAssignmentIndex.value + 1];
     });
 
-    watch(() => props.selectedTab, (newValue) => {
-      currentSelectedTab.value = newValue;
-    });
+    watch(
+      () => props.selectedTab,
+      (newValue) => {
+        currentSelectedTab.value = newValue;
+      },
+    );
 
     return {
       T,
@@ -228,7 +247,6 @@ export default defineComponent({
     };
   },
 });
-
 </script>
 
 <style lang="scss" scoped>

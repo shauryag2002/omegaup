@@ -10,7 +10,7 @@ import { DisqualificationType } from './Runs.vue';
 
 describe('RunsForCourses.vue', () => {
   it('Should handle empty runs', () => {
-    const wrapper = shallowMount(arena_RunsForCourses, {
+    const wrapper = shallowMount(arena_RunsForCourses as any, {
       props: {
         contestAlias: 'admin',
         runs: [],
@@ -120,7 +120,7 @@ describe('RunsForCourses.vue', () => {
   ];
 
   it('Should handle order runs', async () => {
-    const wrapper = shallowMount(arena_RunsForCourses, {
+    const wrapper = shallowMount(arena_RunsForCourses as any, {
       props: {
         contestAlias: 'admin',
         runs,
@@ -160,7 +160,7 @@ describe('RunsForCourses.vue', () => {
 
   describe.each(filtersMapping)(`A filter:`, (filter) => {
     it(`whose name is ${filter.filter} should have gotten the value ${filter.value}`, async () => {
-      const wrapper = shallowMount(arena_RunsForCourses, {
+      const wrapper = shallowMount(arena_RunsForCourses as any, {
         props: {
           contestAlias: 'admin',
           runs,
@@ -177,7 +177,7 @@ describe('RunsForCourses.vue', () => {
   });
 
   it('Should handle run percentage color', async () => {
-    const wrapper = mount(arena_RunsForCourses, {
+    const wrapper = mount(arena_RunsForCourses as any, {
       props: {
         runs,
         itemsPerPage: 100,
@@ -206,7 +206,7 @@ describe('RunsForCourses.vue', () => {
   });
 
   it('Should handle paginator in user view', async () => {
-    const wrapper = mount(arena_RunsForCourses, {
+    const wrapper = mount(arena_RunsForCourses as any, {
       props: {
         runs,
         itemsPerPage: 2,
@@ -220,7 +220,7 @@ describe('RunsForCourses.vue', () => {
   });
 
   it('Should handle paginator in admin view', async () => {
-    const wrapper = mount(arena_RunsForCourses, {
+    const wrapper = mount(arena_RunsForCourses as any, {
       props: {
         contestAlias: 'contest',
         runs,
@@ -243,7 +243,7 @@ describe('RunsForCourses.vue', () => {
   });
 
   it('Should handle paginator in admin view with no runs', async () => {
-    const wrapper = mount(arena_RunsForCourses, {
+    const wrapper = mount(arena_RunsForCourses as any, {
       props: {
         contestAlias: 'contest',
         showFilters: true,
@@ -257,7 +257,7 @@ describe('RunsForCourses.vue', () => {
   });
 
   it('Should handle execution filter', async () => {
-    const wrapper = mount(arena_RunsForCourses, {
+    const wrapper = mount(arena_RunsForCourses as any, {
       props: {
         contestAlias: 'contest',
         runs,
@@ -285,7 +285,7 @@ describe('RunsForCourses.vue', () => {
   });
 
   it('Should handle output filter', async () => {
-    const wrapper = mount(arena_RunsForCourses, {
+    const wrapper = mount(arena_RunsForCourses as any, {
       props: {
         contestAlias: 'contest',
         runs,
@@ -313,7 +313,7 @@ describe('RunsForCourses.vue', () => {
   });
 
   it('Should handle username filter', async () => {
-    const wrapper = shallowMount(arena_RunsForCourses, {
+    const wrapper = shallowMount(arena_RunsForCourses as any, {
       props: {
         contestAlias: 'contest',
         runs,
@@ -331,7 +331,7 @@ describe('RunsForCourses.vue', () => {
   });
 
   it('Should handle problem filter', async () => {
-    const wrapper = shallowMount(arena_RunsForCourses, {
+    const wrapper = shallowMount(arena_RunsForCourses as any, {
       props: {
         contestAlias: 'contest',
         runs,
@@ -349,7 +349,7 @@ describe('RunsForCourses.vue', () => {
   });
 
   it('Should handle the new submission button', async () => {
-    const wrapper = shallowMount(arena_RunsForCourses, {
+    const wrapper = shallowMount(arena_RunsForCourses as any, {
       props: {
         problemAlias: 'alias',
         runs,
@@ -369,7 +369,7 @@ describe('RunsForCourses.vue', () => {
       time: new Date('1/3/2020, 12:25:00 AM'),
       type: 'disqualified',
     });
-    const wrapper = shallowMount(arena_RunsForCourses, {
+    const wrapper = shallowMount(arena_RunsForCourses as any, {
       props: {
         contestAlias: 'admin',
         problemAlias: 'alias',
@@ -425,7 +425,7 @@ describe('RunsForCourses.vue', () => {
   });
 
   it('Should handle filterUsername when username changes', async () => {
-    const wrapper = shallowMount(arena_RunsForCourses, {
+    const wrapper = shallowMount(arena_RunsForCourses as any, {
       props: {
         contestAlias: 'admin',
         runs,
@@ -442,16 +442,16 @@ describe('RunsForCourses.vue', () => {
     });
 
     await wrapper.setProps({ username: 'username' });
-    expect(wrapper.vm.filterUsername?.key).toBe('username');
+    expect((wrapper.vm as any).filterUsername?.key).toBe('username');
 
     await wrapper.setProps({ username: null });
-    expect(wrapper.vm.filterUsername).toBeFalsy();
+    expect((wrapper.vm as any).filterUsername).toBeFalsy();
   });
 
   const usernamesToBeFiltered = ['username', 'other_username'];
   describe.each(usernamesToBeFiltered)(`A user:`, (username) => {
     it(`whose username is ${username} should be filtered when they are selected.`, async () => {
-      const wrapper = mount(arena_RunsForCourses, {
+      const wrapper = mount(arena_RunsForCourses as any, {
         props: {
           contestAlias: 'admin',
           runs,
@@ -471,8 +471,7 @@ describe('RunsForCourses.vue', () => {
       expect(wrapper.findAll('table tbody tr').length).toBe(runs.length);
 
       await wrapper
-        .findAll(`td[data-username="${username}"]`)
-        [1]
+        .findAll(`td[data-username="${username}"]`)[1]
         .find(`a[title="${username}"]`)
         .trigger('click');
 
@@ -488,8 +487,7 @@ describe('RunsForCourses.vue', () => {
       expect(wrapper.findAll('table tbody tr').length).toBe(runs.length);
 
       await wrapper
-        .findAll(`td[data-username="${username}"]`)
-        [1]
+        .findAll(`td[data-username="${username}"]`)[1]
         .find(`a[title="${username}"]`)
         .trigger('click');
 
@@ -497,7 +495,7 @@ describe('RunsForCourses.vue', () => {
 
       // Now all runs should appear
       expect(wrapper.findAll('table tbody tr').length).toBe(runs.length);
-      expect(wrapper.vm.filterUsername).toBeFalsy();
+      expect((wrapper.vm as any).filterUsername).toBeFalsy();
     });
   });
 });

@@ -14,7 +14,7 @@ OmegaUp.on('ready', function () {
 
   createApp({
     render: () =>
-      h(course_ViewProgress, {
+      h(course_ViewProgress as any, {
         course: payload.course,
         students: payload.students,
         assignmentsProblems: payload.assignmentsProblems,

@@ -454,7 +454,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, watch, onMounted, PropType } from 'vue';
+import {
+  defineComponent,
+  ref,
+  computed,
+  watch,
+  onMounted,
+  PropType,
+} from 'vue';
 import problem_Settings from './Settings.vue';
 import problem_Tags from './Tags.vue';
 import T from '../../lang';
@@ -734,9 +741,8 @@ export default defineComponent({
                 intro: T.createProblemInteractiveGuideType,
               },
               {
-                element: document.querySelector<HTMLElement>(
-                  '.introjs-validator',
-                ),
+                element:
+                  document.querySelector<HTMLElement>('.introjs-validator'),
                 title: guideTitle,
                 intro: T.createProblemInteractiveGuideValidator,
               },

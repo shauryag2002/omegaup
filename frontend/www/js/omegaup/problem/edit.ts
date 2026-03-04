@@ -48,7 +48,7 @@ OmegaUp.on('ready', () => {
 
   createApp({
     render: () =>
-      h(problem_Edit, {
+      h(problem_Edit as any, {
         data: payload,
         initialTab: state.initialTab,
         originalVisibility: payload.visibility,

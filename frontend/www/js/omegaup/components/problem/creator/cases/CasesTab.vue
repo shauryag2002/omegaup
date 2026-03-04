@@ -116,11 +116,14 @@ export default defineComponent({
       }
     }
 
-    watch(() => props.activeTabIndex, (newIndex: TabIndex) => {
-      if (newIndex === TabIndex.TestCases) {
-        startIntroGuide();
-      }
-    });
+    watch(
+      () => props.activeTabIndex,
+      (newIndex: TabIndex) => {
+        if (newIndex === TabIndex.TestCases) {
+          startIntroGuide();
+        }
+      },
+    );
 
     return {
       shouldShowAddWindow,

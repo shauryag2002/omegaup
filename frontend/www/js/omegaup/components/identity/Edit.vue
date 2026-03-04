@@ -169,13 +169,11 @@ const identityName = computed({
   },
 });
 
-const countryStates = computed(
-  (): iso3166.Subdivisions => {
-    const countryId = selectedIdentity.country_id || 'MX';
-    const countrySelected = iso3166.country(countryId);
-    return countrySelected.sub;
-  },
-);
+const countryStates = computed((): iso3166.Subdivisions => {
+  const countryId = selectedIdentity.country_id || 'MX';
+  const countrySelected = iso3166.country(countryId);
+  return countrySelected.sub;
+});
 
 function onEditMember(): void {
   emit('edit-identity-member', {

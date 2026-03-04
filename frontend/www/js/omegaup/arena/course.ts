@@ -479,12 +479,14 @@ OmegaUp.on('ready', async () => {
               api.Run.getSubmissionFeedback({
                 run_alias: guid,
               }).then((response) => {
-                component.feedbackMap.forEach((feedback: ArenaCourseFeedback) => {
-                  feedback.submissionFeedbackId = response.find(
-                    (fb) => fb.range_bytes_start == feedback.lineNumber,
-                  )?.submission_feedback_id;
-                  feedback.status = FeedbackStatus.Saved;
-                });
+                component.feedbackMap.forEach(
+                  (feedback: ArenaCourseFeedback) => {
+                    feedback.submissionFeedbackId = response.find(
+                      (fb) => fb.range_bytes_start == feedback.lineNumber,
+                    )?.submission_feedback_id;
+                    feedback.status = FeedbackStatus.Saved;
+                  },
+                );
               });
 
               component.currentPopupDisplayed = PopupDisplayed.None;
@@ -569,9 +571,7 @@ OmegaUp.on('ready', async () => {
       .catch(ui.apiError);
   }
 
-  function getFeedbackMap(
-    runDetailsFeedback: types.SubmissionFeedback[],
-  ): {
+  function getFeedbackMap(runDetailsFeedback: types.SubmissionFeedback[]): {
     feedbackMap: Map<number, ArenaCourseFeedback>;
     feedbackThreadMap: Map<number, ArenaCourseFeedback>;
   } {

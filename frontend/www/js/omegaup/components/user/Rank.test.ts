@@ -25,7 +25,7 @@ describe('Rank.vue', () => {
   };
 
   it('Should handle an empty rank', () => {
-    const wrapper = shallowMount(user_Rank, {
+    const wrapper = shallowMount(user_Rank as any, {
       propsData,
     });
 
@@ -34,7 +34,7 @@ describe('Rank.vue', () => {
   });
 
   it('Should handle a rank with data', () => {
-    const wrapper = mount(user_Rank, {
+    const wrapper = mount(user_Rank as any, {
       props: {
         ...propsData,
         ...{

@@ -1,9 +1,5 @@
 <template>
-  <div
-    ref="scrollContainer"
-    submissions-problem
-    @scroll="onScroll"
-  >
+  <div ref="scrollContainer" submissions-problem @scroll="onScroll">
     <div class="text-center mb-5 submissions-title">
       <h2>
         {{ T.submissionsListTitle }}
@@ -128,7 +124,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, onBeforeUnmount, PropType } from 'vue';
+import {
+  defineComponent,
+  ref,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  PropType,
+} from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
@@ -147,8 +150,14 @@ export default defineComponent({
   props: {
     page: { type: Number, required: true },
     includeUser: { type: Boolean, required: true },
-    submissions: { type: Array as PropType<types.Submission[]>, required: true },
-    searchResultUsers: { type: Array as PropType<types.ListItem[]>, required: true },
+    submissions: {
+      type: Array as PropType<types.Submission[]>,
+      required: true,
+    },
+    searchResultUsers: {
+      type: Array as PropType<types.ListItem[]>,
+      required: true,
+    },
     loading: { type: Boolean, required: true },
     endOfResults: { type: Boolean, required: true },
   },
@@ -157,7 +166,9 @@ export default defineComponent({
     const searchedUsername = ref<types.ListItem | null>(null);
     let _scrollHandler: (() => void) | null = null;
 
-    const isScrollDisabled = computed(() => props.loading || props.endOfResults);
+    const isScrollDisabled = computed(
+      () => props.loading || props.endOfResults,
+    );
 
     const hrefSearchUser = computed(() => {
       if (!searchedUsername.value?.key) {

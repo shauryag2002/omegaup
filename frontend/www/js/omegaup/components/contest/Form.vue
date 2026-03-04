@@ -884,7 +884,6 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { isValidAlias } from '../../validators';
 library.add(fas);
 
-
 export enum ScoreMode {
   AllOrNothing = 'all_or_nothing',
   Partial = 'partial',

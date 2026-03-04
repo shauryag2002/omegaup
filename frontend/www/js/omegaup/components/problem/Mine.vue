@@ -155,9 +155,8 @@
                       class="badge custom-badge m-1 p-1 p-lg-2"
                       :class="[
                         {
-                          'custom-badge-quality': tag.name.includes(
-                            'problemLevel',
-                          ),
+                          'custom-badge-quality':
+                            tag.name.includes('problemLevel'),
                         },
                         `custom-badge-${
                           tag.source.includes('quality') ? 'owner' : tag.source
@@ -278,14 +277,26 @@ export default defineComponent({
     'omegaup-common-paginator': common_Paginator,
   },
   props: {
-    problems: { type: Array as PropType<types.ProblemListItem[]>, required: true },
+    problems: {
+      type: Array as PropType<types.ProblemListItem[]>,
+      required: true,
+    },
     pagerItems: { type: Array as PropType<types.PageItem[]>, required: true },
     privateProblemsAlert: { type: Boolean, required: true },
     isSysadmin: { type: Boolean, required: true },
-    visibilityStatuses: { type: Object as PropType<Record<string, number>>, required: true },
+    visibilityStatuses: {
+      type: Object as PropType<Record<string, number>>,
+      required: true,
+    },
     query: { type: String as PropType<string | null>, default: null },
   },
-  emits: ['change-show-all-problems', 'remove', 'remove-all-problems', 'change-visibility', 'go-to-page'],
+  emits: [
+    'change-show-all-problems',
+    'remove',
+    'remove-all-problems',
+    'change-visibility',
+    'go-to-page',
+  ],
   setup(props, { emit }) {
     const currentQuery = ref(props.query ?? '');
     const shouldShowAllProblems = ref(false);

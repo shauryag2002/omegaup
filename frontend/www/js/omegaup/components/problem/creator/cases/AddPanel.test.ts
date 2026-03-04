@@ -1,13 +1,12 @@
 import { mount, VueWrapper } from '@vue/test-utils';
 
 import AddPanel from './AddPanel.vue';
-import BootstrapVueNext from 'bootstrap-vue-next';
+import { createBootstrap } from 'bootstrap-vue-next';
 import T from '../../../../lang';
 import { nextTick } from 'vue';
 import vuexStore from '../../../../problem/creator/store';
 import { StoreState } from '../../../../problem/creator/types';
 import { Store } from 'vuex';
-
 
 describe('AddPanel.vue', () => {
   beforeEach(() => {
@@ -18,7 +17,7 @@ describe('AddPanel.vue', () => {
 
   it('Should add a case to the store', async () => {
     const wrapper: VueWrapper<InstanceType<typeof AddPanel>> = mount(AddPanel, {
-      global: { plugins: [vuexStore, BootstrapVueNext] },
+      global: { plugins: [vuexStore, createBootstrap()] },
     });
 
     await nextTick();
@@ -46,7 +45,7 @@ describe('AddPanel.vue', () => {
 
   it('Should add a group to the store and add a case to the group', async () => {
     const wrapper: VueWrapper<InstanceType<typeof AddPanel>> = mount(AddPanel, {
-      global: { plugins: [vuexStore, BootstrapVueNext] },
+      global: { plugins: [vuexStore, createBootstrap()] },
     });
 
     await wrapper.setData({ tab: 'group' });
@@ -87,7 +86,7 @@ describe('AddPanel.vue', () => {
 
   it('Should add an ungrouped case to the store', async () => {
     const wrapper: VueWrapper<InstanceType<typeof AddPanel>> = mount(AddPanel, {
-      global: { plugins: [vuexStore, BootstrapVueNext] },
+      global: { plugins: [vuexStore, createBootstrap()] },
     });
 
     await wrapper.setData({ tab: 'case' });
@@ -117,7 +116,7 @@ describe('AddPanel.vue', () => {
 
   it('Should add multiple ungrouped cases to the store', async () => {
     const wrapper: VueWrapper<InstanceType<typeof AddPanel>> = mount(AddPanel, {
-      global: { plugins: [vuexStore, BootstrapVueNext] },
+      global: { plugins: [vuexStore, createBootstrap()] },
     });
 
     await wrapper.setData({ tab: 'multiplecases' });
@@ -127,16 +126,22 @@ describe('AddPanel.vue', () => {
     await wrapper.find('input[name="multiple-cases-count"]').setValue(10);
 
     expect(
-      (wrapper.find('input[name="multiple-cases-prefix"]')
-        .element as HTMLInputElement).value,
+      (
+        wrapper.find('input[name="multiple-cases-prefix"]')
+          .element as HTMLInputElement
+      ).value,
     ).toBe('test');
     expect(
-      (wrapper.find('input[name="multiple-cases-suffix"]')
-        .element as HTMLInputElement).value,
+      (
+        wrapper.find('input[name="multiple-cases-suffix"]')
+          .element as HTMLInputElement
+      ).value,
     ).toBe('case');
     expect(
-      (wrapper.find('input[name="multiple-cases-count"]')
-        .element as HTMLInputElement).value,
+      (
+        wrapper.find('input[name="multiple-cases-count"]')
+          .element as HTMLInputElement
+      ).value,
     ).toBe('10');
 
     await wrapper.find('form').trigger('submit.prevent');
@@ -154,7 +159,7 @@ describe('AddPanel.vue', () => {
 
   it('Should contain 3 tabs', async () => {
     const wrapper = mount(AddPanel, {
-      global: { plugins: [vuexStore, BootstrapVueNext] },
+      global: { plugins: [vuexStore, createBootstrap()] },
       stubs: { transition: false },
     });
 

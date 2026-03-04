@@ -298,7 +298,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, watch, onMounted, nextTick } from 'vue';
+import {
+  defineComponent,
+  ref,
+  computed,
+  watch,
+  onMounted,
+  nextTick,
+} from 'vue';
 import omegaup_Markdown from '../Markdown.vue';
 import T from '../../lang';
 import * as ui from '../../ui';
@@ -467,11 +474,14 @@ export default defineComponent({
       maybeStartIntro();
     });
 
-    watch(() => props.activeTab, (newValue: string) => {
-      if (newValue === 'signup') {
-        maybeStartIntro();
-      }
-    });
+    watch(
+      () => props.activeTab,
+      (newValue: string) => {
+        if (newValue === 'signup') {
+          maybeStartIntro();
+        }
+      },
+    );
 
     return {
       T,

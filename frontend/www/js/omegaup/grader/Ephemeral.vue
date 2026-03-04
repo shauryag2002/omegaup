@@ -122,11 +122,19 @@
 <script lang="ts">
 import * as monaco from 'monaco-editor';
 (window as any).monaco = monaco;
-import { defineComponent, ref, computed, watch, onBeforeMount, onMounted, nextTick, PropType } from 'vue';
+import {
+  defineComponent,
+  ref,
+  computed,
+  watch,
+  onBeforeMount,
+  onMounted,
+  nextTick,
+  PropType,
+} from 'vue';
 import { omegaup } from '../omegaup';
-import Vue from 'vue';
-import { h } from 'vue';
-import type { VNode } from 'vue';
+import { createApp, h } from 'vue';
+import type { VNode, App } from 'vue';
 import omegaup_Countdown from '../components/Countdown.vue';
 import type { Component as VueComponent } from 'vue';
 import GoldenLayout from 'golden-layout';
@@ -285,29 +293,37 @@ export default defineComponent({
           store.commit('updatingSettings', false);
           nextTick(() => {
             if (!props.isEmbedded || !goldenLayout?.isInitialised) return;
-            let mainColumn = goldenLayout.root.getItemsById(
-              'main-column',
-            )[0];
+            let mainColumn = goldenLayout.root.getItemsById('main-column')[0];
             mainColumn.parent.setActiveContentItem(mainColumn);
           });
         })
         .catch(Util.asyncError);
     }
 
-    watch(() => props.problem, () => {
-      initProblem();
-    });
+    watch(
+      () => props.problem,
+      () => {
+        initProblem();
+      },
+    );
 
-    watch(() => props.initialLanguage, () => {
-      initProblem();
-    });
+    watch(
+      () => props.initialLanguage,
+      () => {
+        initProblem();
+      },
+    );
 
-    watch(currentCase, () => {
-      if (!props.isEmbedded || store.getters['isUpdatingSettings']) return;
-      const casesColumn = goldenLayout?.root.getItemsById('cases-column')[0];
-      if (!casesColumn) return;
-      casesColumn.parent.setActiveContentItem(casesColumn);
-    }, { immediate: true });
+    watch(
+      currentCase,
+      () => {
+        if (!props.isEmbedded || store.getters['isUpdatingSettings']) return;
+        const casesColumn = goldenLayout?.root.getItemsById('cases-column')[0];
+        if (!casesColumn) return;
+        casesColumn.parent.setActiveContentItem(casesColumn);
+      },
+      { immediate: true },
+    );
 
     watch(isDirty, (value: boolean) => {
       if (!value || props.isEmbedded) return;
@@ -332,7 +348,8 @@ export default defineComponent({
     function onFilesZipReady(blob: Blob | null) {
       if (blob == null || blob.size == 0) {
         if (componentMapping.zipviewer) {
-          (componentMapping.zipviewer as ZipViewer).zip = null;
+          (componentMapping.zipviewer as InstanceType<typeof ZipViewer>).zip =
+            null;
         }
         store.dispatch('clearOutputs');
         return;
@@ -346,7 +363,9 @@ export default defineComponent({
         JSZip.loadAsync(reader.result)
           .then((zip) => {
             if (componentMapping.zipviewer) {
-              (componentMapping.zipviewer as ZipViewer).zip = zip;
+              (
+                componentMapping.zipviewer as InstanceType<typeof ZipViewer>
+              ).zip = zip;
             }
             store.dispatch('clearOutputs');
 
@@ -444,8 +463,7 @@ export default defineComponent({
                   score: 0,
                   verdict: 'JE',
                 });
-              } else
-                onDetailsJsonReady(JSON.parse(reader.result as string));
+              } else onDetailsJsonReady(JSON.parse(reader.result as string));
             });
             reader.readAsText(formData.get('details.json') as File);
           }
@@ -647,9 +665,7 @@ export default defineComponent({
                 })
                 .catch(Util.asyncError);
             } else if (fileName.startsWith('interactive/Main.')) {
-              const extension = fileName.substring(
-                'interactive/Main.'.length,
-              );
+              const extension = fileName.substring('interactive/Main.'.length);
               if (!Util.supportedExtensions.includes(extension)) continue;
 
               zip
@@ -705,26 +721,21 @@ export default defineComponent({
               compProps[k] = componentState[k];
             }
 
-            const vue = new Vue({
-              el: (container.getElement() as unknown as HTMLElement[])[0],
-              components: {
-                [componentName]: component,
-              },
-              render: function (): VNode {
+            const mountEl = (
+              container.getElement() as unknown as HTMLElement[]
+            )[0];
+            const app = createApp({
+              render: (): VNode => {
                 return h(componentName, {
                   ...compProps,
                 });
               },
             });
+            const vueInstance = app.mount(mountEl);
 
-            const vueComponent = (
-              vue as unknown as Record<string, unknown>
-            ).$children
-              ? (
-                  (vue as unknown as Record<string, unknown>)
-                    .$children as GraderComponent[]
-                )[0]
-              : ({} as GraderComponent);
+            const vueComponent =
+              (vueInstance as unknown as GraderComponent) ||
+              ({} as GraderComponent);
             if (vueComponent.title) {
               container.setTitle(vueComponent.title);
               vueComponent.$watch('title', function (title: string) {

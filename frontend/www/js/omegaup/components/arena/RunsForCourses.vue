@@ -553,7 +553,6 @@ library.add(faCalendarAlt);
 library.add(faCheckCircle);
 library.add(faTimesCircle);
 
-
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface JQuery {
@@ -848,9 +847,11 @@ export default defineComponent({
       });
     });
 
-    const filtersExcludingOffset = computed((): { name: string; value: string }[] => {
-      return filters.value.filter((filter) => filter.name !== 'offset');
-    });
+    const filtersExcludingOffset = computed(
+      (): { name: string; value: string }[] => {
+        return filters.value.filter((filter) => filter.name !== 'offset');
+      },
+    );
 
     const newSubmissionUrl = computed((): string => {
       if (props.isProblemsetOpened) {
@@ -930,9 +931,9 @@ export default defineComponent({
     }
 
     function showVerdictHelp(ev: Event): void {
-      (window as { $?: (el: HTMLElement) => JQuery }).$?.(
-        ev.target as HTMLElement,
-      )?.popover('show');
+      (window as { $?: (el: HTMLElement) => JQuery })
+        .$?.(ev.target as HTMLElement)
+        ?.popover('show');
     }
 
     function statusClass(run: types.Run): string {
@@ -1062,7 +1063,9 @@ export default defineComponent({
 
     function outputIconColorStatus(run: types.Run): number {
       if (
-        !(run.status === 'ready' && run.output !== StringOutputStatus.Exceeded) ||
+        !(
+          run.status === 'ready' && run.output !== StringOutputStatus.Exceeded
+        ) ||
         run.time < newFieldsLaunchDate
       ) {
         return NumericOutputStatus.None;
@@ -1109,7 +1112,9 @@ export default defineComponent({
         // This field does not appear as filter
         filterContest.value = value;
       }
-      const currentFilterItem = filters.value.find((item) => item.name === filter);
+      const currentFilterItem = filters.value.find(
+        (item) => item.name === filter,
+      );
       if (!currentFilterItem) {
         filters.value.push({ name: filter, value: value });
       } else {
@@ -1180,25 +1185,34 @@ export default defineComponent({
       emit('update-search-result-users', { query });
     }
 
-    watch(() => props.runDetailsData, (newValue) => {
-      currentRunDetailsData.value = newValue;
-    });
+    watch(
+      () => props.runDetailsData,
+      (newValue) => {
+        currentRunDetailsData.value = newValue;
+      },
+    );
 
-    watch(() => props.username, (newValue) => {
-      if (!newValue) {
-        filterUsername.value = null;
-        return;
-      }
-      filterUsername.value = { key: newValue, value: newValue };
-    });
+    watch(
+      () => props.username,
+      (newValue) => {
+        if (!newValue) {
+          filterUsername.value = null;
+          return;
+        }
+        filterUsername.value = { key: newValue, value: newValue };
+      },
+    );
 
-    watch(() => props.problemAlias, (newValue) => {
-      if (!newValue) {
-        filterProblem.value = null;
-        return;
-      }
-      filterProblem.value = { key: newValue, value: newValue };
-    });
+    watch(
+      () => props.problemAlias,
+      (newValue) => {
+        if (!newValue) {
+          filterProblem.value = null;
+          return;
+        }
+        filterProblem.value = { key: newValue, value: newValue };
+      },
+    );
 
     watch(filterLanguage, (newValue) => {
       onEmitFilterChanged({ filter: 'language', value: newValue });
@@ -1232,25 +1246,28 @@ export default defineComponent({
       onEmitFilterChanged({ filter: 'output', value: newValue });
     });
 
-    watch(() => props.createdGuid, (newValue) => {
-      if (!newValue) {
-        return;
-      }
+    watch(
+      () => props.createdGuid,
+      (newValue) => {
+        if (!newValue) {
+          return;
+        }
 
-      const singleProblemRuns = document.getElementsByClassName(
-        'single-problem-runs',
-      );
-      if (singleProblemRuns.length === 0) {
-        return;
-      }
-      singleProblemRuns[0].scrollIntoView({ behavior: 'smooth' });
-      const selectedElements = document.getElementsByClassName('selected');
-      setTimeout(() => {
-        Array.from(selectedElements).forEach((element) => {
-          element.classList.remove('selected');
-        });
-      }, 10000);
-    });
+        const singleProblemRuns = document.getElementsByClassName(
+          'single-problem-runs',
+        );
+        if (singleProblemRuns.length === 0) {
+          return;
+        }
+        singleProblemRuns[0].scrollIntoView({ behavior: 'smooth' });
+        const selectedElements = document.getElementsByClassName('selected');
+        setTimeout(() => {
+          Array.from(selectedElements).forEach((element) => {
+            element.classList.remove('selected');
+          });
+        }, 10000);
+      },
+    );
 
     return {
       NumericOutputStatus,
@@ -1304,7 +1321,6 @@ export default defineComponent({
     };
   },
 });
-
 </script>
 
 <style lang="scss" scoped>

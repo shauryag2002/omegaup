@@ -1,9 +1,9 @@
 <template>
   <div data-user-profile-edit class="mx-auto">
     <omegaup-user-profile-wrapper
+      v-model:selected-tab="currentSelectedTab"
       :profile="profile"
       :data="data"
-      v-model:selected-tab="currentSelectedTab"
       :has-password="hasPassword"
     >
       <template #message>
@@ -17,11 +17,11 @@
       <template #content>
         <template v-if="currentSelectedTab === 'view-profile'">
           <omegaup-user-view-profile
+            v-model:selected-tab="currentViewProfileSelectedTab"
             :data="data"
             :profile="profile"
             :profile-badges="profileBadges"
             :visitor-badges="visitorBadges"
-            v-model:selected-tab="currentViewProfileSelectedTab"
             :heatmap-data="heatmapData"
             :available-years="availableYears"
             :profile-statistics="profileStatistics"
@@ -225,8 +225,8 @@ export default defineComponent({
         return T.omegaupTitleProfile;
       }
       return (
-        urlMapping.find((url) => url.key === currentSelectedTab.value)
-          ?.title ?? 'view-profile'
+        urlMapping.find((url) => url.key === currentSelectedTab.value)?.title ??
+        'view-profile'
       );
     });
 

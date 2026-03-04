@@ -6,7 +6,7 @@ import problem_Edit from './Edit.vue';
 
 describe('Edit.vue', () => {
   it('Should handle an existing problem', async () => {
-    const wrapper = shallowMount(problem_Edit, {
+    const wrapper = shallowMount(problem_Edit as any, {
       props: {
         data: {
           title: 'problem',

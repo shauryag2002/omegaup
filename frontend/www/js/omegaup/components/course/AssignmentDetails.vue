@@ -360,46 +360,42 @@ const update = computed((): boolean => {
   }
 });
 
-const updateParams = computed(
-  (): UpdateParams => {
-    const params: UpdateParams = {
-      name: name.value,
-      description: description.value,
-      assignment_type: assignmentType.value,
-      assignment: alias.value,
-      course: props.courseAlias,
-    };
-    if (unlimitedDuration.value) {
-      params.unlimited_duration = true;
-    } else {
-      params.finish_time = finishTime.value.getTime() / 1000;
-    }
-    if (!props.assignment.has_runs) {
-      params.start_time = startTime.value.getTime() / 1000;
-    }
-    return params;
-  },
-);
+const updateParams = computed((): UpdateParams => {
+  const params: UpdateParams = {
+    name: name.value,
+    description: description.value,
+    assignment_type: assignmentType.value,
+    assignment: alias.value,
+    course: props.courseAlias,
+  };
+  if (unlimitedDuration.value) {
+    params.unlimited_duration = true;
+  } else {
+    params.finish_time = finishTime.value.getTime() / 1000;
+  }
+  if (!props.assignment.has_runs) {
+    params.start_time = startTime.value.getTime() / 1000;
+  }
+  return params;
+});
 
-const addParams = computed(
-  (): AddParams => {
-    const params: AddParams = {
-      name: name.value,
-      description: description.value,
-      assignment_type: assignmentType.value,
-      alias: alias.value,
-      course_alias: props.courseAlias,
-      start_time: startTime.value.getTime() / 1000,
-      problems: JSON.stringify(scheduledProblemListRef.value?.problems ?? []),
-    };
-    if (unlimitedDuration.value) {
-      params.unlimited_duration = true;
-    } else {
-      params.finish_time = finishTime.value.getTime() / 1000;
-    }
-    return params;
-  },
-);
+const addParams = computed((): AddParams => {
+  const params: AddParams = {
+    name: name.value,
+    description: description.value,
+    assignment_type: assignmentType.value,
+    alias: alias.value,
+    course_alias: props.courseAlias,
+    start_time: startTime.value.getTime() / 1000,
+    problems: JSON.stringify(scheduledProblemListRef.value?.problems ?? []),
+  };
+  if (unlimitedDuration.value) {
+    params.unlimited_duration = true;
+  } else {
+    params.finish_time = finishTime.value.getTime() / 1000;
+  }
+  return params;
+});
 
 function reset(): void {
   alias.value = props.assignment.alias;

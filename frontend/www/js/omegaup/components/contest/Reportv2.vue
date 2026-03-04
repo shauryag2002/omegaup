@@ -91,7 +91,11 @@ import { BButton, BCard, BCardText, BTable } from 'bootstrap-vue-next';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faPrint, faSquareCaretDown, faSquareCaretUp } from '@fortawesome/free-solid-svg-icons';
+import {
+  faPrint,
+  faSquareCaretDown,
+  faSquareCaretUp,
+} from '@fortawesome/free-solid-svg-icons';
 library.add(faPrint, faSquareCaretDown, faSquareCaretUp);
 
 interface GroupDetails {
