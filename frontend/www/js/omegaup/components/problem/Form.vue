@@ -765,11 +765,13 @@ export default class ProblemForm extends Vue {
     if (typeof performance === 'undefined') {
       return false;
     }
-    const entries = performance.getEntriesByType('navigation') as
-      | PerformanceNavigationTiming[]
-      | undefined;
-    if (entries && entries.length > 0) {
-      return entries[0].type === 'reload';
+    if (typeof performance.getEntriesByType === 'function') {
+      const entries = performance.getEntriesByType('navigation') as
+        | PerformanceNavigationTiming[]
+        | undefined;
+      if (entries && entries.length > 0) {
+        return entries[0].type === 'reload';
+      }
     }
     const navigation = (performance as any).navigation;
     return navigation && navigation.type === 1;
