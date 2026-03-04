@@ -155,7 +155,8 @@ describe('ContestListv2.vue', () => {
         description: 'hello contest 3',
         contest_id: 3,
         contestants: 15,
-        finish_time: yesterday /*new Date(yesterday.getTime() - daySeconds * 2)*/,
+        finish_time:
+          yesterday /*new Date(yesterday.getTime() - daySeconds * 2)*/,
         last_updated: new Date(yesterday.getTime() - daySeconds),
         organizer: 'alfadown',
         original_finish_time: yesterday,
@@ -189,8 +190,8 @@ describe('ContestListv2.vue', () => {
   };
 
   it('Should show the current contest list', async () => {
-    const wrapper = mount(arena_ContestList, {
-      propsData: {
+    const wrapper = mount(arena_ContestList as any, {
+      props: {
         contests,
         tab: ContestTab.Current,
       },
@@ -205,8 +206,8 @@ describe('ContestListv2.vue', () => {
   });
 
   it('Should show the future contest list', async () => {
-    const wrapper = mount(arena_ContestList, {
-      propsData: {
+    const wrapper = mount(arena_ContestList as any, {
+      props: {
         contests,
         tab: ContestTab.Future,
       },
@@ -221,8 +222,8 @@ describe('ContestListv2.vue', () => {
   });
 
   it('Should show the past contest list', async () => {
-    const wrapper = mount(arena_ContestList, {
-      propsData: {
+    const wrapper = mount(arena_ContestList as any, {
+      props: {
         contests,
         tab: ContestTab.Past,
       },
@@ -237,8 +238,8 @@ describe('ContestListv2.vue', () => {
   });
 
   it('Should handle filter buttons', async () => {
-    const wrapper = mount(arena_ContestList, {
-      propsData: {
+    const wrapper = mount(arena_ContestList as any, {
+      props: {
         contests,
         tab: ContestTab.Current,
       },
@@ -247,13 +248,15 @@ describe('ContestListv2.vue', () => {
       ref: 'dropdownFilterBy',
     });
     // Current filter "By All" is turned on by default
-    expect(wrapper.vm.currentFilter).toBe(ContestFilter.All);
+    expect((wrapper.vm as any).currentFilter).toBe(ContestFilter.All);
     await dropdownFilterBy.find('[data-filter-by-signed-up]').trigger('click');
-    expect(wrapper.vm.currentFilter).toBe(ContestFilter.SignedUp);
+    expect((wrapper.vm as any).currentFilter).toBe(ContestFilter.SignedUp);
     await dropdownFilterBy
       .find('[data-filter-by-recommended]')
       .trigger('click');
-    expect(wrapper.vm.currentFilter).toBe(ContestFilter.OnlyRecommended);
+    expect((wrapper.vm as any).currentFilter).toBe(
+      ContestFilter.OnlyRecommended,
+    );
   });
 
   const dropdownMapping = [
@@ -268,8 +271,8 @@ describe('ContestListv2.vue', () => {
   each(dropdownMapping).it(
     'Should show dropdown when "%s" field is selected',
     async (value) => {
-      const wrapper = mount(arena_ContestList, {
-        propsData: {
+      const wrapper = mount(arena_ContestList as any, {
+        props: {
           contests,
         },
       });
@@ -333,8 +336,8 @@ describe('ContestListv2.vue', () => {
     'Should order correctly current contest list when "%s" field is selected',
     ({ field, name }) => {
       each(tabMapping).it('When selected tab equal to %s', async ({ tab }) => {
-        const wrapper = mount(arena_ContestList, {
-          propsData: {
+        const wrapper = mount(arena_ContestList as any, {
+          props: {
             contests,
             tab,
           },
@@ -342,27 +345,31 @@ describe('ContestListv2.vue', () => {
 
         const dropdown = wrapper.findComponent({ ref: 'dropdownOrderBy' });
         expect(dropdown.exists()).toBeTruthy();
-        expect(wrapper.vm.currentOrder).toBe(ContestOrder.None);
+        expect((wrapper.vm as any).currentOrder).toBe(ContestOrder.None);
 
         // Find and click the dropdown item
         await dropdown.find(`[data-order-by-${name}]`).trigger('click');
         await wrapper.vm.$nextTick();
-        expect(wrapper.vm.currentOrder).toBe(field);
+        expect((wrapper.vm as any).currentOrder).toBe(field);
 
         const emittedEvents = wrapper.emitted('fetch-page');
 
         // Instead of checking for specific page numbers, check that the event was emitted
         // with the correct sorting order and that the page was reset to 1
         const lastEmmitedEvent = emittedEvents?.slice(-1)[0];
-        expect(lastEmmitedEvent[0].params.sort_order).toBe(field);
-        expect(lastEmmitedEvent[0].params.page).toBe(1);
+        expect(lastEmmitedEvent).toBeDefined();
+        const eventData = lastEmmitedEvent![0] as {
+          params: { sort_order: string; page: number };
+        };
+        expect(eventData.params.sort_order).toBe(field);
+        expect(eventData.params.page).toBe(1);
       });
     },
   );
 
   it('Should use replaceState on initial mount to avoid extra history entry', async () => {
-    const wrapper = mount(arena_ContestList, {
-      propsData: {
+    const wrapper = mount(arena_ContestList as any, {
+      props: {
         contests,
         tab: ContestTab.Current,
       },
@@ -381,8 +388,8 @@ describe('ContestListv2.vue', () => {
   });
 
   it('Should use pushState (replaceState: false) for subsequent user interactions', async () => {
-    const wrapper = mount(arena_ContestList, {
-      propsData: {
+    const wrapper = mount(arena_ContestList as any, {
+      props: {
         contests,
         tab: ContestTab.Current,
       },
@@ -396,7 +403,7 @@ describe('ContestListv2.vue', () => {
     const initialCount = initialEvents.length;
 
     // Simulate a user clicking a different tab
-    ((wrapper.vm as unknown) as { currentTab: ContestTab }).currentTab =
+    (wrapper.vm as unknown as { currentTab: ContestTab }).currentTab =
       ContestTab.Future;
     await wrapper.vm.$nextTick();
 

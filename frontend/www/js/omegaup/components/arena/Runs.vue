@@ -461,6 +461,7 @@ declare global {
     popover(action: string): JQuery;
   }
 }
+export default {};
 </script>
 
 <script setup lang="ts">
@@ -632,12 +633,14 @@ const filteredRuns = computed((): types.Run[] => {
   });
 });
 
-const filtersExcludingOffset = computed((): {
-  name: string;
-  value: string;
-}[] => {
-  return filters.value.filter((filter) => filter.name !== 'offset');
-});
+const filtersExcludingOffset = computed(
+  (): {
+    name: string;
+    value: string;
+  }[] => {
+    return filters.value.filter((filter) => filter.name !== 'offset');
+  },
+);
 
 const newSubmissionUrl = computed((): string => {
   if (props.isProblemsetOpened) {

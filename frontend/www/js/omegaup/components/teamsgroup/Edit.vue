@@ -117,6 +117,7 @@ export enum AvailableTabs {
   Teams = 'teams',
   Upload = 'upload',
 }
+export default {};
 </script>
 
 <script setup lang="ts">

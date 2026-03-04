@@ -62,7 +62,10 @@
           @click="$emit('open-add-window')"
         >
           <span class="d-none d-xl-inline">{{ T.problemCreatorAdd }}</span>
-          <FontAwesomeIcon :icon="['fas', 'circle-plus']" class="d-inline d-xl-none" />
+          <FontAwesomeIcon
+            :icon="['fas', 'circle-plus']"
+            class="d-inline d-xl-none"
+          />
         </b-button>
         <b-dropdown variant="light" size="sm" right no-caret>
           <template #button-content>
@@ -405,11 +408,43 @@ import {
   CaseGroupID,
 } from '@/js/omegaup/problem/creator/types';
 import JSZip from 'jszip';
-import { BBadge, BButton, BCard, BCollapse, BContainer, BDropdown, BDropdownItem, BFormCheckbox, BFormGroup, BFormInput, BModal, BOffcanvas, BRow } from 'bootstrap-vue-next';
+import {
+  BBadge,
+  BButton,
+  BCard,
+  BCollapse,
+  BContainer,
+  BDropdown,
+  BDropdownItem,
+  BFormCheckbox,
+  BFormGroup,
+  BFormInput,
+  BModal,
+  BOffcanvas,
+  BRow,
+} from 'bootstrap-vue-next';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faAlignLeft, faBoxArchive, faCirclePlus, faEllipsisVertical, faPencil, faTableColumns, faTowerBroadcast, faTrash } from '@fortawesome/free-solid-svg-icons';
-library.add(faAlignLeft, faBoxArchive, faCirclePlus, faEllipsisVertical, faPencil, faTableColumns, faTowerBroadcast, faTrash);
+import {
+  faAlignLeft,
+  faBoxArchive,
+  faCirclePlus,
+  faEllipsisVertical,
+  faPencil,
+  faTableColumns,
+  faTowerBroadcast,
+  faTrash,
+} from '@fortawesome/free-solid-svg-icons';
+library.add(
+  faAlignLeft,
+  faBoxArchive,
+  faCirclePlus,
+  faEllipsisVertical,
+  faPencil,
+  faTableColumns,
+  faTowerBroadcast,
+  faTrash,
+);
 
 export default defineComponent({
   name: 'Sidebar',
@@ -490,11 +525,7 @@ export default defineComponent({
     const pointsFormatter = (points: number) => Math.max(points, 0);
 
     const updateGroupInfo = (groupID: GroupID) => {
-      updateGroup([
-        groupID,
-        editGroupName[groupID],
-        editGroupPoints[groupID],
-      ]);
+      updateGroup([groupID, editGroupName[groupID], editGroupPoints[groupID]]);
     };
 
     const editCase = (groupID: GroupID, caseID: CaseID) => {

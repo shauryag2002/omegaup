@@ -298,7 +298,14 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+import {
+  defineComponent,
+  ref,
+  computed,
+  watch,
+  onMounted,
+  nextTick,
+} from 'vue';
 import omegaup_Markdown from '../Markdown.vue';
 import T from '../../lang';
 import * as ui from '../../ui';
@@ -309,171 +316,198 @@ import { getBlogUrl } from '../../urlHelper';
 import omegaup_PasswordInput from '../common/PasswordInput.vue';
 import { VueRecaptcha } from 'vue-recaptcha';
 
-@Component({
+export default defineComponent({
+  name: 'Signup',
   components: {
     'omegaup-markdown': omegaup_Markdown,
     'omegaup-password-input': omegaup_PasswordInput,
     'vue-recaptcha': VueRecaptcha,
   },
-})
-export default class Signup extends Vue {
-  @Prop() validateRecaptcha!: boolean;
-  @Prop({ default: false }) hasVisitedSection!: boolean;
-  @Prop({ default: false }) useSignupFormWithBirthDate!: boolean;
-  @Prop({ default: 'login' }) activeTab!: string;
+  props: {
+    validateRecaptcha: { type: Boolean, required: true },
+    hasVisitedSection: { type: Boolean, default: false },
+    useSignupFormWithBirthDate: { type: Boolean, default: false },
+    activeTab: { type: String, default: 'login' },
+  },
+  emits: ['register-and-login'],
+  setup(props) {
+    const username = ref('');
+    const email = ref('');
+    const dateOfBirth = ref('');
+    const parentEmail = ref('');
+    const password = ref('');
+    const passwordConfirmation = ref('');
+    const recaptchaResponse = ref('');
+    const isUnder13 = ref(true);
+    const over13Checked = ref(false);
+    const privacyPolicyAccepted = ref(false);
+    const codeOfConductAccepted = ref(false);
+    const introStarted = ref(false);
 
-  T = T;
-  ui = ui;
-  username: string = '';
-  email: string = '';
-  dateOfBirth: string = '';
-  parentEmail: string = '';
-  password: string = '';
-  passwordConfirmation: string = '';
-  recaptchaResponse: string = '';
-  isUnder13: boolean = true;
-  over13Checked: boolean = false;
-  privacyPolicyAccepted: boolean = false;
-  codeOfConductAccepted: boolean = false;
-  introStarted: boolean = false;
+    const termsAndPolicies = computed(
+      (): boolean => privacyPolicyAccepted.value && codeOfConductAccepted.value,
+    );
 
-  mounted() {
-    this.maybeStartIntro();
-  }
+    const formattedAcceptPolicyMarkdown = computed((): string => {
+      const policyUrl = getBlogUrl('PrivacyPolicyURL');
+      return ui.formatString(T.acceptPrivacyPolicy, {
+        PrivacyPolicyURL: policyUrl,
+      });
+    });
 
-  @Watch('activeTab')
-  onActiveTabChanged(newValue: string): void {
-    if (newValue === 'signup') {
-      this.maybeStartIntro();
-    }
-  }
+    const formattedAcceptConductMarkdown = computed((): string => {
+      const conductUrl = getBlogUrl('CodeofConductPolicyURL');
+      return ui.formatString(T.acceptCodeOfConduct, {
+        CodeofConductPolicyURL: conductUrl,
+      });
+    });
 
-  maybeStartIntro(): void {
-    if (this.introStarted || this.hasVisitedSection) {
-      return;
-    }
-    if (this.activeTab !== 'signup') {
-      return;
-    }
+    const maxDateForTimepicker = computed(() => {
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = (currentDate.getMonth() + 1)
+        .toString()
+        .padStart(2, '0');
+      const currentDay = currentDate.getDate().toString().padStart(2, '0');
 
-    this.$nextTick(() => {
-      if (this.introStarted || this.hasVisitedSection) {
+      return over13Checked.value
+        ? `${currentYear - 13}-${currentMonth}-${currentDay}`
+        : `${currentYear}-${currentMonth}-${currentDay}`;
+    });
+
+    const minDateForTimepicker = computed(() => {
+      const currentDate = new Date();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = (currentDate.getMonth() + 1)
+        .toString()
+        .padStart(2, '0');
+      const dayFollowingTheCurrent = (currentDate.getDate() + 1)
+        .toString()
+        .padStart(2, '0');
+
+      return over13Checked.value
+        ? '1900-01-01'
+        : `${currentYear - 13}-${currentMonth}-${dayFollowingTheCurrent}`;
+    });
+
+    function maybeStartIntro(): void {
+      if (introStarted.value || props.hasVisitedSection) {
         return;
       }
-      const title = T.signUpFormInteractiveGuideTitle;
-      const steps: Array<{
-        title: string;
-        intro: string;
-        element?: Element;
-      }> = [
-        {
-          title,
-          intro: T.signUpFormInteractiveGuideWelcome,
-        },
-      ];
-      const addStep = (selector: string, intro: string): void => {
-        const element = document.querySelector(selector);
-        if (!element) {
+      if (props.activeTab !== 'signup') {
+        return;
+      }
+
+      nextTick(() => {
+        if (introStarted.value || props.hasVisitedSection) {
           return;
         }
-        steps.push({
-          element,
-          title,
-          intro,
-        });
-      };
+        const title = T.signUpFormInteractiveGuideTitle;
+        const steps: Array<{
+          title: string;
+          intro: string;
+          element?: HTMLElement;
+        }> = [
+          {
+            title,
+            intro: T.signUpFormInteractiveGuideWelcome,
+          },
+        ];
+        const addStep = (selector: string, intro: string): void => {
+          const element = document.querySelector<HTMLElement>(selector);
+          if (!element) {
+            return;
+          }
+          steps.push({
+            element,
+            title,
+            intro,
+          });
+        };
 
-      addStep('.introjs-username', T.signUpFormInteractiveGuideUsername);
-      addStep('.introjs-email', T.signUpFormInteractiveGuideEmail);
-      addStep('.introjs-password', T.signUpFormInteractiveGuidePassword);
-      addStep(
-        '.introjs-confirmpassword',
-        T.signUpFormInteractiveGuideConfirmPassword,
-      );
-      addStep(
-        '.introjs-terms-and-conditions',
-        T.signUpFormInteractiveGuideTermsAndConditions,
-      );
-      addStep('.introjs-register', T.signUpFormInteractiveGuideRegister);
+        addStep('.introjs-username', T.signUpFormInteractiveGuideUsername);
+        addStep('.introjs-email', T.signUpFormInteractiveGuideEmail);
+        addStep('.introjs-password', T.signUpFormInteractiveGuidePassword);
+        addStep(
+          '.introjs-confirmpassword',
+          T.signUpFormInteractiveGuideConfirmPassword,
+        );
+        addStep(
+          '.introjs-terms-and-conditions',
+          T.signUpFormInteractiveGuideTermsAndConditions,
+        );
+        addStep('.introjs-register', T.signUpFormInteractiveGuideRegister);
 
-      if (steps.length <= 1) {
+        if (steps.length <= 1) {
+          return;
+        }
+        introStarted.value = true;
+        introJs()
+          .setOptions({
+            nextLabel: T.interactiveGuideNextButton,
+            prevLabel: T.interactiveGuidePreviousButton,
+            doneLabel: T.interactiveGuideDoneButton,
+            steps,
+          })
+          .start();
+        setCookie('has-visited-signup', true);
+      });
+    }
+
+    function verify(response: string): void {
+      recaptchaResponse.value = response;
+    }
+
+    function expired(): void {
+      recaptchaResponse.value = '';
+    }
+
+    function updateDateRestriction(): void {
+      if (over13Checked.value) {
+        isUnder13.value = false;
         return;
       }
-      this.introStarted = true;
-      introJs()
-        .setOptions({
-          nextLabel: T.interactiveGuideNextButton,
-          prevLabel: T.interactiveGuidePreviousButton,
-          doneLabel: T.interactiveGuideDoneButton,
-          steps,
-        })
-        .start();
-      setCookie('has-visited-signup', true);
-    });
-  }
-
-  verify(response: string): void {
-    this.recaptchaResponse = response;
-  }
-
-  expired(): void {
-    this.recaptchaResponse = '';
-  }
-
-  get termsAndPolicies(): boolean {
-    return this.privacyPolicyAccepted && this.codeOfConductAccepted;
-  }
-
-  get formattedAcceptPolicyMarkdown(): string {
-    const policyUrl = getBlogUrl('PrivacyPolicyURL');
-    return ui.formatString(T.acceptPrivacyPolicy, {
-      PrivacyPolicyURL: policyUrl,
-    });
-  }
-
-  get formattedAcceptConductMarkdown(): string {
-    const conductUrl = getBlogUrl('CodeofConductPolicyURL');
-    return ui.formatString(T.acceptCodeOfConduct, {
-      CodeofConductPolicyURL: conductUrl,
-    });
-  }
-
-  get maxDateForTimepicker() {
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentMonth = (currentDate.getMonth() + 1)
-      .toString()
-      .padStart(2, '0');
-    const currentDay = currentDate.getDate().toString().padStart(2, '0');
-
-    return this.over13Checked
-      ? `${currentYear - 13}-${currentMonth}-${currentDay}`
-      : `${currentYear}-${currentMonth}-${currentDay}`;
-  }
-
-  get minDateForTimepicker() {
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentMonth = (currentDate.getMonth() + 1)
-      .toString()
-      .padStart(2, '0');
-    const dayFollowingTheCurrent = (currentDate.getDate() + 1)
-      .toString()
-      .padStart(2, '0');
-
-    return this.over13Checked
-      ? '1900-01-01'
-      : `${currentYear - 13}-${currentMonth}-${dayFollowingTheCurrent}`;
-  }
-
-  updateDateRestriction() {
-    if (this.over13Checked) {
-      this.isUnder13 = false;
-      return;
+      isUnder13.value = true;
     }
-    this.isUnder13 = true;
-  }
-}
+
+    onMounted(() => {
+      maybeStartIntro();
+    });
+
+    watch(
+      () => props.activeTab,
+      (newValue: string) => {
+        if (newValue === 'signup') {
+          maybeStartIntro();
+        }
+      },
+    );
+
+    return {
+      T,
+      ui,
+      username,
+      email,
+      dateOfBirth,
+      parentEmail,
+      password,
+      passwordConfirmation,
+      recaptchaResponse,
+      isUnder13,
+      over13Checked,
+      privacyPolicyAccepted,
+      codeOfConductAccepted,
+      termsAndPolicies,
+      formattedAcceptPolicyMarkdown,
+      formattedAcceptConductMarkdown,
+      maxDateForTimepicker,
+      minDateForTimepicker,
+      verify,
+      expired,
+      updateDateRestriction,
+    };
+  },
+});
 </script>
 
 <style scoped>

@@ -26,26 +26,45 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+import { defineComponent, ref, watch, PropType } from 'vue';
 import user_SidebarMainInfo from './SidebarMainInfo.vue';
 import { types } from '../../api_types';
 
-@Component({
+export default defineComponent({
+  name: 'ProfileWrapper',
   components: {
     'omegaup-user-maininfo': user_SidebarMainInfo,
   },
-})
-export default class ProfileWrapper extends Vue {
-  @Prop({ default: null }) data!: types.ExtraProfileDetails | null;
-  @Prop() profile!: types.UserProfileInfo;
-  @Prop({ default: null }) selectedTab!: null | string;
-  @Prop() hasPassword!: boolean;
+  props: {
+    data: {
+      type: Object as PropType<types.ExtraProfileDetails | null>,
+      default: null,
+    },
+    profile: {
+      type: Object as PropType<types.UserProfileInfo>,
+    },
+    selectedTab: {
+      type: String as PropType<string | null>,
+      default: null,
+    },
+    hasPassword: {
+      type: Boolean,
+    },
+  },
+  emits: ['update:selectedTab'],
+  setup(props, { emit }) {
+    const currentSelectedTab = ref<string | null>(props.selectedTab);
 
-  currentSelectedTab = this.selectedTab;
+    watch(
+      () => currentSelectedTab.value,
+      (newValue) => {
+        emit('update:selectedTab', newValue);
+      },
+    );
 
-  @Watch('currentSelectedTab')
-  onCurrentSelectedTabChanged(newValue: string) {
-    this.$emit('update:selectedTab', newValue);
-  }
-}
+    return {
+      currentSelectedTab,
+    };
+  },
+});
 </script>

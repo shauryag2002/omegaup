@@ -21,7 +21,7 @@ OmegaUp.on('ready', () => {
 
   createApp({
     render: () =>
-      h(course_Form, {
+      h(course_Form as any, {
         course: {
           alias: '',
           description: '',

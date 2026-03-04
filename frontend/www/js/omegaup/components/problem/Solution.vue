@@ -29,7 +29,7 @@
           ui.formatString(T.solutionViewsLeft, {
             available: allowedSolutionsToSee,
             total: 5,
-          }),
+          })
         "
       ></OmegaupMarkdown>
       <div class="text-center mt-5">

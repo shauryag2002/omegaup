@@ -67,6 +67,7 @@ export enum AvailableTabs {
   Login = 'login',
   Signup = 'signup',
 }
+export default {};
 </script>
 
 <script setup lang="ts">

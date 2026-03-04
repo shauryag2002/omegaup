@@ -1,7 +1,7 @@
 import { shallowMount, mount } from '@vue/test-utils';
 
 import CaseEdit from './CaseEdit.vue';
-import { BButton } from 'bootstrap-vue-next';
+import { createBootstrap, BButton } from 'bootstrap-vue-next';
 import store from '@/js/omegaup/problem/creator/store';
 import { nextTick } from 'vue';
 import { NIL as UUID_NIL } from 'uuid';
@@ -39,7 +39,9 @@ describe('CaseEdit.vue', () => {
   });
 
   it('Should show an ungrouped case', async () => {
-    const wrapper = shallowMount(CaseEdit, { global: { plugins: [store] } });
+    const wrapper = shallowMount(CaseEdit, {
+      global: { plugins: [store, createBootstrap()] },
+    });
 
     const groupID = newUngroupedCasegroup.groupID;
     const caseID = newUngroupedCase.caseID;
@@ -75,7 +77,9 @@ describe('CaseEdit.vue', () => {
   });
 
   it('Should show a grouped case', async () => {
-    const wrapper = shallowMount(CaseEdit, { global: { plugins: [store] } });
+    const wrapper = shallowMount(CaseEdit, {
+      global: { plugins: [store, createBootstrap()] },
+    });
 
     const groupID = newGroup.groupID;
     const caseID = newCase.caseID;
@@ -98,7 +102,9 @@ describe('CaseEdit.vue', () => {
   });
 
   it('Should delete a case', async () => {
-    const wrapper = mount(CaseEdit, { global: { plugins: [store] } });
+    const wrapper = mount(CaseEdit, {
+      global: { plugins: [store, createBootstrap()] },
+    });
 
     const groupID = newGroup.groupID;
     const caseID = newCase.caseID;
@@ -125,7 +131,9 @@ describe('CaseEdit.vue', () => {
   });
 
   it('Should add, modify and delete a line', async () => {
-    const wrapper = mount(CaseEdit, { global: { plugins: [store] } });
+    const wrapper = mount(CaseEdit, {
+      global: { plugins: [store, createBootstrap()] },
+    });
 
     const groupID = newGroup.groupID;
     const caseID = newCase.caseID;
@@ -181,7 +189,9 @@ describe('CaseEdit.vue', () => {
   });
 
   it('Should write and erase outputs', async () => {
-    const wrapper = mount(CaseEdit, { global: { plugins: [store] } });
+    const wrapper = mount(CaseEdit, {
+      global: { plugins: [store, createBootstrap()] },
+    });
 
     const groupID = newGroup.groupID;
     const caseID = newCase.caseID;
@@ -227,7 +237,9 @@ describe('CaseEdit.vue', () => {
     store.commit('casesStore/addCase', newUngroupedCase);
     store.commit('casesStore/addGroup', newGroup);
 
-    const wrapper = mount(CaseEdit, { global: { plugins: [store] } });
+    const wrapper = mount(CaseEdit, {
+      global: { plugins: [store, createBootstrap()] },
+    });
 
     const groupID = newUngroupedCasegroup.groupID;
     const caseID = newUngroupedCase.caseID;
@@ -302,7 +314,9 @@ describe('CaseEdit.vue', () => {
 
   describe.each(arrayInputMapping)(`An array with:`, (arrayInput) => {
     it(`size ${arrayInput.arrSize}, minimum ${arrayInput.arrLow}, maximum ${arrayInput.arrHigh}, distinct ${arrayInput.distinct}, should have uniqueConstraint ${arrayInput.emptyConstraint} and emptyConstraint ${arrayInput.emptyConstraint}`, async () => {
-      const wrapper = mount(CaseEdit, { global: { plugins: [store] } });
+      const wrapper = mount(CaseEdit, {
+        global: { plugins: [store, createBootstrap()] },
+      });
 
       const array = wrapper.vm
         .getArrayContent(
@@ -395,7 +409,9 @@ describe('CaseEdit.vue', () => {
 
   describe.each(matrixInputMapping)(`A matrix with:`, (matrixInput) => {
     it(`${matrixInput.matrixRows} rows, ${matrixInput.matrixCols} columns, minimum ${matrixInput.matrixLow}, maximum ${matrixInput.matrixHigh}, distinct type ${matrixInput.distinct}, should have emptyConstraint ${matrixInput.emptyConstraint}, rowUniqueConstraint ${matrixInput.rowUniqueConstraint}, colUniqueConstraint ${matrixInput.colUniqueConstraint}`, async () => {
-      const wrapper = mount(CaseEdit, { global: { plugins: [store] } });
+      const wrapper = mount(CaseEdit, {
+        global: { plugins: [store, createBootstrap()] },
+      });
       const matrix = wrapper.vm
         .getMatrixContent(
           matrixInput.matrixRows,
@@ -439,7 +455,9 @@ describe('CaseEdit.vue', () => {
   });
 
   it('Should generate and render arrays', async () => {
-    const wrapper = mount(CaseEdit, { global: { plugins: [store] } });
+    const wrapper = mount(CaseEdit, {
+      global: { plugins: [store, createBootstrap()] },
+    });
 
     const groupID = newGroup.groupID;
     const caseID = newCase.caseID;
@@ -481,9 +499,9 @@ describe('CaseEdit.vue', () => {
     await modalBody.find('input[data-array-modal-size]').setValue(5);
     await modalBody.find('input[data-array-modal-min]').setValue(10);
     await modalBody.find('input[data-array-modal-max]').setValue(20);
-    await (modalBody.find(
-      'input[data-array-modal-checkbox]',
-    ) as any).setChecked(true);
+    await (modalBody.find('input[data-array-modal-checkbox]') as any).setValue(
+      true,
+    );
 
     await modalButton.trigger('click');
     expect(mockGenerate).toHaveBeenCalledWith(5, 10, 20, true);
@@ -492,13 +510,15 @@ describe('CaseEdit.vue', () => {
     await modalInputs[0].setValue(5);
     await modalInputs[1].setValue(10);
     await modalInputs[2].setValue(10);
-    await (modalInputs[3] as any).setChecked(false);
+    await (modalInputs[3] as any).setValue(false);
 
     await modalButton.trigger('click');
 
     expect(
-      (modalBody.find('input[data-array-modal-generated-array]')
-        .element as HTMLInputElement).value,
+      (
+        modalBody.find('input[data-array-modal-generated-array]')
+          .element as HTMLInputElement
+      ).value,
     ).toBe('10 10 10 10 10');
 
     const modalFooter = wrapper.find('footer.modal-footer');
@@ -517,7 +537,9 @@ describe('CaseEdit.vue', () => {
   });
 
   it('Should generate and render matrices', async () => {
-    const wrapper = mount(CaseEdit, { global: { plugins: [store] } });
+    const wrapper = mount(CaseEdit, {
+      global: { plugins: [store, createBootstrap()] },
+    });
 
     const groupID = newGroup.groupID;
     const caseID = newCase.caseID;
@@ -563,8 +585,10 @@ describe('CaseEdit.vue', () => {
 
     await modalButton.trigger('click');
     expect(
-      (modalBody.find('textarea[data-matrix-modal-generated-matrix]')
-        .element as HTMLInputElement).value,
+      (
+        modalBody.find('textarea[data-matrix-modal-generated-matrix]')
+          .element as HTMLInputElement
+      ).value,
     ).toBe('20 20 20\n20 20 20\n20 20 20');
 
     const modalFooter = wrapper.find('footer.modal-footer');
@@ -608,7 +632,9 @@ describe('CaseEdit.vue', () => {
     `When dropdown:`,
     ({ matrixDistinctType, matrixDistinctEnum }) => {
       it(`${matrixDistinctType} is selected, function should be called with ${matrixDistinctEnum}`, async () => {
-        const wrapper = mount(CaseEdit, { global: { plugins: [store] } });
+        const wrapper = mount(CaseEdit, {
+          global: { plugins: [store, createBootstrap()] },
+        });
 
         const groupID = newGroup.groupID;
         const caseID = newCase.caseID;
@@ -652,7 +678,9 @@ describe('CaseEdit.vue', () => {
   );
 
   it('deletes line, downloads .in and downloads .txt, when corresponding buttons are clicked', async () => {
-    const wrapper = mount(CaseEdit, { global: { plugins: [store] } });
+    const wrapper = mount(CaseEdit, {
+      global: { plugins: [store, createBootstrap()] },
+    });
 
     const groupID = newGroup.groupID;
     const caseID = newCase.caseID;

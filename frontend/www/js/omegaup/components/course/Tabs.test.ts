@@ -44,8 +44,8 @@ describe('Tabs.vue', () => {
   };
 
   it('Should show tabs', () => {
-    const wrapper = shallowMount(course_Tabs, {
-      propsData: {
+    const wrapper = shallowMount(course_Tabs as any, {
+      props: {
         courses,
       },
     });
@@ -57,8 +57,8 @@ describe('Tabs.vue', () => {
   });
 
   it('Should show tabs with counts for logged user', () => {
-    const wrapper = mount(course_Tabs, {
-      propsData: {
+    const wrapper = mount(course_Tabs as any, {
+      props: {
         courses,
         loggedIn: true,
       },
@@ -79,8 +79,8 @@ describe('Tabs.vue', () => {
   });
 
   it('Should show the correct course cards', async () => {
-    const wrapper = mount(course_Tabs, {
-      propsData: {
+    const wrapper = mount(course_Tabs as any, {
+      props: {
         courses,
         loggedIn: true,
       },

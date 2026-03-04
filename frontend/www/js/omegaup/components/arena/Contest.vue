@@ -384,11 +384,9 @@ const activeProblemAlias = computed((): null | string => {
   return activeProblem.value?.alias ?? null;
 });
 
-const deadline = computed(
-  (): Date => {
-    return props.submissionDeadline || props.contest.finish_time;
-  },
-);
+const deadline = computed((): Date => {
+  return props.submissionDeadline || props.contest.finish_time;
+});
 
 const isContestFinished = computed((): boolean => {
   return deadline.value < now.value;

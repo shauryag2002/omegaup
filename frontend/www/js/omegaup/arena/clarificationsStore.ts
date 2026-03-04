@@ -29,13 +29,12 @@ export const clarificationStoreConfig = {
           clarification.clarification_id,
         )
       ) {
-        state.clarifications[
-          state.index[clarification.clarification_id]
-        ] = Object.assign(
-          {},
-          state.clarifications[state.index[clarification.clarification_id]],
-          clarification,
-        );
+        state.clarifications[state.index[clarification.clarification_id]] =
+          Object.assign(
+            {},
+            state.clarifications[state.index[clarification.clarification_id]],
+            clarification,
+          );
         return;
       }
       state.index[clarification.clarification_id] = state.clarifications.length;

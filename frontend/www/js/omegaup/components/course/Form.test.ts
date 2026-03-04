@@ -42,16 +42,16 @@ const selector = '.omegaup-course-details button.btn-primary';
 
 describe('Form.vue', () => {
   it('Should handle course edit form', () => {
-    const wrapper = shallowMount(course_Form, {
-      propsData: baseCourseFormProps,
+    const wrapper = shallowMount(course_Form as any, {
+      props: baseCourseFormProps,
     });
 
     expect(wrapper.find(selector).text()).toBe(T.courseNewFormUpdateCourse);
   });
 
   it('Should handle admission mode as normal user', () => {
-    const wrapper = shallowMount(course_Form, {
-      propsData: Object.assign({}, baseCourseFormProps, { update: false }),
+    const wrapper = shallowMount(course_Form as any, {
+      props: Object.assign({}, baseCourseFormProps, { update: false }),
     });
 
     expect(wrapper.find(selector).text()).toBe(T.courseNewFormScheduleCourse);

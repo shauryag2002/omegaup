@@ -26,8 +26,8 @@ const profile: types.UserProfileInfo = {
 
 describe('ManageSchools.vue', () => {
   it('Should enable graduation date', async () => {
-    const wrapper = mount(userManageSchools, {
-      propsData: {
+    const wrapper = mount(userManageSchools as any, {
+      props: {
         profile,
         searchResultSchools: [{ key: 'teams-group', value: 'teams group' }],
       },
@@ -37,13 +37,13 @@ describe('ManageSchools.vue', () => {
     await wrapper
       .findComponent(omegaupRadioSwitch)
       .find('input[value="false"]')
-      .setChecked();
+      .setValue(true);
     expect(wrapper.findComponent(datePicker).element).toBeEnabled();
   });
 
   it('Should emit user update schools', async () => {
-    const wrapper = mount(userManageSchools, {
-      propsData: {
+    const wrapper = mount(userManageSchools as any, {
+      props: {
         profile,
         searchResultSchools: [{ key: 1, value: 'escuela' }],
       },
@@ -52,11 +52,11 @@ describe('ManageSchools.vue', () => {
     await wrapper
       .find('select')
       .find('option[value="bachelors"]')
-      .setSelected();
+      .setValue(true);
     await wrapper
       .findComponent(omegaupRadioSwitch)
       .find('input[value="false"]')
-      .setChecked();
+      .setValue(true);
     await wrapper.findComponent(datePicker).setValue('2010-10-10');
 
     await wrapper.find('button[type="submit"]').trigger('submit');

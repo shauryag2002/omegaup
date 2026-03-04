@@ -67,6 +67,7 @@ export enum CourseType {
   Public = 'public',
   Student = 'student',
 }
+export default {};
 </script>
 
 <script setup lang="ts">

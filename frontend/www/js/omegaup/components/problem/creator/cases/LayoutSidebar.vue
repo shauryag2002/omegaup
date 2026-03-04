@@ -42,9 +42,8 @@
             <b-dropdown-item
               data-layout-dropdown-rename-layout
               @click="
-                showRenameModal[layout.layoutID] = !showRenameModal[
-                  layout.layoutID
-                ]
+                showRenameModal[layout.layoutID] =
+                  !showRenameModal[layout.layoutID]
               "
             >
               <div class="d-flex">
@@ -57,7 +56,10 @@
               @click="enforceLayoutToTheSelectedCase(layout.layoutID)"
             >
               <div class="d-flex">
-                <FontAwesomeIcon :icon="['fas', 'arrows-left-right']" class="pt-1 mr-3" />
+                <FontAwesomeIcon
+                  :icon="['fas', 'arrows-left-right']"
+                  class="pt-1 mr-3"
+                />
                 {{ T.problemCreatorLayoutLoadToSelected }}
               </div>
             </b-dropdown-item>
@@ -66,7 +68,10 @@
               @click="enforceLayoutToAllCases(layout.layoutID)"
             >
               <div class="d-flex">
-                <FontAwesomeIcon :icon="['fas', 'arrows-rotate']" class="pt-1 mr-3" />
+                <FontAwesomeIcon
+                  :icon="['fas', 'arrows-rotate']"
+                  class="pt-1 mr-3"
+                />
                 {{ T.problemCreatorLayoutLoadToAll }}
               </div>
             </b-dropdown-item>
@@ -75,7 +80,10 @@
               @click="copyLayout(layout.layoutID)"
             >
               <div class="d-flex">
-                <FontAwesomeIcon :icon="['fas', 'download']" class="pt-1 mr-3" />
+                <FontAwesomeIcon
+                  :icon="['fas', 'download']"
+                  class="pt-1 mr-3"
+                />
                 {{ T.problemCreatorLayoutCopy }}
               </div>
             </b-dropdown-item>
@@ -176,7 +184,10 @@
             >
               <div class="container">
                 <div class="row">
-                  <FontAwesomeIcon :icon="['fas', 'square-plus']" class="mr-2 pt-1" />
+                  <FontAwesomeIcon
+                    :icon="['fas', 'square-plus']"
+                    class="mr-2 pt-1"
+                  />
                   {{ T.problemCreatorLayoutAddLineInfo }}
                 </div>
               </div>
@@ -192,11 +203,41 @@
 import { defineComponent, reactive, computed, watch } from 'vue';
 import { useStore } from 'vuex';
 import T from '../../../../lang';
-import { BButton, BCard, BCardHeader, BCol, BCollapse, BContainer, BDropdown, BDropdownItem, BFormInput, BModal, BRow } from 'bootstrap-vue-next';
+import {
+  BButton,
+  BCard,
+  BCardHeader,
+  BCol,
+  BCollapse,
+  BContainer,
+  BDropdown,
+  BDropdownItem,
+  BFormInput,
+  BModal,
+  BRow,
+} from 'bootstrap-vue-next';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faArrowsLeftRight, faArrowsRotate, faDownload, faPenToSquare, faPencil, faSquarePlus, faTrash, faTrashCan } from '@fortawesome/free-solid-svg-icons';
-library.add(faArrowsLeftRight, faArrowsRotate, faDownload, faPenToSquare, faPencil, faSquarePlus, faTrash, faTrashCan);
+import {
+  faArrowsLeftRight,
+  faArrowsRotate,
+  faDownload,
+  faPenToSquare,
+  faPencil,
+  faSquarePlus,
+  faTrash,
+  faTrashCan,
+} from '@fortawesome/free-solid-svg-icons';
+library.add(
+  faArrowsLeftRight,
+  faArrowsRotate,
+  faDownload,
+  faPenToSquare,
+  faPencil,
+  faSquarePlus,
+  faTrash,
+  faTrashCan,
+);
 import {
   Layout,
   LayoutID,
@@ -232,18 +273,16 @@ export default defineComponent({
       store.commit('casesStore/enforceLayoutToTheSelectedCase', layoutID);
     const addNewLineInfoToLayout = (layoutID: LayoutID) =>
       store.commit('casesStore/addNewLineInfoToLayout', layoutID);
-    const editLineInfoKind = (
-      payload: [LayoutID, LineInfoID, CaseLineKind],
-    ) => store.commit('casesStore/editLineInfoKind', payload);
+    const editLineInfoKind = (payload: [LayoutID, LineInfoID, CaseLineKind]) =>
+      store.commit('casesStore/editLineInfoKind', payload);
     const enforceLayoutToAllCases = (layoutID: LayoutID) =>
       store.commit('casesStore/enforceLayoutToAllCases', layoutID);
     const copyLayout = (layoutID: LayoutID) =>
       store.commit('casesStore/copyLayout', layoutID);
     const removeLayout = (layoutID: LayoutID) =>
       store.commit('casesStore/removeLayout', layoutID);
-    const removeLineInfoFromLayout = (
-      payload: [LayoutID, LineInfoID],
-    ) => store.commit('casesStore/removeLineInfoFromLayout', payload);
+    const removeLineInfoFromLayout = (payload: [LayoutID, LineInfoID]) =>
+      store.commit('casesStore/removeLineInfoFromLayout', payload);
     const editLayoutName = (payload: [LayoutID, string]) =>
       store.commit('casesStore/editLayoutName', payload);
 

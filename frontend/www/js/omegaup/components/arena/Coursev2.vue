@@ -118,7 +118,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+import { defineComponent, computed, ref, watch, PropType } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
@@ -128,11 +128,24 @@ import problem_Details from '../problem/Detailsv2.vue';
 
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
-import { BButton, BCard, BCardHeader, BCol, BContainer, BNav, BNavItem, BRow } from 'bootstrap-vue-next';
+import {
+  BButton,
+  BCard,
+  BCardHeader,
+  BCol,
+  BContainer,
+  BNav,
+  BNavItem,
+  BRow,
+} from 'bootstrap-vue-next';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faChevronLeft, faCircleArrowLeft, faCircleArrowRight } from '@fortawesome/free-solid-svg-icons';
+import {
+  faChevronLeft,
+  faCircleArrowLeft,
+  faCircleArrowRight,
+} from '@fortawesome/free-solid-svg-icons';
 library.add(faChevronLeft, faCircleArrowLeft, faCircleArrowRight);
 
 export enum Tabs {
@@ -140,56 +153,100 @@ export enum Tabs {
   Ranking = 'ranking',
 }
 
-@Component({
+export default defineComponent({
+  name: 'ArenaCourse',
   components: {
     FontAwesomeIcon,
     'omegaup-markdown': omegaup_Markdown,
     'omegaup-arena-scoreboard': arena_Scoreboard,
     'omegaup-problem-details': problem_Details,
   },
-})
-export default class ArenaCourse extends Vue {
-  @Prop() allRuns!: types.Run[];
-  @Prop() assignment!: types.ArenaCourseAssignment;
-  @Prop() course!: types.ArenaCourseDetails;
-  @Prop() currentProblem!: types.ProblemDetails;
-  @Prop() currentRunDetails!: types.RunDetails | null;
-  @Prop() problems!: types.ArenaCourseProblem[];
-  @Prop() scoreboard!: types.Scoreboard;
-  @Prop({ default: Tabs.Summary }) selectedTab!: string | null;
-  @Prop() user!: types.UserInfoForProblem;
-  @Prop() userRuns!: types.Run[];
+  props: {
+    allRuns: {
+      type: Array as PropType<types.Run[]>,
+      required: true,
+    },
+    assignment: {
+      type: Object as PropType<types.ArenaCourseAssignment>,
+      required: true,
+    },
+    course: {
+      type: Object as PropType<types.ArenaCourseDetails>,
+      required: true,
+    },
+    currentProblem: {
+      type: Object as PropType<types.ProblemDetails>,
+      required: true,
+    },
+    currentRunDetails: {
+      type: Object as PropType<types.RunDetails | null>,
+      default: null,
+    },
+    problems: {
+      type: Array as PropType<types.ArenaCourseProblem[]>,
+      required: true,
+    },
+    scoreboard: {
+      type: Object as PropType<types.Scoreboard>,
+      required: true,
+    },
+    selectedTab: {
+      type: String as PropType<string | null>,
+      default: Tabs.Summary,
+    },
+    user: {
+      type: Object as PropType<types.UserInfoForProblem>,
+      required: true,
+    },
+    userRuns: {
+      type: Array as PropType<types.Run[]>,
+      required: true,
+    },
+  },
+  emits: ['show-run-details', 'submit-run'],
+  setup(props) {
+    const currentSelectedTab = ref<string | null>(props.selectedTab);
 
-  T = T;
-  ui = ui;
-  Tabs = Tabs;
-  currentSelectedTab: string | null = this.selectedTab;
+    const currentAssignmentIndex = computed((): number => {
+      return props.course.assignments.findIndex(
+        (assignment) => assignment.alias === props.assignment.alias,
+      );
+    });
 
-  private get currentAssignmentIndex(): number {
-    return this.course.assignments.findIndex(
-      (assignment) => assignment.alias === this.assignment.alias,
+    const previousAssignment = computed((): types.CourseAssignment | null => {
+      if (currentAssignmentIndex.value === 0) {
+        return null;
+      }
+      return props.course.assignments[currentAssignmentIndex.value - 1];
+    });
+
+    const nextAssignment = computed((): types.CourseAssignment | null => {
+      if (
+        currentAssignmentIndex.value ===
+        props.course.assignments.length - 1
+      ) {
+        return null;
+      }
+      return props.course.assignments[currentAssignmentIndex.value + 1];
+    });
+
+    watch(
+      () => props.selectedTab,
+      (newValue) => {
+        currentSelectedTab.value = newValue;
+      },
     );
-  }
 
-  get previousAssignment(): types.CourseAssignment | null {
-    if (this.currentAssignmentIndex === 0) {
-      return null;
-    }
-    return this.course.assignments[this.currentAssignmentIndex - 1];
-  }
-
-  get nextAssignment(): types.CourseAssignment | null {
-    if (this.currentAssignmentIndex === this.course.assignments.length - 1) {
-      return null;
-    }
-    return this.course.assignments[this.currentAssignmentIndex + 1];
-  }
-
-  @Watch('selectedTab')
-  onSelectedTabChanged(newValue: string | null) {
-    this.currentSelectedTab = newValue;
-  }
-}
+    return {
+      T,
+      ui,
+      Tabs,
+      currentSelectedTab,
+      previousAssignment,
+      nextAssignment,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>

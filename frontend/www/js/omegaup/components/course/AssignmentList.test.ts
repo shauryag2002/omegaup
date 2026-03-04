@@ -10,7 +10,7 @@ import course_AssignmentList from './AssignmentList.vue';
 describe('AssignmentList.vue', () => {
   it('Should handle empty content list', () => {
     const wrapper = shallowMount(course_AssignmentList, {
-      propsData: {
+      props: {
         content: [] as types.CourseAssignment[],
         courseAlias: 'course_alias',
       },
@@ -21,7 +21,19 @@ describe('AssignmentList.vue', () => {
 
   it('Should handle content list', async () => {
     const wrapper = shallowMount(course_AssignmentList, {
-      propsData: {
+      global: {
+        directives: {
+          Sortable: {
+            mounted: (
+              el: HTMLElement,
+              binding: import('vue').DirectiveBinding,
+            ) => {
+              new Sortable(el, binding.value || {});
+            },
+          },
+        },
+      },
+      props: {
         content: [
           {
             alias: 'CA',

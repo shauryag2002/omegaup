@@ -47,8 +47,8 @@ describe('Mine.vue', () => {
   };
 
   it('Should handle an empty table', () => {
-    const wrapper = shallowMount(certificate_Mine, {
-      propsData: {
+    const wrapper = shallowMount(certificate_Mine as any, {
+      props: {
         certificates: [] as types.CertificateListItem[],
       },
     });
@@ -59,7 +59,7 @@ describe('Mine.vue', () => {
   });
 
   it('Should handle a table with data', () => {
-    const wrapper = mount(certificate_Mine, {
+    const wrapper = mount(certificate_Mine as any, {
       propsData,
     });
 
@@ -85,11 +85,11 @@ describe('Mine.vue', () => {
 
   it('Should copy the verification code', () => {
     const defineSpy = jest.spyOn(
-      ((certificate_Mine as unknown) as Mine).options.methods,
+      (certificate_Mine as unknown as Mine).options.methods,
       'getVerificationLink',
     );
 
-    shallowMount(certificate_Mine, {
+    shallowMount(certificate_Mine as any, {
       propsData,
     });
 
@@ -105,15 +105,18 @@ describe('Mine.vue', () => {
 
   it('Should download a file', async () => {
     const clickSpy = jest.spyOn(
-      ((certificate_Mine as unknown) as Mine).options.methods,
+      (certificate_Mine as unknown as Mine).options.methods,
       'getDownloadLink',
     );
 
-    const wrapper = mount(certificate_Mine, {
+    const wrapper = mount(certificate_Mine as any, {
       propsData,
     });
 
-    await wrapper.findAll('a[download-file]').trigger('click');
+    const downloadLinks = wrapper.findAll('a[download-file]');
+    for (const link of downloadLinks) {
+      await link.trigger('click');
+    }
 
     await wrapper.vm.$nextTick();
 

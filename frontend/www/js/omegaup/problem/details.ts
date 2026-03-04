@@ -223,7 +223,11 @@ OmegaUp.on('ready', async () => {
             contents: JSON.stringify(contents),
           }).catch(ui.apiError);
         },
-        onSubmitDemotion: (source: qualitynomination_Demotion) => {
+        onSubmitDemotion: (source: {
+          rationale: string;
+          selectedReason: string;
+          original: boolean;
+        }) => {
           api.QualityNomination.create({
             problem_alias: payload.problem.alias,
             nomination: 'demotion',
@@ -272,7 +276,7 @@ OmegaUp.on('ready', async () => {
             .catch(ui.apiError);
         },
         onDismissPromotion: (
-          source: qualitynomination_Promotion,
+          source: { solved: boolean; tried: boolean },
           isDismissed: boolean,
         ) => {
           const contents: { before_ac?: boolean } = {};

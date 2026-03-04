@@ -48,7 +48,7 @@ OmegaUp.on('ready', () => {
 
   createApp({
     render: () =>
-      h(problem_Edit, {
+      h(problem_Edit as any, {
         data: payload,
         initialTab: state.initialTab,
         originalVisibility: payload.visibility,
@@ -262,7 +262,7 @@ OmegaUp.on('ready', () => {
             .catch(ui.apiError);
         },
         onRunsDiff: (
-          versions: types.CommitRunsDiff,
+          versions: { runsDiff: types.CommitRunsDiff },
           selectedCommit: types.ProblemVersion,
         ) => {
           api.Problem.runsDiff({

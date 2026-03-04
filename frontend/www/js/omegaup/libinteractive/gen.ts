@@ -7,7 +7,7 @@ OmegaUp.on('ready', () => {
   const payload = types.payloadParsers.LibinteractiveGenPayload();
   createApp({
     render: () =>
-      h(libinteractive_Gen, {
+      h(libinteractive_Gen as any, {
         error: payload.error,
         language: payload.language,
         os: payload.os,

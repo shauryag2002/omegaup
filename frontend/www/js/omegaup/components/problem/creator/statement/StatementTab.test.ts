@@ -1,6 +1,7 @@
-import { shallowMount } from '@vue/test-utils';
+import { shallowMount, VueWrapper } from '@vue/test-utils';
 
 import store from '@/js/omegaup/problem/creator/store';
+import { createBootstrap } from 'bootstrap-vue-next';
 import T from '../../../../lang';
 import * as ui from '../../../../ui';
 import StatementTab from './StatementTab.vue';
@@ -8,7 +9,7 @@ import StatementTab from './StatementTab.vue';
 describe('StatementTab.vue', () => {
   it('Should contain markdown buttons and contents and update the store accordingly', async () => {
     const wrapper = shallowMount(StatementTab, {
-      store,
+      global: { plugins: [store, createBootstrap()] },
     });
 
     const markdownButtons = wrapper.find('div.wmd-button-bar');
@@ -20,28 +21,30 @@ describe('StatementTab.vue', () => {
 
     expect(wrapper.vm.currentMarkdown).toBe('Hello omegaUp');
 
-    const markdownContent = wrapper.find('omegaup-markdown-stub');
+    const markdownContent = wrapper.findComponent(
+      'omegaup-markdown-stub',
+    ) as VueWrapper;
     expect(markdownContent.exists()).toBe(true);
 
     await wrapper.trigger('click');
 
-    expect(markdownContent.props()['markdown']).toBe(
-      T.problemCreatorMarkdownPreviewInitialRender + 'Hello omegaUp',
-    );
+    expect(
+      (markdownContent.props() as Record<string, unknown>)['markdown'],
+    ).toBe(T.problemCreatorMarkdownPreviewInitialRender + 'Hello omegaUp');
 
-    expect(wrapper.vm.$store.state.problemMarkdown).toBe('');
+    expect(store.state.problemMarkdown).toBe('');
 
     const markdownSaveButton = wrapper.find('button.btn-primary');
     expect(markdownSaveButton.exists()).toBe(true);
     await markdownSaveButton.trigger('click');
 
-    expect(wrapper.vm.$store.state.problemMarkdown).toBe('Hello omegaUp');
+    expect(store.state.problemMarkdown).toBe('Hello omegaUp');
   });
 
   describe('Image size validation', () => {
     it('Should allow pasting images under 256 KB', async () => {
       const wrapper = shallowMount(StatementTab, {
-        store,
+        global: { plugins: [store, createBootstrap()] },
       });
 
       const textArea = wrapper.find('textarea.wmd-input');
@@ -68,7 +71,7 @@ describe('StatementTab.vue', () => {
 
     it('Should reject pasting images over 256 KB and show error', async () => {
       const wrapper = shallowMount(StatementTab, {
-        store,
+        global: { plugins: [store, createBootstrap()] },
       });
 
       const errorSpy = jest.spyOn(ui, 'error').mockImplementation(() => {});
@@ -105,7 +108,7 @@ describe('StatementTab.vue', () => {
 
     it('Should reject dropping images over 256 KB and show error', async () => {
       const wrapper = shallowMount(StatementTab, {
-        store,
+        global: { plugins: [store, createBootstrap()] },
       });
 
       const errorSpy = jest.spyOn(ui, 'error').mockImplementation(() => {});
@@ -134,7 +137,7 @@ describe('StatementTab.vue', () => {
 
     it('Should allow non-image files without size validation', async () => {
       const wrapper = shallowMount(StatementTab, {
-        store,
+        global: { plugins: [store, createBootstrap()] },
       });
 
       const textArea = wrapper.find('textarea.wmd-input');

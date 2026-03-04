@@ -1,9 +1,9 @@
 <template>
   <div data-user-profile-edit class="mx-auto">
     <omegaup-user-profile-wrapper
+      v-model:selected-tab="currentSelectedTab"
       :profile="profile"
       :data="data"
-      v-model:selected-tab="currentSelectedTab"
       :has-password="hasPassword"
     >
       <template #message>
@@ -17,11 +17,11 @@
       <template #content>
         <template v-if="currentSelectedTab === 'view-profile'">
           <omegaup-user-view-profile
+            v-model:selected-tab="currentViewProfileSelectedTab"
             :data="data"
             :profile="profile"
             :profile-badges="profileBadges"
             :visitor-badges="visitorBadges"
-            v-model:selected-tab="currentViewProfileSelectedTab"
             :heatmap-data="heatmapData"
             :available-years="availableYears"
             :profile-statistics="profileStatistics"
@@ -102,7 +102,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
+import { defineComponent, ref, computed, watch, PropType } from 'vue';
 import { dao, types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
@@ -126,7 +126,8 @@ export interface ProfileStatistics {
   tags: Array<{ name: string; count: number }>;
 }
 
-@Component({
+export default defineComponent({
+  name: 'Profile',
   components: {
     'omegaup-user-profile-wrapper': user_ProfileWrapper,
     'omegaup-user-view-profile': user_ViewProfile,
@@ -139,47 +140,112 @@ export interface ProfileStatistics {
     'omegaup-user-manage-schools': user_ManageSchools,
     'omegaup-user-delete-account': userDeleteAccount,
   },
-})
-export default class Profile extends Vue {
-  @Prop({ default: null }) data!: types.ExtraProfileDetails | null;
-  @Prop() profile!: types.UserProfileInfo;
-  @Prop({ default: 'view-profile' }) selectedTab!: string;
-  @Prop({ default: null }) viewProfileSelectedTab!: string | null;
-  @Prop() identities!: types.Identity[];
-  @Prop() apiTokens!: types.ApiToken[];
-  @Prop() profileBadges!: Set<string>;
-  @Prop() visitorBadges!: Set<string>;
-  @Prop() countries!: dao.Countries[];
-  @Prop() programmingLanguages!: { [key: string]: string };
-  @Prop() hasPassword!: boolean;
-  @Prop() searchResultSchools!: types.SchoolListItem[];
-  @Prop({ default: () => [] }) heatmapData!: Array<{
-    date: string;
-    count: number;
-  }>;
-  @Prop({ default: () => [] }) availableYears!: number[];
-  @Prop({ default: null }) profileStatistics!: ProfileStatistics | null;
+  props: {
+    data: {
+      type: Object as PropType<types.ExtraProfileDetails | null>,
+      default: null,
+    },
+    profile: {
+      type: Object as PropType<types.UserProfileInfo>,
+      required: true,
+    },
+    selectedTab: {
+      type: String,
+      default: 'view-profile',
+    },
+    viewProfileSelectedTab: {
+      type: String as PropType<string | null>,
+      default: null,
+    },
+    identities: {
+      type: Array as PropType<types.Identity[]>,
+      required: true,
+    },
+    apiTokens: {
+      type: Array as PropType<types.ApiToken[]>,
+      required: true,
+    },
+    profileBadges: {
+      type: Object as PropType<Set<string>>,
+      required: true,
+    },
+    visitorBadges: {
+      type: Object as PropType<Set<string>>,
+      required: true,
+    },
+    countries: {
+      type: Array as PropType<dao.Countries[]>,
+      required: true,
+    },
+    programmingLanguages: {
+      type: Object as PropType<{ [key: string]: string }>,
+      required: true,
+    },
+    hasPassword: {
+      type: Boolean,
+      required: true,
+    },
+    searchResultSchools: {
+      type: Array as PropType<types.SchoolListItem[]>,
+      required: true,
+    },
+    heatmapData: {
+      type: Array as PropType<Array<{ date: string; count: number }>>,
+      default: () => [],
+    },
+    availableYears: {
+      type: Array as PropType<number[]>,
+      default: () => [],
+    },
+    profileStatistics: {
+      type: Object as PropType<ProfileStatistics | null>,
+      default: null,
+    },
+  },
+  emits: [
+    'heatmap-year-changed',
+    'update-user-basic-information',
+    'update-user-basic-information-error',
+    'update-user-preferences',
+    'update-search-result-schools',
+    'update-user-schools',
+    'add-identity',
+    'create-api-token',
+    'revoke-api-token',
+    'update-password',
+    'add-password',
+    'request-delete-account',
+  ],
+  setup(props) {
+    const currentSelectedTab = ref(props.selectedTab);
+    const currentViewProfileSelectedTab = ref(props.viewProfileSelectedTab);
 
-  T = T;
-  ui = ui;
-  currentSelectedTab = this.selectedTab;
-  currentViewProfileSelectedTab = this.viewProfileSelectedTab;
+    const currentTitle = computed((): string => {
+      if (!props.profile.is_own_profile) {
+        return T.omegaupTitleProfile;
+      }
+      return (
+        urlMapping.find((url) => url.key === currentSelectedTab.value)?.title ??
+        'view-profile'
+      );
+    });
 
-  get currentTitle(): string {
-    if (!this.profile.is_own_profile) {
-      return T.omegaupTitleProfile;
-    }
-    return (
-      urlMapping.find((url) => url.key === this.currentSelectedTab)?.title ??
-      'view-profile'
+    watch(
+      () => props.selectedTab,
+      (newValue: string) => {
+        currentSelectedTab.value = newValue;
+      },
     );
-  }
 
-  @Watch('selectedTab')
-  onSelectedTabChanged(newValue: string) {
-    this.currentSelectedTab = newValue;
-  }
-}
+    return {
+      T,
+      ui,
+      currentSelectedTab,
+      currentViewProfileSelectedTab,
+      currentTitle,
+    };
+  },
+});
 </script>
 
 <style scoped>

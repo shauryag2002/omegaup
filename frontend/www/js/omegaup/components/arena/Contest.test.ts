@@ -125,7 +125,7 @@ describe('Contest.vue', () => {
 
   it('Should handle a finished contest', async () => {
     const wrapper = mount(arena_Contest, {
-      propsData: {
+      props: {
         contest: Object.assign({}, contest, { finish_time: currentDate }),
         problems,
         problemInfo,
@@ -139,7 +139,7 @@ describe('Contest.vue', () => {
 
   it('Should handle details for a problem in a contest', async () => {
     const wrapper = mount(arena_Contest, {
-      propsData: {
+      props: {
         contest,
         problems,
         problemInfo,
@@ -163,7 +163,7 @@ describe('Contest.vue', () => {
   it('Should handle a submission', async () => {
     const wrapper = mount(arena_Contest, {
       attachTo: '#root',
-      propsData: {
+      props: {
         contest,
         problems,
         problemInfo,
@@ -180,7 +180,7 @@ describe('Contest.vue', () => {
 
     await wrapper
       .find('select[name="language"] option[value="py3"]')
-      .setSelected();
+      .setValue(true);
 
     const runSubmitWrapper = wrapper.findComponent(arena_RunSubmit);
 
@@ -191,7 +191,7 @@ describe('Contest.vue', () => {
     await wrapper.find('form button[type="submit"]').trigger('click');
     expect(wrapper.emitted('submit-run')).toBeDefined();
 
-    wrapper.destroy();
+    wrapper.unmount();
   });
 
   const run: types.Run = {
@@ -218,7 +218,7 @@ describe('Contest.vue', () => {
   };
   it('Should handle details for a run in a contest', async () => {
     const wrapper = mount(arena_Contest, {
-      propsData: {
+      props: {
         contest,
         problems,
         problem: problems[0],
@@ -234,8 +234,7 @@ describe('Contest.vue', () => {
       [
         {
           guid: '78099022574726af861839e1b4210188',
-          hash:
-            '#problems/problemOmegaUp/show-run:78099022574726af861839e1b4210188',
+          hash: '#problems/problemOmegaUp/show-run:78099022574726af861839e1b4210188',
           isAdmin: false,
         },
       ],
@@ -244,7 +243,7 @@ describe('Contest.vue', () => {
 
   it('Should handle details for a run in a contest as admin', async () => {
     const wrapper = mount(arena_Contest, {
-      propsData: {
+      props: {
         activeTab: 'runs',
         contestAdmin: true,
         contest,
@@ -273,7 +272,7 @@ describe('Contest.vue', () => {
 
   it('Should display the edit button when current user is admin', () => {
     const wrapper = mount(arena_Contest, {
-      propsData: {
+      props: {
         activeTab: 'runs',
         contestAdmin: true,
         contest,
@@ -287,7 +286,7 @@ describe('Contest.vue', () => {
 
   it('Should hide the edit button when current user is not an admin', () => {
     const wrapper = mount(arena_Contest, {
-      propsData: {
+      props: {
         activeTab: 'runs',
         contestAdmin: false,
         contest,

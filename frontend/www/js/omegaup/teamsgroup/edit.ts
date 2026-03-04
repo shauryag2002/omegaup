@@ -368,9 +368,8 @@ OmegaUp.on('ready', () => {
                   });
                 }
               }
-              identitiesTeams[
-                `teams:${payload.teamGroup.alias}:${username}`
-              ] = members;
+              identitiesTeams[`teams:${payload.teamGroup.alias}:${username}`] =
+                members;
             }
             ui.dismissNotifications();
             state.userErrorRow = null;

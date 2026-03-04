@@ -20,11 +20,15 @@ OmegaUp.on('ready', () => {
   const getStats = (entityType: string): void => {
     if (entityType === 'contest') {
       api.Contest.stats({ contest_alias: payload.alias })
-        .then((s) => (statsChart.stats = s))
+        .then((s) => {
+          Object.assign(state.stats, s);
+        })
         .catch(ui.apiError);
     } else {
       api.Problem.stats({ problem_alias: payload.alias })
-        .then((s) => (statsChart.stats = s))
+        .then((s) => {
+          Object.assign(state.stats, s);
+        })
         .catch(ui.apiError);
     }
   };
@@ -139,8 +143,7 @@ OmegaUp.on('ready', () => {
         events: {
           load: (ev: Event): void => {
             // set up the updating of the chart each second
-            const series = ((ev.target as unknown) as Highcharts.Chart)
-              .series[0];
+            const series = (ev.target as unknown as Highcharts.Chart).series[0];
             setInterval(() => {
               const x = new Date().getTime(), // current time
                 y = state.stats.pending_runs.length;
@@ -190,12 +193,10 @@ OmegaUp.on('ready', () => {
         pendingChartOptions: state.pendingChartOptions,
         onUpdateSeries: (series: types.StatsPayload): void => {
           state.verdictChartOptions.series[0].data = normalizeRunCounts(series);
-          state.distributionChartOptions.series[0].data = getDistribution(
-            series,
-          );
-          state.distributionChartOptions.xAxis.categories = getCategories(
-            series,
-          );
+          state.distributionChartOptions.series[0].data =
+            getDistribution(series);
+          state.distributionChartOptions.xAxis.categories =
+            getCategories(series);
           state.stats.pending_runs = series.pending_runs;
         },
       }),

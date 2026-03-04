@@ -1,4 +1,4 @@
-import course_ViewProgress from '../components/course/state.vue';
+import course_ViewProgress from '../components/course/ViewProgress.vue';
 import { OmegaUp } from '../omegaup';
 import { types } from '../api_types';
 import { createApp, h, reactive } from 'vue';
@@ -14,7 +14,7 @@ OmegaUp.on('ready', function () {
 
   createApp({
     render: () =>
-      h(course_ViewProgress, {
+      h(course_ViewProgress as any, {
         course: payload.course,
         students: payload.students,
         assignmentsProblems: payload.assignmentsProblems,

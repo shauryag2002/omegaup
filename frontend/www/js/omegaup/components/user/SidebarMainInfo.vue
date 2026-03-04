@@ -91,7 +91,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+import { defineComponent, ref, computed, watch, PropType } from 'vue';
 import T from '../../lang';
 import country_Flag from '../CountryFlag.vue';
 import user_Username from './Username.vue';
@@ -115,93 +115,115 @@ export const urlMapping: { key: string; title: string; visible: boolean }[] = [
   { key: 'delete-account', title: T.userEditDeleteAccount, visible: true },
 ];
 
-@Component({
+export default defineComponent({
+  name: 'UserSidebarMainInfo',
   components: {
     'omegaup-countryflag': country_Flag,
     'omegaup-user-username': user_Username,
   },
-})
-export default class UserSidebarMainInfo extends Vue {
-  @Prop({ default: null }) data!: types.ExtraProfileDetails | null;
-  @Prop() profile!: types.UserProfileInfo;
-  @Prop() selectedTab!: string;
-  @Prop() hasPassword!: boolean;
+  props: {
+    data: {
+      type: Object as PropType<types.ExtraProfileDetails | null>,
+      default: null,
+    },
+    profile: {
+      type: Object as PropType<types.UserProfileInfo>,
+      required: true,
+    },
+    selectedTab: {
+      type: String,
+      required: true,
+    },
+    hasPassword: {
+      type: Boolean,
+      required: true,
+    },
+  },
+  emits: ['update:selectedTab'],
+  setup(props, { emit }) {
+    const solvedProblems = computed((): Problem[] => {
+      if (!props.data?.solvedProblems) return [];
+      return props.data.solvedProblems.map((problem) => new Problem(problem));
+    });
 
-  T = T;
-  urlMapping = urlMapping;
-  currentSelectedTab = this.getSelectedValidTab(
-    this.selectedTab,
-    this.currentUrlMapping,
-  );
+    const rank = computed((): string => {
+      switch (props.profile.classname) {
+        case 'user-rank-beginner':
+          return T.profileRankBeginner;
+        case 'user-rank-specialist':
+          return T.profileRankSpecialist;
+        case 'user-rank-expert':
+          return T.profileRankExpert;
+        case 'user-rank-master':
+          return T.profileRankMaster;
+        case 'user-rank-international-master':
+          return T.profileRankInternationalMaster;
+        default:
+          return T.profileRankUnrated;
+      }
+    });
 
-  get solvedProblems(): Problem[] {
-    if (!this.data?.solvedProblems) return [];
-    return this.data.solvedProblems.map((problem) => new Problem(problem));
-  }
-  get rank(): string {
-    switch (this.profile.classname) {
-      case 'user-rank-beginner':
-        return T.profileRankBeginner;
-      case 'user-rank-specialist':
-        return T.profileRankSpecialist;
-      case 'user-rank-expert':
-        return T.profileRankExpert;
-      case 'user-rank-master':
-        return T.profileRankMaster;
-      case 'user-rank-international-master':
-        return T.profileRankInternationalMaster;
-      default:
-        return T.profileRankUnrated;
-    }
-  }
-
-  get currentUrlMapping(): {
-    key: string;
-    title: string;
-    visible: boolean;
-  }[] {
-    if (!this.profile.is_own_profile) {
-      return [];
-    }
-    const changePasswordRowIndex = urlMapping.findIndex(
-      (url) => url.key === 'change-password',
+    const currentUrlMapping = computed(
+      (): { key: string; title: string; visible: boolean }[] => {
+        if (!props.profile.is_own_profile) {
+          return [];
+        }
+        const changePasswordRowIndex = urlMapping.findIndex(
+          (url) => url.key === 'change-password',
+        );
+        const addPasswordRowIndex = urlMapping.findIndex(
+          (url) => url.key === 'add-password',
+        );
+        if (!changePasswordRowIndex || !addPasswordRowIndex) {
+          return urlMapping;
+        }
+        if (props.hasPassword) {
+          urlMapping[changePasswordRowIndex].visible = true;
+          urlMapping[addPasswordRowIndex].visible = false;
+          return urlMapping;
+        }
+        urlMapping[addPasswordRowIndex].visible = true;
+        urlMapping[changePasswordRowIndex].visible = false;
+        return urlMapping;
+      },
     );
-    const addPasswordRowIndex = urlMapping.findIndex(
-      (url) => url.key === 'add-password',
+
+    function getSelectedValidTab(
+      tab: string,
+      urls: { key: string; title: string; visible: boolean }[],
+    ): string {
+      const validTabs = urls.filter((url) => url.visible).map((url) => url.key);
+      const isValidTab = validTabs.includes(tab);
+      if (!isValidTab) {
+        emit('update:selectedTab', 'view-profile');
+        return 'view-profile';
+      }
+      return tab;
+    }
+
+    const currentSelectedTab = ref(
+      getSelectedValidTab(props.selectedTab, currentUrlMapping.value),
     );
-    if (!changePasswordRowIndex || !addPasswordRowIndex) {
-      return urlMapping;
-    }
-    if (this.hasPassword) {
-      urlMapping[changePasswordRowIndex].visible = true;
-      urlMapping[addPasswordRowIndex].visible = false;
-      return urlMapping;
-    }
-    urlMapping[addPasswordRowIndex].visible = true;
-    urlMapping[changePasswordRowIndex].visible = false;
-    return urlMapping;
-  }
 
-  getSelectedValidTab(
-    tab: string,
-    urls: { key: string; title: string; visible: boolean }[],
-  ): string {
-    const validTabs = urls.filter((url) => url.visible).map((url) => url.key);
-    const isValidTab = validTabs.includes(tab);
-    if (!isValidTab) {
-      this.$emit('update:selectedTab', 'view-profile');
-      return 'view-profile';
-    }
-    return tab;
-  }
+    watch(
+      () => props.selectedTab,
+      (newValue: string) => {
+        const validTab = getSelectedValidTab(newValue, currentUrlMapping.value);
+        currentSelectedTab.value = validTab;
+        if (validTab !== newValue) {
+          emit('update:selectedTab', validTab);
+        }
+      },
+    );
 
-  @Watch('selectedTab')
-  onSelectedTabChange(newValue: string) {
-    const validTab = this.getSelectedValidTab(newValue, this.currentUrlMapping);
-    this.currentSelectedTab = validTab;
-    if (validTab !== newValue) {
-      this.$emit('update:selectedTab', validTab);
-    }
-  }
-}
+    return {
+      T,
+      urlMapping,
+      currentSelectedTab,
+      solvedProblems,
+      rank,
+      currentUrlMapping,
+    };
+  },
+});
 </script>

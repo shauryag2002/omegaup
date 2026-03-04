@@ -128,9 +128,8 @@ OmegaUp.on('ready', async () => {
   }
 
   // Cache scoreboard data for virtual contest
-  let virtualContestRefreshInterval: ReturnType<
-    typeof setInterval
-  > | null = null;
+  let virtualContestRefreshInterval: ReturnType<typeof setInterval> | null =
+    null;
   if (
     payload.scoreboard &&
     payload.scoreboardEvents &&
@@ -188,7 +187,7 @@ OmegaUp.on('ready', async () => {
     blockedMessage,
   });
 
-  createApp({
+  const contestContestant = createApp({
     render: () =>
       h(arena_Contest, {
         contest: payload.contest,
@@ -224,7 +223,7 @@ OmegaUp.on('ready', async () => {
           navigateToProblem({
             type: NavigationType.ForContest,
             problem,
-            target: contestContestant,
+            target: state,
             problems: state.problems,
             contestAlias: payload.contest.alias,
             contestMode: getScoreModeEnum(payload.contest.score_mode),
@@ -249,7 +248,7 @@ OmegaUp.on('ready', async () => {
         onExecuteRun: ({
           target,
         }: {
-          target: Vue & { currentNextExecutionTimestamp: Date };
+          target: { currentNextExecutionTimestamp: Date };
         }) => {
           api.Run.execute()
             .then(time.remoteTimeAdapter)
@@ -268,7 +267,7 @@ OmegaUp.on('ready', async () => {
           problem: types.NavbarProblemsetProblem;
           code: string;
           language: string;
-          target: Vue & { currentNextSubmissionTimestamp: Date };
+          target: { currentNextSubmissionTimestamp: Date };
         }) => {
           api.Run.create({
             contest_alias: payload.contest.alias,

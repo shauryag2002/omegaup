@@ -25,8 +25,8 @@ describe('Form.vue', () => {
   it('Should handle add contest form', async () => {
     const startTime = new Date();
     const finishTime = new Date(startTime.getTime() + 60 * 60 * 1000);
-    const wrapper = shallowMount(contest_Form, {
-      propsData: {
+    const wrapper = shallowMount(contest_Form as any, {
+      props: {
         update: false,
         allLanguages: [{ py2: 'Python 2' }, { py3: 'Python 3' }],
         initialLanguages: [],
@@ -55,9 +55,9 @@ describe('Form.vue', () => {
   it('Should handle edit contest form', async () => {
     const startTime = new Date();
     const finishTime = new Date(startTime.getTime() + 60 * 60 * 1000);
-    const wrapper = shallowMount(contest_Form, {
+    const wrapper = shallowMount(contest_Form as any, {
       attachTo: '#root',
-      propsData: {
+      props: {
         update: true,
         allLanguages: [{ py2: 'Python 2' }, { py3: 'Python 3' }],
         initialLanguages: ['py2'],
@@ -75,7 +75,7 @@ describe('Form.vue', () => {
     );
     await wrapper.find('form button[type="submit"]').trigger('click');
     expect(wrapper.emitted('update-contest')).toBeDefined();
-    wrapper.destroy();
+    wrapper.unmount();
   });
 
   const problems: types.ProblemsetProblemWithVersions[] = [
@@ -103,8 +103,8 @@ describe('Form.vue', () => {
   it('Should block language removal', async () => {
     const startTime = new Date();
     const finishTime = new Date(startTime.getTime() + 60 * 60 * 1000);
-    const wrapper = shallowMount(contest_Form, {
-      propsData: {
+    const wrapper = shallowMount(contest_Form as any, {
+      props: {
         update: true,
         allLanguages: [
           { py2: 'Python 2' },
@@ -123,13 +123,13 @@ describe('Form.vue', () => {
     });
     await wrapper.findComponent(Multiselect).vm.$emit('remove', 'cat');
     expect(wrapper.emitted('language-remove-blocked')).toBeDefined();
-    wrapper.destroy();
+    wrapper.unmount();
   });
   it('Should update score mode when', async () => {
     const startTime = new Date();
     const finishTime = new Date(startTime.getTime() + 60 * 60 * 1000);
-    const wrapper = shallowMount(contest_Form, {
-      propsData: {
+    const wrapper = shallowMount(contest_Form as any, {
+      props: {
         update: true,
         allLanguages: [
           { py2: 'Python 2' },
@@ -147,14 +147,14 @@ describe('Form.vue', () => {
       },
     });
 
-    expect(wrapper.vm.currentScoreMode).toBe('partial');
+    expect((wrapper.vm as any).currentScoreMode).toBe('partial');
     await wrapper.find('[data-contest-icpc]').trigger('click');
-    expect(wrapper.vm.currentScoreMode).toBe('all_or_nothing');
+    expect((wrapper.vm as any).currentScoreMode).toBe('all_or_nothing');
     await wrapper.find('[data-contest-preioi]').trigger('click');
-    expect(wrapper.vm.currentScoreMode).toBe('partial');
+    expect((wrapper.vm as any).currentScoreMode).toBe('partial');
     await wrapper.find('[data-contest-omi]').trigger('click');
-    expect(wrapper.vm.currentScoreMode).toBe('partial');
+    expect((wrapper.vm as any).currentScoreMode).toBe('partial');
     await wrapper.find('[data-contest-conacup]').trigger('click');
-    expect(wrapper.vm.currentScoreMode).toBe('partial');
+    expect((wrapper.vm as any).currentScoreMode).toBe('partial');
   });
 });

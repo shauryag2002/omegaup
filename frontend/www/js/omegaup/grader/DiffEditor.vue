@@ -4,76 +4,94 @@
 
 <script lang="ts">
 // TODO: replace all instances of any with correct type
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+import {
+  defineComponent,
+  computed,
+  watch,
+  onMounted,
+  ref,
+  getCurrentInstance,
+  PropType,
+} from 'vue';
 import store from './GraderStore';
 import * as monaco from 'monaco-editor';
 
-@Component
-export default class DiffEditor extends Vue {
-  // TODO: place more restrictions on value of keys inside storeMapping
-  @Prop({ required: true }) storeMapping!: {
-    [key: string]: string;
-  };
-  @Prop({ default: false }) readOnly!: boolean;
+export default defineComponent({
+  name: 'DiffEditor',
+  props: {
+    storeMapping: {
+      type: Object as PropType<{ [key: string]: string }>,
+      required: true,
+    },
+    readOnly: { type: Boolean, default: false },
+  },
+  setup(props) {
+    const _originalModel = ref<monaco.editor.ITextModel | null>(null);
+    const _modifiedModel = ref<monaco.editor.ITextModel | null>(null);
+    const _editor = ref<monaco.editor.IStandaloneDiffEditor | null>(null);
 
-  _originalModel: monaco.editor.ITextModel | null = null;
-  _modifiedModel: monaco.editor.ITextModel | null = null;
-  _editor: monaco.editor.IStandaloneDiffEditor | null = null;
+    const theme = computed((): string => store.getters['theme']);
 
-  get theme(): string {
-    return store.getters['theme'];
-  }
-  get originalContents(): string {
-    return store.getters[this.storeMapping.originalContents];
-  }
-
-  get modifiedContents(): string {
-    return store.getters[this.storeMapping.modifiedContents];
-  }
-
-  @Watch('originalContents')
-  onOriginalContentsChange(value: string): void {
-    if (this._originalModel) {
-      this._originalModel.setValue(value);
-    }
-  }
-
-  @Watch('modifiedContents')
-  onModifiedContentsChange(value: string): void {
-    if (this._modifiedModel) {
-      this._modifiedModel.setValue(value);
-    }
-  }
-
-  mounted(): void {
-    this._originalModel = monaco.editor.createModel(
-      this.originalContents,
-      'text/plain',
-    );
-    this._modifiedModel = monaco.editor.createModel(
-      this.modifiedContents,
-      'text/plain',
+    const originalContents = computed(
+      (): string => store.getters[props.storeMapping.originalContents],
     );
 
-    // both sides are either editable or not at the same time
-    this._editor = monaco.editor.createDiffEditor(this.$el as HTMLElement, {
-      theme: this.theme,
-      originalEditable: !this.readOnly,
-      readOnly: this.readOnly,
+    const modifiedContents = computed(
+      (): string => store.getters[props.storeMapping.modifiedContents],
+    );
+
+    watch(originalContents, (value) => {
+      if (_originalModel.value) {
+        _originalModel.value.setValue(value);
+      }
     });
 
-    this._editor.setModel({
-      original: this._originalModel,
-      modified: this._modifiedModel,
+    watch(modifiedContents, (value) => {
+      if (_modifiedModel.value) {
+        _modifiedModel.value.setValue(value);
+      }
     });
-  }
 
-  onResize(): void {
-    if (this._editor) {
-      this._editor.layout();
+    onMounted(() => {
+      const instance = getCurrentInstance();
+      const el = instance?.proxy?.$el as HTMLElement;
+
+      _originalModel.value = monaco.editor.createModel(
+        originalContents.value,
+        'text/plain',
+      );
+      _modifiedModel.value = monaco.editor.createModel(
+        modifiedContents.value,
+        'text/plain',
+      );
+
+      // both sides are either editable or not at the same time
+      _editor.value = monaco.editor.createDiffEditor(el, {
+        theme: theme.value,
+        originalEditable: !props.readOnly,
+        readOnly: props.readOnly,
+      });
+
+      _editor.value.setModel({
+        original: _originalModel.value,
+        modified: _modifiedModel.value,
+      });
+    });
+
+    function onResize(): void {
+      if (_editor.value) {
+        _editor.value.layout();
+      }
     }
-  }
-}
+
+    return {
+      theme,
+      originalContents,
+      modifiedContents,
+      onResize,
+    };
+  },
+});
 </script>
 
 <style scoped>

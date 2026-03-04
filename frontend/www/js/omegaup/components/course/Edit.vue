@@ -500,4 +500,12 @@ watch(
     showTab.value = newValue;
   },
 );
+
+defineExpose({
+  assignments,
+  assignmentProblems,
+  assignmentFormMode,
+  token,
+  onResetAssignmentForm,
+});
 </script>

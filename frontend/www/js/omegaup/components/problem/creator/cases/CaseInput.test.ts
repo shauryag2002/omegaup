@@ -1,14 +1,15 @@
 import { shallowMount } from '@vue/test-utils';
 
 import CaseInput from './CaseInput.vue';
+import { createBootstrap } from 'bootstrap-vue-next';
 import T from '../../../../lang';
-import Vue from 'vue';
+import { nextTick } from 'vue';
 import store from '@/js/omegaup/problem/creator/store';
 
 describe('CaseInput.vue', () => {
   it('Should contain all 4 inputs', async () => {
     const wrapper = shallowMount(CaseInput, {
-      store,
+      global: { plugins: [store, createBootstrap()] },
     });
 
     const expectedTextInputText = [
@@ -18,19 +19,19 @@ describe('CaseInput.vue', () => {
       T.problemCreatorAutomaticPointsRecommended,
     ];
 
-    await Vue.nextTick();
+    await nextTick();
 
     const inputElements = wrapper.findAll('[label]');
 
     expect(inputElements.length).toBe(expectedTextInputText.length);
 
-    inputElements.wrappers.forEach((element, index) => {
+    inputElements.forEach((element, index) => {
       expect(element.attributes('label')).toBe(expectedTextInputText[index]); // We need to make it like this because that's how Vue-Bootstrap input element works
     });
   });
   it('Should handle autoformatting', () => {
     const wrapper = shallowMount(CaseInput, {
-      store,
+      global: { plugins: [store, createBootstrap()] },
     });
 
     // These any are necessary since wrapper.vm doesn't load the component's methods to typescript, even if they exist

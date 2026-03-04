@@ -404,6 +404,7 @@ export enum PopupDisplayed {
   Demotion,
   Reviewer,
 }
+export default {};
 </script>
 
 <script setup lang="ts">
@@ -717,22 +718,20 @@ function onProblemRendered(): void {
   // to inject Vue components into the DOM after it's being rendered, so that
   // all the templating and interactivity can be handled by Vue instead of by
   // JavaScript.
-  const libinteractiveInterfaceNameElement = statementMarkdownRef.value?.$el.querySelector(
-    'span.libinteractive-interface-name',
-  ) as HTMLElement | null;
+  const libinteractiveInterfaceNameElement =
+    statementMarkdownRef.value?.$el.querySelector(
+      'span.libinteractive-interface-name',
+    ) as HTMLElement | null;
   if (
     libinteractiveInterfaceNameElement &&
     props.problem.settings?.interactive?.module_name
   ) {
-    libinteractiveInterfaceNameElement.innerText = props.problem.settings.interactive.module_name.replace(
-      /\.idl$/,
-      '',
-    );
+    libinteractiveInterfaceNameElement.innerText =
+      props.problem.settings.interactive.module_name.replace(/\.idl$/, '');
   }
 
-  const outputOnlyDownloadElement = statementMarkdownRef.value?.$el.querySelector(
-    '.output-only-download a',
-  );
+  const outputOnlyDownloadElement =
+    statementMarkdownRef.value?.$el.querySelector('.output-only-download a');
   if (outputOnlyDownloadElement) {
     outputOnlyDownloadElement.setAttribute(
       'href',
@@ -740,9 +739,10 @@ function onProblemRendered(): void {
     );
   }
 
-  const libinteractiveDownloadFormElement = statementMarkdownRef.value?.$el.querySelector(
-    '.libinteractive-download form',
-  ) as HTMLElement | null;
+  const libinteractiveDownloadFormElement =
+    statementMarkdownRef.value?.$el.querySelector(
+      '.libinteractive-download form',
+    ) as HTMLElement | null;
   if (libinteractiveDownloadFormElement) {
     libinteractiveDownloadFormElement.addEventListener('submit', (e: Event) => {
       e.preventDefault();
@@ -762,9 +762,10 @@ function onProblemRendered(): void {
     });
   }
 
-  const libinteractiveDownloadLangElement = statementMarkdownRef.value?.$el.querySelector(
-    '.libinteractive-download .download-lang',
-  ) as HTMLSelectElement | null;
+  const libinteractiveDownloadLangElement =
+    statementMarkdownRef.value?.$el.querySelector(
+      '.libinteractive-download .download-lang',
+    ) as HTMLSelectElement | null;
   if (libinteractiveDownloadLangElement) {
     libinteractiveDownloadLangElement.addEventListener('change', (e: Event) => {
       let form = e.target as HTMLElement;
@@ -774,9 +775,9 @@ function onProblemRendered(): void {
         }
         form = form.parentElement;
       }
-      (form.querySelector(
-        '.libinteractive-extension',
-      ) as HTMLElement).innerText = libinteractiveDownloadLangElement.value;
+      (
+        form.querySelector('.libinteractive-extension') as HTMLElement
+      ).innerText = libinteractiveDownloadLangElement.value;
     });
   }
 }

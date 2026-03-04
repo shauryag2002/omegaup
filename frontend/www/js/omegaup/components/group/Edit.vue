@@ -157,6 +157,7 @@ export enum AvailableTabs {
   Scoreboards = 'scoreboards',
   Identities = 'identities',
 }
+export default {};
 </script>
 
 <script setup lang="ts">

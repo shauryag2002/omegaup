@@ -131,7 +131,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Prop, Component } from 'vue-property-decorator';
+import { defineComponent, computed, PropType } from 'vue';
 import { types } from '../../api_types';
 import * as time from '../../time';
 import * as ui from '../../ui';
@@ -142,46 +142,57 @@ import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
 import { BButton, BCard } from 'bootstrap-vue-next';
 
-
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 library.add(fas);
 
-@Component({
+export default defineComponent({
+  name: 'ContestCardv2',
   components: {
     FontAwesomeIcon,
   },
-})
-export default class ContestCardv2 extends Vue {
-  @Prop({ required: true }) contest!: types.ContestListItem;
+  props: {
+    contest: {
+      type: Object as PropType<types.ContestListItem>,
+      required: true,
+    },
+  },
+  setup(props) {
+    const contestDuration = computed((): string => {
+      return time.formatContestDuration(
+        props.contest.start_time,
+        props.contest.finish_time,
+      );
+    });
 
-  T = T;
-  ui = ui;
+    function getContestURL(alias: string): string {
+      return `/arena/${encodeURIComponent(alias)}/`;
+    }
 
-  get contestDuration(): string {
-    return time.formatContestDuration(
-      this.contest.start_time,
-      this.contest.finish_time,
-    );
-  }
+    function getContestScoreboardURL(alias: string): string {
+      return `/arena/${encodeURIComponent(alias)}/#ranking`;
+    }
 
-  getContestURL(alias: string): string {
-    return `/arena/${encodeURIComponent(alias)}/`;
-  }
+    function getVirtualContestURL(alias: string): string {
+      return `/contest/${encodeURIComponent(alias)}/virtual/`;
+    }
 
-  getContestScoreboardURL(alias: string): string {
-    return `/arena/${encodeURIComponent(alias)}/#ranking`;
-  }
+    function getPracticeContestURL(alias: string): string {
+      return `/arena/${encodeURIComponent(alias)}/practice/`;
+    }
 
-  getVirtualContestURL(alias: string): string {
-    return `/contest/${encodeURIComponent(alias)}/virtual/`;
-  }
-
-  getPracticeContestURL(alias: string): string {
-    return `/arena/${encodeURIComponent(alias)}/practice/`;
-  }
-}
+    return {
+      T,
+      ui,
+      contestDuration,
+      getContestURL,
+      getContestScoreboardURL,
+      getVirtualContestURL,
+      getPracticeContestURL,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>

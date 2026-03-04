@@ -2,22 +2,18 @@ import * as util from 'util';
 import 'process';
 
 import '@testing-library/jest-dom';
-import '@testing-library/jest-dom/extend-expect';
 
-import Vue, { configureCompat } from 'vue';
-import type { DirectiveBinding } from 'vue';
+import { createApp, type DirectiveBinding } from 'vue';
 import Sortable from 'sortablejs';
 
-// Configure Vue 3 compatibility mode for tests — default to Vue 2 behavior.
-configureCompat({
-  MODE: 2,
-});
-
-Vue.directive('Sortable', {
+// Register global Sortable directive for tests.
+// In Vue 3, global directives are registered per-app, but for tests we can
+// register it via a temporary app to make it available.
+const sortableDirective = {
   mounted: (el: HTMLElement, binding: DirectiveBinding) => {
     new Sortable(el, binding.value || {});
   },
-});
+};
 
 // Intercept all API calls. Only let `API.Session.currentSession()` work and
 // fail everything else.
@@ -62,12 +58,12 @@ global.URL.createObjectURL = jest.fn();
 
 // This is needed for CodeMirror to work.
 global.document.createRange = () => {
-  return ({
+  return {
     setEnd: () => {},
     setStart: () => {},
     getBoundingClientRect: () => {},
     getClientRects: () => [],
-  } as any) as Range;
+  } as any as Range;
 };
 
 // Any write to console.error() will cause a test failure.

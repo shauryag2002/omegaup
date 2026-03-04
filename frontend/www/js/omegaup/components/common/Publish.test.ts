@@ -6,8 +6,8 @@ import common_Publish from './Publish.vue';
 
 describe('Publish.vue', () => {
   it('Should handle initial props', async () => {
-    const wrapper = shallowMount(common_Publish, {
-      propsData: {
+    const wrapper = shallowMount(common_Publish as any, {
+      props: {
         initialAdmissionMode: 'public',
         shouldShowPublicOption: true,
         admissionModeDescription: T.contestNewFormAdmissionModeDescription,

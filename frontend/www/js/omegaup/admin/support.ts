@@ -28,7 +28,7 @@ OmegaUp.on('ready', () => {
 
   createApp({
     render: () =>
-      h(admin_Support, {
+      h(admin_Support as any, {
         username: state.username,
         link: state.link,
         verified: state.verified,

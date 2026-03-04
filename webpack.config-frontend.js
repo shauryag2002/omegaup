@@ -227,9 +227,6 @@ module.exports = {
         options: {
           compilerOptions: {
             whitespace: 'condense',
-            compatConfig: {
-              MODE: 2,
-            },
           },
         },
       },
@@ -279,7 +276,6 @@ module.exports = {
   resolve: {
     extensions: ['.ts', '.js', '.vue', '.json'],
     alias: {
-      vue$: path.resolve(__dirname, './frontend/www/js/omegaup/vue-compat.ts'),
       jszip: 'jszip/dist/jszip.js',
       pako: 'pako/dist/pako.min.js',
       '@': path.resolve(__dirname, './frontend/www/'),

@@ -85,7 +85,7 @@ OmegaUp.on('ready', () => {
                   ? T.feedbackSuccessfullyUpdated
                   : T.feedbackSuccessfullyAdded,
               );
-              state.refreshStudentProgress(studentUsername, assignmentAlias);
+              methods.refreshStudentProgress(studentUsername, assignmentAlias);
               api.Course.studentProgress({
                 course_alias: payload.course.alias,
                 assignment_alias: assignmentAlias,
@@ -105,7 +105,7 @@ OmegaUp.on('ready', () => {
           student: string;
           assignmentAlias: string;
         }) => {
-          state.refreshStudentProgress(student, assignmentAlias);
+          methods.refreshStudentProgress(student, assignmentAlias);
         },
         onPushState: (student: string, title: string, url: string) => {
           window.history.pushState(student, title, url);

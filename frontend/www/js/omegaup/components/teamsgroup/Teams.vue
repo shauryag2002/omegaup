@@ -102,6 +102,7 @@ export enum AvailableForms {
   ChangePassword,
   AddMembers,
 }
+export default {};
 </script>
 
 <script setup lang="ts">

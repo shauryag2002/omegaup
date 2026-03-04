@@ -26,15 +26,20 @@ module.exports = {
   moduleFileExtensions: ['js', 'ts', 'vue'],
   moduleDirectories: ['node_modules'],
   moduleNameMapper: {
-    '^vue$': '@vue/compat',
+    '^vue$': 'vue',
     '^@/(.*)$': '<rootDir>/frontend/www/$1',
     '\\.(css|less)$':
       '<rootDir>/frontend/www/js/omegaup/__mocks__/styleMock.js',
     'monaco-editor':
       '<rootDir>/frontend/www/third_party/js/__mocks__/monacoEditor.js',
     sugar: '<rootDir>/frontend/www/js/omegaup/__mocks__/sugar.js',
+    'vue-codemirror-lite':
+      '<rootDir>/frontend/www/js/omegaup/__mocks__/vue-codemirror-lite.js',
   },
-  setupFilesAfterEnv: ['<rootDir>/frontend/www/js/omegaup/test.setup.ts'],
+  setupFilesAfterEnv: [
+    '<rootDir>/frontend/www/js/omegaup/test.jquery-setup.ts',
+    '<rootDir>/frontend/www/js/omegaup/test.setup.ts',
+  ],
   transform: {
     '.*\\.vue$': [
       '@vue/vue3-jest',
@@ -49,5 +54,6 @@ module.exports = {
   ],
   testEnvironmentOptions: {
     url: 'http://localhost:8001/',
+    customExportConditions: ['node', 'node-addons'],
   },
 };

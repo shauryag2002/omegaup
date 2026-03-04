@@ -143,7 +143,7 @@ OmegaUp.on('ready', () => {
       window.removeEventListener('hashchange', onHashChange);
     },
     render: () =>
-      h(arena_ContestList, {
+      h(arena_ContestList as any, {
         contests: contestStore.state.contests,
         countContests: contestStore.state.countContests,
         query: state.query,

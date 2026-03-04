@@ -44,7 +44,17 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Ref, Watch } from 'vue-property-decorator';
+import {
+  defineComponent,
+  ref,
+  computed,
+  watch,
+  onMounted,
+  nextTick,
+  PropType,
+} from 'vue';
+import { useStore } from 'vuex';
+import type { StoreState } from '../../../../problem/creator/types';
 import * as Markdown from '@/third_party/js/pagedown/Markdown.Editor.js';
 import * as markdown from '../../../../markdown';
 import * as ui from '../../../../ui';
@@ -59,105 +69,125 @@ const markdownConverter = new markdown.Converter({
   preview: true,
 });
 
-@Component({
+export default defineComponent({
+  name: 'SolutionTab',
   components: {
     'omegaup-markdown': ProblemMarkdown,
   },
-})
-export default class SolutionTab extends Vue {
-  @Ref() readonly markdownButtonBar!: HTMLDivElement;
-  @Ref() readonly markdownInput!: HTMLTextAreaElement;
+  props: {
+    currentSolutionMarkdownProp: {
+      type: String,
+      default: T.problemCreatorEmpty,
+    },
+    activeTabIndex: {
+      type: Number as PropType<TabIndex>,
+      required: true,
+    },
+  },
+  emits: ['show-update-success-message'],
+  setup(props, { emit }) {
+    const store = useStore<StoreState>();
+    const markdownButtonBar = ref<HTMLDivElement | null>(null);
+    const markdownInput = ref<HTMLTextAreaElement | null>(null);
 
-  @Prop({ default: T.problemCreatorEmpty })
-  currentSolutionMarkdownProp!: string;
-  @Prop() activeTabIndex!: TabIndex;
+    let markdownEditor: Markdown.Editor | null = null;
 
-  T = T;
-  ui = ui;
-  markdownEditor: Markdown.Editor | null = null;
+    const currentSolutionMarkdownInternal = ref<string>(T.problemCreatorEmpty);
 
-  currentSolutionMarkdownInternal: string = T.problemCreatorEmpty;
-
-  get currentSolutionMarkdown(): string {
-    return this.currentSolutionMarkdownInternal;
-  }
-  set currentSolutionMarkdown(newMarkdown: string) {
-    this.currentSolutionMarkdownInternal = newMarkdown;
-  }
-
-  @Watch('currentSolutionMarkdownProp')
-  onCurrentSolutionMarkdownPropChanged() {
-    this.currentSolutionMarkdown = this.currentSolutionMarkdownProp;
-  }
-
-  @Watch('activeTabIndex')
-  onActiveTabIndexChanged(newIndex: TabIndex) {
-    if (newIndex === TabIndex.Solution) {
-      this.$nextTick(() => {
-        this.startIntroGuide();
-      });
-    }
-  }
-
-  mounted(): void {
-    this.markdownEditor = new Markdown.Editor(markdownConverter.converter, '', {
-      panels: {
-        buttonBar: this.markdownButtonBar,
-        preview: null,
-        input: this.markdownInput,
+    const currentSolutionMarkdown = computed({
+      get: () => currentSolutionMarkdownInternal.value,
+      set: (newMarkdown: string) => {
+        currentSolutionMarkdownInternal.value = newMarkdown;
       },
     });
-    this.markdownEditor.run();
-  }
 
-  updateMarkdown() {
-    this.$store.commit('updateSolutionMarkdown', this.currentSolutionMarkdown);
-    this.$emit('show-update-success-message');
-  }
+    watch(
+      () => props.currentSolutionMarkdownProp,
+      () => {
+        currentSolutionMarkdown.value = props.currentSolutionMarkdownProp;
+      },
+    );
 
-  startIntroGuide() {
-    if (!getCookie('has-visited-solution-tab')) {
-      introJs()
-        .setOptions({
-          nextLabel: T.interactiveGuideNextButton,
-          prevLabel: T.interactiveGuidePreviousButton,
-          doneLabel: T.interactiveGuideDoneButton,
-          steps: [
-            {
-              title: T.problemCreatorSolutionTabIntroToolbarTitle,
-              intro: T.problemCreatorSolutionTabIntroToolbarIntro,
-              element: document.querySelector(
-                '[data-solution-markdown-toolbar]',
-              ) as Element,
-            },
-            {
-              title: T.problemCreatorSolutionTabIntroEditorTitle,
-              intro: T.problemCreatorSolutionTabIntroEditorIntro,
-              element: document.querySelector(
-                '[data-problem-creator-solution-editor-markdown]',
-              ) as Element,
-            },
-            {
-              title: T.problemCreatorSolutionTabIntroPreviewTitle,
-              intro: T.problemCreatorSolutionTabIntroPreviewIntro,
-              element: document.querySelector(
-                '[data-problem-creator-solution-previewer-markdown]',
-              ) as Element,
-            },
-            {
-              title: T.problemCreatorSolutionTabIntroSaveTitle,
-              intro: T.problemCreatorSolutionTabIntroSaveIntro,
-              element: document.querySelector(
-                '[data-problem-creator-solution-save-markdown]',
-              ) as Element,
-            },
-          ],
-        })
-        .start();
-      setCookie('has-visited-solution-tab', true);
+    watch(
+      () => props.activeTabIndex,
+      (newIndex: TabIndex) => {
+        if (newIndex === TabIndex.Solution) {
+          nextTick(() => {
+            startIntroGuide();
+          });
+        }
+      },
+    );
+
+    onMounted(() => {
+      markdownEditor = new Markdown.Editor(markdownConverter.converter, '', {
+        panels: {
+          buttonBar: markdownButtonBar.value!,
+          preview: null,
+          input: markdownInput.value!,
+        },
+      });
+      markdownEditor.run();
+    });
+
+    function updateMarkdown() {
+      store.commit('updateSolutionMarkdown', currentSolutionMarkdown.value);
+      emit('show-update-success-message');
     }
-  }
-}
+
+    function startIntroGuide() {
+      if (!getCookie('has-visited-solution-tab')) {
+        introJs()
+          .setOptions({
+            nextLabel: T.interactiveGuideNextButton,
+            prevLabel: T.interactiveGuidePreviousButton,
+            doneLabel: T.interactiveGuideDoneButton,
+            steps: [
+              {
+                title: T.problemCreatorSolutionTabIntroToolbarTitle,
+                intro: T.problemCreatorSolutionTabIntroToolbarIntro,
+                element: document.querySelector<HTMLElement>(
+                  '[data-solution-markdown-toolbar]',
+                ),
+              },
+              {
+                title: T.problemCreatorSolutionTabIntroEditorTitle,
+                intro: T.problemCreatorSolutionTabIntroEditorIntro,
+                element: document.querySelector<HTMLElement>(
+                  '[data-problem-creator-solution-editor-markdown]',
+                ),
+              },
+              {
+                title: T.problemCreatorSolutionTabIntroPreviewTitle,
+                intro: T.problemCreatorSolutionTabIntroPreviewIntro,
+                element: document.querySelector<HTMLElement>(
+                  '[data-problem-creator-solution-previewer-markdown]',
+                ),
+              },
+              {
+                title: T.problemCreatorSolutionTabIntroSaveTitle,
+                intro: T.problemCreatorSolutionTabIntroSaveIntro,
+                element: document.querySelector<HTMLElement>(
+                  '[data-problem-creator-solution-save-markdown]',
+                ),
+              },
+            ],
+          })
+          .start();
+        setCookie('has-visited-solution-tab', true);
+      }
+    }
+
+    return {
+      T,
+      ui,
+      markdownButtonBar,
+      markdownInput,
+      currentSolutionMarkdown,
+      updateMarkdown,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>

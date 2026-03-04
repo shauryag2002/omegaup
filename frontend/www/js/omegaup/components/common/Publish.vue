@@ -62,7 +62,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop, Watch } from 'vue-property-decorator';
+import { defineComponent, ref, computed, watch, PropType } from 'vue';
 import T from '../../lang';
 import omegaup_Markdown from '../Markdown.vue';
 import omegaup_ToggleSwitch from '../ToggleSwitch.vue';
@@ -81,7 +81,8 @@ export enum AdmissionMode {
   Public = 'public',
 }
 
-@Component({
+export default defineComponent({
+  name: 'ContestEditPublish',
   components: {
     'omegaup-markdown': omegaup_Markdown,
     'omegaup-toggle-switch': omegaup_ToggleSwitch,
@@ -89,44 +90,59 @@ export enum AdmissionMode {
     'font-awesome-layers': FontAwesomeLayers,
     'font-awesome-layers-text': FontAwesomeLayersText,
   },
-})
-export default class ContestEditPublish extends Vue {
-  @Prop() admissionMode!: AdmissionMode;
-  @Prop() admissionModeDescription!: string;
-  @Prop() alias!: string;
-  @Prop() shouldShowPublicOption!: boolean;
-  @Prop({ default: false }) defaultShowAllContestantsInScoreboard!: boolean;
+  props: {
+    admissionMode: { type: String as PropType<AdmissionMode>, required: true },
+    admissionModeDescription: { type: String, required: true },
+    alias: { type: String, required: true },
+    shouldShowPublicOption: { type: Boolean, required: true },
+    defaultShowAllContestantsInScoreboard: { type: Boolean, default: false },
+  },
+  emits: ['update-admission-mode', 'show-copy-message'],
+  setup(props, { emit }) {
+    const currentAdmissionMode = ref(props.admissionMode);
+    const currentDefaultShowAllContestantsInScoreboard = ref(
+      props.defaultShowAllContestantsInScoreboard,
+    );
 
-  T = T;
-  AdmissionMode = AdmissionMode;
-  currentAdmissionMode = this.admissionMode;
-  currentDefaultShowAllContestantsInScoreboard = this
-    .defaultShowAllContestantsInScoreboard;
+    const contestURL = computed(
+      (): string =>
+        `${window.location.origin}/arena/${props.alias}/startfresh/`,
+    );
 
-  get contestURL(): string {
-    return `${window.location.origin}/arena/${this.alias}/startfresh/`;
-  }
+    function onSubmit(): void {
+      emit('update-admission-mode', {
+        admissionMode: currentAdmissionMode.value,
+        defaultShowAllContestantsInScoreboard:
+          currentDefaultShowAllContestantsInScoreboard.value,
+      });
+    }
 
-  onSubmit(): void {
-    this.$emit('update-admission-mode', {
-      admissionMode: this.currentAdmissionMode,
-      defaultShowAllContestantsInScoreboard: this
-        .currentDefaultShowAllContestantsInScoreboard,
-    });
-  }
+    function copyAndNotify(text: string): void {
+      navigator.clipboard.writeText(text);
+      emit('show-copy-message');
+    }
 
-  copyAndNotify(text: string): void {
-    navigator.clipboard.writeText(text);
-    this.$emit('show-copy-message');
-  }
+    function onCopyContestLink(): void {
+      emit('show-copy-message');
+    }
 
-  onCopyContestLink(): void {
-    this.$emit('show-copy-message');
-  }
+    watch(
+      () => props.admissionMode,
+      (newValue: AdmissionMode) => {
+        currentAdmissionMode.value = newValue;
+      },
+    );
 
-  @Watch('admissionMode')
-  onCourseChange(newValue: AdmissionMode): void {
-    this.currentAdmissionMode = newValue;
-  }
-}
+    return {
+      T,
+      AdmissionMode,
+      currentAdmissionMode,
+      currentDefaultShowAllContestantsInScoreboard,
+      contestURL,
+      onSubmit,
+      copyAndNotify,
+      onCopyContestLink,
+    };
+  },
+});
 </script>

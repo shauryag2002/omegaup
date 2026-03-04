@@ -1,4 +1,4 @@
-import { shallowMount } from '@vue/test-utils';
+import { shallowMount, VueWrapper } from '@vue/test-utils';
 
 import T from '../../lang';
 
@@ -6,8 +6,8 @@ import problem_Edit from './Edit.vue';
 
 describe('Edit.vue', () => {
   it('Should handle an existing problem', async () => {
-    const wrapper = shallowMount(problem_Edit, {
-      propsData: {
+    const wrapper = shallowMount(problem_Edit as any, {
+      props: {
         data: {
           title: 'problem',
           alias: 'problem-alias',
@@ -57,7 +57,7 @@ describe('Edit.vue', () => {
     await wrapper.find('a[data-tab-delete]').trigger('click');
     expect(wrapper.find('.alert-heading').text()).toBe(T.wordsDangerZone);
 
-    const deleteModal = wrapper.find('b-modal-stub');
+    const deleteModal = wrapper.findComponent('b-modal-stub') as VueWrapper;
     deleteModal.vm.$emit('ok');
     expect(wrapper.emitted('remove')).toBeDefined();
     expect(wrapper.emitted('remove')).toEqual([['problem-alias']]);

@@ -1,8 +1,9 @@
-import { shallowMount } from '@vue/test-utils';
+import { shallowMount, VueWrapper } from '@vue/test-utils';
 
 import MultipleCasesInput from './MultipleCasesInput.vue';
+import { createBootstrap } from 'bootstrap-vue-next';
 import T from '../../../../lang';
-import Vue from 'vue';
+import { nextTick } from 'vue';
 import store from '@/js/omegaup/problem/creator/store';
 import { Group } from '@/js/omegaup/problem/creator/types';
 import { v4 as uuid } from 'uuid';
@@ -20,7 +21,7 @@ store.commit('casesStore/addGroup', testGroup);
 describe('MultipleCasesInput.vue', () => {
   it('Should contain all 4 inputs', async () => {
     const wrapper = shallowMount(MultipleCasesInput, {
-      store,
+      global: { plugins: [store, createBootstrap()] },
     });
 
     const expectedTextInputText = [
@@ -30,13 +31,13 @@ describe('MultipleCasesInput.vue', () => {
       T.problemCreatorGroupName,
     ];
 
-    await Vue.nextTick();
+    await nextTick();
 
     const inputElements = wrapper.findAll('[label]');
 
     expect(inputElements.length).toBe(expectedTextInputText.length);
 
-    inputElements.wrappers.forEach((element, index) => {
+    inputElements.forEach((element, index) => {
       expect(element.attributes('label')).toBe(expectedTextInputText[index]); // We need to make it like this because that's how Vue-Bootstrap input element works
     });
 
@@ -44,7 +45,7 @@ describe('MultipleCasesInput.vue', () => {
 
     await wrapper.setData({ multipleCasesPrefix: 'case#' });
 
-    await Vue.nextTick();
+    await nextTick();
 
     expect(wrapper.find('[description]').attributes('description')).toContain(
       'case',
@@ -53,7 +54,7 @@ describe('MultipleCasesInput.vue', () => {
 
   it('Should handle autoformatting', () => {
     const wrapper = shallowMount(MultipleCasesInput, {
-      store,
+      global: { plugins: [store, createBootstrap()] },
     });
 
     // These any are necessary since wrapper.vm doesn't load the component's methods to typescript, even if they exist
@@ -68,12 +69,14 @@ describe('MultipleCasesInput.vue', () => {
 
   it('Should handle choice of groups', () => {
     const wrapper = shallowMount(MultipleCasesInput, {
-      store,
+      global: { plugins: [store, createBootstrap()] },
     });
 
-    const formSelect = wrapper.find(
+    const formSelect = wrapper.findComponent(
       'b-form-select-stub[name="multiple-cases-group"]',
+    ) as VueWrapper;
+    expect((formSelect.props() as Record<string, unknown>)['options']).toBe(
+      wrapper.vm.options,
     );
-    expect(formSelect.props()['options']).toBe(wrapper.vm.options);
   });
 });

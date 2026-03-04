@@ -1,9 +1,5 @@
 <template>
-  <div
-    ref="scrollContainer"
-    submissions-problem
-    @scroll="onScroll"
-  >
+  <div ref="scrollContainer" submissions-problem @scroll="onScroll">
     <div class="text-center mb-5 submissions-title">
       <h2>
         {{ T.submissionsListTitle }}
@@ -128,7 +124,14 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import {
+  defineComponent,
+  ref,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  PropType,
+} from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
@@ -137,60 +140,76 @@ import UserName from '../user/Username.vue';
 import common_Typeahead from '../common/Typeahead.vue';
 import common_Paginator from '../common/Paginator.vue';
 
-@Component({
+export default defineComponent({
+  name: 'SubmissionsList',
   components: {
     'omegaup-username': UserName,
     'omegaup-common-typeahead': common_Typeahead,
     'omegaup-common-paginator': common_Paginator,
   },
-})
-export default class SubmissionsList extends Vue {
-  @Prop() page!: number;
-  @Prop() includeUser!: boolean;
-  @Prop() submissions!: types.Submission[];
-  @Prop() searchResultUsers!: types.ListItem[];
-  @Prop() loading!: boolean;
-  @Prop() endOfResults!: boolean;
+  props: {
+    page: { type: Number, required: true },
+    includeUser: { type: Boolean, required: true },
+    submissions: {
+      type: Array as PropType<types.Submission[]>,
+      required: true,
+    },
+    searchResultUsers: {
+      type: Array as PropType<types.ListItem[]>,
+      required: true,
+    },
+    loading: { type: Boolean, required: true },
+    endOfResults: { type: Boolean, required: true },
+  },
+  emits: ['fetch-more-data', 'update-search-result-users'],
+  setup(props, { emit }) {
+    const searchedUsername = ref<types.ListItem | null>(null);
+    let _scrollHandler: (() => void) | null = null;
 
-  T = T;
-  ui = ui;
-  time = time;
-  searchedUsername: types.ListItem | null = null;
+    const isScrollDisabled = computed(
+      () => props.loading || props.endOfResults,
+    );
 
-  private _scrollHandler: (() => void) | null = null;
+    const hrefSearchUser = computed(() => {
+      if (!searchedUsername.value?.key) {
+        return '/submissions/';
+      }
+      return `/submissions/${encodeURIComponent(searchedUsername.value?.key)}/`;
+    });
 
-  mounted(): void {
-    this._scrollHandler = () => this.onScroll();
-    window.addEventListener('scroll', this._scrollHandler);
-  }
-
-  beforeUnmount(): void {
-    if (this._scrollHandler) {
-      window.removeEventListener('scroll', this._scrollHandler);
+    function onScroll(): void {
+      if (isScrollDisabled.value) return;
+      const scrollBottom =
+        document.documentElement.scrollHeight -
+        window.innerHeight -
+        window.scrollY;
+      if (scrollBottom < 10) {
+        emit('fetch-more-data');
+      }
     }
-  }
 
-  onScroll(): void {
-    if (this.isScrollDisabled) return;
-    const scrollBottom =
-      document.documentElement.scrollHeight -
-      window.innerHeight -
-      window.scrollY;
-    if (scrollBottom < 10) {
-      this.$emit('fetch-more-data');
-    }
-  }
+    onMounted(() => {
+      _scrollHandler = () => onScroll();
+      window.addEventListener('scroll', _scrollHandler);
+    });
 
-  get hrefSearchUser(): string {
-    if (!this.searchedUsername?.key) {
-      return '/submissions/';
-    }
-    return `/submissions/${encodeURIComponent(this.searchedUsername?.key)}/`;
-  }
-  get isScrollDisabled() {
-    return this.loading || this.endOfResults;
-  }
-}
+    onBeforeUnmount(() => {
+      if (_scrollHandler) {
+        window.removeEventListener('scroll', _scrollHandler);
+      }
+    });
+
+    return {
+      T,
+      ui,
+      time,
+      searchedUsername,
+      hrefSearchUser,
+      isScrollDisabled,
+      onScroll,
+    };
+  },
+});
 </script>
 
 <style lang="scss">

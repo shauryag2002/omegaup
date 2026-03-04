@@ -173,10 +173,10 @@ function addItemToStore() {
       cases: [],
     } as Group);
   } else if (tab.value === 'multiplecases') {
-    const multipleCasesPrefix = multipleCasesInputRef.value!
-      .multipleCasesPrefix;
-    const multipleCasesSuffix = multipleCasesInputRef.value!
-      .multipleCasesSuffix;
+    const multipleCasesPrefix =
+      multipleCasesInputRef.value!.multipleCasesPrefix;
+    const multipleCasesSuffix =
+      multipleCasesInputRef.value!.multipleCasesSuffix;
     const multipleCasesCount = multipleCasesInputRef.value!.multipleCasesCount;
     const multipleCasesGroup = multipleCasesInputRef.value!.multipleCasesGroup;
 

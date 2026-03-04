@@ -88,7 +88,10 @@
             @click="downloadInputFile('.in')"
           >
             <div class="d-flex">
-              <FontAwesomeIcon :icon="['fas', 'box-archive']" class="pt-1 mr-3" />
+              <FontAwesomeIcon
+                :icon="['fas', 'box-archive']"
+                class="pt-1 mr-3"
+              />
               {{ T.problemCreatorCaseDownloadIn }}
             </div>
           </b-button>
@@ -99,7 +102,10 @@
             @click="downloadInputFile('.txt')"
           >
             <div class="d-flex">
-              <FontAwesomeIcon :icon="['fas', 'align-left']" class="pt-1 mr-3" />
+              <FontAwesomeIcon
+                :icon="['fas', 'align-left']"
+                class="pt-1 mr-3"
+              />
               {{ T.problemCreatorCaseDownloadTxt }}
             </div>
           </b-button>
@@ -118,284 +124,287 @@
         >
           <template #item="{ element: line }">
             <tr>
-            <td>
-              <b-container fluid class="bg-light">
-                <b-row class="d-flex justify-content-between" align-v="center">
-                  <b-col cols="1">
-                    <b-button
-                      class="btn btn-link drag-handle"
-                      type="button"
-                      :title="T.problemCreatorLinesReorder"
-                      variant="light"
-                    >
-                      <font-awesome-icon icon="sort" />
-                    </b-button>
-                  </b-col>
-                  <b-col cols="2" class="pl-0 pr-2">
-                    <b-form-input
-                      v-model="line.label"
-                      size="sm"
-                      :placeholder="T.problemCreatorLabelPlaceHolder"
-                    />
-                  </b-col>
-                  <b-col cols="5" class="pr-0 text-center">
-                    <b-form-input
-                      v-if="getLineDisplay(line) === LineDisplayOption.LINE"
-                      v-model="line.data.value"
-                      size="sm"
-                      class="mt-3 mb-3"
-                      :placeholder="T.problemCreatorContentPlaceHolder"
-                    />
-                    <b-form-textarea
-                      v-if="
-                        getLineDisplay(line) === LineDisplayOption.MULTILINE
-                      "
-                      v-model="line.data.value"
-                      class="mt-3 mb-3 text-nowrap overflow-auto w-100"
-                      rows="2"
-                      max-rows="3"
-                      :placeholder="T.problemCreatorContentPlaceHolder"
-                    ></b-form-textarea>
-                  </b-col>
-                  <b-col cols="3" class="pl-2 pr-0 text-center">
-                    <b-dropdown
-                      :data-array-modal-dropdown="line.lineID"
-                      :text="getLineNameFromKind(line.data.kind)"
-                      variant="light"
-                    >
-                      <b-dropdown-item
-                        v-for="lineKindOption in lineKindOptions"
-                        :key="lineKindOption.kind"
-                        :data-array-modal-dropdown-kind="`${line.lineID}-${lineKindOption.kind}`"
-                        @click="
-                          editLineKind([line.lineID, lineKindOption.kind])
+              <td>
+                <b-container fluid class="bg-light">
+                  <b-row
+                    class="d-flex justify-content-between"
+                    align-v="center"
+                  >
+                    <b-col cols="1">
+                      <b-button
+                        class="btn btn-link drag-handle"
+                        type="button"
+                        :title="T.problemCreatorLinesReorder"
+                        variant="light"
+                      >
+                        <font-awesome-icon icon="sort" />
+                      </b-button>
+                    </b-col>
+                    <b-col cols="2" class="pl-0 pr-2">
+                      <b-form-input
+                        v-model="line.label"
+                        size="sm"
+                        :placeholder="T.problemCreatorLabelPlaceHolder"
+                      />
+                    </b-col>
+                    <b-col cols="5" class="pr-0 text-center">
+                      <b-form-input
+                        v-if="getLineDisplay(line) === LineDisplayOption.LINE"
+                        v-model="line.data.value"
+                        size="sm"
+                        class="mt-3 mb-3"
+                        :placeholder="T.problemCreatorContentPlaceHolder"
+                      />
+                      <b-form-textarea
+                        v-if="
+                          getLineDisplay(line) === LineDisplayOption.MULTILINE
+                        "
+                        v-model="line.data.value"
+                        class="mt-3 mb-3 text-nowrap overflow-auto w-100"
+                        rows="2"
+                        max-rows="3"
+                        :placeholder="T.problemCreatorContentPlaceHolder"
+                      ></b-form-textarea>
+                    </b-col>
+                    <b-col cols="3" class="pl-2 pr-0 text-center">
+                      <b-dropdown
+                        :data-array-modal-dropdown="line.lineID"
+                        :text="getLineNameFromKind(line.data.kind)"
+                        variant="light"
+                      >
+                        <b-dropdown-item
+                          v-for="lineKindOption in lineKindOptions"
+                          :key="lineKindOption.kind"
+                          :data-array-modal-dropdown-kind="`${line.lineID}-${lineKindOption.kind}`"
+                          @click="
+                            editLineKind([line.lineID, lineKindOption.kind])
+                          "
+                        >
+                          {{ lineKindOption.type }}
+                        </b-dropdown-item>
+                      </b-dropdown>
+                      <b-button
+                        v-if="
+                          getEditIconDisplay(line) ===
+                          EditIconDisplayOption.EDIT_ICON
+                        "
+                        :data-line-edit-button="line.lineID"
+                        size="sm"
+                        type="button"
+                        :title="T.problemCreatorLineEdit"
+                        variant="light"
+                        @click="editModalState(line.data.kind)"
+                      >
+                        <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
+                      </b-button>
+                      <b-modal
+                        v-if="line.data.kind === 'array'"
+                        v-model="arrayModalEdit"
+                        data-array-modal
+                        :title="T.arrayEditTitle"
+                        :ok-title="T.arrayModalSave"
+                        ok-variant="success"
+                        :cancel-title="T.arrayModalBack"
+                        cancel-variant="danger"
+                        static
+                        lazy
+                        @ok="
+                          editLineValue([line.lineID, arrayModalEditArray]);
+                          arrayModalEditArray = '';
                         "
                       >
-                        {{ lineKindOption.type }}
-                      </b-dropdown-item>
-                    </b-dropdown>
-                    <b-button
-                      v-if="
-                        getEditIconDisplay(line) ===
-                        EditIconDisplayOption.EDIT_ICON
-                      "
-                      :data-line-edit-button="line.lineID"
-                      size="sm"
-                      type="button"
-                      :title="T.problemCreatorLineEdit"
-                      variant="light"
-                      @click="editModalState(line.data.kind)"
-                    >
-                      <FontAwesomeIcon :icon="['fas', 'pen-to-square']" />
-                    </b-button>
-                    <b-modal
-                      v-if="line.data.kind === 'array'"
-                      v-model="arrayModalEdit"
-                      data-array-modal
-                      :title="T.arrayEditTitle"
-                      :ok-title="T.arrayModalSave"
-                      ok-variant="success"
-                      :cancel-title="T.arrayModalBack"
-                      cancel-variant="danger"
-                      static
-                      lazy
-                      @ok="
-                        editLineValue([line.lineID, arrayModalEditArray]);
-                        arrayModalEditArray = '';
-                      "
-                    >
-                      <b-container>
-                        <b-row class="mb-4">
-                          <b-col class="text-left">
-                            {{ T.arrayModalSize }}
-                            <b-form-input
-                              v-model="line.data.size"
-                              type="number"
-                              data-array-modal-size
-                            />
-                          </b-col>
-                          <b-col class="text-left">
-                            {{ T.arrayModalMinimum }}
-                            <b-form-input
-                              v-model="line.data.min"
-                              type="number"
-                              data-array-modal-min
-                            />
-                          </b-col>
-                          <b-col class="text-left">
-                            {{ T.arrayModalMaximum }}
-                            <b-form-input
-                              v-model="line.data.max"
-                              type="number"
-                              data-array-modal-max
-                            />
-                          </b-col>
-                        </b-row>
-                        <b-row class="mt-2 mb-4">
-                          <b-col class="text-left">
-                            <b-form-checkbox
-                              v-model="line.data.distinct"
-                              data-array-modal-checkbox
-                            >
-                              {{ T.arrayModalDistinctValues }}
-                            </b-form-checkbox>
-                          </b-col>
-                        </b-row>
-                        <b-row class="mt-4">
-                          <b-col class="text-left">
-                            <b-button
-                              variant="primary"
-                              data-array-modal-generate
-                              @click="
-                                arrayModalEditArray = getArrayContent(
-                                  Number(line.data.size),
-                                  Number(line.data.min),
-                                  Number(line.data.max),
-                                  line.data.distinct,
-                                )
-                              "
-                              >{{ T.arrayModalGenerate }}</b-button
-                            >
-                          </b-col>
-                        </b-row>
-                        <hr />
-                        <div class="text-left">
-                          {{ T.arrayModalGeneratedArray }}
-                        </div>
-                        <b-form-input
-                          v-model="arrayModalEditArray"
-                          data-array-modal-generated-array
-                          class="w-100"
-                        />
-                      </b-container>
-                    </b-modal>
-                    <b-modal
-                      v-if="line.data.kind === 'matrix'"
-                      v-model="matrixModalEdit"
-                      data-matrix-modal
-                      :title="T.matrixEditTitle"
-                      :ok-title="T.matrixModalSave"
-                      ok-variant="success"
-                      :cancel-title="T.matrixModalBack"
-                      cancel-variant="danger"
-                      static
-                      lazy
-                      @ok="
-                        editLineValue([line.lineID, matrixModalEditArray]);
-                        matrixModalEditArray = '';
-                      "
-                    >
-                      <b-container>
-                        <b-row class="mb-4">
-                          <b-col class="text-left">
-                            {{ T.matrixModalRows }}
-                            <b-form-input
-                              v-model="line.data.rows"
-                              type="number"
-                              data-matrix-modal-rows
-                            />
-                          </b-col>
-                          <b-col>
-                            {{ T.matrixModalColumns }}
-                            <b-form-input
-                              v-model="line.data.cols"
-                              type="number"
-                              data-matrix-modal-columns
-                            />
-                          </b-col>
-                          <b-col class="text-left">
-                            {{ T.matrixModalMinimum }}
-                            <b-form-input
-                              v-model="line.data.min"
-                              type="number"
-                              data-matrix-modal-min
-                            />
-                          </b-col>
-                          <b-col>
-                            {{ T.matrixModalMaximum }}
-                            <b-form-input
-                              v-model="line.data.max"
-                              type="number"
-                              data-matrix-modal-max
-                            />
-                          </b-col>
-                        </b-row>
-                        <b-row class="mt-2 mb-4">
-                          <b-col class="text-left">
-                            <div class="mb-1 font-weight-bold">
-                              {{ T.matrixModalDistinct }}
-                            </div>
-                            <b-dropdown
-                              :text="
-                                getDistinctNameFromType(line.data.distinct)
-                              "
-                              data-matrix-modal-dropdown
-                              variant="light"
-                            >
-                              <b-dropdown-header>
-                                {{ T.matrixModalDistinctHeader }}
-                              </b-dropdown-header>
-                              <b-dropdown-item
-                                v-for="matrixDistinctOption in matrixDistinctOptions"
-                                :key="matrixDistinctOption.distinctType"
-                                :data-matrix-modal-dropdown="
-                                  matrixDistinctOption.type
-                                "
-                                @click="
-                                  line.data.distinct =
-                                    matrixDistinctOption.distinctType
-                                "
+                        <b-container>
+                          <b-row class="mb-4">
+                            <b-col class="text-left">
+                              {{ T.arrayModalSize }}
+                              <b-form-input
+                                v-model="line.data.size"
+                                type="number"
+                                data-array-modal-size
+                              />
+                            </b-col>
+                            <b-col class="text-left">
+                              {{ T.arrayModalMinimum }}
+                              <b-form-input
+                                v-model="line.data.min"
+                                type="number"
+                                data-array-modal-min
+                              />
+                            </b-col>
+                            <b-col class="text-left">
+                              {{ T.arrayModalMaximum }}
+                              <b-form-input
+                                v-model="line.data.max"
+                                type="number"
+                                data-array-modal-max
+                              />
+                            </b-col>
+                          </b-row>
+                          <b-row class="mt-2 mb-4">
+                            <b-col class="text-left">
+                              <b-form-checkbox
+                                v-model="line.data.distinct"
+                                data-array-modal-checkbox
                               >
-                                {{ matrixDistinctOption.type }}
-                              </b-dropdown-item>
-                            </b-dropdown>
-                          </b-col>
-                        </b-row>
-                        <b-row class="mt-4">
-                          <b-col class="text-left">
-                            <b-button
-                              variant="primary"
-                              data-matrix-modal-generate
-                              @click="
-                                matrixModalEditArray = getMatrixContent(
-                                  Number(line.data.rows),
-                                  Number(line.data.cols),
-                                  Number(line.data.min),
-                                  Number(line.data.max),
-                                  line.data.distinct,
-                                )
-                              "
-                              >{{ T.matrixModalGenerate }}</b-button
-                            >
-                          </b-col>
-                        </b-row>
-                        <hr />
-                        <div class="text-left">
-                          {{ T.matrixModalGeneratedArray }}
-                        </div>
-                        <b-form-textarea
-                          v-model="matrixModalEditArray"
-                          data-matrix-modal-generated-matrix
-                          class="w-100"
-                        />
-                      </b-container>
-                    </b-modal>
-                  </b-col>
-                  <b-col cols="1">
-                    <b-button
-                      size="sm"
-                      type="button"
-                      :title="T.problemCreatorLineDelete"
-                      variant="light"
-                      @click="deleteLine(line.lineID)"
-                    >
-                      <FontAwesomeIcon :icon="['fas', 'trash-can']" />
-                    </b-button>
-                  </b-col>
-                </b-row>
-              </b-container>
-            </td>
-          </tr>
+                                {{ T.arrayModalDistinctValues }}
+                              </b-form-checkbox>
+                            </b-col>
+                          </b-row>
+                          <b-row class="mt-4">
+                            <b-col class="text-left">
+                              <b-button
+                                variant="primary"
+                                data-array-modal-generate
+                                @click="
+                                  arrayModalEditArray = getArrayContent(
+                                    Number(line.data.size),
+                                    Number(line.data.min),
+                                    Number(line.data.max),
+                                    line.data.distinct,
+                                  )
+                                "
+                                >{{ T.arrayModalGenerate }}</b-button
+                              >
+                            </b-col>
+                          </b-row>
+                          <hr />
+                          <div class="text-left">
+                            {{ T.arrayModalGeneratedArray }}
+                          </div>
+                          <b-form-input
+                            v-model="arrayModalEditArray"
+                            data-array-modal-generated-array
+                            class="w-100"
+                          />
+                        </b-container>
+                      </b-modal>
+                      <b-modal
+                        v-if="line.data.kind === 'matrix'"
+                        v-model="matrixModalEdit"
+                        data-matrix-modal
+                        :title="T.matrixEditTitle"
+                        :ok-title="T.matrixModalSave"
+                        ok-variant="success"
+                        :cancel-title="T.matrixModalBack"
+                        cancel-variant="danger"
+                        static
+                        lazy
+                        @ok="
+                          editLineValue([line.lineID, matrixModalEditArray]);
+                          matrixModalEditArray = '';
+                        "
+                      >
+                        <b-container>
+                          <b-row class="mb-4">
+                            <b-col class="text-left">
+                              {{ T.matrixModalRows }}
+                              <b-form-input
+                                v-model="line.data.rows"
+                                type="number"
+                                data-matrix-modal-rows
+                              />
+                            </b-col>
+                            <b-col>
+                              {{ T.matrixModalColumns }}
+                              <b-form-input
+                                v-model="line.data.cols"
+                                type="number"
+                                data-matrix-modal-columns
+                              />
+                            </b-col>
+                            <b-col class="text-left">
+                              {{ T.matrixModalMinimum }}
+                              <b-form-input
+                                v-model="line.data.min"
+                                type="number"
+                                data-matrix-modal-min
+                              />
+                            </b-col>
+                            <b-col>
+                              {{ T.matrixModalMaximum }}
+                              <b-form-input
+                                v-model="line.data.max"
+                                type="number"
+                                data-matrix-modal-max
+                              />
+                            </b-col>
+                          </b-row>
+                          <b-row class="mt-2 mb-4">
+                            <b-col class="text-left">
+                              <div class="mb-1 font-weight-bold">
+                                {{ T.matrixModalDistinct }}
+                              </div>
+                              <b-dropdown
+                                :text="
+                                  getDistinctNameFromType(line.data.distinct)
+                                "
+                                data-matrix-modal-dropdown
+                                variant="light"
+                              >
+                                <b-dropdown-header>
+                                  {{ T.matrixModalDistinctHeader }}
+                                </b-dropdown-header>
+                                <b-dropdown-item
+                                  v-for="matrixDistinctOption in matrixDistinctOptions"
+                                  :key="matrixDistinctOption.distinctType"
+                                  :data-matrix-modal-dropdown="
+                                    matrixDistinctOption.type
+                                  "
+                                  @click="
+                                    line.data.distinct =
+                                      matrixDistinctOption.distinctType
+                                  "
+                                >
+                                  {{ matrixDistinctOption.type }}
+                                </b-dropdown-item>
+                              </b-dropdown>
+                            </b-col>
+                          </b-row>
+                          <b-row class="mt-4">
+                            <b-col class="text-left">
+                              <b-button
+                                variant="primary"
+                                data-matrix-modal-generate
+                                @click="
+                                  matrixModalEditArray = getMatrixContent(
+                                    Number(line.data.rows),
+                                    Number(line.data.cols),
+                                    Number(line.data.min),
+                                    Number(line.data.max),
+                                    line.data.distinct,
+                                  )
+                                "
+                                >{{ T.matrixModalGenerate }}</b-button
+                              >
+                            </b-col>
+                          </b-row>
+                          <hr />
+                          <div class="text-left">
+                            {{ T.matrixModalGeneratedArray }}
+                          </div>
+                          <b-form-textarea
+                            v-model="matrixModalEditArray"
+                            data-matrix-modal-generated-matrix
+                            class="w-100"
+                          />
+                        </b-container>
+                      </b-modal>
+                    </b-col>
+                    <b-col cols="1">
+                      <b-button
+                        size="sm"
+                        type="button"
+                        :title="T.problemCreatorLineDelete"
+                        variant="light"
+                        @click="deleteLine(line.lineID)"
+                      >
+                        <FontAwesomeIcon :icon="['fas', 'trash-can']" />
+                      </b-button>
+                    </b-col>
+                  </b-row>
+                </b-container>
+              </td>
+            </tr>
           </template>
         </draggable>
         <tbody>
@@ -474,11 +483,46 @@ import {
 } from '@fortawesome/vue-fontawesome';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap-vue-next/dist/bootstrap-vue-next.css';
-import { BButton, BCol, BContainer, BDropdown, BDropdownDivider, BDropdownHeader, BDropdownItem, BFormCheckbox, BFormInput, BFormTextarea, BModal, BRow } from 'bootstrap-vue-next';
-import { faAlignLeft, faBoxArchive, faEllipsisVertical, faEraser, faPen, faPenToSquare, faSort, faSquarePlus, faTrash, faTrashCan } from '@fortawesome/free-solid-svg-icons';
+import {
+  BButton,
+  BCol,
+  BContainer,
+  BDropdown,
+  BDropdownDivider,
+  BDropdownHeader,
+  BDropdownItem,
+  BFormCheckbox,
+  BFormInput,
+  BFormTextarea,
+  BModal,
+  BRow,
+} from 'bootstrap-vue-next';
+import {
+  faAlignLeft,
+  faBoxArchive,
+  faEllipsisVertical,
+  faEraser,
+  faPen,
+  faPenToSquare,
+  faSort,
+  faSquarePlus,
+  faTrash,
+  faTrashCan,
+} from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import draggable from 'vuedraggable';
-library.add(faAlignLeft, faBoxArchive, faEllipsisVertical, faEraser, faPen, faPenToSquare, faSort, faSquarePlus, faTrash, faTrashCan);
+library.add(
+  faAlignLeft,
+  faBoxArchive,
+  faEllipsisVertical,
+  faEraser,
+  faPen,
+  faPenToSquare,
+  faSort,
+  faSquarePlus,
+  faTrash,
+  faTrashCan,
+);
 
 export default defineComponent({
   name: 'CaseEdit',
@@ -632,9 +676,7 @@ export default defineComponent({
     ): string => {
       const generatedArray = [];
       while (generatedArray.length < size) {
-        generatedArray.push(
-          low + Math.floor(Math.random() * (high - low + 1)),
-        );
+        generatedArray.push(low + Math.floor(Math.random() * (high - low + 1)));
       }
       return [...generatedArray].join(' ');
     };

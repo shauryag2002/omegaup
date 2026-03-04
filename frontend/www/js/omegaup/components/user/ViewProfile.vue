@@ -247,7 +247,7 @@
 
 <script lang="ts">
 import * as Highcharts from 'highcharts/highstock';
-import { Component, Prop, Vue, Watch } from 'vue-property-decorator';
+import { defineComponent, ref, computed, watch, PropType } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import {
@@ -288,7 +288,8 @@ function getInitialSelectedTab(
   return selectedTab ?? ViewProfileTabs.Badges;
 }
 
-@Component({
+export default defineComponent({
+  name: 'ViewProfile',
   components: {
     'omegaup-user-basicinfo': user_BasicInfo,
     'omegaup-user-username': user_Username,
@@ -302,110 +303,159 @@ function getInitialSelectedTab(
     'omegaup-table-paginator': common_TablePaginator,
     'omegaup-countryflag': country_Flag,
   },
-})
-export default class ViewProfile extends Vue {
-  @Prop() data!: types.ExtraProfileDetails | null;
-  @Prop() profile!: types.UserProfileInfo;
-  @Prop() profileBadges!: Set<string>;
-  @Prop() visitorBadges!: Set<string>;
-  @Prop({ default: null }) selectedTab!: string | null;
-  @Prop({ default: () => [] }) availableYears!: number[];
-  @Prop({ default: null }) profileStatistics!: {
-    solved: number;
-    attempting: number;
-    difficulty: {
-      easy: number;
-      medium: number;
-      hard: number;
-      unlabelled: number;
-    };
-    tags: Array<{ name: string; count: number }>;
-  } | null;
-  contests = Object.values(
-    this.data?.contests ?? ({} as types.UserProfileContests),
-  )
-    .map((contest) => {
-      const now = new Date();
-      if (contest.place === null || now <= contest.data.finish_time) {
-        return null;
-      }
-      return new ContestResult(contest);
-    })
-    .filter((contest) => Boolean(contest));
-  charts: types.UserProfileStats[] = this.data?.stats ?? [];
-  ViewProfileTabs = ViewProfileTabs;
-  T = T;
-  ui = ui;
-  columns = 3;
-  currentSelectedTab = getInitialSelectedTab(this.profile, this.selectedTab);
-  normalizedRunCounts: Highcharts.PointOptionsObject[] = [];
-
-  get createdContests(): Contest[] {
-    if (!this.data?.createdContests) return [];
-    let contests = this.data.createdContests;
-    if (!this.profile.is_own_profile) {
-      contests = contests.filter(
-        (contest) => contest.admission_mode === 'public',
-      );
-    }
-    return contests.map((contest) => new Contest(contest));
-  }
-  get createdCourses(): Course[] {
-    if (!this.data?.createdCourses) return [];
-    let courses = this.data.createdCourses;
-    if (!this.profile.is_own_profile) {
-      courses = courses.filter((course) => course.admission_mode === 'public');
-    }
-    return courses.map((course) => new Course(course));
-  }
-  get createdProblems(): Problem[] {
-    if (!this.data?.createdProblems) return [];
-    return this.data.createdProblems.map((problem) => new Problem(problem));
-  }
-  get unsolvedProblems(): Problem[] {
-    if (!this.data?.unsolvedProblems) return [];
-    return this.data.unsolvedProblems.map((problem) => new Problem(problem));
-  }
-
-  get columnNames(): Array<{ name: string; style: string }> {
-    return [
-      { name: T.profileContestsTableContest, style: 'text-left' },
-      { name: T.profileContestsTablePlace, style: 'text-right' },
-    ];
-  }
-
-  get solvedProblems(): Problem[] {
-    if (!this.data?.solvedProblems) return [];
-    return this.data.solvedProblems.map((problem) => new Problem(problem));
-  }
-  get bookmarkedProblems(): Problem[] {
-    if (!this.data?.bookmarkedProblems) return [];
-    return this.data.bookmarkedProblems.map(
-      (problem: types.BookmarkProblem) => new Problem(problem as types.Problem),
+  props: {
+    data: {
+      type: Object as PropType<types.ExtraProfileDetails | null>,
+      required: true,
+    },
+    profile: {
+      type: Object as PropType<types.UserProfileInfo>,
+      required: true,
+    },
+    profileBadges: {
+      type: Set as unknown as PropType<Set<string>>,
+      required: true,
+    },
+    visitorBadges: {
+      type: Set as unknown as PropType<Set<string>>,
+      required: true,
+    },
+    selectedTab: {
+      type: String as PropType<string | null>,
+      default: null,
+    },
+    availableYears: {
+      type: Array as PropType<number[]>,
+      default: () => [],
+    },
+    profileStatistics: {
+      type: Object as PropType<{
+        solved: number;
+        attempting: number;
+        difficulty: {
+          easy: number;
+          medium: number;
+          hard: number;
+          unlabelled: number;
+        };
+        tags: Array<{ name: string; count: number }>;
+      } | null>,
+      default: null,
+    },
+  },
+  emits: ['update:selectedTab', 'heatmap-year-changed'],
+  setup(props, { emit }) {
+    const contests = Object.values(
+      props.data?.contests ?? ({} as types.UserProfileContests),
+    )
+      .map((contest) => {
+        const now = new Date();
+        if (contest.place === null || now <= contest.data.finish_time) {
+          return null;
+        }
+        return new ContestResult(contest);
+      })
+      .filter((contest) => Boolean(contest));
+    const charts = ref<types.UserProfileStats[]>(props.data?.stats ?? []);
+    const columns = ref(3);
+    const currentSelectedTab = ref(
+      getInitialSelectedTab(props.profile, props.selectedTab),
     );
-  }
-  get rank(): string {
-    switch (this.profile.classname) {
-      case 'user-rank-beginner':
-        return T.profileRankBeginner;
-      case 'user-rank-specialist':
-        return T.profileRankSpecialist;
-      case 'user-rank-expert':
-        return T.profileRankExpert;
-      case 'user-rank-master':
-        return T.profileRankMaster;
-      case 'user-rank-international-master':
-        return T.profileRankInternationalMaster;
-      default:
-        return T.profileRankUnrated;
-    }
-  }
+    const normalizedRunCounts = ref<Highcharts.PointOptionsObject[]>([]);
 
-  @Watch('currentSelectedTab')
-  onCurrentSelectedTabChanged(newValue: string) {
-    this.$emit('update:selectedTab', newValue);
-  }
-}
+    const createdContests = computed((): Contest[] => {
+      if (!props.data?.createdContests) return [];
+      let contestsList = props.data.createdContests;
+      if (!props.profile.is_own_profile) {
+        contestsList = contestsList.filter(
+          (contest) => contest.admission_mode === 'public',
+        );
+      }
+      return contestsList.map((contest) => new Contest(contest));
+    });
+
+    const createdCourses = computed((): Course[] => {
+      if (!props.data?.createdCourses) return [];
+      let courses = props.data.createdCourses;
+      if (!props.profile.is_own_profile) {
+        courses = courses.filter(
+          (course) => course.admission_mode === 'public',
+        );
+      }
+      return courses.map((course) => new Course(course));
+    });
+
+    const createdProblems = computed((): Problem[] => {
+      if (!props.data?.createdProblems) return [];
+      return props.data.createdProblems.map((problem) => new Problem(problem));
+    });
+
+    const unsolvedProblems = computed((): Problem[] => {
+      if (!props.data?.unsolvedProblems) return [];
+      return props.data.unsolvedProblems.map((problem) => new Problem(problem));
+    });
+
+    const columnNames = computed((): Array<{ name: string; style: string }> => {
+      return [
+        { name: T.profileContestsTableContest, style: 'text-left' },
+        { name: T.profileContestsTablePlace, style: 'text-right' },
+      ];
+    });
+
+    const solvedProblems = computed((): Problem[] => {
+      if (!props.data?.solvedProblems) return [];
+      return props.data.solvedProblems.map((problem) => new Problem(problem));
+    });
+
+    const bookmarkedProblems = computed((): Problem[] => {
+      if (!props.data?.bookmarkedProblems) return [];
+      return props.data.bookmarkedProblems.map(
+        (problem: types.BookmarkProblem) =>
+          new Problem(problem as types.Problem),
+      );
+    });
+
+    const rank = computed((): string => {
+      switch (props.profile.classname) {
+        case 'user-rank-beginner':
+          return T.profileRankBeginner;
+        case 'user-rank-specialist':
+          return T.profileRankSpecialist;
+        case 'user-rank-expert':
+          return T.profileRankExpert;
+        case 'user-rank-master':
+          return T.profileRankMaster;
+        case 'user-rank-international-master':
+          return T.profileRankInternationalMaster;
+        default:
+          return T.profileRankUnrated;
+      }
+    });
+
+    watch(currentSelectedTab, (newValue: string) => {
+      emit('update:selectedTab', newValue);
+    });
+
+    return {
+      ViewProfileTabs,
+      T,
+      ui,
+      contests,
+      charts,
+      columns,
+      currentSelectedTab,
+      normalizedRunCounts,
+      createdContests,
+      createdCourses,
+      createdProblems,
+      unsolvedProblems,
+      columnNames,
+      solvedProblems,
+      bookmarkedProblems,
+      rank,
+    };
+  },
+});
 </script>
 
 <style lang="scss">

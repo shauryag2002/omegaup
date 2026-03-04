@@ -17,7 +17,7 @@ OmegaUp.on('ready', () => {
 
   createApp({
     render: () =>
-      h(contest_NewForm, {
+      h(contest_NewForm as any, {
         allLanguages: payload.languages,
         initialLanguages: Object.keys(payload.languages),
         update: false,

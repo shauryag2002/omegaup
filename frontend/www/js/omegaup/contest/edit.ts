@@ -3,7 +3,7 @@ import { types } from '../api_types';
 import { createApp, h, reactive } from 'vue';
 import T from '../lang';
 import contest_Edit from '../components/contest/Edit.vue';
-import SearchTypes from '../components/contest/AddProblem.vue';
+import { SearchTypes } from '../components/contest/AddProblem.vue';
 import * as ui from '../ui';
 import * as api from '../api';
 import { toCsv, TableCell } from '../csv';
@@ -56,7 +56,7 @@ OmegaUp.on('ready', () => {
           } else {
             ui.success(T.arbitrateRequestDenySuccessfully);
           }
-          state.refreshRequests();
+          methods.refreshRequests();
         })
         .catch(ui.apiError);
     },
@@ -302,7 +302,7 @@ OmegaUp.on('ready', () => {
             commit: problem.commit,
           })
             .then((data) => {
-              state.refreshProblems(true);
+              methods.refreshProblems(true);
               if (isUpdate) {
                 ui.success(T.problemSuccessfullyUpdated);
                 return;
@@ -360,13 +360,13 @@ OmegaUp.on('ready', () => {
           })
             .then(() => {
               ui.success(T.problemSuccessfullyRemoved);
-              state.refreshProblems(false);
+              methods.refreshProblems(false);
             })
             .catch(ui.apiError);
         },
         onRunsDiff: (
           problemAlias: string,
-          versionsComponent: types.CommitRunsDiff,
+          versionsComponent: { runsDiff: types.CommitRunsDiff },
           selectedCommit: types.ProblemVersion,
         ) => {
           api.Contest.runsDiff({
@@ -375,11 +375,8 @@ OmegaUp.on('ready', () => {
             version: selectedCommit.version,
           })
             .then((response) => {
-              Vue.set(
-                versionsComponent.runsDiff,
-                selectedCommit.version,
-                response.diff,
-              );
+              versionsComponent.runsDiff[selectedCommit.version] =
+                response.diff;
             })
             .catch(ui.apiError);
         },
@@ -393,19 +390,21 @@ OmegaUp.on('ready', () => {
           api.Contest.update({
             contest_alias: payload.details.alias,
             admission_mode: admissionMode,
-            default_show_all_contestants_in_scoreboard: defaultShowAllContestantsInScoreboard,
+            default_show_all_contestants_in_scoreboard:
+              defaultShowAllContestantsInScoreboard,
           })
             .then(() => {
               state.details.admission_mode = admissionMode;
-              state.details.default_show_all_contestants_in_scoreboard = defaultShowAllContestantsInScoreboard;
+              state.details.default_show_all_contestants_in_scoreboard =
+                defaultShowAllContestantsInScoreboard;
               ui.success(
                 ui.formatString(T.contestEditContestEdited, {
                   alias: payload.details.alias,
                 }),
               );
-              state.refreshDetails();
+              methods.refreshDetails();
               if (admissionMode === 'registration') {
-                state.refreshRequests();
+                methods.refreshRequests();
               }
             })
             .catch(ui.apiError);
@@ -426,8 +425,8 @@ OmegaUp.on('ready', () => {
                     result.status === 'rejected',
                 )
                 .map((result) => result.reason);
-              state.refreshUsers();
-              state.refreshRequests();
+              methods.refreshUsers();
+              methods.refreshRequests();
               if (!contestantsWithError.length) {
                 ui.success(
                   contestants.length === 1
@@ -451,7 +450,7 @@ OmegaUp.on('ready', () => {
           })
             .then(() => {
               ui.success(T.userRemoveSuccess);
-              state.refreshUsers();
+              methods.refreshUsers();
             })
             .catch(ui.apiError);
         },
@@ -470,7 +469,7 @@ OmegaUp.on('ready', () => {
             .catch(ui.apiError);
         },
         onAcceptRequest: ({ username }: { username: string }) => {
-          state.arbitrateRequest(username, true);
+          methods.arbitrateRequest(username, true);
         },
         onDenyRequest: ({
           username,
@@ -479,7 +478,7 @@ OmegaUp.on('ready', () => {
           username: string;
           resolutionText: null | string;
         }) => {
-          state.arbitrateRequest(username, false, resolutionText);
+          methods.arbitrateRequest(username, false, resolutionText);
         },
         onAddAdmin: (username: string) => {
           api.Contest.addAdmin({
@@ -488,7 +487,7 @@ OmegaUp.on('ready', () => {
           })
             .then(() => {
               ui.success(T.adminAdded);
-              state.refreshAdmins();
+              methods.refreshAdmins();
             })
             .catch(ui.apiError);
         },
@@ -499,7 +498,7 @@ OmegaUp.on('ready', () => {
           })
             .then(() => {
               ui.success(T.adminRemoved);
-              state.refreshAdmins();
+              methods.refreshAdmins();
             })
             .catch(ui.apiError);
         },
@@ -510,7 +509,7 @@ OmegaUp.on('ready', () => {
           })
             .then(() => {
               ui.success(T.groupAdminAdded);
-              state.refreshGroupAdmins();
+              methods.refreshGroupAdmins();
             })
             .catch(ui.apiError);
         },
@@ -521,7 +520,7 @@ OmegaUp.on('ready', () => {
           })
             .then(() => {
               ui.success(T.groupAdminRemoved);
-              state.refreshGroupAdmins();
+              methods.refreshGroupAdmins();
             })
             .catch(ui.apiError);
         },
@@ -532,7 +531,7 @@ OmegaUp.on('ready', () => {
           })
             .then(() => {
               ui.success(T.contestGroupAdded);
-              state.refreshGroups();
+              methods.refreshGroups();
             })
             .catch(ui.apiError);
         },
@@ -543,7 +542,7 @@ OmegaUp.on('ready', () => {
           })
             .then(() => {
               ui.success(T.contestGroupRemoved);
-              state.refreshGroups();
+              methods.refreshGroups();
             })
             .catch(ui.apiError);
         },
@@ -630,7 +629,7 @@ OmegaUp.on('ready', () => {
                 row.push(user.total.points.toFixed(2));
                 table.push(row);
               }
-              state.downloadCsvFile(`${contestAlias}_scoreboard.csv`, table);
+              methods.downloadCsvFile(`${contestAlias}_scoreboard.csv`, table);
             })
             .catch(ui.apiError);
         },

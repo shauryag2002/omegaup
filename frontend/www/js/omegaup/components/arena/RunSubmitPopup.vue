@@ -160,29 +160,26 @@ const filename = computed((): string => {
   return `Main${extension.value}`;
 });
 
-const allowedLanguages = computed(
-  (): omegaup.Languages => {
-    const result: omegaup.Languages = {};
-    const allLanguages: { language: string; name: string }[] = Object.values(
-      supportedLanguages,
-    ).map((languageInfo: LanguageInfo) => ({
-      language: languageInfo.language,
-      name: languageInfo.name,
-    }));
-    // dont forget about cat ext
-    allLanguages.push({ language: 'cat', name: T.outputOnly });
+const allowedLanguages = computed((): omegaup.Languages => {
+  const result: omegaup.Languages = {};
+  const allLanguages: { language: string; name: string }[] = Object.values(
+    supportedLanguages,
+  ).map((languageInfo: LanguageInfo) => ({
+    language: languageInfo.language,
+    name: languageInfo.name,
+  }));
+  // dont forget about cat ext
+  allLanguages.push({ language: 'cat', name: T.outputOnly });
 
-    allLanguages
-      .filter(
-        (item) =>
-          props.languages.includes(item.language) || item.language === '',
-      )
-      .forEach((optionItem) => {
-        result[optionItem.language] = optionItem.name;
-      });
-    return result;
-  },
-);
+  allLanguages
+    .filter(
+      (item) => props.languages.includes(item.language) || item.language === '',
+    )
+    .forEach((optionItem) => {
+      result[optionItem.language] = optionItem.name;
+    });
+  return result;
+});
 
 const extension = computed((): string => {
   if (!selectedLanguage.value || selectedLanguage.value === 'cat') {

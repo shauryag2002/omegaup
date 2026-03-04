@@ -28,7 +28,7 @@ OmegaUp.on('ready', async () => {
 
   createApp({
     render: () =>
-      h(arena_Course, {
+      h(arena_Course as any, {
         allRuns: runsStore.state.runs,
         assignment: payload.assignment,
         course: payload.course,

@@ -6,8 +6,8 @@ import group_Identities from './Identities.vue';
 
 describe('Identities.vue', () => {
   it('Should handle identities view', () => {
-    const wrapper = shallowMount(group_Identities, {
-      propsData: {
+    const wrapper = shallowMount(group_Identities as any, {
+      props: {
         groupAlias: 'Hello',
         isOrganizer: true,
       },
@@ -17,8 +17,8 @@ describe('Identities.vue', () => {
   });
 
   it('Should handle an invalid csv file', async () => {
-    const wrapper = mount(group_Identities, {
-      propsData: {
+    const wrapper = mount(group_Identities as any, {
+      props: {
         groupAlias: 'Hello',
         isOrganizer: true,
       },
@@ -26,7 +26,7 @@ describe('Identities.vue', () => {
 
     const invalidFile = new File([''], 'fake.html', { type: 'text/html' });
     const mockReadFileMethod = jest
-      .spyOn(wrapper.vm, 'readFile')
+      .spyOn(wrapper.vm as any, 'readFile')
       .mockImplementation(() => invalidFile);
     const fileInput = wrapper.find('input[type=file]');
     await fileInput.trigger('change');
@@ -36,8 +36,8 @@ describe('Identities.vue', () => {
   });
 
   it('Should handle a valid csv file', async () => {
-    const wrapper = mount(group_Identities, {
-      propsData: {
+    const wrapper = mount(group_Identities as any, {
+      props: {
         groupAlias: 'Hello',
         isOrganizer: true,
       },
@@ -45,7 +45,7 @@ describe('Identities.vue', () => {
 
     const validFile = new File([''], 'users.csv', { type: 'text/csv' });
     const mockReadFileMethod = jest
-      .spyOn(wrapper.vm, 'readFile')
+      .spyOn(wrapper.vm as any, 'readFile')
       .mockImplementation(() => validFile);
     const fileInput = wrapper.find('input[type=file]');
     await fileInput.trigger('change');
@@ -55,8 +55,8 @@ describe('Identities.vue', () => {
   });
 
   it('Should handle the view for restricted users', () => {
-    const wrapper = mount(group_Identities, {
-      propsData: {
+    const wrapper = mount(group_Identities as any, {
+      props: {
         groupAlias: 'Hello',
         isOrganizer: false,
       },

@@ -1,6 +1,7 @@
 import { mount } from '@vue/test-utils';
 
 import LayoutSidebar from './LayoutSidebar.vue';
+import { createBootstrap } from 'bootstrap-vue-next';
 import T from '../../../../lang';
 import { nextTick } from 'vue';
 import store from '@/js/omegaup/problem/creator/store';
@@ -50,7 +51,7 @@ describe('LayoutSidebar.vue', () => {
   });
   it('Should show layouts and methods', async () => {
     const wrapper = mount(LayoutSidebar, {
-      global: { plugins: [store] },
+      global: { plugins: [store, createBootstrap()] },
     });
 
     expect(wrapper.vm.getAllLayouts.length).toBe(1);
@@ -163,7 +164,7 @@ describe('LayoutSidebar.vue', () => {
     store.commit('casesStore/resetStore');
     store.commit('casesStore/addNewLayout');
     const wrapper = mount(LayoutSidebar, {
-      global: { plugins: [store] },
+      global: { plugins: [store, createBootstrap()] },
     });
 
     expect(wrapper.vm.getAllLayouts.length).toBe(1);

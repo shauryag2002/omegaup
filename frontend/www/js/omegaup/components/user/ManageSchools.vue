@@ -63,7 +63,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { defineComponent, ref, PropType } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as time from '../../time';
@@ -71,40 +71,61 @@ import common_Typeahead from '../common/Typeahead.vue';
 import DatePicker from '../DatePicker.vue';
 import OmegaupRadioSwitch from '../RadioSwitch.vue';
 
-@Component({
+export default defineComponent({
+  name: 'UserManageSchools',
   components: {
     'omegaup-datepicker': DatePicker,
     'omegaup-common-typeahead': common_Typeahead,
     'omegaup-radio-switch': OmegaupRadioSwitch,
   },
-})
-export default class UserManageSchools extends Vue {
-  @Prop() profile!: types.UserProfileInfo;
-  @Prop() searchResultSchools!: types.SchoolListItem[];
+  props: {
+    profile: {
+      type: Object as PropType<types.UserProfileInfo>,
+      required: true,
+    },
+    searchResultSchools: {
+      type: Array as PropType<types.SchoolListItem[]>,
+      required: true,
+    },
+  },
+  emits: ['update-user-schools'],
+  setup(props, { emit }) {
+    const graduationDate = ref(
+      props.profile.graduation_date
+        ? time.convertLocalDateToGMTDate(props.profile.graduation_date)
+        : new Date(''),
+    );
+    const school = ref<null | types.SchoolListItem>(
+      props.searchResultSchools[0] ?? null,
+    );
+    const scholarDegree = ref(props.profile.scholar_degree);
+    const isCurrentlyEnrolled = ref(!props.profile.graduation_date);
 
-  T = T;
-  graduationDate = this.profile.graduation_date
-    ? time.convertLocalDateToGMTDate(this.profile.graduation_date)
-    : new Date('');
-  school: null | types.SchoolListItem = this.searchResultSchools[0] ?? null;
-  scholarDegree = this.profile.scholar_degree;
-  isCurrentlyEnrolled = !this.profile.graduation_date;
+    function onUpdateUserSchools(): void {
+      emit('update-user-schools', {
+        graduation_date:
+          isCurrentlyEnrolled.value || isNaN(graduationDate.value.getTime())
+            ? null
+            : graduationDate.value,
+        school_id:
+          !school.value ||
+          (school.value.key === props.profile.school_id &&
+            school.value.value !== props.profile.school)
+            ? null
+            : school.value.key,
+        school_name: school.value?.value,
+        scholar_degree: scholarDegree.value,
+      });
+    }
 
-  onUpdateUserSchools(): void {
-    this.$emit('update-user-schools', {
-      graduation_date:
-        this.isCurrentlyEnrolled || isNaN(this.graduationDate.getTime())
-          ? null
-          : this.graduationDate,
-      school_id:
-        !this.school ||
-        (this.school.key === this.profile.school_id &&
-          this.school.value !== this.profile.school)
-          ? null
-          : this.school.key,
-      school_name: this.school?.value,
-      scholar_degree: this.scholarDegree,
-    });
-  }
-}
+    return {
+      T,
+      graduationDate,
+      school,
+      scholarDegree,
+      isCurrentlyEnrolled,
+      onUpdateUserSchools,
+    };
+  },
+});
 </script>

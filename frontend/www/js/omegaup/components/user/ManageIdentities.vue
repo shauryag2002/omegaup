@@ -69,7 +69,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { defineComponent, ref, PropType } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 
@@ -83,19 +83,29 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import omegaup_PasswordInput from '../common/PasswordInput.vue';
 library.add(fas);
 
-@Component({
+export default defineComponent({
+  name: 'ManageIdentities',
   components: {
     'font-awesome-icon': FontAwesomeIcon,
     'font-awesome-layers': FontAwesomeLayers,
     'font-awesome-layers-text': FontAwesomeLayersText,
     'omegaup-password-input': omegaup_PasswordInput,
   },
-})
-export default class ManageIdentities extends Vue {
-  @Prop() identities!: types.Identity[];
+  props: {
+    identities: {
+      type: Array as PropType<types.Identity[]>,
+      required: true,
+    },
+  },
+  setup() {
+    const username = ref('');
+    const password = ref('');
 
-  T = T;
-  username = '';
-  password = '';
-}
+    return {
+      T,
+      username,
+      password,
+    };
+  },
+});
 </script>

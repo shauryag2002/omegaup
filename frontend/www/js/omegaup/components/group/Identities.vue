@@ -98,7 +98,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { defineComponent, ref, onMounted, PropType } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import omegaup_Markdown from '../Markdown.vue';
@@ -111,116 +111,138 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 library.add(faDownload);
 
-@Component({
+export default defineComponent({
+  name: 'Identities',
   components: {
     FontAwesomeIcon,
     'omegaup-markdown': omegaup_Markdown,
   },
-})
-export default class Identities extends Vue {
-  @Prop() groupAlias!: string;
-  @Prop() userErrorRow!: string | null;
-  @Prop() hasVisitedSection!: boolean;
-  @Prop() isOrganizer!: boolean;
+  props: {
+    groupAlias: {
+      type: String,
+      required: true,
+    },
+    userErrorRow: {
+      type: String as PropType<string | null>,
+      default: null,
+    },
+    hasVisitedSection: {
+      type: Boolean,
+      required: true,
+    },
+    isOrganizer: {
+      type: Boolean,
+      required: true,
+    },
+  },
+  emits: ['bulk-identities', 'download-identities', 'invalid-file', 'read-csv'],
+  setup(props, { emit }) {
+    const identities = ref<types.Identity[]>([]);
+    const humanReadable = ref(false);
 
-  T = T;
-  identities: types.Identity[] = [];
-  humanReadable = false;
-
-  mounted() {
-    if (!this.isOrganizer) {
-      return;
-    }
-    const title = T.createIdentitiesInteractiveGuideTitle;
-    if (!this.hasVisitedSection) {
-      introJs()
-        .setOptions({
-          nextLabel: T.interactiveGuideNextButton,
-          prevLabel: T.interactiveGuidePreviousButton,
-          doneLabel: T.interactiveGuideDoneButton,
-          steps: [
-            {
-              title,
-              intro: T.createIdentitiesInteractiveGuideWelcome,
-            },
-            {
-              element: document.querySelector(
-                '.introjs-information p:nth-child(1)',
-              ) as Element,
-              title,
-              intro: T.createIdentitiesInteractiveGuideInformation,
-            },
-            {
-              element: document.querySelector(
-                '.introjs-information p:nth-child(2)',
-              ) as Element,
-              title,
-              intro: T.createIdentitiesInteractiveGuideFormat,
-            },
-            {
-              element: document.querySelector(
-                '.introjs-information pre',
-              ) as Element,
-              title,
-              intro: T.createIdentitiesInteractiveGuideExample,
-            },
-            {
-              element: document.querySelector(
-                '.introjs-information button',
-              ) as Element,
-              title,
-              intro: T.createIdentitiesInteractiveGuideCopy,
-            },
-            {
-              element: document.querySelector('.introjs-password') as Element,
-              title,
-              intro: T.createIdentitiesInteractiveGuidePassword,
-            },
-            {
-              element: document.querySelector('.introjs-upload') as Element,
-              title,
-              intro: T.createIdentitiesInteractiveGuideUpload,
-            },
-            {
-              element: document.querySelector('.introjs-info') as Element,
-              title,
-              intro: T.createIdentitiesInteractiveGuideInformationPassword,
-            },
-            {
-              element: document.querySelector('.introjs-info') as Element,
-              title,
-              intro: T.createIdentitiesInteractiveGuideInformationConfirm,
-            },
-          ],
-        })
-        .start();
-      setCookie('has-visited-create-identities', true);
-    }
-  }
-
-  readFile(e: HTMLInputElement): File | null {
-    return (e.files && e.files[0]) || null;
-  }
-
-  readCsv(ev: Event): void {
-    const file = this.readFile(ev.target as HTMLInputElement);
-    if (!file || file.name === '') {
-      return;
-    }
-
-    const regex = /.*\.(?:csv|txt)$/;
-
-    if (!regex.test(file.name.toLowerCase())) {
-      this.$emit('invalid-file');
-      return;
-    }
-
-    this.identities = [];
-    this.$emit('read-csv', {
-      identities: this.identities,
-      file: file,
-      humanReadable: this.humanReadable,
+    onMounted(() => {
+      if (!props.isOrganizer) {
+        return;
+      }
+      const title = T.createIdentitiesInteractiveGuideTitle;
+      if (!props.hasVisitedSection) {
+        introJs()
+          .setOptions({
+            nextLabel: T.interactiveGuideNextButton,
+            prevLabel: T.interactiveGuidePreviousButton,
+            doneLabel: T.interactiveGuideDoneButton,
+            steps: [
+              {
+                title,
+                intro: T.createIdentitiesInteractiveGuideWelcome,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-information p:nth-child(1)',
+                ),
+                title,
+                intro: T.createIdentitiesInteractiveGuideInformation,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-information p:nth-child(2)',
+                ),
+                title,
+                intro: T.createIdentitiesInteractiveGuideFormat,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-information pre',
+                ),
+                title,
+                intro: T.createIdentitiesInteractiveGuideExample,
+              },
+              {
+                element: document.querySelector<HTMLElement>(
+                  '.introjs-information button',
+                ),
+                title,
+                intro: T.createIdentitiesInteractiveGuideCopy,
+              },
+              {
+                element:
+                  document.querySelector<HTMLElement>('.introjs-password'),
+                title,
+                intro: T.createIdentitiesInteractiveGuidePassword,
+              },
+              {
+                element: document.querySelector<HTMLElement>('.introjs-upload'),
+                title,
+                intro: T.createIdentitiesInteractiveGuideUpload,
+              },
+              {
+                element: document.querySelector<HTMLElement>('.introjs-info'),
+                title,
+                intro: T.createIdentitiesInteractiveGuideInformationPassword,
+              },
+              {
+                element: document.querySelector<HTMLElement>('.introjs-info'),
+                title,
+                intro: T.createIdentitiesInteractiveGuideInformationConfirm,
+              },
+            ],
+          })
+          .start();
+        setCookie('has-visited-create-identities', true);
+      }
     });
-  }
-}
+
+    function readFile(e: HTMLInputElement): File | null {
+      return (e.files && e.files[0]) || null;
+    }
+
+    function readCsv(ev: Event): void {
+      const file = readFile(ev.target as HTMLInputElement);
+      if (!file || file.name === '') {
+        return;
+      }
+
+      const regex = /.*\.(?:csv|txt)$/;
+
+      if (!regex.test(file.name.toLowerCase())) {
+        emit('invalid-file');
+        return;
+      }
+
+      identities.value = [];
+      emit('read-csv', {
+        identities: identities.value,
+        file: file,
+        humanReadable: humanReadable.value,
+      });
+    }
+
+    return {
+      T,
+      identities,
+      humanReadable,
+      readCsv,
+    };
+  },
+});
 </script>

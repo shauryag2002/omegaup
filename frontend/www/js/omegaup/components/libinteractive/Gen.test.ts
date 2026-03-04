@@ -18,9 +18,9 @@ describe('Gen.vue', () => {
   });
 
   it('Should handle empty form to be filled', async () => {
-    const wrapper = shallowMount(course_LibinteractiveGen, {
+    const wrapper = shallowMount(course_LibinteractiveGen as any, {
       attachTo: '#root',
-      propsData: {
+      props: {
         language: null,
         os: null,
         name: null,
@@ -57,7 +57,7 @@ describe('Gen.vue', () => {
     idl = wrapper.find('textarea[name="idl"]').element as HTMLInputElement;
     expect(idl.value).toEqual('any text');
 
-    wrapper.destroy();
+    wrapper.unmount();
   });
 
   it('Should handle form with initial error', async () => {
@@ -66,8 +66,8 @@ describe('Gen.vue', () => {
       field: 'idl',
     };
 
-    const wrapper = shallowMount(course_LibinteractiveGen, {
-      propsData: {
+    const wrapper = shallowMount(course_LibinteractiveGen as any, {
+      props: {
         language: null,
         os: null,
         name: null,

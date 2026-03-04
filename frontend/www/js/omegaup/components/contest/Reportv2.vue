@@ -79,7 +79,7 @@
 </template>
 
 <script lang="ts">
-import { Vue, Component, Prop } from 'vue-property-decorator';
+import { defineComponent, PropType } from 'vue';
 import { types } from '../../api_types';
 import T from '../../lang';
 import * as ui from '../../ui';
@@ -91,7 +91,11 @@ import { BButton, BCard, BCardText, BTable } from 'bootstrap-vue-next';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { faPrint, faSquareCaretDown, faSquareCaretUp } from '@fortawesome/free-solid-svg-icons';
+import {
+  faPrint,
+  faSquareCaretDown,
+  faSquareCaretUp,
+} from '@fortawesome/free-solid-svg-icons';
 library.add(faPrint, faSquareCaretDown, faSquareCaretUp);
 
 interface GroupDetails {
@@ -104,56 +108,71 @@ interface GroupDetails {
   diff?: string;
 }
 
-@Component({
+export default defineComponent({
+  name: 'Report',
   components: {
     FontAwesomeIcon,
   },
-})
-export default class Report extends Vue {
-  @Prop() contestReport!: types.ContestReport[];
-  @Prop() contestAlias!: string;
+  props: {
+    contestReport: {
+      type: Array as PropType<types.ContestReport[]>,
+      required: true,
+    },
+    contestAlias: {
+      type: String,
+      required: true,
+    },
+  },
+  setup() {
+    const groupColumns = [
+      { key: 'group', label: T.wordsGroup, isRowHeader: true },
+      { key: 'rank_score', label: T.rankScore },
+      { key: 'details', label: T.wordsDetails },
+    ];
 
-  T = T;
-  ui = ui;
-  groupColumns = [
-    { key: 'group', label: T.wordsGroup, isRowHeader: true },
-    { key: 'rank_score', label: T.rankScore },
-    { key: 'details', label: T.wordsDetails },
-  ];
+    const casesColumns = [
+      { key: 'name', label: T.wordsCase, isRowHeader: true },
+      { key: 'time', label: T.wordsTimeInSeconds },
+      { key: 'wall_time', label: T.wordsWallTimeInSeconds },
+      { key: 'memory', label: T.wordsMemoryInMebibytes },
+      { key: 'verdict', label: T.wordsStatus },
+      { key: 'score', label: T.rankScore },
+      { key: 'diff', label: T.wordsDifference },
+    ];
 
-  casesColumns = [
-    { key: 'name', label: T.wordsCase, isRowHeader: true },
-    { key: 'time', label: T.wordsTimeInSeconds },
-    { key: 'wall_time', label: T.wordsWallTimeInSeconds },
-    { key: 'memory', label: T.wordsMemoryInMebibytes },
-    { key: 'verdict', label: T.wordsStatus },
-    { key: 'score', label: T.rankScore },
-    { key: 'diff', label: T.wordsDifference },
-  ];
+    function totalPoints(contestantData: types.ContestReport): string {
+      const points = contestantData.total.points ?? 0;
+      return ui.formatString(T.contestReportProblemWithPoints, { points });
+    }
 
-  totalPoints(contestantData: types.ContestReport): string {
-    const points = contestantData.total.points ?? 0;
-    return ui.formatString(T.contestReportProblemWithPoints, { points });
-  }
+    function getGroupsByProblemAndUser(
+      groups: types.RunDetailsGroup[],
+    ): { group: string; rankScore: number; details: GroupDetails[] }[] {
+      return groups.map((item) => ({
+        group: item.group,
+        rankScore: item.score,
+        details: item.cases.map((row) => ({
+          name: row.name,
+          time: row.meta.time.toFixed(3),
+          wallTime: row.meta.wall_time.toFixed(3),
+          memory: row.meta.memory.toFixed(2),
+          verdict: row.verdict,
+          score: row.score,
+          diff: row.out_diff,
+        })),
+      }));
+    }
 
-  getGroupsByProblemAndUser(
-    groups: types.RunDetailsGroup[],
-  ): { group: string; rankScore: number; details: GroupDetails[] }[] {
-    return groups.map((item) => ({
-      group: item.group,
-      rankScore: item.score,
-      details: item.cases.map((row) => ({
-        name: row.name,
-        time: row.meta.time.toFixed(3),
-        wallTime: row.meta.wall_time.toFixed(3),
-        memory: row.meta.memory.toFixed(2),
-        verdict: row.verdict,
-        score: row.score,
-        diff: row.out_diff,
-      })),
-    }));
-  }
-}
+    return {
+      T,
+      ui,
+      groupColumns,
+      casesColumns,
+      totalPoints,
+      getGroupsByProblemAndUser,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>
