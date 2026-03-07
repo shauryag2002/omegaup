@@ -6,7 +6,9 @@ import T from '../../lang';
 
 Vue.use(Vuex);
 
-const state: StoreState = {
+const draftStorageKey = 'problemCreatorDraft';
+
+const defaultState: StoreState = {
   problemName: T.problemCreatorNewProblem,
   problemMarkdown: T.problemCreatorEmpty,
   problemCodeContent: T.problemCreatorEmpty,
@@ -14,8 +16,24 @@ const state: StoreState = {
   problemSolutionMarkdown: T.problemCreatorEmpty,
 } as StoreState;
 
-export default new Vuex.Store({
-  state,
+function loadDraft(): Partial<StoreState> & { casesStore?: unknown } {
+  if (typeof window === 'undefined') {
+    return {};
+  }
+  const raw = window.localStorage.getItem(draftStorageKey);
+  if (!raw) {
+    return {};
+  }
+  try {
+    return JSON.parse(raw) as Partial<StoreState> & { casesStore?: unknown };
+  } catch (err) {
+    console.error('Failed to parse problem creator draft', err);
+    return {};
+  }
+}
+
+const store = new Vuex.Store({
+  state: { ...defaultState },
   modules: {
     casesStore,
   },
@@ -44,3 +62,40 @@ export default new Vuex.Store({
     },
   },
 });
+
+const draft = loadDraft();
+if (draft.problemName) {
+  store.state.problemName = draft.problemName;
+}
+if (draft.problemMarkdown) {
+  store.state.problemMarkdown = draft.problemMarkdown;
+}
+if (draft.problemCodeContent) {
+  store.state.problemCodeContent = draft.problemCodeContent;
+}
+if (draft.problemCodeExtension) {
+  store.state.problemCodeExtension = draft.problemCodeExtension;
+}
+if (draft.problemSolutionMarkdown) {
+  store.state.problemSolutionMarkdown = draft.problemSolutionMarkdown;
+}
+if (draft.casesStore) {
+  store.commit('casesStore/replaceState', draft.casesStore);
+}
+
+store.subscribe((_mutation, state) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  const snapshot = {
+    problemName: state.problemName,
+    problemMarkdown: state.problemMarkdown,
+    problemCodeContent: state.problemCodeContent,
+    problemCodeExtension: state.problemCodeExtension,
+    problemSolutionMarkdown: state.problemSolutionMarkdown,
+    casesStore: state.casesStore,
+  };
+  window.localStorage.setItem(draftStorageKey, JSON.stringify(snapshot));
+});
+
+export default store;

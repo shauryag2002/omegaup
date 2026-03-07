@@ -8,7 +8,7 @@
         :placeholder="T.problemCreatorNewProblem"
       />
     </b-col>
-    <b-col class="d-flex justify-content-end">
+    <b-col v-if="showHeaderActions" class="d-flex justify-content-end">
       <b-button
         data-load-problem-button
         class="mr-2"
@@ -83,7 +83,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Watch } from 'vue-property-decorator';
+import { Component, Vue, Watch, Prop } from 'vue-property-decorator';
 import JSZip from 'jszip';
 import { namespace } from 'vuex-class';
 import T from '../../../lang';
@@ -94,6 +94,8 @@ const casesStore = namespace('casesStore');
 
 @Component
 export default class Header extends Vue {
+  @Prop({ default: true }) showHeaderActions!: boolean;
+
   T = T;
   zipFile: File | null = null;
   uploadZipModal: boolean = false;
@@ -111,6 +113,12 @@ export default class Header extends Vue {
   }
   set name(newName: string) {
     this.nameInternal = newName;
+  }
+
+  mounted(): void {
+    if (this.$store?.state?.problemName) {
+      this.nameInternal = this.$store.state.problemName;
+    }
   }
 
   readFile(e: HTMLInputElement): File | null {

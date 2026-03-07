@@ -516,6 +516,7 @@ export default class Navbar extends Vue {
 }
 
 nav.navbar {
+  z-index: 998;
   background-color: var(--header-primary-color);
 
   .navbar-brand {

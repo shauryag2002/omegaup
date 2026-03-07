@@ -63,7 +63,7 @@ export default class GlobalNotifications extends Vue {
   top: 66px; // Below navbar
   left: 0;
   right: 0;
-  z-index: 1029;
+  z-index: 997;
   margin-bottom: 0;
   border-radius: 0.3rem;
   overflow: hidden;
