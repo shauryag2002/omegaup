@@ -42,6 +42,7 @@ class Experiments {
      * An array with all the known experiments.
      */
     private const KNOWN_EXPERIMENTS = [
+        'problem_creation_method_selector',
     ];
 
     /**
