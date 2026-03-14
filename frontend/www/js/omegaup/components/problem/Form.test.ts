@@ -187,4 +187,53 @@ describe('Settings.vue', () => {
 
     expect((wrapper.vm as any).showProblemCreator).toBe(false);
   });
+
+  it('Should parse uploaded zip and import into creator in feature-flag flow', async () => {
+    const wrapper = shallowMount(Form, {
+      propsData: {
+        data: props,
+        showCreationMethodSelector: true,
+      },
+    });
+    await wrapper.setData({ creationMethod: 'zip' });
+
+    const parsedStoreData = { problemName: 'sumas' };
+    const parseSpy = jest
+      .spyOn(wrapper.vm as any, 'parseUploadedZipToStoreData')
+      .mockResolvedValue(parsedStoreData);
+    const importSpy = jest
+      .spyOn(wrapper.vm as any, 'importZipIntoCreator')
+      .mockResolvedValue(undefined);
+
+    const file = new File(['zip-content'], 'sumas.zip', {
+      type: 'application/zip',
+    });
+    const input = document.createElement('input');
+    Object.defineProperty(input, 'files', { value: [file] });
+
+    await (wrapper.vm as any).onUploadFile({ target: input });
+
+    expect(parseSpy).toHaveBeenCalledWith(file);
+    expect(importSpy).toHaveBeenCalledWith(parsedStoreData);
+  });
+
+  it('Should auto-open creator and switch method after zip import', async () => {
+    const wrapper = shallowMount(Form, {
+      propsData: {
+        data: props,
+        showCreationMethodSelector: true,
+      },
+    });
+    await wrapper.setData({ creationMethod: 'zip' });
+
+    const loadSpy = jest
+      .spyOn(wrapper.vm as any, 'loadStoreDataIntoCreator')
+      .mockImplementation(() => {});
+
+    await (wrapper.vm as any).importZipIntoCreator({ problemName: 'sumas' });
+
+    expect((wrapper.vm as any).creationMethod).toBe('creator');
+    expect((wrapper.vm as any).showProblemCreator).toBe(true);
+    expect(loadSpy).toHaveBeenCalled();
+  });
 });

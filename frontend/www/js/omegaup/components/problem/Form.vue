@@ -569,6 +569,7 @@ import 'intro.js/introjs.css';
 import introJs from 'intro.js';
 import VueCookies from 'vue-cookies';
 import JSZip from 'jszip';
+import { v4 as uuid, NIL as UUID_NIL } from 'uuid';
 Vue.use(VueCookies, { expire: -1 });
 
 @Component({
@@ -885,9 +886,260 @@ export default class ProblemForm extends Vue {
     this.problemLevel = levelTag;
   }
 
-  onUploadFile(ev: InputEvent): void {
+  async onUploadFile(ev: Event): Promise<void> {
     const uploadedFile = ev.target as HTMLInputElement;
-    this.hasFile = uploadedFile.files !== null;
+    this.hasFile = uploadedFile.files !== null && uploadedFile.files.length > 0;
+
+    if (
+      this.isUpdate ||
+      !this.showCreationMethodSelector ||
+      this.creationMethod !== 'zip' ||
+      !uploadedFile.files ||
+      uploadedFile.files.length === 0
+    ) {
+      return;
+    }
+
+    const storeData = await this.parseUploadedZipToStoreData(
+      uploadedFile.files[0],
+    );
+    if (!storeData) {
+      return;
+    }
+
+    await this.importZipIntoCreator(storeData);
+  }
+
+  async importZipIntoCreator(storeData: { [key: string]: any }): Promise<void> {
+    this.setCreationMethod('creator');
+    this.creatorGeneratedZipBlob = null;
+    this.showProblemCreator = true;
+
+    await this.$nextTick();
+    await this.$nextTick();
+
+    this.loadStoreDataIntoCreator(storeData);
+  }
+
+  loadStoreDataIntoCreator(storeData: { [key: string]: any }): void {
+    const creatorWrapper = this.$refs.problemCreator as any;
+    const creatorComponent = creatorWrapper?.$refs?.creator;
+    if (!creatorComponent?.$store) {
+      return;
+    }
+
+    creatorComponent.populateProps(storeData);
+    creatorComponent.$store.replaceState({
+      ...creatorComponent.$store.state,
+      problemName: storeData.problemName,
+      problemMarkdown: storeData.problemMarkdown,
+      problemCodeContent: storeData.problemCodeContent,
+      problemCodeExtension: storeData.problemCodeExtension,
+      problemSolutionMarkdown: storeData.problemSolutionMarkdown,
+    });
+    if (storeData.casesStore) {
+      creatorComponent.$store.commit(
+        'casesStore/replaceState',
+        storeData.casesStore,
+      );
+    }
+  }
+
+  async parseUploadedZipToStoreData(
+    uploadedZipFile: File,
+  ): Promise<{ [key: string]: any } | null> {
+    try {
+      const zip = await new JSZip().loadAsync(uploadedZipFile);
+      const cdpDataFile = zip.file('cdp.data');
+      if (cdpDataFile) {
+        const content = await cdpDataFile.async('text');
+        return JSON.parse(content);
+      }
+
+      return await this.parseStandardOmegaUpZip(zip, uploadedZipFile.name);
+    } catch (error) {
+      ui.error(T.problemCreatorZipFileIsNotValid);
+      return null;
+    }
+  }
+
+  async parseStandardOmegaUpZip(
+    zipContent: JSZip,
+    filename: string,
+  ): Promise<{ [key: string]: any } | null> {
+    const casePaths = Object.keys(zipContent.files).filter(
+      (filePath) =>
+        filePath.startsWith('cases/') &&
+        !zipContent.files[filePath].dir &&
+        (filePath.endsWith('.in') || filePath.endsWith('.out')),
+    );
+    if (casePaths.length === 0) {
+      ui.error(T.problemCreatorZipFileIsNotComplete);
+      return null;
+    }
+
+    const problemMarkdown = await this.readFirstZipText(zipContent, [
+      'statements/es.markdown',
+      'statements/en.markdown',
+      'statements/pt.markdown',
+    ]);
+    const problemSolutionMarkdown = await this.readFirstZipText(zipContent, [
+      'solutions/es.markdown',
+      'solutions/en.markdown',
+      'solutions/pt.markdown',
+    ]);
+
+    const codeFilePath = Object.keys(zipContent.files).find(
+      (filePath) =>
+        filePath.startsWith('solutions/') &&
+        !zipContent.files[filePath].dir &&
+        !filePath.endsWith('.markdown'),
+    );
+    let problemCodeContent = '';
+    let problemCodeExtension = '';
+    if (codeFilePath) {
+      const codeFile = zipContent.file(codeFilePath);
+      if (codeFile) {
+        problemCodeContent = await codeFile.async('text');
+        const codeFilename = codeFilePath.split('/').pop() || '';
+        const extension = codeFilename.split('.').pop();
+        problemCodeExtension = extension || '';
+      }
+    }
+
+    const testplanData = await this.readFirstZipText(zipContent, ['testplan']);
+    const pointsByCaseName = this.parseTestplan(testplanData);
+
+    const caseNameToInput = new Map<string, string>();
+    const caseNameToOutput = new Map<string, string>();
+    for (const filePath of casePaths) {
+      const file = zipContent.file(filePath);
+      if (!file) {
+        continue;
+      }
+      const text = await file.async('text');
+      const relativeName = filePath.substring('cases/'.length);
+      const caseName = relativeName.replace(/\.(in|out)$/i, '');
+      if (filePath.endsWith('.in')) {
+        caseNameToInput.set(caseName, text);
+      } else {
+        caseNameToOutput.set(caseName, text);
+      }
+    }
+
+    const allCaseNames = new Set<string>([
+      ...Array.from(caseNameToInput.keys()),
+      ...Array.from(caseNameToOutput.keys()),
+    ]);
+
+    const groupsByKey = new Map<string, any>();
+    for (const fullCaseName of allCaseNames) {
+      const dotIndex = fullCaseName.indexOf('.');
+      const hasGroup = dotIndex !== -1;
+      const groupName = hasGroup
+        ? fullCaseName.substring(0, dotIndex)
+        : fullCaseName;
+      const caseName = hasGroup
+        ? fullCaseName.substring(dotIndex + 1)
+        : fullCaseName;
+      const groupKey = hasGroup ? `g:${groupName}` : `u:${caseName}`;
+
+      if (!groupsByKey.has(groupKey)) {
+        groupsByKey.set(groupKey, {
+          groupID: uuid(),
+          name: groupName,
+          points: 0,
+          autoPoints: false,
+          ungroupedCase: !hasGroup,
+          cases: [],
+        });
+      }
+
+      const group = groupsByKey.get(groupKey);
+      const points = pointsByCaseName.get(fullCaseName) ?? 0;
+      const autoPoints = !pointsByCaseName.has(fullCaseName);
+      const caseID = uuid();
+      group.cases.push({
+        caseID,
+        groupID: group.groupID,
+        name: caseName,
+        lines: [
+          {
+            lineID: uuid(),
+            caseID,
+            label: '',
+            data: {
+              kind: 'multiline',
+              value: caseNameToInput.get(fullCaseName) || '',
+            },
+          },
+        ],
+        output: caseNameToOutput.get(fullCaseName) || '',
+        points,
+        autoPoints,
+      });
+      group.points += points;
+      group.autoPoints = group.autoPoints || autoPoints;
+    }
+
+    const groups = Array.from(groupsByKey.values());
+    const firstCase = groups[0]?.cases?.[0];
+    const selected = firstCase
+      ? {
+          groupID: firstCase.groupID,
+          caseID: firstCase.caseID,
+        }
+      : {
+          groupID: UUID_NIL,
+          caseID: UUID_NIL,
+        };
+
+    return {
+      problemName: filename.replace(/\.zip$/i, ''),
+      problemMarkdown,
+      problemCodeContent,
+      problemCodeExtension,
+      problemSolutionMarkdown,
+      casesStore: {
+        groups,
+        selected,
+        layouts: [],
+        hide: false,
+      },
+    };
+  }
+
+  async readFirstZipText(
+    zipContent: JSZip,
+    candidates: string[],
+  ): Promise<string> {
+    for (const candidate of candidates) {
+      const file = zipContent.file(candidate);
+      if (file) {
+        return file.async('text');
+      }
+    }
+    return '';
+  }
+
+  parseTestplan(testplanData: string): Map<string, number> {
+    const pointsByCaseName = new Map<string, number>();
+    const lines = testplanData.split('\n').map((line) => line.trim());
+    for (const line of lines) {
+      if (!line || line.startsWith('#')) {
+        continue;
+      }
+      const parsed = line.match(/^(.+?)\s+([+-]?\d+(?:\.\d+)?)$/);
+      if (!parsed) {
+        continue;
+      }
+      const caseName = parsed[1].trim();
+      const points = Number(parsed[2]);
+      if (caseName && !Number.isNaN(points)) {
+        pointsByCaseName.set(caseName, points);
+      }
+    }
+    return pointsByCaseName;
   }
 
   onGenerateAlias(): void {
