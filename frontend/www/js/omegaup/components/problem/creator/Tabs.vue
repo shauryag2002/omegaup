@@ -8,8 +8,10 @@
         >
       </template>
       <omegaup-problem-creator-statement-tab
+        ref="statementTab"
         :current-markdown-prop="currentMarkdownProp"
         :active-tab-index="activeTabIndex"
+        :hide-save-button="hideSaveButtons"
         @show-update-success-message="
           () => $emit('show-update-success-message')
         "
@@ -24,9 +26,11 @@
         >
       </template>
       <omegaup-problem-creator-code-tab
+        ref="codeTab"
         :code-prop="codeProp"
         :extension-prop="extensionProp"
         :active-tab-index="activeTabIndex"
+        :hide-save-button="hideSaveButtons"
         @show-update-success-message="
           () => $emit('show-update-success-message')
         "
@@ -42,12 +46,8 @@
       </template>
       <omegaup-problem-creator-cases-tab
         :active-tab-index="activeTabIndex"
-        @download-zip-file="
-          (zipObject) => $emit('download-zip-file', zipObject)
-        "
-        @download-input-file="
-          (fileObject) => $emit('download-input-file', fileObject)
-        "
+        @download-zip-file="onDownloadZipFile"
+        @download-input-file="onDownloadInputFile"
       />
     </b-tab>
 
@@ -59,8 +59,10 @@
         >
       </template>
       <omegaup-problem-creator-solution-tab
+        ref="solutionTab"
         :current-solution-markdown-prop="currentSolutionMarkdownProp"
         :active-tab-index="activeTabIndex"
+        :hide-save-button="hideSaveButtons"
         @show-update-success-message="
           () => $emit('show-update-success-message')
         "
@@ -70,7 +72,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Prop } from 'vue-property-decorator';
+import { Component, Vue, Prop, Ref } from 'vue-property-decorator';
 import problemCreator_CasesTab from './cases/CasesTab.vue';
 import problemCreator_StatementTab from './statement/StatementTab.vue';
 import problemCreator_CodeTab from './code/CodeTab.vue';
@@ -96,6 +98,10 @@ export default class Tabs extends Vue {
   T = T;
   activeTabIndex = TabIndex.Statement;
 
+  @Ref('statementTab') statementTabRef!: problemCreator_StatementTab;
+  @Ref('codeTab') codeTabRef!: problemCreator_CodeTab;
+  @Ref('solutionTab') solutionTabRef!: problemCreator_SolutionTab;
+
   @Prop({ default: T.problemCreatorEmpty })
   currentSolutionMarkdownProp!: string;
   @Prop({ default: T.problemCreatorEmpty })
@@ -104,5 +110,26 @@ export default class Tabs extends Vue {
   codeProp!: string;
   @Prop({ default: T.problemCreatorEmpty })
   extensionProp!: string;
+  @Prop({ default: false }) hideSaveButtons!: boolean;
+
+  saveAllDrafts(): void {
+    if (this.statementTabRef) {
+      this.statementTabRef.persistDraft();
+    }
+    if (this.codeTabRef) {
+      this.codeTabRef.persistDraft();
+    }
+    if (this.solutionTabRef) {
+      this.solutionTabRef.persistDraft();
+    }
+  }
+
+  onDownloadZipFile(zipObject: unknown): void {
+    this.$emit('download-zip-file', zipObject);
+  }
+
+  onDownloadInputFile(fileObject: unknown): void {
+    this.$emit('download-input-file', fileObject);
+  }
 }
 </script>

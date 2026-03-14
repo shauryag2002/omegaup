@@ -108,7 +108,11 @@
                     v-if="creationMethod === 'creator'"
                     class="mt-2 introjs-open-creator"
                   >
-                    <button type="button" class="btn btn-info">
+                    <button
+                      type="button"
+                      class="btn btn-info"
+                      @click="openProblemCreatorModal()"
+                    >
                       {{ T.openProblemCreator }}
                     </button>
                   </div>
@@ -506,6 +510,34 @@
         </div>
       </form>
     </div>
+
+    <div
+      v-if="showCreationMethodSelector"
+      v-show="showProblemCreator"
+      class="problem-creator-modal"
+      @click.self="closeProblemCreatorModal"
+    >
+      <div class="problem-creator-modal-content">
+        <div class="problem-creator-modal-body">
+          <omegaup-problem-creator
+            v-if="showProblemCreator"
+            :hide-header-actions="true"
+            :hide-save-buttons="true"
+            close-button-selector="[data-problem-creator-close]"
+          />
+        </div>
+        <div class="problem-creator-modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-problem-creator-close
+            @click="closeProblemCreatorModal"
+          >
+            {{ T.wordsClose }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -513,6 +545,7 @@
 import { Vue, Component, Prop, Watch, Ref } from 'vue-property-decorator';
 import problem_Settings from './Settings.vue';
 import problem_Tags from './Tags.vue';
+import problem_CreatorWrapper from './CreatorWrapper.vue';
 import T from '../../lang';
 import latinize from 'latinize';
 import { types } from '../../api_types';
@@ -525,6 +558,7 @@ Vue.use(VueCookies, { expire: -1 });
   components: {
     'omegaup-problem-settings': problem_Settings,
     'omegaup-problem-tags': problem_Tags,
+    'omegaup-problem-creator': problem_CreatorWrapper,
   },
 })
 export default class ProblemForm extends Vue {
@@ -568,6 +602,8 @@ export default class ProblemForm extends Vue {
   validatorTypes = this.data.validatorTypes;
   currentLanguages = this.data.languages;
   creationMethod: 'creator' | 'zip' = 'creator';
+  showProblemCreator = false;
+  private createProblemIntro: any = null;
 
   mounted() {
     if (!this.isUpdate && this.showCreationMethodSelector) {
@@ -653,14 +689,14 @@ export default class ProblemForm extends Vue {
         },
       );
 
-      introJs()
-        .setOptions({
-          nextLabel: T.interactiveGuideNextButton,
-          prevLabel: T.interactiveGuidePreviousButton,
-          doneLabel: T.interactiveGuideDoneButton,
-          steps,
-        })
-        .start();
+      const intro = introJs().setOptions({
+        nextLabel: T.interactiveGuideNextButton,
+        prevLabel: T.interactiveGuidePreviousButton,
+        doneLabel: T.interactiveGuideDoneButton,
+        steps,
+      });
+      this.createProblemIntro = intro;
+      intro.start();
       this.$cookies.set('has-visited-create-problem', true, -1);
     }
   }
@@ -670,6 +706,14 @@ export default class ProblemForm extends Vue {
     if (!this.isUpdate && this.showCreationMethodSelector) {
       window.sessionStorage.setItem('problemCreationMethod', method);
     }
+  }
+
+  openProblemCreatorModal(): void {
+    this.showProblemCreator = true;
+  }
+
+  closeProblemCreatorModal(): void {
+    this.showProblemCreator = false;
   }
 
   get howToWriteProblemLink(): string {
@@ -833,6 +877,18 @@ export default class ProblemForm extends Vue {
     }
     this.$emit('alias-changed', newValue);
   }
+
+  @Watch('showProblemCreator')
+  onShowProblemCreatorChanged(isVisible: boolean): void {
+    if (isVisible) {
+      if (this.createProblemIntro?.exit) {
+        this.createProblemIntro.exit();
+      }
+      document.body.classList.add('problem-creator-intro');
+      return;
+    }
+    document.body.classList.remove('problem-creator-intro');
+  }
 }
 </script>
 
@@ -840,5 +896,79 @@ export default class ProblemForm extends Vue {
 .problem-form .languages {
   padding: 0;
   width: 100%;
+}
+
+.problem-creator-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1060;
+}
+
+.problem-creator-modal-content {
+  background-color: white;
+  height: 81vh;
+  width: 78%;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.problem-creator-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.problem-creator-modal-footer {
+  padding: 20px;
+  border-top: 1px solid #dee2e6;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+body.problem-creator-intro .introjs-helperLayer {
+  background: transparent !important;
+}
+
+body.problem-creator-intro .introjs-overlay {
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1070;
+}
+
+body.problem-creator-intro .introjs-tooltipReference,
+body.problem-creator-intro .introjs-tooltip {
+  z-index: 1071;
+}
+
+@media (max-width: 768px) {
+  .problem-creator-modal {
+    align-items: stretch;
+    justify-content: stretch;
+  }
+
+  .problem-creator-modal-content {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0;
+  }
+
+  .problem-creator-modal-body {
+    padding: 0;
+  }
+
+  .problem-creator-modal-footer {
+    padding: 8px 12px;
+  }
 }
 </style>
