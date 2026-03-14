@@ -45,6 +45,7 @@ export default class Creator extends Vue {
   @Prop({ default: false }) hideHeaderActions!: boolean;
   @Prop({ default: false }) hideSaveButtons!: boolean;
   @Prop({ default: '' }) closeButtonSelector!: string;
+  @Ref('creatorHeader') creatorHeaderRef!: creator_Header;
   @Ref('creatorTabs') creatorTabsRef!: creator_Tabs;
 
   T = T;
@@ -156,6 +157,13 @@ export default class Creator extends Vue {
     if (this.creatorTabsRef) {
       this.creatorTabsRef.saveAllDrafts();
     }
+  }
+
+  async importZipFile(zipFile: File): Promise<{ [key: string]: any } | null> {
+    if (!this.creatorHeaderRef?.importZipFile) {
+      return null;
+    }
+    return this.creatorHeaderRef.importZipFile(zipFile);
   }
 
   onDownloadZipFile(zipObject: unknown): void {

@@ -17,4 +17,24 @@ describe('Creator.vue', () => {
     expect(wrapper.findComponent(Header).exists()).toBe(true);
     expect(wrapper.findComponent(Tabs).exists()).toBe(true);
   });
+
+  it('Should delegate zip import to header component', async () => {
+    const wrapper = shallowMount(Creator, { localVue });
+    const zipFile = new File(['zip-content'], 'sumas.zip', {
+      type: 'application/zip',
+    });
+    const importZipFile = jest.fn().mockResolvedValue({ problemName: 'sumas' });
+    Object.defineProperty(wrapper.vm, '$refs', {
+      value: {
+        creatorHeader: {
+          importZipFile,
+        },
+      },
+      configurable: true,
+    });
+
+    await (wrapper.vm as any).importZipFile(zipFile);
+
+    expect(importZipFile).toHaveBeenCalledWith(zipFile);
+  });
 });

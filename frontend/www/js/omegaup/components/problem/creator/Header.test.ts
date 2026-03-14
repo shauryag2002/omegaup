@@ -281,4 +281,46 @@ describe('Header.vue', () => {
       emittedStoreData.casesStore,
     );
   });
+
+  it('Should parse a standard omegaUp zip through importZipFile', async () => {
+    const wrapper = mount(Header, {
+      localVue,
+      store,
+    });
+
+    const zip = new JSZip();
+    zip.file('statements/es.markdown', '# Statement');
+    zip.file('solutions/es.markdown', '# Solution');
+    zip.file('cases/sample.in', '1 2');
+    zip.file('cases/sample.out', '3');
+    zip.file('cases/group1.case1.in', '4 5');
+    zip.file('cases/group1.case1.out', '9');
+    zip.file('testplan', 'sample 70\ngroup1.case1 30\n');
+
+    const zipContent = await zip.generateAsync({ type: 'blob' });
+    const testZipFile = new File([zipContent], 'sumas.zip', {
+      type: 'application/zip',
+    });
+
+    const storeData = await wrapper.vm.importZipFile(testZipFile);
+
+    expect(storeData?.problemName).toBe('sumas');
+    expect(wrapper.vm.$store.state.problemName).toBe('sumas');
+    expect(wrapper.vm.$store.state.problemMarkdown).toContain('Statement');
+    expect(wrapper.vm.$store.state.problemSolutionMarkdown).toContain(
+      'Solution',
+    );
+
+    const groups = wrapper.vm.$store.state.casesStore.groups;
+    expect(groups.length).toBe(2);
+
+    const ungrouped = groups.find((group: any) => group.ungroupedCase);
+    const grouped = groups.find((group: any) => !group.ungroupedCase);
+    expect(ungrouped?.name).toBe('sample');
+    expect(ungrouped?.cases[0]?.name).toBe('sample');
+    expect(ungrouped?.cases[0]?.points).toBe(70);
+    expect(grouped?.name).toBe('group1');
+    expect(grouped?.cases[0]?.name).toBe('case1');
+    expect(grouped?.cases[0]?.points).toBe(30);
+  });
 });

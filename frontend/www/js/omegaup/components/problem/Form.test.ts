@@ -188,7 +188,7 @@ describe('Settings.vue', () => {
     expect((wrapper.vm as any).showProblemCreator).toBe(false);
   });
 
-  it('Should parse uploaded zip and import into creator in feature-flag flow', async () => {
+  it('Should import uploaded zip into creator in feature-flag flow', async () => {
     const wrapper = shallowMount(Form, {
       propsData: {
         data: props,
@@ -197,10 +197,6 @@ describe('Settings.vue', () => {
     });
     await wrapper.setData({ creationMethod: 'zip' });
 
-    const parsedStoreData = { problemName: 'sumas' };
-    const parseSpy = jest
-      .spyOn(wrapper.vm as any, 'parseUploadedZipToStoreData')
-      .mockResolvedValue(parsedStoreData);
     const importSpy = jest
       .spyOn(wrapper.vm as any, 'importZipIntoCreator')
       .mockResolvedValue(undefined);
@@ -213,8 +209,7 @@ describe('Settings.vue', () => {
 
     await (wrapper.vm as any).onUploadFile({ target: input });
 
-    expect(parseSpy).toHaveBeenCalledWith(file);
-    expect(importSpy).toHaveBeenCalledWith(parsedStoreData);
+    expect(importSpy).toHaveBeenCalledWith(file);
   });
 
   it('Should auto-open creator and switch method after zip import', async () => {
@@ -226,14 +221,29 @@ describe('Settings.vue', () => {
     });
     await wrapper.setData({ creationMethod: 'zip' });
 
-    const loadSpy = jest
-      .spyOn(wrapper.vm as any, 'loadStoreDataIntoCreator')
-      .mockImplementation(() => {});
+    const importZipFile = jest.fn().mockResolvedValue({ problemName: 'sumas' });
+    jest
+      .spyOn(wrapper.vm as any, '$nextTick')
+      .mockResolvedValue(undefined as never);
+    Object.defineProperty(wrapper.vm, '$refs', {
+      value: {
+        problemCreator: {
+          $refs: {
+            creator: {
+              importZipFile,
+            },
+          },
+        },
+      },
+      configurable: true,
+    });
 
-    await (wrapper.vm as any).importZipIntoCreator({ problemName: 'sumas' });
+    const zipFile = new File(['zip-content'], 'sumas.zip', {
+      type: 'application/zip',
+    });
+    await (wrapper.vm as any).importZipIntoCreator(zipFile);
 
     expect((wrapper.vm as any).creationMethod).toBe('creator');
     expect((wrapper.vm as any).showProblemCreator).toBe(true);
-    expect(loadSpy).toHaveBeenCalled();
   });
 });

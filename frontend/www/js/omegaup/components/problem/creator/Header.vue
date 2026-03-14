@@ -89,6 +89,7 @@ import { namespace } from 'vuex-class';
 import T from '../../../lang';
 import * as ui from '../../../ui';
 import { Group, CaseGroupID } from '@/js/omegaup/problem/creator/types';
+import { v4 as uuid, NIL as UUID_NIL } from 'uuid';
 
 const casesStore = namespace('casesStore');
 
@@ -123,39 +124,234 @@ export default class Header extends Vue {
     this.zipFile = this.readFile(ev.target as HTMLInputElement);
   }
 
-  retrieveStore(): void {
+  async retrieveStore(): Promise<void> {
     if (!this.zipFile) {
       return;
     }
-    const zipUploaded = new JSZip();
-    zipUploaded
-      .loadAsync(this.zipFile)
-      .then((zipContent) => {
-        const cdpDataFile = zipContent.file('cdp.data');
-        if (!cdpDataFile) {
-          ui.error(T.problemCreatorZipFileIsNotComplete);
-          return;
-        }
-        cdpDataFile.async('text').then((content) => {
-          const storeData = JSON.parse(content);
-          this.$emit('upload-zip-file', storeData);
-          this.name = storeData.problemName;
-          this.$store.replaceState({
-            ...this.$store.state,
-            problemName: storeData.problemName,
-            problemMarkdown: storeData.problemMarkdown,
-            problemCodeContent: storeData.problemCodeContent,
-            problemCodeExtension: storeData.problemCodeExtension,
-            problemSolutionMarkdown: storeData.problemSolutionMarkdown,
-          });
-          if (storeData.casesStore) {
-            this.$store.commit('casesStore/replaceState', storeData.casesStore);
-          }
+    await this.importZipFile(this.zipFile);
+  }
+
+  async importZipFile(zipFile: File): Promise<{ [key: string]: any } | null> {
+    try {
+      const zipContent = await new JSZip().loadAsync(zipFile);
+
+      const cdpDataFile = zipContent.file('cdp.data');
+      if (cdpDataFile) {
+        const content = await cdpDataFile.async('text');
+        const storeData = JSON.parse(content);
+        this.applyStoreData(storeData);
+        return storeData;
+      }
+
+      const parsedStoreData = await this.parseStandardOmegaUpZip(
+        zipContent,
+        zipFile.name,
+      );
+      if (!parsedStoreData) {
+        ui.error(T.problemCreatorZipFileIsNotComplete);
+        return null;
+      }
+
+      this.applyStoreData(parsedStoreData);
+      return parsedStoreData;
+    } catch (error) {
+      ui.error(T.problemCreatorZipFileIsNotValid);
+      return null;
+    }
+  }
+
+  applyStoreData(storeData: { [key: string]: any }): void {
+    this.$emit('upload-zip-file', storeData);
+    this.name = storeData.problemName;
+    this.$store.replaceState({
+      ...this.$store.state,
+      problemName: storeData.problemName,
+      problemMarkdown: storeData.problemMarkdown,
+      problemCodeContent: storeData.problemCodeContent,
+      problemCodeExtension: storeData.problemCodeExtension,
+      problemSolutionMarkdown: storeData.problemSolutionMarkdown,
+    });
+    if (storeData.casesStore) {
+      this.$store.commit('casesStore/replaceState', storeData.casesStore);
+    }
+  }
+
+  async parseStandardOmegaUpZip(
+    zipContent: JSZip,
+    filename: string,
+  ): Promise<{ [key: string]: any } | null> {
+    const casePaths = Object.keys(zipContent.files).filter(
+      (filePath) =>
+        filePath.startsWith('cases/') &&
+        !zipContent.files[filePath].dir &&
+        (filePath.endsWith('.in') || filePath.endsWith('.out')),
+    );
+    if (casePaths.length === 0) {
+      return null;
+    }
+
+    const problemMarkdown = await this.readFirstZipText(zipContent, [
+      'statements/es.markdown',
+      'statements/en.markdown',
+      'statements/pt.markdown',
+    ]);
+    const problemSolutionMarkdown = await this.readFirstZipText(zipContent, [
+      'solutions/es.markdown',
+      'solutions/en.markdown',
+      'solutions/pt.markdown',
+    ]);
+
+    const codeFilePath = Object.keys(zipContent.files).find(
+      (filePath) =>
+        filePath.startsWith('solutions/') &&
+        !zipContent.files[filePath].dir &&
+        !filePath.endsWith('.markdown'),
+    );
+    let problemCodeContent = '';
+    let problemCodeExtension = '';
+    if (codeFilePath) {
+      const codeFile = zipContent.file(codeFilePath);
+      if (codeFile) {
+        problemCodeContent = await codeFile.async('text');
+        const codeFilename = codeFilePath.split('/').pop() || '';
+        const extension = codeFilename.split('.').pop();
+        problemCodeExtension = extension || '';
+      }
+    }
+
+    const testplanData = await this.readFirstZipText(zipContent, ['testplan']);
+    const pointsByCaseName = this.parseTestplan(testplanData);
+
+    const caseNameToInput = new Map<string, string>();
+    const caseNameToOutput = new Map<string, string>();
+    for (const filePath of casePaths) {
+      const file = zipContent.file(filePath);
+      if (!file) {
+        continue;
+      }
+      const text = await file.async('text');
+      const relativeName = filePath.substring('cases/'.length);
+      const caseName = relativeName.replace(/\.(in|out)$/i, '');
+      if (filePath.endsWith('.in')) {
+        caseNameToInput.set(caseName, text);
+      } else {
+        caseNameToOutput.set(caseName, text);
+      }
+    }
+
+    const allCaseNames = new Set<string>([
+      ...Array.from(caseNameToInput.keys()),
+      ...Array.from(caseNameToOutput.keys()),
+    ]);
+
+    const groupsByKey = new Map<string, any>();
+    for (const fullCaseName of allCaseNames) {
+      const dotIndex = fullCaseName.indexOf('.');
+      const hasGroup = dotIndex !== -1;
+      const groupName = hasGroup
+        ? fullCaseName.substring(0, dotIndex)
+        : fullCaseName;
+      const caseName = hasGroup
+        ? fullCaseName.substring(dotIndex + 1)
+        : fullCaseName;
+      const groupKey = hasGroup ? `g:${groupName}` : `u:${caseName}`;
+
+      if (!groupsByKey.has(groupKey)) {
+        groupsByKey.set(groupKey, {
+          groupID: uuid(),
+          name: groupName,
+          points: 0,
+          autoPoints: false,
+          ungroupedCase: !hasGroup,
+          cases: [],
         });
-      })
-      .catch(() => {
-        ui.error(T.problemCreatorZipFileIsNotValid);
+      }
+
+      const group = groupsByKey.get(groupKey);
+      const points = pointsByCaseName.get(fullCaseName) ?? 0;
+      const autoPoints = !pointsByCaseName.has(fullCaseName);
+      const caseID = uuid();
+      group.cases.push({
+        caseID,
+        groupID: group.groupID,
+        name: caseName,
+        lines: [
+          {
+            lineID: uuid(),
+            caseID,
+            label: '',
+            data: {
+              kind: 'multiline',
+              value: caseNameToInput.get(fullCaseName) || '',
+            },
+          },
+        ],
+        output: caseNameToOutput.get(fullCaseName) || '',
+        points,
+        autoPoints,
       });
+      group.points += points;
+      group.autoPoints = group.autoPoints || autoPoints;
+    }
+
+    const groups = Array.from(groupsByKey.values());
+    const firstCase = groups[0]?.cases?.[0];
+    const selected = firstCase
+      ? {
+          groupID: firstCase.groupID,
+          caseID: firstCase.caseID,
+        }
+      : {
+          groupID: UUID_NIL,
+          caseID: UUID_NIL,
+        };
+
+    return {
+      problemName: filename.replace(/\.zip$/i, ''),
+      problemMarkdown,
+      problemCodeContent,
+      problemCodeExtension,
+      problemSolutionMarkdown,
+      casesStore: {
+        groups,
+        selected,
+        layouts: [],
+        hide: false,
+      },
+    };
+  }
+
+  async readFirstZipText(
+    zipContent: JSZip,
+    candidates: string[],
+  ): Promise<string> {
+    for (const candidate of candidates) {
+      const file = zipContent.file(candidate);
+      if (file) {
+        return file.async('text');
+      }
+    }
+    return '';
+  }
+
+  parseTestplan(testplanData: string): Map<string, number> {
+    const pointsByCaseName = new Map<string, number>();
+    const lines = testplanData.split('\n').map((line) => line.trim());
+    for (const line of lines) {
+      if (!line || line.startsWith('#')) {
+        continue;
+      }
+      const parsed = line.match(/^(.+?)\s+([+-]?\d+(?:\.\d+)?)$/);
+      if (!parsed) {
+        continue;
+      }
+      const caseName = parsed[1].trim();
+      const points = Number(parsed[2]);
+      if (caseName && !Number.isNaN(points)) {
+        pointsByCaseName.set(caseName, points);
+      }
+    }
+    return pointsByCaseName;
   }
 
   @Watch('name')
