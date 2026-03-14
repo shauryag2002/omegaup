@@ -4,11 +4,13 @@
       <b-col>
         <b-card :header="T.problemCreatorTitle" header-class="h3">
           <creator-header
+            ref="creatorHeader"
             :show-header-actions="!hideHeaderActions"
             @download-zip-file="onDownloadZipFile"
             @upload-zip-file="populateProps"
           />
           <creator-tabs
+            ref="creatorTabs"
             data-problem-creator-tabs
             :code-prop="codeProp"
             :extension-prop="extensionProp"

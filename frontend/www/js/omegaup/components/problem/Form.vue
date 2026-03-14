@@ -16,7 +16,13 @@
       </p>
     </div>
     <div class="card-body px-2 px-sm-4">
-      <form ref="form" method="POST" class="form" enctype="multipart/form-data">
+      <form
+        ref="form"
+        method="POST"
+        class="form"
+        enctype="multipart/form-data"
+        @submit="handleFormSubmit"
+      >
         <div class="accordion mb-3">
           <div class="card">
             <div class="card-header">
@@ -115,6 +121,13 @@
                     >
                       {{ T.openProblemCreator }}
                     </button>
+                    <input
+                      ref="creatorFileInput"
+                      name="problem_contents"
+                      type="file"
+                      accept=".zip"
+                      style="display: none"
+                    />
                   </div>
                   <div
                     v-if="creationMethod === 'zip'"
@@ -521,9 +534,11 @@
         <div class="problem-creator-modal-body">
           <omegaup-problem-creator
             v-if="showProblemCreator"
+            ref="problemCreator"
             :hide-header-actions="true"
             :hide-save-buttons="true"
             close-button-selector="[data-problem-creator-close]"
+            @download-zip-file="handleCreatorZipGeneration"
           />
         </div>
         <div class="problem-creator-modal-footer">
@@ -547,11 +562,13 @@ import problem_Settings from './Settings.vue';
 import problem_Tags from './Tags.vue';
 import problem_CreatorWrapper from './CreatorWrapper.vue';
 import T from '../../lang';
+import * as ui from '../../ui';
 import latinize from 'latinize';
 import { types } from '../../api_types';
 import 'intro.js/introjs.css';
 import introJs from 'intro.js';
 import VueCookies from 'vue-cookies';
+import JSZip from 'jszip';
 Vue.use(VueCookies, { expire: -1 });
 
 @Component({
@@ -573,6 +590,10 @@ export default class ProblemForm extends Vue {
   @Ref('tags') tagsRef!: HTMLDivElement;
   @Ref('limits') limitsRef!: HTMLDivElement;
   @Ref('form') formRef!: HTMLFormElement;
+  @Ref('problemCreator') problemCreatorRef!: InstanceType<
+    typeof problem_CreatorWrapper
+  >;
+  @Ref('creatorFileInput') creatorFileInputRef!: HTMLInputElement;
 
   T = T;
   title = this.data.title;
@@ -603,6 +624,7 @@ export default class ProblemForm extends Vue {
   currentLanguages = this.data.languages;
   creationMethod: 'creator' | 'zip' = 'creator';
   showProblemCreator = false;
+  creatorGeneratedZipBlob: Blob | null = null;
   private createProblemIntro: any = null;
 
   mounted() {
@@ -713,7 +735,73 @@ export default class ProblemForm extends Vue {
   }
 
   closeProblemCreatorModal(): void {
+    this.persistProblemCreatorDraft();
+    this.generateProblemCreatorZip();
     this.showProblemCreator = false;
+  }
+
+  handleFormSubmit(event: Event): void {
+    if (!this.isUpdate && this.showCreationMethodSelector) {
+      if (this.creationMethod === 'creator') {
+        if (!this.creatorGeneratedZipBlob) {
+          event.preventDefault();
+          ui.error(
+            'Please create content in Problem Creator before submitting',
+          );
+          return;
+        }
+
+        const fileInput = this.creatorFileInputRef;
+        if (!fileInput) {
+          event.preventDefault();
+          ui.error('File input not found. Please try again.');
+          return;
+        }
+
+        const file = new File(
+          [this.creatorGeneratedZipBlob],
+          `${this.alias || 'problem'}.zip`,
+          { type: 'application/zip' },
+        );
+
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        fileInput.files = dataTransfer.files;
+
+        if (!fileInput.files || fileInput.files.length === 0) {
+          event.preventDefault();
+          ui.error('Failed to attach problem file. Please try again.');
+          return;
+        }
+      }
+
+      if (this.creationMethod === 'zip' && !this.hasFile) {
+        event.preventDefault();
+        ui.error(T.editFieldRequired || 'Please attach a zip file.');
+      }
+    }
+  }
+
+  handleCreatorZipGeneration({ zipContent }: { zipContent: JSZip }): void {
+    zipContent.generateAsync({ type: 'blob' }).then((blob) => {
+      this.creatorGeneratedZipBlob = blob;
+    });
+  }
+
+  persistProblemCreatorDraft(): void {
+    const creatorWrapper = this.$refs.problemCreator as any;
+    const creatorComponent = creatorWrapper?.$refs?.creator;
+    if (creatorComponent?.saveDraft) {
+      creatorComponent.saveDraft();
+    }
+  }
+
+  generateProblemCreatorZip(): void {
+    const creatorWrapper = this.$refs.problemCreator as any;
+    const creatorComponent = creatorWrapper?.$refs?.creator;
+    if (creatorComponent?.$refs?.creatorHeader) {
+      creatorComponent.$refs.creatorHeader.generateProblem();
+    }
   }
 
   get howToWriteProblemLink(): string {
