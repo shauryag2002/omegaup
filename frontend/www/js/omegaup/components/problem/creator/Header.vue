@@ -1,6 +1,6 @@
 <template>
-  <b-row class="mb-3">
-    <b-col class="d-flex align-items-center">
+  <b-row v-if="showHeaderActions || showNameInput" class="mb-3">
+    <b-col v-if="showNameInput" class="d-flex align-items-center">
       <span class="mr-2">{{ T.problemCreatorName }}</span>
       <b-form-input
         v-model="name"
@@ -96,6 +96,7 @@ const casesStore = namespace('casesStore');
 @Component
 export default class Header extends Vue {
   @Prop({ default: true }) showHeaderActions!: boolean;
+  @Prop({ default: true }) showNameInput!: boolean;
 
   T = T;
   zipFile: File | null = null;

@@ -34,6 +34,18 @@ describe('Header.vue', () => {
     expect(wrapper.findComponent(BFormInput).exists()).toBe(true);
   });
 
+  it('Should hide problem name input when showNameInput is false', async () => {
+    const wrapper = shallowMount(Header, {
+      localVue,
+      store,
+      propsData: {
+        showNameInput: false,
+      },
+    });
+
+    expect(wrapper.findComponent(BFormInput).exists()).toBe(false);
+  });
+
   it('Should reset the store on clicking the reset button', async () => {
     const original = window.location;
 

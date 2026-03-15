@@ -18,6 +18,17 @@ describe('Creator.vue', () => {
     expect(wrapper.findComponent(Tabs).exists()).toBe(true);
   });
 
+  it('Should hide name input when embedded mode is active', async () => {
+    const wrapper = shallowMount(Creator, {
+      localVue,
+      propsData: {
+        hideHeaderActions: true,
+      },
+    });
+
+    expect(wrapper.findComponent(Header).props('showNameInput')).toBe(false);
+  });
+
   it('Should delegate zip import to header component', async () => {
     const wrapper = shallowMount(Creator, { localVue });
     const zipFile = new File(['zip-content'], 'sumas.zip', {

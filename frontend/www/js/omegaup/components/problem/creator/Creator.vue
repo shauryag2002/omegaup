@@ -6,6 +6,7 @@
           <creator-header
             ref="creatorHeader"
             :show-header-actions="!hideHeaderActions"
+            :show-name-input="!hideHeaderActions"
             @download-zip-file="onDownloadZipFile"
             @upload-zip-file="populateProps"
           />
@@ -105,13 +106,16 @@ export default class Creator extends Vue {
         );
       }
 
-      steps.push({
-        title: T.problemCreatorIntroNameTitle,
-        intro: T.problemCreatorIntroNameIntro,
-        element: document.querySelector(
-          'input[placeholder="New Problem"]',
-        ) as Element,
-      });
+      const nameElement = document.querySelector(
+        'input[placeholder="New Problem"]',
+      ) as Element | null;
+      if (nameElement) {
+        steps.push({
+          title: T.problemCreatorIntroNameTitle,
+          intro: T.problemCreatorIntroNameIntro,
+          element: nameElement,
+        });
+      }
 
       if (this.closeButtonSelector) {
         const closeElement = document.querySelector(
